@@ -260,6 +260,63 @@ class TestProviderIntegration:
             provider.get_capabilities("pro")
         assert "not allowed by restriction policy" in str(exc_info.value)
 
+    @patch.dict(os.environ, {"GOOGLE_ALLOWED_MODELS": "flash"})
+    def test_gemini_parameter_order_regression_protection(self):
+        """Test that prevents regression of parameter order bug in is_allowed calls.
+        
+        This test specifically catches the bug where parameters were incorrectly 
+        passed as (provider, user_input, resolved_name) instead of 
+        (provider, resolved_name, user_input).
+        
+        The bug was subtle because the is_allowed method uses OR logic, so it
+        worked in most cases by accident. This test creates a scenario where
+        the parameter order matters.
+        """
+        # Clear any cached restriction service
+        import utils.model_restrictions
+        utils.model_restrictions._restriction_service = None
+
+        provider = GeminiModelProvider(api_key="test-key")
+
+        # Test case: Only alias "flash" is allowed, not the full name
+        # If parameters are in wrong order, this test will catch it
+
+        # Should allow "flash" alias
+        assert provider.validate_model_name("flash")
+
+        # Should allow getting capabilities for "flash"
+        capabilities = provider.get_capabilities("flash")
+        assert capabilities.model_name == "gemini-2.5-flash-preview-05-20"
+
+        # Test the edge case: Try to use full model name when only alias is allowed
+        # This should NOT be allowed - only the alias "flash" is in the restriction list
+        assert not provider.validate_model_name("gemini-2.5-flash-preview-05-20")
+
+    @patch.dict(os.environ, {"GOOGLE_ALLOWED_MODELS": "gemini-2.5-flash-preview-05-20"})
+    def test_gemini_parameter_order_edge_case_full_name_only(self):
+        """Test parameter order with only full name allowed, not alias.
+        
+        This is the reverse scenario - only the full canonical name is allowed,
+        not the shorthand alias. This tests that the parameter order is correct
+        when resolving aliases.
+        """
+        # Clear any cached restriction service
+        import utils.model_restrictions
+        utils.model_restrictions._restriction_service = None
+
+        provider = GeminiModelProvider(api_key="test-key")
+
+        # Should allow full name
+        assert provider.validate_model_name("gemini-2.5-flash-preview-05-20")
+
+        # Should also allow alias that resolves to allowed full name
+        # This works because is_allowed checks both resolved_name and original_name
+        assert provider.validate_model_name("flash")
+
+        # Should not allow "pro" alias
+        assert not provider.validate_model_name("pro")
+        assert not provider.validate_model_name("gemini-2.5-pro-preview-06-05")
+
 
 class TestCustomProviderOpenRouterRestrictions:
     """Test custom provider integration with OpenRouter restrictions."""
