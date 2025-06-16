@@ -91,6 +91,17 @@ class ExampleRequest(ToolRequest):
         default="detailed",
         description="Output format: 'summary', 'detailed', or 'actionable'"
     )
+    
+    # New features - images and web search support
+    images: Optional[list[str]] = Field(
+        default=None,
+        description="Optional images for visual context (file paths or base64 data URLs)"
+    )
+    
+    use_websearch: Optional[bool] = Field(
+        default=True,
+        description="Enable web search for documentation and current information"
+    )
 ```
 
 ### 3. Implement the Tool Class
@@ -151,6 +162,16 @@ class ExampleTool(BaseTool):
                     "enum": ["minimal", "low", "medium", "high", "max"],
                     "description": "Thinking depth: minimal (0.5% of model max), "
                                    "low (8%), medium (33%), high (67%), max (100%)",
+                },
+                "use_websearch": {
+                    "type": "boolean",
+                    "description": "Enable web search for documentation and current information",
+                    "default": True,
+                },
+                "images": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Optional images for visual context",
                 },
                 "continuation_id": {
                     "type": "string",
@@ -331,14 +352,16 @@ Find the `TOOLS` dictionary in `server.py` and add your tool:
 
 ```python
 TOOLS = {
+    "thinkdeep": ThinkDeepTool(),
+    "codereview": CodeReviewTool(),
+    "debug": DebugIssueTool(),
     "analyze": AnalyzeTool(),
     "chat": ChatTool(),
-    "review_code": CodeReviewTool(),
-    "debug": DebugTool(),
-    "review_changes": PreCommitTool(),
-    "generate_tests": TestGenTool(),
-    "thinkdeep": ThinkDeepTool(),
+    "listmodels": ListModelsTool(),
+    "precommit": Precommit(),
+    "testgen": TestGenerationTool(),
     "refactor": RefactorTool(),
+    "tracer": TracerTool(),
     "example": ExampleTool(),  # Add your tool here
 }
 ```
@@ -462,6 +485,16 @@ Add your tool to the README.md in the tools section:
 ```markdown
 ### Available Tools
 
+- **thinkdeep** - Extended thinking and reasoning for complex problems
+- **codereview** - Professional code review with bug and security analysis
+- **debug** - Debug and root cause analysis for complex issues
+- **analyze** - General-purpose file and code analysis
+- **chat** - General chat and collaborative thinking
+- **listmodels** - List all available AI models and their capabilities
+- **precommit** - Pre-commit validation for git changes
+- **testgen** - Comprehensive test generation with edge cases
+- **refactor** - Intelligent code refactoring suggestions
+- **tracer** - Static analysis for tracing code execution paths
 - **example** - Brief description of what the tool does
   - Use cases: [scenario 1], [scenario 2]
   - Supports: [key features]
@@ -469,6 +502,25 @@ Add your tool to the README.md in the tools section:
 ```
 
 ## Advanced Features
+
+### Token Budget Management
+
+The server provides a `_remaining_tokens` parameter that tools can use for dynamic content allocation:
+
+```python
+# In execute method, you receive remaining tokens:
+async def execute(self, arguments: dict[str, Any]) -> list[TextContent]:
+    # Access remaining tokens if provided
+    remaining_tokens = arguments.get('_remaining_tokens')
+    
+    # Use for file content preparation
+    file_content = self._prepare_file_content_for_prompt(
+        files,
+        continuation_id,
+        "Analysis files",
+        max_tokens=remaining_tokens - 5000  # Reserve for response
+    )
+```
 
 ### Understanding Conversation Memory
 
@@ -505,12 +557,15 @@ Tools can return special status responses for complex interactions. These are de
 ```python
 # Currently supported special statuses:
 SPECIAL_STATUS_MODELS = {
-    "need_clarification": NeedClarificationModel,
-    "focused_review_required": FocusedReviewRequiredModel,
-    "more_review_required": MoreReviewRequiredModel,
-    "more_testgen_required": MoreTestGenRequiredModel,
-    "more_refactor_required": MoreRefactorRequiredModel,
-    "resend_prompt": ResendPromptModel,
+    "clarification_required": ClarificationRequest,
+    "full_codereview_required": FullCodereviewRequired,
+    "focused_review_required": FocusedReviewRequired,
+    "test_sample_needed": TestSampleNeeded,
+    "more_tests_required": MoreTestsRequired,
+    "refactor_analysis_complete": RefactorAnalysisComplete,
+    "trace_complete": TraceComplete,
+    "resend_prompt": ResendPromptRequest,
+    "code_too_large": CodeTooLargeRequest,
 }
 ```
 
@@ -595,6 +650,30 @@ websearch_instruction = self.get_websearch_instruction(
 full_prompt = f"{system_prompt}{websearch_instruction}\n\n{user_content}"
 ```
 
+### Image Support
+
+Tools can now accept images for visual context:
+
+```python
+# In your request model:
+images: Optional[list[str]] = Field(
+    None,
+    description="Optional images for visual context"
+)
+
+# In prepare_prompt:
+if request.images:
+    # Images are automatically validated and processed by base class
+    # They will be included in the prompt sent to the model
+    pass
+```
+
+Image validation includes:
+- Size limits based on model capabilities
+- Format validation (PNG, JPEG, GIF, WebP)
+- Automatic base64 encoding for file paths
+- Model-specific image count limits
+
 ## Best Practices
 
 1. **Clear Tool Descriptions**: Write descriptive text that helps Claude understand when to use your tool
@@ -614,6 +693,8 @@ full_prompt = f"{system_prompt}{websearch_instruction}\n\n{user_content}"
 3. **Don't Hardcode Models**: Use model categories for flexibility
 4. **Don't Forget Tests**: Every tool needs tests for reliability
 5. **Don't Break Conventions**: Follow existing patterns from other tools
+6. **Don't Overlook Images**: Validate image limits based on model capabilities
+7. **Don't Waste Tokens**: Use remaining_tokens budget for efficient allocation
 
 ## Testing Your Tool
 
@@ -654,6 +735,42 @@ Before submitting your PR:
 - [ ] Security validation for file paths
 - [ ] Appropriate model category selected
 - [ ] Tool description is clear and helpful
+
+## Model Providers and Configuration
+
+The Zen MCP Server supports multiple AI providers:
+
+### Built-in Providers
+- **Anthropic** (Claude models)
+- **Google** (Gemini models) 
+- **OpenAI** (GPT and O-series models)
+- **X.AI** (Grok models)
+- **Mistral** (Mistral models)
+- **Meta** (Llama models via various providers)
+- **Groq** (Fast inference)
+- **Fireworks** (Open models)
+- **OpenRouter** (Multi-provider gateway)
+- **Deepseek** (Deepseek models)
+- **Together** (Open models)
+
+### Custom Endpoints
+- **Ollama** - Local models via `http://host.docker.internal:11434/v1`
+- **vLLM** - Custom inference endpoints
+
+### Prompt Templates
+
+The server supports prompt templates for quick tool invocation:
+
+```python
+PROMPT_TEMPLATES = {
+    "thinkdeep": {
+        "name": "thinkdeeper",
+        "description": "Think deeply about the current context",
+        "template": "Think deeper about this with {model} using {thinking_mode} thinking mode",
+    },
+    # Add your own templates in server.py
+}
+```
 
 ## Example: Complete Simple Tool
 
