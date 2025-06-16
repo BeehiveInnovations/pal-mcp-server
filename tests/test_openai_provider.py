@@ -75,7 +75,7 @@ class TestOpenAIProvider:
         # Test full name passthrough
         assert provider._resolve_model_name("o3") == "o3"
         assert provider._resolve_model_name("o3-mini") == "o3-mini"
-        assert provider._resolve_model_name("o3-pro") == "o3-pro"
+        assert provider._resolve_model_name("o3-pro") == "o3-pro-2025-06-10"
         assert provider._resolve_model_name("o4-mini") == "o4-mini"
         assert provider._resolve_model_name("o4-mini-high") == "o4-mini-high"
 
@@ -196,7 +196,7 @@ class TestOpenAIProvider:
         mock_response.choices = [MagicMock()]
         mock_response.choices[0].message.content = "Test response"
         mock_response.choices[0].finish_reason = "stop"
-        mock_response.model = "o3-pro"
+        mock_response.model = "o3-mini"
         mock_response.usage = MagicMock()
         mock_response.usage.prompt_tokens = 10
         mock_response.usage.completion_tokens = 5
@@ -205,10 +205,10 @@ class TestOpenAIProvider:
 
         provider = OpenAIModelProvider("test-key")
 
-        # Test full model name passes through unchanged
-        provider.generate_content(prompt="Test", model_name="o3-pro", temperature=1.0)
+        # Test full model name passes through unchanged (use o3-mini since o3-pro has special handling)
+        provider.generate_content(prompt="Test", model_name="o3-mini", temperature=1.0)
         call_kwargs = mock_client.chat.completions.create.call_args[1]
-        assert call_kwargs["model"] == "o3-pro"  # Should be unchanged
+        assert call_kwargs["model"] == "o3-mini"  # Should be unchanged
 
     def test_supports_thinking_mode(self):
         """Test thinking mode support (currently False for all OpenAI models)."""
@@ -219,3 +219,73 @@ class TestOpenAIProvider:
         assert provider.supports_thinking_mode("o3-mini") is False
         assert provider.supports_thinking_mode("o4-mini") is False
         assert provider.supports_thinking_mode("mini") is False  # Test with alias too
+
+    @patch("providers.openai_compatible.OpenAI")
+    def test_o3_pro_routes_to_responses_endpoint(self, mock_openai_class):
+        """Test that o3-pro model routes to the /v1/responses endpoint (mock test)."""
+        # Set up mock for OpenAI client responses endpoint
+        mock_client = MagicMock()
+        mock_openai_class.return_value = mock_client
+
+        mock_response = MagicMock()
+        mock_response.output = MagicMock()
+        mock_response.output.content = [MagicMock()]
+        mock_response.output.content[0].type = "output_text"
+        mock_response.output.content[0].text = "4"
+        mock_response.model = "o3-pro-2025-06-10"
+        mock_response.id = "test-id"
+        mock_response.created_at = 1234567890
+        mock_response.usage = MagicMock()
+        mock_response.usage.prompt_tokens = 10
+        mock_response.usage.completion_tokens = 5
+        mock_response.usage.total_tokens = 15
+
+        mock_client.responses.create.return_value = mock_response
+
+        provider = OpenAIModelProvider("test-key")
+
+        # Generate content with o3-pro
+        result = provider.generate_content(prompt="What is 2 + 2?", model_name="o3-pro", temperature=1.0)
+
+        # Verify responses.create was called
+        mock_client.responses.create.assert_called_once()
+        call_args = mock_client.responses.create.call_args[1]
+        assert call_args["model"] == "o3-pro-2025-06-10"
+        assert call_args["input"][0]["role"] == "user"
+        assert "What is 2 + 2?" in call_args["input"][0]["content"][0]["text"]
+
+        # Verify the response
+        assert result.content == "4"
+        assert result.model_name == "o3-pro-2025-06-10"
+        assert result.metadata["endpoint"] == "responses"
+
+    @patch("providers.openai_compatible.OpenAI")
+    def test_non_o3_pro_uses_chat_completions(self, mock_openai_class):
+        """Test that non-o3-pro models use the standard chat completions endpoint."""
+        # Set up mock
+        mock_client = MagicMock()
+        mock_openai_class.return_value = mock_client
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        mock_response.choices[0].message.content = "Test response"
+        mock_response.choices[0].finish_reason = "stop"
+        mock_response.model = "o3-mini"
+        mock_response.id = "test-id"
+        mock_response.created = 1234567890
+        mock_response.usage = MagicMock()
+        mock_response.usage.prompt_tokens = 10
+        mock_response.usage.completion_tokens = 5
+        mock_response.usage.total_tokens = 15
+        mock_client.chat.completions.create.return_value = mock_response
+
+        provider = OpenAIModelProvider("test-key")
+
+        # Generate content with o3-mini (not o3-pro)
+        result = provider.generate_content(prompt="Test prompt", model_name="o3-mini", temperature=1.0)
+
+        # Verify chat.completions.create was called
+        mock_client.chat.completions.create.assert_called_once()
+
+        # Verify the response
+        assert result.content == "Test response"
+        assert result.model_name == "o3-mini"

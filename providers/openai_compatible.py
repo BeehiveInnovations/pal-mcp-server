@@ -224,6 +224,138 @@ class OpenAICompatibleProvider(ModelProvider):
 
         return self._client
 
+    def _generate_with_responses_endpoint(
+        self,
+        model_name: str,
+        messages: list,
+        temperature: float,
+        max_output_tokens: Optional[int] = None,
+        **kwargs,
+    ) -> ModelResponse:
+        """Generate content using the /v1/responses endpoint for o3-pro via OpenAI library."""
+        # Convert messages to the correct format for responses endpoint
+        input_messages = []
+
+        for message in messages:
+            role = message.get("role", "")
+            content = message.get("content", "")
+
+            if role == "system":
+                # System messages can be treated as user messages for o3-pro
+                input_messages.append(
+                    {"role": "user", "content": [{"type": "input_text", "text": f"System: {content}"}]}
+                )
+            elif role == "user":
+                input_messages.append({"role": "user", "content": [{"type": "input_text", "text": content}]})
+            elif role == "assistant":
+                input_messages.append({"role": "assistant", "content": [{"type": "output_text", "text": content}]})
+
+        # Prepare completion parameters for responses endpoint
+        completion_params = {
+            "model": model_name,
+            "input": input_messages,
+            "text": {"format": {"type": "text"}},
+            "reasoning": {"effort": "medium", "summary": "auto"},
+            "tools": [],
+            "store": True,
+        }
+
+        # Temperature is not in the documented parameters for responses endpoint
+        # but we'll try to add it in case it's supported
+
+        # Add max tokens if specified
+        if max_output_tokens:
+            completion_params["max_tokens"] = max_output_tokens
+
+        # Add any additional OpenAI-specific parameters
+        for key, value in kwargs.items():
+            if key in ["top_p", "frequency_penalty", "presence_penalty", "seed", "stop"]:
+                completion_params[key] = value
+
+        # Retry logic with progressive delays
+        max_retries = 4
+        retry_delays = [1, 3, 5, 8]
+        last_exception = None
+
+        for attempt in range(max_retries):
+            try:
+                # Use OpenAI client's responses endpoint
+                response = self.client.responses.create(**completion_params)
+
+                # Extract content and usage from responses endpoint format
+                # The response format is different for responses endpoint
+                content = ""
+                if hasattr(response, "output") and response.output:
+                    if hasattr(response.output, "content") and response.output.content:
+                        # Look for output_text in content
+                        for content_item in response.output.content:
+                            if hasattr(content_item, "type") and content_item.type == "output_text":
+                                content = content_item.text
+                                break
+                    elif hasattr(response.output, "text"):
+                        content = response.output.text
+
+                # Try to extract usage information
+                usage = None
+                if hasattr(response, "usage"):
+                    usage = self._extract_usage(response)
+                elif hasattr(response, "input_tokens") and hasattr(response, "output_tokens"):
+                    usage = {
+                        "input_tokens": getattr(response, "input_tokens", 0),
+                        "output_tokens": getattr(response, "output_tokens", 0),
+                        "total_tokens": getattr(response, "input_tokens", 0) + getattr(response, "output_tokens", 0),
+                    }
+
+                return ModelResponse(
+                    content=content,
+                    usage=usage,
+                    model_name=model_name,
+                    friendly_name=self.FRIENDLY_NAME,
+                    provider=self.get_provider_type(),
+                    metadata={
+                        "model": getattr(response, "model", model_name),
+                        "id": getattr(response, "id", ""),
+                        "created": getattr(response, "created_at", 0),
+                        "endpoint": "responses",
+                    },
+                )
+
+            except Exception as e:
+                last_exception = e
+
+                # Check if this is a retryable error
+                error_str = str(e).lower()
+                is_retryable = any(
+                    term in error_str
+                    for term in [
+                        "timeout",
+                        "connection",
+                        "network",
+                        "temporary",
+                        "unavailable",
+                        "retry",
+                        "429",
+                        "500",
+                        "502",
+                        "503",
+                        "504",
+                    ]
+                )
+
+                if is_retryable and attempt < max_retries - 1:
+                    delay = retry_delays[attempt]
+                    logging.warning(
+                        f"Retryable error for o3-pro responses endpoint, attempt {attempt + 1}/{max_retries}: {str(e)}. Retrying in {delay}s..."
+                    )
+                    time.sleep(delay)
+                else:
+                    break
+
+        # If we get here, all retries failed
+        error_msg = f"o3-pro responses endpoint error after {max_retries} attempts: {str(last_exception)}"
+        logging.error(error_msg)
+        raise RuntimeError(error_msg) from last_exception
+
     def generate_content(
         self,
         prompt: str,
@@ -300,6 +432,22 @@ class OpenAICompatibleProvider(ModelProvider):
         for key, value in kwargs.items():
             if key in ["top_p", "frequency_penalty", "presence_penalty", "seed", "stop", "stream"]:
                 completion_params[key] = value
+
+        # Check if this is o3-pro and needs the responses endpoint
+        resolved_model = model_name
+        if hasattr(self, "_resolve_model_name"):
+            resolved_model = self._resolve_model_name(model_name)
+
+        if resolved_model == "o3-pro-2025-06-10":
+            # This model requires the /v1/responses endpoint
+            # If it fails, we should not fall back to chat/completions
+            return self._generate_with_responses_endpoint(
+                model_name=resolved_model,
+                messages=messages,
+                temperature=temperature,
+                max_output_tokens=max_output_tokens,
+                **kwargs,
+            )
 
         # Retry logic with progressive delays
         max_retries = 4  # Total of 4 attempts

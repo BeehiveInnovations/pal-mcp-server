@@ -925,6 +925,15 @@ async def handle_list_prompts() -> list[Prompt]:
                 )
             )
 
+    # Add special "continue" prompt
+    prompts.append(
+        Prompt(
+            name="continue",
+            description="Continue the previous conversation using the chat tool",
+            arguments=[],
+        )
+    )
+
     logger.debug(f"Returning {len(prompts)} prompts to MCP client")
     return prompts
 
@@ -934,12 +943,16 @@ async def handle_get_prompt(name: str, arguments: dict[str, Any] = None) -> GetP
     """
     Get prompt details and generate the actual prompt text.
 
-    This handler is called when a user invokes a prompt (e.g., /zen:thinkdeeper).
+    This handler is called when a user invokes a prompt (e.g., /zen:thinkdeeper or /zen:chat:o3).
     It generates the appropriate text that Claude will then use to call the
     underlying tool.
 
+    Supports structured prompt names like "chat:o3" where:
+    - "chat" is the tool name
+    - "o3" is the model to use
+
     Args:
-        name: The name of the prompt to execute
+        name: The name of the prompt to execute (can include model like "chat:o3")
         arguments: Optional arguments for the prompt (e.g., model, thinking_mode)
 
     Returns:
@@ -950,38 +963,73 @@ async def handle_get_prompt(name: str, arguments: dict[str, Any] = None) -> GetP
     """
     logger.debug(f"MCP client requested prompt: {name} with args: {arguments}")
 
-    # Find the corresponding tool by checking prompt names
-    tool_name = None
-    template_info = None
+    # Parse structured prompt names like "chat:o3" or "chat:continue"
+    parsed_model = None
+    is_continuation = False
+    base_name = name
 
-    # Check if it's a known prompt name
-    for t_name, t_info in PROMPT_TEMPLATES.items():
-        if t_info["name"] == name:
-            tool_name = t_name
-            template_info = t_info
-            break
+    if ":" in name:
+        parts = name.split(":", 1)
+        base_name = parts[0]
+        second_part = parts[1]
 
-    # If not found, check if it's a direct tool name
-    if not tool_name and name in TOOLS:
-        tool_name = name
+        # Check if the second part is "continue" (special keyword)
+        if second_part.lower() == "continue":
+            is_continuation = True
+            logger.debug(f"Parsed continuation prompt: tool='{base_name}', continue=True")
+        else:
+            parsed_model = second_part
+            logger.debug(f"Parsed structured prompt: tool='{base_name}', model='{parsed_model}'")
+
+    # Handle special "continue" cases
+    if base_name.lower() == "continue":
+        # This is "/zen:continue" - use chat tool as default for continuation
+        tool_name = "chat"
+        is_continuation = True
         template_info = {
-            "name": name,
-            "description": f"Use {name} tool",
-            "template": f"Use {name}",
+            "name": "continue",
+            "description": "Continue the previous conversation",
+            "template": "Continue the conversation",
         }
+        logger.debug("Using /zen:continue - defaulting to chat tool with continuation")
+    else:
+        # Find the corresponding tool by checking prompt names
+        tool_name = None
+        template_info = None
 
-    if not tool_name:
-        logger.error(f"Unknown prompt requested: {name}")
-        raise ValueError(f"Unknown prompt: {name}")
+        # Check if it's a known prompt name (using base_name)
+        for t_name, t_info in PROMPT_TEMPLATES.items():
+            if t_info["name"] == base_name:
+                tool_name = t_name
+                template_info = t_info
+                break
+
+        # If not found, check if it's a direct tool name
+        if not tool_name and base_name in TOOLS:
+            tool_name = base_name
+            template_info = {
+                "name": base_name,
+                "description": f"Use {base_name} tool",
+                "template": f"Use {base_name}",
+            }
+
+        if not tool_name:
+            logger.error(f"Unknown prompt requested: {name} (base: {base_name})")
+            raise ValueError(f"Unknown prompt: {name}")
 
     # Get the template
     template = template_info.get("template", f"Use {tool_name}")
 
     # Safe template expansion with defaults
+    # Prioritize: parsed model > arguments model > "auto"
+    final_model = parsed_model or (arguments.get("model", "auto") if arguments else "auto")
+
     prompt_args = {
-        "model": arguments.get("model", "auto") if arguments else "auto",
+        "model": final_model,
         "thinking_mode": arguments.get("thinking_mode", "medium") if arguments else "medium",
     }
+
+    logger.debug(f"Using model '{final_model}' for prompt '{name}'")
 
     # Safely format the template
     try:
@@ -989,6 +1037,21 @@ async def handle_get_prompt(name: str, arguments: dict[str, Any] = None) -> GetP
     except KeyError as e:
         logger.warning(f"Missing template argument {e} for prompt {name}, using raw template")
         prompt_text = template  # Fallback to raw template
+
+    # Generate tool call instruction based on the type of prompt
+    if is_continuation:
+        if base_name.lower() == "continue":
+            # "/zen:continue" case
+            tool_instruction = f"Continue the previous conversation using the {tool_name} tool"
+        else:
+            # "/zen:chat:continue" case
+            tool_instruction = f"Continue the previous conversation using the {tool_name} tool"
+    elif parsed_model:
+        # "/zen:chat:o3" case
+        tool_instruction = f"Use the {tool_name} tool with model '{parsed_model}'"
+    else:
+        # "/zen:chat" case
+        tool_instruction = prompt_text
 
     return GetPromptResult(
         prompt=Prompt(
@@ -999,7 +1062,7 @@ async def handle_get_prompt(name: str, arguments: dict[str, Any] = None) -> GetP
         messages=[
             PromptMessage(
                 role="user",
-                content={"type": "text", "text": prompt_text},
+                content={"type": "text", "text": tool_instruction},
             )
         ],
     )

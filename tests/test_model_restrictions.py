@@ -263,17 +263,18 @@ class TestProviderIntegration:
     @patch.dict(os.environ, {"GOOGLE_ALLOWED_MODELS": "flash"})
     def test_gemini_parameter_order_regression_protection(self):
         """Test that prevents regression of parameter order bug in is_allowed calls.
-        
-        This test specifically catches the bug where parameters were incorrectly 
-        passed as (provider, user_input, resolved_name) instead of 
+
+        This test specifically catches the bug where parameters were incorrectly
+        passed as (provider, user_input, resolved_name) instead of
         (provider, resolved_name, user_input).
-        
+
         The bug was subtle because the is_allowed method uses OR logic, so it
         worked in most cases by accident. This test creates a scenario where
         the parameter order matters.
         """
         # Clear any cached restriction service
         import utils.model_restrictions
+
         utils.model_restrictions._restriction_service = None
 
         provider = GeminiModelProvider(api_key="test-key")
@@ -295,13 +296,14 @@ class TestProviderIntegration:
     @patch.dict(os.environ, {"GOOGLE_ALLOWED_MODELS": "gemini-2.5-flash-preview-05-20"})
     def test_gemini_parameter_order_edge_case_full_name_only(self):
         """Test parameter order with only full name allowed, not alias.
-        
+
         This is the reverse scenario - only the full canonical name is allowed,
         not the shorthand alias. This tests that the parameter order is correct
         when resolving aliases.
         """
         # Clear any cached restriction service
         import utils.model_restrictions
+
         utils.model_restrictions._restriction_service = None
 
         provider = GeminiModelProvider(api_key="test-key")

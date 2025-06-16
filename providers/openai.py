@@ -32,12 +32,14 @@ class OpenAIModelProvider(OpenAICompatibleProvider):
             "supports_images": True,  # O3 models support vision
             "max_image_size_mb": 20.0,  # 20MB per OpenAI docs
         },
-        "o3-pro": {
+        "o3-pro-2025-06-10": {
             "context_window": 200_000,  # 200K tokens
             "supports_extended_thinking": False,
             "supports_images": True,  # O3 models support vision
             "max_image_size_mb": 20.0,  # 20MB per OpenAI docs
         },
+        # Aliases
+        "o3-pro": "o3-pro-2025-06-10",
         "o4-mini": {
             "context_window": 200_000,  # 200K tokens
             "supports_extended_thinking": False,
@@ -89,7 +91,7 @@ class OpenAIModelProvider(OpenAICompatibleProvider):
         config = self.SUPPORTED_MODELS[resolved_name]
 
         # Define temperature constraints per model
-        if resolved_name in ["o3", "o3-mini", "o3-pro", "o4-mini", "o4-mini-high"]:
+        if resolved_name in ["o3", "o3-mini", "o3-pro", "o3-pro-2025-06-10", "o4-mini", "o4-mini-high"]:
             # O3 and O4 reasoning models only support temperature=1.0
             temp_constraint = FixedTemperatureConstraint(1.0)
         else:

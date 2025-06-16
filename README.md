@@ -592,10 +592,41 @@ For detailed tool parameters and configuration options, see the [Advanced Usage 
 
 ### Prompt Support
 
-- `/zen:thinkdeeper with o3 check if the algorithm in @sort.py is performant and if there are alternatives we could explore`
-- `/zen:precommit use gemini pro and confirm these changes match our requirements in COOL_FEATURE.md`
-- `/zen:testgen write me tests for class ABC`
-- `/zen:refactor using local-llama propose a decomposition strategy, make a plan and save it in FIXES.md then share this with o3 to confirm along with large_file.swift`
+Zen supports powerful structured prompts in Claude Code for quick access to tools and models:
+
+#### Basic Tool Prompts
+- `/zen:thinkdeeper` - Use thinkdeep tool with auto-selected model
+- `/zen:chat` - Use chat tool with auto-selected model  
+- `/zen:codereview` - Use codereview tool with auto-selected model
+- `/zen:analyze` - Use analyze tool with auto-selected model
+
+#### Model-Specific Tool Prompts
+- `/zen:chat:o3 hello there` - Use chat tool specifically with O3 model
+- `/zen:thinkdeep:flash analyze this quickly` - Use thinkdeep tool with Flash for speed
+- `/zen:codereview:pro review for security` - Use codereview tool with Gemini Pro for thorough analysis
+- `/zen:debug:grok help with this error` - Use debug tool with GROK model
+- `/zen:analyze:gemini-2.5-flash-preview-05-20 examine these files` - Use analyze tool with specific Gemini model
+
+#### Continuation Prompts
+- `/zen:continue` - Continue previous conversation using chat tool
+- `/zen:chat:continue` - Continue previous conversation using chat tool specifically
+- `/zen:thinkdeep:continue` - Continue previous conversation using thinkdeep tool
+- `/zen:analyze:continue` - Continue previous conversation using analyze tool
+
+#### Advanced Examples
+- `/zen:thinkdeeper:o3 check if the algorithm in @sort.py is performant and if there are alternatives we could explore`
+- `/zen:precommit:pro confirm these changes match our requirements in COOL_FEATURE.md`
+- `/zen:testgen:flash write me tests for class ABC`
+- `/zen:refactor:local-llama propose a decomposition strategy, make a plan and save it in FIXES.md then share this with o3 to confirm along with large_file.swift`
+
+#### Syntax Format
+The structured prompt format is: `/zen:[tool]:[model / continue] [your_message]`
+
+- `[tool]` - Any available tool name (chat, thinkdeep, codereview, debug, analyze, etc.)
+- `[model / continue]` - Either a specific model name (o3, flash, pro, grok, etc.) or the keyword `continue` to continue the conversation using this tool
+- `[your_message]` - Your actual prompt or question
+
+**Note**: When using `:continue`, it intelligently resumes the previous conversation with the specified tool, maintaining full context and conversation history.
 
 ### Add Your Own Tools
 
