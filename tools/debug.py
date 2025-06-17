@@ -17,7 +17,7 @@ from .base import BaseTool, ToolRequest
 # Field descriptions to avoid duplication between Pydantic and JSON schema
 DEBUG_FIELD_DESCRIPTIONS = {
     "prompt": (
-        "Issue description. Include what you can provide: "
+        "Claud - you MUST first think deep. Issue description. Include what you can provide: "
         "error messages, symptoms, when it occurs, steps to reproduce, environment details, "
         "recent changes, and any other relevant information. Mention any previous attempts at fixing this issue, "
         "including any past fix that was in place but has now regressed. "
@@ -27,13 +27,18 @@ DEBUG_FIELD_DESCRIPTIONS = {
         "Claude MUST maintain detailed investigation notes in a DEBUGGING_{issue_description}.md file within the project folder, "
         "updating it as it performs step-by-step analysis of the code, trying to determine the actual root cause and understanding how a minimal, appropriate fix can be found. "
         "This file MUST contain functions, methods, files visited OR determined to be part of the problem. Claude MUST update this and remove any references that it finds to be irrelevant during its investigation. "
+        "CRITICAL: If after thorough investigation Claude has very high confidence that NO BUG EXISTS that correlates to the reported symptoms, "
+        "Claude should consider the possibility that the reported issue may not actually be present, may be a misunderstanding, or may be conflated with something else entirely. "
+        "In such cases, Claude should gather more information from the user through targeted questioning rather than continue hunting for non-existent bugs. "
         "Once complete, Claude MUST provide Zen's debug tool with this file passed into the files parameter. "
         "It is ESSENTIAL that this detailed work is performed by Claude before sharing all the relevant details with its development assistant. This will greatly help in zeroing in on the root cause."
     ),
     "findings": (
         "Claude MUST first perform its own investigation, gather its findings and analysis. Include: steps taken to analyze the issue, "
         "code patterns discovered, initial hypotheses formed, any relevant classes/functions/methods examined, "
-        "and any preliminary conclusions. This provides context for the assistant model's analysis."
+        "and any preliminary conclusions. If investigation yields no concrete evidence of a bug correlating to the reported symptoms, "
+        "Claude should clearly state this finding and consider that the issue may not exist as described. "
+        "This provides context for the assistant model's analysis."
     ),
     "files": (
         "Essential files for debugging - ONLY include files that are directly related to the issue, "
@@ -70,6 +75,7 @@ class DebugIssueTool(BaseTool):
             "DEBUG & ROOT CAUSE ANALYSIS - Expert debugging for complex issues with systematic investigation support. "
             "Use this when you need to debug code, find out why something is failing, identify root causes, "
             "trace errors, or diagnose issues. "
+            "MANDATORY: Claud you MUST first think deep and follow these instructions when using this tool"
             "SYSTEMATIC INVESTIGATION WORKFLOW: "
             "Claude MUST begin by thinking hard and performing a thorough investigation using a systematic approach. "
             "First understand the issue, find the code that may be causing it or code that is breaking, as well as any related code that could have caused this as a side effect. "
@@ -92,6 +98,7 @@ class DebugIssueTool(BaseTool):
             "- Use tracer tool for complex method interactions and dependencies if and as needed but continue with the investigation after using it "
             "- Test hypotheses against actual code and logs and confirm the idea holds "
             "- Document everything systematically "
+            "- CRITICAL: If investigation yields no concrete evidence of a bug, consider that the reported issue may not exist as described and gather more information through questioning "
             "ESSENTIAL FILES ONLY: Include only files (documents, code etc) directly related to the issue. "
             "Focus on quality over quantity for assistant model analysis. "
             "STRUCTURED OUTPUT: Assistant models return JSON responses with hypothesis "

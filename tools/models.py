@@ -45,6 +45,7 @@ class ToolOutput(BaseModel):
         "resend_prompt",
         "code_too_large",
         "continuation_available",
+        "no_bug_found",
     ] = "success"
     content: Optional[str] = Field(None, description="The main content/response from the tool")
     content_type: Literal["text", "markdown", "json"] = "text"
@@ -342,6 +343,23 @@ class DebugAnalysisComplete(BaseModel):
     )
 
 
+class NoBugFound(BaseModel):
+    """Response when thorough investigation finds no concrete evidence of a bug"""
+
+    status: Literal["no_bug_found"] = "no_bug_found"
+    summary: str = Field(..., description="Summary of what was thoroughly investigated")
+    investigation_steps: list[str] = Field(..., description="Steps taken during the investigation")
+    areas_examined: list[str] = Field(..., description="Code areas and potential failure points examined")
+    confidence_level: Literal["High", "Medium", "Low"] = Field(
+        ..., description="Confidence level in the no-bug finding"
+    )
+    alternative_explanations: list[str] = Field(
+        ..., description="Possible alternative explanations for reported symptoms"
+    )
+    recommended_questions: list[str] = Field(..., description="Questions to clarify the issue with the user")
+    next_steps: list[str] = Field(..., description="Suggested actions to better understand the reported issue")
+
+
 # Registry mapping status strings to their corresponding Pydantic models
 SPECIAL_STATUS_MODELS = {
     "clarification_required": ClarificationRequest,
@@ -354,4 +372,5 @@ SPECIAL_STATUS_MODELS = {
     "resend_prompt": ResendPromptRequest,
     "code_too_large": CodeTooLargeRequest,
     "analysis_complete": DebugAnalysisComplete,
+    "no_bug_found": NoBugFound,
 }
