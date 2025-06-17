@@ -300,10 +300,13 @@ class OpenAICompatibleProvider(ModelProvider):
                 if hasattr(response, "usage"):
                     usage = self._extract_usage(response)
                 elif hasattr(response, "input_tokens") and hasattr(response, "output_tokens"):
+                    # Safely extract token counts with None handling
+                    input_tokens = getattr(response, "input_tokens", 0) or 0
+                    output_tokens = getattr(response, "output_tokens", 0) or 0
                     usage = {
-                        "input_tokens": getattr(response, "input_tokens", 0),
-                        "output_tokens": getattr(response, "output_tokens", 0),
-                        "total_tokens": getattr(response, "input_tokens", 0) + getattr(response, "output_tokens", 0),
+                        "input_tokens": input_tokens,
+                        "output_tokens": output_tokens,
+                        "total_tokens": input_tokens + output_tokens,
                     }
 
                 return ModelResponse(
@@ -607,9 +610,10 @@ class OpenAICompatibleProvider(ModelProvider):
         usage = {}
 
         if hasattr(response, "usage") and response.usage:
-            usage["input_tokens"] = getattr(response.usage, "prompt_tokens", 0)
-            usage["output_tokens"] = getattr(response.usage, "completion_tokens", 0)
-            usage["total_tokens"] = getattr(response.usage, "total_tokens", 0)
+            # Safely extract token counts with None handling
+            usage["input_tokens"] = getattr(response.usage, "prompt_tokens", 0) or 0
+            usage["output_tokens"] = getattr(response.usage, "completion_tokens", 0) or 0
+            usage["total_tokens"] = getattr(response.usage, "total_tokens", 0) or 0
 
         return usage
 

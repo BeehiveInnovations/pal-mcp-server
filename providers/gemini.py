@@ -303,12 +303,26 @@ class GeminiModelProvider(ModelProvider):
         # Note: The actual structure depends on the SDK version and response format
         if hasattr(response, "usage_metadata"):
             metadata = response.usage_metadata
+
+            # Extract token counts with explicit None checks
+            input_tokens = None
+            output_tokens = None
+
             if hasattr(metadata, "prompt_token_count"):
-                usage["input_tokens"] = metadata.prompt_token_count
+                value = metadata.prompt_token_count
+                if value is not None:
+                    input_tokens = value
+                    usage["input_tokens"] = value
+
             if hasattr(metadata, "candidates_token_count"):
-                usage["output_tokens"] = metadata.candidates_token_count
-            if "input_tokens" in usage and "output_tokens" in usage:
-                usage["total_tokens"] = usage["input_tokens"] + usage["output_tokens"]
+                value = metadata.candidates_token_count
+                if value is not None:
+                    output_tokens = value
+                    usage["output_tokens"] = value
+
+            # Calculate total only if both values are available and valid
+            if input_tokens is not None and output_tokens is not None:
+                usage["total_tokens"] = input_tokens + output_tokens
 
         return usage
 
