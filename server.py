@@ -34,6 +34,7 @@ from mcp.types import (
     GetPromptResult,
     Prompt,
     PromptMessage,
+    PromptsCapability,
     ServerCapabilities,
     TextContent,
     Tool,
@@ -1065,71 +1066,46 @@ async def handle_get_prompt(name: str, arguments: dict[str, Any] = None) -> GetP
     """
     logger.debug(f"MCP client requested prompt: {name} with args: {arguments}")
 
-    # Parse structured prompt names like "chat:o3", "chat:continue", or "consensus:flash:for,o3:against,pro:neutral"
-    parsed_model = None
-    is_continuation = False
-    consensus_models = None
-    base_name = name
-
-    if ":" in name:
-        parts = name.split(":", 1)
-        base_name = parts[0]
-        second_part = parts[1]
-
-        # Check if the second part is "continue" (special keyword)
-        if second_part.lower() == "continue":
-            is_continuation = True
-            logger.debug(f"Parsed continuation prompt: tool='{base_name}', continue=True")
-        elif base_name == "consensus" and "," in second_part:
-            # Handle consensus tool format: "consensus:flash:for,o3:against,pro:neutral"
-            consensus_models = ConsensusTool.parse_structured_prompt_models(second_part)
-            logger.debug(f"Parsed consensus prompt with models: {consensus_models}")
-        else:
-            parsed_model = second_part
-            logger.debug(f"Parsed structured prompt: tool='{base_name}', model='{parsed_model}'")
-
-    # Handle special "continue" cases
-    if base_name.lower() == "continue":
+    # Handle special "continue" case
+    if name.lower() == "continue":
         # This is "/zen:continue" - use chat tool as default for continuation
         tool_name = "chat"
-        is_continuation = True
         template_info = {
             "name": "continue",
             "description": "Continue the previous conversation",
             "template": "Continue the conversation",
         }
-        logger.debug("Using /zen:continue - defaulting to chat tool with continuation")
+        logger.debug("Using /zen:continue - defaulting to chat tool")
     else:
         # Find the corresponding tool by checking prompt names
         tool_name = None
         template_info = None
 
-        # Check if it's a known prompt name (using base_name)
+        # Check if it's a known prompt name
         for t_name, t_info in PROMPT_TEMPLATES.items():
-            if t_info["name"] == base_name:
+            if t_info["name"] == name:
                 tool_name = t_name
                 template_info = t_info
                 break
 
         # If not found, check if it's a direct tool name
-        if not tool_name and base_name in TOOLS:
-            tool_name = base_name
+        if not tool_name and name in TOOLS:
+            tool_name = name
             template_info = {
-                "name": base_name,
-                "description": f"Use {base_name} tool",
-                "template": f"Use {base_name}",
+                "name": name,
+                "description": f"Use {name} tool",
+                "template": f"Use {name}",
             }
 
         if not tool_name:
-            logger.error(f"Unknown prompt requested: {name} (base: {base_name})")
+            logger.error(f"Unknown prompt requested: {name}")
             raise ValueError(f"Unknown prompt: {name}")
 
     # Get the template
     template = template_info.get("template", f"Use {tool_name}")
 
     # Safe template expansion with defaults
-    # Prioritize: parsed model > arguments model > "auto"
-    final_model = parsed_model or (arguments.get("model", "auto") if arguments else "auto")
+    final_model = arguments.get("model", "auto") if arguments else "auto"
 
     prompt_args = {
         "model": final_model,
@@ -1145,31 +1121,12 @@ async def handle_get_prompt(name: str, arguments: dict[str, Any] = None) -> GetP
         logger.warning(f"Missing template argument {e} for prompt {name}, using raw template")
         prompt_text = template  # Fallback to raw template
 
-    # Generate tool call instruction based on the type of prompt
-    if is_continuation:
-        if base_name.lower() == "continue":
-            # "/zen:continue" case
-            tool_instruction = f"Continue the previous conversation using the {tool_name} tool"
-        else:
-            # "/zen:chat:continue" case
-            tool_instruction = f"Continue the previous conversation using the {tool_name} tool"
-    elif consensus_models:
-        # "/zen:consensus:flash:for,o3:against,pro:neutral" case
-        model_descriptions = []
-        for model_config in consensus_models:
-            if model_config["stance"] != "neutral":
-                model_descriptions.append(f"{model_config['model']} with {model_config['stance']} stance")
-            else:
-                model_descriptions.append(f"{model_config['model']} with neutral stance")
-
-        models_text = ", ".join(model_descriptions)
-        models_json = str(consensus_models).replace("'", '"')  # Convert to JSON-like format for Claude
-        tool_instruction = f"Use the {tool_name} tool with models: {models_text}. Call the consensus tool with prompt='debate this proposal' and models={models_json}"
-    elif parsed_model:
-        # "/zen:chat:o3" case
-        tool_instruction = f"Use the {tool_name} tool with model '{parsed_model}'"
+    # Generate tool call instruction
+    if name.lower() == "continue":
+        # "/zen:continue" case
+        tool_instruction = f"Continue the previous conversation using the {tool_name} tool"
     else:
-        # "/zen:chat" case
+        # Simple prompt case
         tool_instruction = prompt_text
 
     return GetPromptResult(
@@ -1230,7 +1187,10 @@ async def main():
             InitializationOptions(
                 server_name="zen",
                 server_version=__version__,
-                capabilities=ServerCapabilities(tools=ToolsCapability()),  # Advertise tool support capability
+                capabilities=ServerCapabilities(
+                    tools=ToolsCapability(),  # Advertise tool support capability
+                    prompts=PromptsCapability(),  # Advertise prompt support capability
+                ),
             ),
         )
 

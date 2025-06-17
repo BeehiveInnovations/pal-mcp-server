@@ -91,57 +91,6 @@ class ConsensusTool(BaseTool):
     def __init__(self):
         super().__init__()
 
-    @staticmethod
-    def parse_structured_prompt_models(model_spec: str) -> list[dict[str, str]]:
-        """
-        Parse consensus model specification from structured prompt format.
-
-        This method parses structured prompt specifications used in Claude Code shortcuts
-        like "/zen:consensus:flash:for,o3:against,pro:neutral" to extract model configurations
-        with their assigned stances.
-
-        Supported formats:
-        - "model:stance" - Explicit stance assignment (e.g., "flash:for", "o3:against")
-        - "model" - Defaults to neutral stance (e.g., "pro" becomes "pro:neutral")
-
-        Supported stances:
-        - Supportive: "for", "support", "favor"
-        - Critical: "against", "oppose", "critical"
-        - Neutral: "neutral" (default)
-
-        Args:
-            model_spec (str): Comma-separated model specification string.
-                Examples: "flash:for,o3:against,pro:neutral" or "flash:for,o3:against,pro"
-
-        Returns:
-            list[dict[str, str]]: List of model configuration dictionaries with keys:
-                - "model": The model name (e.g., "flash", "o3", "pro")
-                - "stance": The normalized stance (e.g., "for", "against", "neutral")
-
-        Examples:
-            >>> ConsensusTool.parse_structured_prompt_models("flash:for,o3:against,pro")
-            [{"model": "flash", "stance": "for"}, {"model": "o3", "stance": "against"}, {"model": "pro", "stance": "neutral"}]
-
-            >>> ConsensusTool.parse_structured_prompt_models("flash,o3,pro")
-            [{"model": "flash", "stance": "neutral"}, {"model": "o3", "stance": "neutral"}, {"model": "pro", "stance": "neutral"}]
-        """
-        models = []
-
-        # Split by comma to get individual model specs
-        model_parts = model_spec.split(",")
-
-        for part in model_parts:
-            part = part.strip()
-            if ":" in part:
-                # Model with stance: "flash:for" or "o3:against"
-                model_name, stance = part.split(":", 1)
-                models.append({"model": model_name.strip(), "stance": stance.strip()})
-            else:
-                # Model without stance (defaults to neutral): "pro"
-                models.append({"model": part.strip(), "stance": "neutral"})
-
-        return models
-
     def get_name(self) -> str:
         return "consensus"
 

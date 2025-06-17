@@ -198,49 +198,6 @@ class TestConsensusTool(unittest.TestCase):
         self.assertIn("pro:against", models_used)  # critical -> against
         self.assertIn("grok", models_used)  # neutral (no suffix)
 
-    def test_parse_structured_prompt_models_comprehensive(self):
-        """Test the structured prompt parsing method"""
-        # Test basic parsing
-        result = ConsensusTool.parse_structured_prompt_models("flash:for,o3:against,pro:neutral")
-        expected = [
-            {"model": "flash", "stance": "for"},
-            {"model": "o3", "stance": "against"},
-            {"model": "pro", "stance": "neutral"},
-        ]
-        self.assertEqual(result, expected)
-
-        # Test with defaults
-        result = ConsensusTool.parse_structured_prompt_models("flash:for,o3:against,pro")
-        expected = [
-            {"model": "flash", "stance": "for"},
-            {"model": "o3", "stance": "against"},
-            {"model": "pro", "stance": "neutral"},  # Defaults to neutral
-        ]
-        self.assertEqual(result, expected)
-
-        # Test all neutral
-        result = ConsensusTool.parse_structured_prompt_models("flash,o3,pro")
-        expected = [
-            {"model": "flash", "stance": "neutral"},
-            {"model": "o3", "stance": "neutral"},
-            {"model": "pro", "stance": "neutral"},
-        ]
-        self.assertEqual(result, expected)
-
-        # Test with whitespace
-        result = ConsensusTool.parse_structured_prompt_models(" flash:for , o3:against , pro ")
-        expected = [
-            {"model": "flash", "stance": "for"},
-            {"model": "o3", "stance": "against"},
-            {"model": "pro", "stance": "neutral"},
-        ]
-        self.assertEqual(result, expected)
-
-        # Test single model
-        result = ConsensusTool.parse_structured_prompt_models("flash:for")
-        expected = [{"model": "flash", "stance": "for"}]
-        self.assertEqual(result, expected)
-
 
 if __name__ == "__main__":
     unittest.main()
