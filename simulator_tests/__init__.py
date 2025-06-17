@@ -24,6 +24,8 @@ from .test_ollama_custom_url import OllamaCustomUrlTest
 from .test_openrouter_fallback import OpenRouterFallbackTest
 from .test_openrouter_models import OpenRouterModelsTest
 from .test_per_tool_deduplication import PerToolDeduplicationTest
+from .test_planner_continuation_history import PlannerContinuationHistoryTest
+from .test_planner_validation import PlannerValidationTest
 from .test_redis_validation import RedisValidationTest
 from .test_refactor_validation import RefactorValidationTest
 from .test_testgen_validation import TestGenValidationTest
@@ -46,6 +48,8 @@ TEST_REGISTRY = {
     "ollama_custom_url": OllamaCustomUrlTest,
     "openrouter_fallback": OpenRouterFallbackTest,
     "openrouter_models": OpenRouterModelsTest,
+    "planner_validation": PlannerValidationTest,
+    "planner_continuation_history": PlannerContinuationHistoryTest,
     "token_allocation_validation": TokenAllocationValidationTest,
     "testgen_validation": TestGenValidationTest,
     "refactor_validation": RefactorValidationTest,
@@ -75,6 +79,8 @@ __all__ = [
     "OllamaCustomUrlTest",
     "OpenRouterFallbackTest",
     "OpenRouterModelsTest",
+    "PlannerValidationTest",
+    "PlannerContinuationHistoryTest",
     "TokenAllocationValidationTest",
     "TestGenValidationTest",
     "RefactorValidationTest",

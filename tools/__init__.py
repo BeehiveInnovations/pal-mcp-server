@@ -8,6 +8,7 @@ from .codereview import CodeReviewTool
 from .consensus import ConsensusTool
 from .debug import DebugIssueTool
 from .listmodels import ListModelsTool
+from .planner import PlannerTool
 from .precommit import Precommit
 from .refactor import RefactorTool
 from .testgen import TestGenerationTool
@@ -22,6 +23,7 @@ __all__ = [
     "ChatTool",
     "ConsensusTool",
     "ListModelsTool",
+    "PlannerTool",
     "Precommit",
     "RefactorTool",
     "TestGenerationTool",

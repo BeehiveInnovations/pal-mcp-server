@@ -169,3 +169,5 @@ test-setup/
 
 # Scratch feature documentation files
 FEATURE_*.md
+# Temporary files
+/tmp/

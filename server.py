@@ -54,6 +54,7 @@ from tools import (
     ConsensusTool,
     DebugIssueTool,
     ListModelsTool,
+    PlannerTool,
     Precommit,
     RefactorTool,
     TestGenerationTool,
@@ -161,6 +162,7 @@ TOOLS = {
     "chat": ChatTool(),  # Interactive development chat and brainstorming
     "consensus": ConsensusTool(),  # Multi-model consensus for diverse perspectives on technical proposals
     "listmodels": ListModelsTool(),  # List all available AI models by provider
+    "planner": PlannerTool(),  # A task or problem to plan out as several smaller steps
     "precommit": Precommit(),  # Pre-commit validation of git changes
     "testgen": TestGenerationTool(),  # Comprehensive test generation with edge case coverage
     "refactor": RefactorTool(),  # Intelligent code refactoring suggestions with precise line references
@@ -213,6 +215,11 @@ PROMPT_TEMPLATES = {
         "name": "tracer",
         "description": "Trace code execution paths",
         "template": "Generate tracer analysis with {model}",
+    },
+    "planner": {
+        "name": "planner",
+        "description": "Break down complex ideas, problems, or projects into multiple manageable steps",
+        "template": "Create a detailed plan with {model}",
     },
     "listmodels": {
         "name": "listmodels",
