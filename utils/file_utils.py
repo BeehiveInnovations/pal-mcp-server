@@ -1090,7 +1090,7 @@ def check_total_file_size(files: list[str], model_name: str) -> Optional[dict]:
                 "threshold_percent": threshold_percent,
                 "model_context_window": context_window,
                 "model_name": model_name,
-                "instructions": "Reduce file selection and try again - all files must fit within budget",
+                "instructions": "Reduce file selection and try again - all files must fit within budget. If this persists, please use a model with a larger context window where available.",
             },
         }
 
