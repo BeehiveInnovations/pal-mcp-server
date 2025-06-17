@@ -17,24 +17,19 @@ This guide covers advanced features, configuration options, and workflows for po
 
 ## Model Configuration
 
-**Auto Mode (Recommended):**
-Set `DEFAULT_MODEL=auto` in your .env file and Claude will intelligently select the best model for each task:
+**For basic configuration**, see the [Configuration Guide](configuration.md) which covers API keys, model selection, and environment variables.
 
-```env
-# .env file
-DEFAULT_MODEL=auto  # Claude picks the best model automatically
+This section focuses on **advanced model usage patterns** for power users:
 
-# API Keys (at least one required)
-GEMINI_API_KEY=your-gemini-key    # Enables Gemini Pro & Flash
-OPENAI_API_KEY=your-openai-key    # Enables O3, O3-mini, O4-mini, O4-mini-high, GPT-4.1
-```
+**Per-Request Model Override:**
+Regardless of your default configuration, you can specify models per request:
+- "Use **pro** for deep security analysis of auth.py"
+- "Use **flash** to quickly format this code"
+- "Use **o3** to debug this logic error"
+- "Review with **o4-mini** for balanced analysis"
+- "Use **gpt4.1** for comprehensive codebase analysis"
 
-**How Auto Mode Works:**
-- Claude analyzes each request and selects the optimal model
-- Model selection is based on task complexity, requirements, and model strengths
-- You can always override: "Use flash for quick check" or "Use o3 to debug"
-
-**Supported Models & When Claude Uses Them:**
+**Claude's Auto Mode Decision Matrix:**
 
 | Model | Provider | Context | Strengths | Auto Mode Usage |
 |-------|----------|---------|-----------|------------------|
@@ -51,27 +46,6 @@ OPENAI_API_KEY=your-openai-key    # Enables O3, O3-mini, O4-mini, O4-mini-high, 
 **Mix & Match Providers:** Use multiple providers simultaneously! Set both `OPENROUTER_API_KEY` and `CUSTOM_API_URL` to access 
 cloud models (expensive/powerful) AND local models (free/private) in the same conversation.
 
-**Manual Model Selection:**
-You can specify a default model instead of auto mode:
-
-```env
-# Use a specific model by default
-DEFAULT_MODEL=gemini-2.5-pro-preview-06-05  # Always use Gemini Pro
-DEFAULT_MODEL=flash                         # Always use Flash
-DEFAULT_MODEL=o3                           # Always use O3
-DEFAULT_MODEL=gpt4.1                       # Always use GPT-4.1
-```
-
-**Important:** After changing any configuration in `.env` (including `DEFAULT_MODEL`, API keys, or other settings), restart the server with `./run-server.sh` to apply the changes.
-
-**Per-Request Model Override:**
-Regardless of your default setting, you can specify models per request:
-- "Use **pro** for deep security analysis of auth.py"
-- "Use **flash** to quickly format this code"
-- "Use **o3** to debug this logic error"
-- "Review with **o4-mini** for balanced analysis"
-- "Use **gpt4.1** for comprehensive codebase analysis"
-
 **Model Capabilities:**
 - **Gemini Models**: Support thinking modes (minimal to max), web search, 1M context
 - **O3 Models**: Excellent reasoning, systematic analysis, 200K context
@@ -79,49 +53,28 @@ Regardless of your default setting, you can specify models per request:
 
 ## Model Usage Restrictions
 
-**Limit which models can be used from each provider**
+**For complete restriction configuration**, see the [Configuration Guide](configuration.md#model-usage-restrictions).
 
-Set environment variables to control model usage:
+**Advanced Restriction Strategies:**
 
+**Cost Control Examples:**
 ```env
-# Only allow specific OpenAI models
+# Development: Allow experimentation
+GOOGLE_ALLOWED_MODELS=flash,pro
 OPENAI_ALLOWED_MODELS=o4-mini,o3-mini
 
-# Only allow specific Gemini models  
+# Production: Cost-optimized  
 GOOGLE_ALLOWED_MODELS=flash
-
-# Only allow specific OpenRouter models
-OPENROUTER_ALLOWED_MODELS=opus,sonnet,mistral
-
-# Use shorthand names or full model names
-OPENAI_ALLOWED_MODELS=mini,o3-mini  # mini = o4-mini
-```
-
-**How it works:**
-- **Not set or empty**: All models allowed (default)
-- **Comma-separated list**: Only those models allowed
-- **To disable a provider**: Don't set its API key
-
-**Examples:**
-
-```env
-# Cost control - only cheap models
 OPENAI_ALLOWED_MODELS=o4-mini
-GOOGLE_ALLOWED_MODELS=flash
-OPENROUTER_ALLOWED_MODELS=haiku,sonnet
 
-# Single model per provider
-OPENAI_ALLOWED_MODELS=o4-mini
+# High-performance: Quality over cost
 GOOGLE_ALLOWED_MODELS=pro
-OPENROUTER_ALLOWED_MODELS=opus
+OPENAI_ALLOWED_MODELS=o3,o4-mini-high
 ```
 
-**Notes:**
-- Applies to all usage including auto mode
-- Case-insensitive, whitespace tolerant
-- Server warns about typos at startup
-- `OPENAI_ALLOWED_MODELS` and `GOOGLE_ALLOWED_MODELS` only affect native providers
-- `OPENROUTER_ALLOWED_MODELS` affects OpenRouter models accessed via custom provider (where `is_custom: false` in custom_models.json)
+**Important Notes:**
+- Restrictions apply to all usage including auto mode
+- `OPENROUTER_ALLOWED_MODELS` only affects OpenRouter models accessed via custom provider (where `is_custom: false` in custom_models.json)
 - Custom local models (`is_custom: true`) are not affected by any restrictions
 
 ## Thinking Modes
@@ -308,6 +261,8 @@ Session 2: "Continue our RAG discussion with o3"
 ```
 
 **📖 [Read the complete Context Revival guide](context-revival.md)** for detailed examples, technical architecture, configuration options, and best practices.
+
+**See also:** [AI-to-AI Collaboration Guide](ai-collaboration.md) for multi-model coordination and conversation threading.
 
 ## Collaborative Workflows
 
