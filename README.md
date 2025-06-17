@@ -13,7 +13,7 @@ problem-solving, and collaborative development.
 
 **Features true AI orchestration with conversations that continue across tasks** - Give Claude a complex
 task and let it orchestrate between models automatically. Claude stays in control, performs the actual work, 
-but gets perspectives from the best AI for each subtask. With tools like [`planner`](#3-planner---interactive-sequential-planning) for 
+but gets perspectives from the best AI for each subtask. With tools like [`planner`](#3-planner---interactive-step-by-step-planning) for 
 breaking down complex projects, [`analyze`](#8-analyze---smart-file-analysis) for understanding codebases, 
 [`codereview`](#5-codereview---professional-code-review) for audits, [`refactor`](#9-refactor---intelligent-code-refactoring) for 
 improving code structure, [`debug`](#7-debug---expert-debugging-assistant) for solving complex problems, and [`precommit`](#6-precommit---pre-commit-validation) for 
@@ -49,7 +49,7 @@ and review into consideration to aid with its pre-commit review.
 - **Tools Reference**
   - [`chat`](#1-chat---general-development-chat--collaborative-thinking) - Collaborative thinking
   - [`thinkdeep`](#2-thinkdeep---extended-reasoning-partner) - Extended reasoning
-  - [`planner`](#3-planner---interactive-sequential-planning) - Interactive sequential planning
+  - [`planner`](#3-planner---interactive-step-by-step-planning) - Interactive step-by-step planning
   - [`consensus`](#4-consensus---multi-model-perspective-gathering) - Multi-model consensus analysis
   - [`codereview`](#5-codereview---professional-code-review) - Code review
   - [`precommit`](#6-precommit---pre-commit-validation) - Pre-commit validation
