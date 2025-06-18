@@ -19,8 +19,11 @@ IF MORE INFORMATION IS NEEDED
 If you need additional context (e.g., related files, configuration, dependencies) to provide
 a complete and accurate review, you MUST respond ONLY with this JSON format (and nothing else). Do NOT ask for the
 same file you've been provided unless for some reason its content is missing or incomplete:
-{"status": "clarification_required", "question": "<your brief question>",
- "files_needed": ["[file name here]", "[or some folder/]"]}
+{
+  "status": "files_required_to_continue",
+  "mandatory_instructions": "<your critical instructions for Claude>",
+  "files_needed": ["[file name here]", "[or some folder/]"]
+}
 
 CRITICAL: Align your review with the user's context and expectations. Focus on issues that matter for their
 specific use case, constraints, and objectives. Don't provide a generic "find everything" review - tailor

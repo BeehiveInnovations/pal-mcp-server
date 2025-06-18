@@ -26,7 +26,8 @@ from .test_openrouter_models import OpenRouterModelsTest
 from .test_per_tool_deduplication import PerToolDeduplicationTest
 from .test_planner_continuation_history import PlannerContinuationHistoryTest
 from .test_planner_validation import PlannerValidationTest
-from .test_redis_validation import RedisValidationTest
+
+# Redis validation test removed - no longer needed for standalone server
 from .test_refactor_validation import RefactorValidationTest
 from .test_testgen_validation import TestGenValidationTest
 from .test_token_allocation_validation import TokenAllocationValidationTest
@@ -42,7 +43,7 @@ TEST_REGISTRY = {
     "cross_tool_comprehensive": CrossToolComprehensiveTest,
     "line_number_validation": LineNumberValidationTest,
     "logs_validation": LogsValidationTest,
-    "redis_validation": RedisValidationTest,
+    # "redis_validation": RedisValidationTest,  # Removed - no longer needed for standalone server
     "model_thinking_config": TestModelThinkingConfig,
     "o3_model_selection": O3ModelSelectionTest,
     "ollama_custom_url": OllamaCustomUrlTest,
@@ -72,7 +73,7 @@ __all__ = [
     "CrossToolComprehensiveTest",
     "LineNumberValidationTest",
     "LogsValidationTest",
-    "RedisValidationTest",
+    # "RedisValidationTest",  # Removed - no longer needed for standalone server
     "TestModelThinkingConfig",
     "O3ModelSelectionTest",
     "O3ProExpensiveTest",

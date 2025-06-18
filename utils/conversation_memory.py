@@ -3,15 +3,29 @@ Conversation Memory for AI-to-AI Multi-turn Discussions
 
 This module provides conversation persistence and context reconstruction for
 stateless MCP (Model Context Protocol) environments. It enables multi-turn
-conversations between Claude and Gemini by storing conversation state in Redis
+conversations between Claude and Gemini by storing conversation state in memory
 across independent request cycles.
+
+CRITICAL ARCHITECTURAL REQUIREMENT:
+This conversation memory system is designed for PERSISTENT MCP SERVER PROCESSES.
+It uses in-memory storage that persists only within a single Python process.
+
+⚠️  IMPORTANT: This system will NOT work correctly if MCP tool calls are made
+    as separate subprocess invocations (each subprocess starts with empty memory).
+
+    WORKING SCENARIO: Claude Desktop with persistent MCP server process
+    FAILING SCENARIO: Simulator tests calling server.py as individual subprocesses
+
+    Root cause of test failures: Each subprocess call loses the conversation
+    state from previous calls because memory is process-specific, not shared
+    across subprocess boundaries.
 
 ARCHITECTURE OVERVIEW:
 The MCP protocol is inherently stateless - each tool request is independent
 with no memory of previous interactions. This module bridges that gap by:
 
 1. Creating persistent conversation threads with unique UUIDs
-2. Storing complete conversation context (turns, files, metadata) in Redis
+2. Storing complete conversation context (turns, files, metadata) in memory
 3. Reconstructing conversation history when tools are called with continuation_id
 4. Supporting cross-tool continuation - seamlessly switch between different tools
    while maintaining full conversation context and file references
@@ -35,9 +49,9 @@ Key Features:
   most recent file context is preserved when token limits require exclusions.
 - Automatic turn limiting (20 turns max) to prevent runaway conversations
 - Context reconstruction for stateless request continuity
-- Redis-based persistence with automatic expiration (3 hour TTL)
+- In-memory persistence with automatic expiration (3 hour TTL)
 - Thread-safe operations for concurrent access
-- Graceful degradation when Redis is unavailable
+- Graceful degradation when storage is unavailable
 
 DUAL PRIORITIZATION STRATEGY (Files & Conversations):
 The conversation memory system implements sophisticated prioritization for both files and
@@ -187,26 +201,16 @@ class ThreadContext(BaseModel):
     initial_context: dict[str, Any]  # Original request parameters
 
 
-def get_redis_client():
+def get_storage():
     """
-    Get Redis client from environment configuration
-
-    Creates a Redis client using the REDIS_URL environment variable.
-    Defaults to localhost:6379/0 if not specified.
+    Get in-memory storage backend for conversation persistence.
 
     Returns:
-        redis.Redis: Configured Redis client with decode_responses=True
-
-    Raises:
-        ValueError: If redis package is not installed
+        InMemoryStorage: Thread-safe in-memory storage backend
     """
-    try:
-        import redis
+    from .storage_backend import get_storage_backend
 
-        redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
-        return redis.from_url(redis_url, decode_responses=True)
-    except ImportError:
-        raise ValueError("redis package required. Install with: pip install redis")
+    return get_storage_backend()
 
 
 def create_thread(tool_name: str, initial_request: dict[str, Any], parent_thread_id: Optional[str] = None) -> str:
@@ -251,10 +255,10 @@ def create_thread(tool_name: str, initial_request: dict[str, Any], parent_thread
         initial_context=filtered_context,
     )
 
-    # Store in Redis with configurable TTL to prevent indefinite accumulation
-    client = get_redis_client()
+    # Store in memory with configurable TTL to prevent indefinite accumulation
+    storage = get_storage()
     key = f"thread:{thread_id}"
-    client.setex(key, CONVERSATION_TIMEOUT_SECONDS, context.model_dump_json())
+    storage.setex(key, CONVERSATION_TIMEOUT_SECONDS, context.model_dump_json())
 
     logger.debug(f"[THREAD] Created new thread {thread_id} with parent {parent_thread_id}")
 
@@ -263,7 +267,7 @@ def create_thread(tool_name: str, initial_request: dict[str, Any], parent_thread
 
 def get_thread(thread_id: str) -> Optional[ThreadContext]:
     """
-    Retrieve thread context from Redis
+    Retrieve thread context from in-memory storage
 
     Fetches complete conversation context for cross-tool continuation.
     This is the core function that enables tools to access conversation
@@ -278,22 +282,22 @@ def get_thread(thread_id: str) -> Optional[ThreadContext]:
 
     Security:
         - Validates UUID format to prevent injection attacks
-        - Handles Redis connection failures gracefully
+        - Handles storage connection failures gracefully
         - No error information leakage on failure
     """
     if not thread_id or not _is_valid_uuid(thread_id):
         return None
 
     try:
-        client = get_redis_client()
+        storage = get_storage()
         key = f"thread:{thread_id}"
-        data = client.get(key)
+        data = storage.get(key)
 
         if data:
             return ThreadContext.model_validate_json(data)
         return None
     except Exception:
-        # Silently handle errors to avoid exposing Redis details
+        # Silently handle errors to avoid exposing storage details
         return None
 
 
@@ -313,8 +317,7 @@ def add_turn(
 
     Appends a new conversation turn to an existing thread. This is the core
     function for building conversation history and enabling cross-tool
-    continuation. Each turn preserves the tool and model that generated it,
-    and tracks file reception order using atomic Redis counters.
+    continuation. Each turn preserves the tool and model that generated it.
 
     Args:
         thread_id: UUID of the conversation thread
@@ -333,7 +336,7 @@ def add_turn(
     Failure cases:
         - Thread doesn't exist or expired
         - Maximum turn limit reached
-        - Redis connection failure
+        - Storage connection failure
 
     Note:
         - Refreshes thread TTL to configured timeout on successful update
@@ -370,14 +373,14 @@ def add_turn(
     context.turns.append(turn)
     context.last_updated_at = datetime.now(timezone.utc).isoformat()
 
-    # Save back to Redis and refresh TTL
+    # Save back to storage and refresh TTL
     try:
-        client = get_redis_client()
+        storage = get_storage()
         key = f"thread:{thread_id}"
-        client.setex(key, CONVERSATION_TIMEOUT_SECONDS, context.model_dump_json())  # Refresh TTL to configured timeout
+        storage.setex(key, CONVERSATION_TIMEOUT_SECONDS, context.model_dump_json())  # Refresh TTL to configured timeout
         return True
     except Exception as e:
-        logger.debug(f"[FLOW] Failed to save turn to Redis: {type(e).__name__}")
+        logger.debug(f"[FLOW] Failed to save turn to storage: {type(e).__name__}")
         return False
 
 
@@ -591,11 +594,9 @@ def _plan_file_inclusion_by_size(all_files: list[str], max_file_tokens: int) -> 
 
     for file_path in all_files:
         try:
-            from utils.file_utils import estimate_file_tokens, translate_path_for_environment
+            from utils.file_utils import estimate_file_tokens
 
-            translated_path = translate_path_for_environment(file_path)
-
-            if os.path.exists(translated_path) and os.path.isfile(translated_path):
+            if os.path.exists(file_path) and os.path.isfile(file_path):
                 # Use centralized token estimation for consistency
                 estimated_tokens = estimate_file_tokens(file_path)
 
@@ -613,7 +614,7 @@ def _plan_file_inclusion_by_size(all_files: list[str], max_file_tokens: int) -> 
             else:
                 files_to_skip.append(file_path)
                 # More descriptive message for missing files
-                if not os.path.exists(translated_path):
+                if not os.path.exists(file_path):
                     logger.debug(
                         f"[FILES] Skipping {file_path} - file no longer exists (may have been moved/deleted since conversation)"
                     )
@@ -724,7 +725,7 @@ def build_conversation_history(context: ThreadContext, model_context=None, read_
     Performance Characteristics:
         - O(n) file collection with newest-first prioritization
         - Intelligent token budgeting prevents context window overflow
-        - Redis-based persistence with automatic TTL management
+        - In-memory persistence with automatic TTL management
         - Graceful degradation when files are inaccessible or too large
     """
     # Get the complete thread chain
@@ -851,10 +852,7 @@ def build_conversation_history(context: ThreadContext, model_context=None, read_
                     except Exception as e:
                         # More descriptive error handling for missing files
                         try:
-                            from utils.file_utils import translate_path_for_environment
-
-                            translated_path = translate_path_for_environment(file_path)
-                            if not os.path.exists(translated_path):
+                            if not os.path.exists(file_path):
                                 logger.info(
                                     f"File no longer accessible for conversation history: {file_path} - file was moved/deleted since conversation (marking as excluded)"
                                 )

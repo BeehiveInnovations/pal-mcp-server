@@ -195,7 +195,7 @@ class TestOldBehaviorSimulation:
         Verify that our fix provides comprehensive alias->target coverage.
         """
         from providers.gemini import GeminiModelProvider
-        from providers.openai import OpenAIModelProvider
+        from providers.openai_provider import OpenAIModelProvider
 
         # Test real providers to ensure they implement our fix correctly
         providers = [OpenAIModelProvider(api_key="test-key"), GeminiModelProvider(api_key="test-key")]

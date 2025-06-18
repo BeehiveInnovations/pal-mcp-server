@@ -84,17 +84,15 @@ class TestSpecialStatusParsing:
         assert result.content_type == "json"
         assert "pending_tests" in result.content
 
-    def test_clarification_required_still_works(self):
-        """Test that existing clarification_required still works"""
-        response_json = (
-            '{"status": "clarification_required", "question": "What files need review?", "files_needed": ["src/"]}'
-        )
+    def test_files_required_to_continue_still_works(self):
+        """Test that existing files_required_to_continue still works"""
+        response_json = '{"status": "files_required_to_continue", "mandatory_instructions": "What files need review?", "files_needed": ["src/"]}'
 
         result = self.tool._parse_response(response_json, self.request)
 
-        assert result.status == "clarification_required"
+        assert result.status == "files_required_to_continue"
         assert result.content_type == "json"
-        assert "question" in result.content
+        assert "mandatory_instructions" in result.content
 
     def test_invalid_status_payload(self):
         """Test that invalid payloads for known statuses are handled gracefully"""
@@ -127,7 +125,7 @@ class TestSpecialStatusParsing:
 
     def test_malformed_json_handled(self):
         """Test that malformed JSON is handled gracefully"""
-        response_text = '{"status": "clarification_required", "question": "incomplete json'
+        response_text = '{"status": "files_required_to_continue", "question": "incomplete json'
 
         result = self.tool._parse_response(response_text, self.request)
 
@@ -192,8 +190,8 @@ class TestSpecialStatusParsing:
         """Test that special status responses preserve exact JSON format for Claude"""
         test_cases = [
             {
-                "input": '{"status": "clarification_required", "question": "What framework to use?", "files_needed": ["tests/"]}',
-                "expected_fields": ["status", "question", "files_needed"],
+                "input": '{"status": "files_required_to_continue", "mandatory_instructions": "What framework to use?", "files_needed": ["tests/"]}',
+                "expected_fields": ["status", "mandatory_instructions", "files_needed"],
             },
             {
                 "input": '{"status": "full_codereview_required", "reason": "Codebase too large"}',
@@ -223,9 +221,20 @@ class TestSpecialStatusParsing:
             parsed_content = json.loads(result.content)
             for field in test_case["expected_fields"]:
                 assert field in parsed_content, f"Field {field} missing from {input_data['status']} response"
-                assert (
-                    parsed_content[field] == input_data[field]
-                ), f"Field {field} value mismatch in {input_data['status']} response"
+
+                # Special handling for mandatory_instructions which gets enhanced
+                if field == "mandatory_instructions" and input_data["status"] == "files_required_to_continue":
+                    # Check that enhanced instructions contain the original message
+                    assert parsed_content[field].startswith(
+                        input_data[field]
+                    ), f"Enhanced {field} should start with original value in {input_data['status']} response"
+                    assert (
+                        "IMPORTANT GUIDANCE:" in parsed_content[field]
+                    ), f"Enhanced {field} should contain guidance in {input_data['status']} response"
+                else:
+                    assert (
+                        parsed_content[field] == input_data[field]
+                    ), f"Field {field} value mismatch in {input_data['status']} response"
 
     def test_focused_review_required_parsing(self):
         """Test that focused_review_required status is parsed correctly"""

@@ -18,8 +18,11 @@ If you need additional context (e.g., related files not in the diff, test files,
 analysis and without this context your review would be ineffective or biased, you MUST respond ONLY with this JSON
 format (and nothing else). Do NOT ask for the same file you've been provided unless for some reason its content is
 missing or incomplete:
-{"status": "clarification_required", "question": "<your brief question>",
- "files_needed": ["[file name here]", "[or some folder/]"]}
+{
+  "status": "files_required_to_continue",
+  "mandatory_instructions": "<your critical instructions for Claude>",
+  "files_needed": ["[file name here]", "[or some folder/]"]
+}
 
 INPUTS PROVIDED
 1. Git diff (staged or branch comparison)

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Docker Logs Validation Test
+Server Logs Validation Test
 
-Validates Docker logs to confirm file deduplication behavior and
+Validates server logs to confirm file deduplication behavior and
 conversation threading is working properly.
 """
 
@@ -10,7 +10,7 @@ from .base_test import BaseSimulatorTest
 
 
 class LogsValidationTest(BaseSimulatorTest):
-    """Validate Docker logs to confirm file deduplication behavior"""
+    """Validate server logs to confirm file deduplication behavior"""
 
     @property
     def test_name(self) -> str:
@@ -18,38 +18,34 @@ class LogsValidationTest(BaseSimulatorTest):
 
     @property
     def test_description(self) -> str:
-        return "Docker logs validation"
+        return "Server logs validation"
 
     def run_test(self) -> bool:
-        """Validate Docker logs to confirm file deduplication behavior"""
+        """Validate server logs to confirm file deduplication behavior"""
         try:
-            self.logger.info("📋 Test: Validating Docker logs for file deduplication...")
+            self.logger.info("📋 Test: Validating server logs for file deduplication...")
 
-            # Get server logs from main container
-            result = self.run_command(["docker", "logs", self.container_name], capture_output=True)
+            # Get server logs from log files
+            import os
 
-            if result.returncode != 0:
-                self.logger.error(f"Failed to get Docker logs: {result.stderr}")
+            logs = ""
+            log_files = ["logs/mcp_server.log", "logs/mcp_activity.log"]
+
+            for log_file in log_files:
+                if os.path.exists(log_file):
+                    try:
+                        with open(log_file) as f:
+                            file_content = f.read()
+                            logs += f"\n=== {log_file} ===\n{file_content}\n"
+                            self.logger.debug(f"Read {len(file_content)} characters from {log_file}")
+                    except Exception as e:
+                        self.logger.warning(f"Could not read {log_file}: {e}")
+                else:
+                    self.logger.warning(f"Log file not found: {log_file}")
+
+            if not logs.strip():
+                self.logger.warning("No log content found - server may not have processed any requests yet")
                 return False
-
-            main_logs = result.stdout.decode() + result.stderr.decode()
-
-            # Get logs from log monitor container (where detailed activity is logged)
-            monitor_result = self.run_command(["docker", "logs", "zen-mcp-log-monitor"], capture_output=True)
-            monitor_logs = ""
-            if monitor_result.returncode == 0:
-                monitor_logs = monitor_result.stdout.decode() + monitor_result.stderr.decode()
-
-            # Also get activity logs for more detailed conversation tracking
-            activity_result = self.run_command(
-                ["docker", "exec", self.container_name, "cat", "/tmp/mcp_activity.log"], capture_output=True
-            )
-
-            activity_logs = ""
-            if activity_result.returncode == 0:
-                activity_logs = activity_result.stdout.decode()
-
-            logs = main_logs + "\n" + monitor_logs + "\n" + activity_logs
 
             # Look for conversation threading patterns that indicate the system is working
             conversation_patterns = [

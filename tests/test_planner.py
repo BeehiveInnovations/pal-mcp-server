@@ -115,7 +115,7 @@ class TestPlannerTool:
         """Test execute method for subsequent planning step."""
         tool = PlannerTool()
         arguments = {
-            "step": "Set up Docker containers for each microservice",
+            "step": "Set up deployment configuration for each microservice",
             "step_number": 2,
             "total_steps": 8,
             "next_step_required": True,

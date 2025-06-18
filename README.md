@@ -44,7 +44,7 @@ Because these AI models [clearly aren't when they get chatty →](docs/ai_banter
 ## Quick Navigation
 
 - **Getting Started**
-  - [Quickstart](#quickstart-5-minutes) - Get running in 5 minutes with Docker
+  - [Quickstart](#quickstart-5-minutes) - Get running in 5 minutes
   - [Available Tools](#available-tools) - Overview of all tools
   - [AI-to-AI Conversations](#ai-to-ai-conversation-threading) - Multi-turn conversations
 
@@ -123,7 +123,7 @@ The final implementation resulted in a 26% improvement in JSON parsing performan
 
 ### Prerequisites
 
-- Docker Desktop installed ([Download here](https://www.docker.com/products/docker-desktop/))
+- Python 3.10+ (3.12 recommended)
 - Git
 - **Windows users**: WSL2 is required for Claude Code CLI
 
@@ -158,16 +158,16 @@ The final implementation resulted in a 26% improvement in JSON parsing performan
 git clone https://github.com/BeehiveInnovations/zen-mcp-server.git
 cd zen-mcp-server
 
-# One-command setup (includes Redis for AI conversations)
+# One-command setup
 ./run-server.sh
 ```
 
 **What this does:**
-- **Builds Docker images** with all dependencies (including Redis for conversation threading)
-- **Creates .env file** (automatically uses `$GEMINI_API_KEY` and `$OPENAI_API_KEY` if set in environment)
-- **Starts Redis service** for AI-to-AI conversation memory
-- **Starts MCP server** with providers based on available API keys
-- **Adds Zen to Claude Code automatically**
+- **Sets up everything automatically** - Python environment, dependencies, configuration
+- **Configures Claude integrations** - Adds to Claude Code CLI and guides Desktop setup
+- **Ready to use immediately** - No manual configuration needed
+
+**After updates:** Always run `./run-server.sh` again after `git pull` to ensure everything stays current.
 
 ### 3. Add Your API Keys
 
@@ -180,74 +180,26 @@ nano .env
 # OPENAI_API_KEY=your-openai-api-key-here  # For O3 model
 # OPENROUTER_API_KEY=your-openrouter-key  # For OpenRouter (see docs/custom_models.md)
 
-# For local models (Ollama, vLLM, etc.) - Note: Use host.docker.internal for Docker networking:
-# CUSTOM_API_URL=http://host.docker.internal:11434/v1  # Ollama example (NOT localhost!)
+# For local models (Ollama, vLLM, etc.):
+# CUSTOM_API_URL=http://localhost:11434/v1  # Ollama example
 # CUSTOM_API_KEY=                                      # Empty for Ollama
 # CUSTOM_MODEL_NAME=llama3.2                          # Default model
 
-# WORKSPACE_ROOT=/Users/your-username  (automatically configured)
-
 # Note: At least one API key OR custom URL is required
-
-# After making changes to .env, restart the server:
-# ./run-server.sh
 ```
 
-**Restart MCP Server**: This step is important. You will need to `./run-server.sh` again for it to 
-pick the changes made to `.env` otherwise the server will be unable to use your newly edited keys. Please also 
-`./run-server.sh` any time in the future you modify the `.env` file. 
+**No restart needed**: The server reads the .env file each time Claude calls a tool, so changes take effect immediately. 
 
 **Next**: Now run `claude` from your project folder using the terminal for it to connect to the newly added mcp server. 
 If you were already running a `claude` code session, please exit and start a new session.
 
 #### If Setting up for Claude Desktop
 
-1. **Launch Claude Desktop**
-- Open Claude Desktop
-- Go to **Settings** → **Developer** → **Edit Config**
+**Need the exact configuration?** Run `./run-server.sh -c` to display the platform-specific setup instructions with correct paths.
 
-This will open a folder revealing `claude_desktop_config.json`.
-
-2. **Update Docker Configuration**
-
-The setup script shows you the exact configuration. It looks like this. When you ran `run-server.sh` it should
-have produced a configuration for you to copy:
-
-```json
-{
-  "mcpServers": {
-    "zen": {
-      "command": "docker",
-      "args": [
-        "exec",
-        "-i",
-        "zen-mcp-server",
-        "python",
-        "server.py"
-      ]
-    }
-  }
-}
-```
-
-Paste the above into `claude_desktop_config.json`. If you have several other MCP servers listed, simply add this below the rest after a `,` comma:
-```json
-  ... other mcp servers ... ,
-
-  "zen": {
-      "command": "docker",
-      "args": [
-        "exec",
-        "-i",
-        "zen-mcp-server",
-        "python",
-        "server.py"
-      ]
-  }
-```
-
-3. **Restart Claude Desktop**
-Completely quit and restart Claude Desktop for the changes to take effect.
+1. **Open Claude Desktop config**: Settings → Developer → Edit Config
+2. **Copy the configuration** shown by `./run-server.sh -c` into your `claude_desktop_config.json`
+3. **Restart Claude Desktop** for changes to take effect
 
 ### 4. Start Using It!
 
@@ -546,7 +498,7 @@ OPENAI_API_KEY=your-openai-key
 - **API Keys**: Native APIs (Gemini, OpenAI, X.AI), OpenRouter, or Custom endpoints (Ollama, vLLM)
 - **Model Selection**: Auto mode or specific model defaults
 - **Usage Restrictions**: Control which models can be used for cost control
-- **Conversation Settings**: Timeout, turn limits, Redis configuration
+- **Conversation Settings**: Timeout, turn limits, memory configuration
 - **Thinking Modes**: Token allocation for extended reasoning
 - **Logging**: Debug levels and operational visibility
 

@@ -25,12 +25,21 @@ import sys
 import time
 from datetime import datetime
 from logging.handlers import RotatingFileHandler
+from pathlib import Path
 from typing import Any, Optional
 
-from mcp.server import Server
-from mcp.server.models import InitializationOptions
-from mcp.server.stdio import stdio_server
-from mcp.types import (
+from dotenv import load_dotenv
+
+# Load environment variables from .env file in the script's directory
+# This ensures .env is loaded regardless of the current working directory
+script_dir = Path(__file__).parent
+env_file = script_dir / ".env"
+load_dotenv(dotenv_path=env_file)
+
+from mcp.server import Server  # noqa: E402
+from mcp.server.models import InitializationOptions  # noqa: E402
+from mcp.server.stdio import stdio_server  # noqa: E402
+from mcp.types import (  # noqa: E402
     GetPromptResult,
     Prompt,
     PromptMessage,
@@ -41,13 +50,13 @@ from mcp.types import (
     ToolsCapability,
 )
 
-from config import (
+from config import (  # noqa: E402
     DEFAULT_MODEL,
     __author__,
     __updated__,
     __version__,
 )
-from tools import (
+from tools import (  # noqa: E402
     AnalyzeTool,
     ChatTool,
     CodeReviewTool,
@@ -61,7 +70,7 @@ from tools import (
     ThinkDeepTool,
     TracerTool,
 )
-from tools.models import ToolOutput
+from tools.models import ToolOutput  # noqa: E402
 
 # Configure logging for server operations
 # Can be controlled via LOG_LEVEL environment variable (DEBUG, INFO, WARNING, ERROR)
@@ -101,13 +110,17 @@ root_logger.addHandler(stderr_handler)
 # Set root logger level
 root_logger.setLevel(getattr(logging, log_level, logging.INFO))
 
-# Add rotating file handler for Docker log monitoring
+# Add rotating file handler for local log monitoring
 
 try:
+    # Create logs directory in project root
+    log_dir = Path(__file__).parent / "logs"
+    log_dir.mkdir(exist_ok=True)
+
     # Main server log with size-based rotation (20MB max per file)
     # This ensures logs don't grow indefinitely and are properly managed
     file_handler = RotatingFileHandler(
-        "/tmp/mcp_server.log",
+        log_dir / "mcp_server.log",
         maxBytes=20 * 1024 * 1024,  # 20MB max file size
         backupCount=10,  # Keep 10 rotated files (200MB total)
         encoding="utf-8",
@@ -119,7 +132,7 @@ try:
     # Create a special logger for MCP activity tracking with size-based rotation
     mcp_logger = logging.getLogger("mcp_activity")
     mcp_file_handler = RotatingFileHandler(
-        "/tmp/mcp_activity.log",
+        log_dir / "mcp_activity.log",
         maxBytes=20 * 1024 * 1024,  # 20MB max file size
         backupCount=5,  # Keep 5 rotated files (100MB total)
         encoding="utf-8",
@@ -131,16 +144,9 @@ try:
     # Ensure MCP activity also goes to stderr
     mcp_logger.propagate = True
 
-    # Also keep a size-based rotation as backup (100MB max per file)
-    # This prevents any single day's log from growing too large
-    size_handler = RotatingFileHandler(
-        "/tmp/mcp_server_overflow.log",
-        maxBytes=100 * 1024 * 1024,
-        backupCount=3,  # 100MB
-    )
-    size_handler.setLevel(logging.WARNING)  # Only warnings and errors
-    size_handler.setFormatter(LocalTimeFormatter(log_format))
-    logging.getLogger().addHandler(size_handler)
+    # Log setup info directly to root logger since logger isn't defined yet
+    logging.info(f"Logging to: {log_dir / 'mcp_server.log'}")
+    logging.info(f"Process PID: {os.getpid()}")
 
 except Exception as e:
     print(f"Warning: Could not set up file logging: {e}", file=sys.stderr)
@@ -243,7 +249,7 @@ def configure_providers():
     from providers.base import ProviderType
     from providers.custom import CustomProvider
     from providers.gemini import GeminiModelProvider
-    from providers.openai import OpenAIModelProvider
+    from providers.openai_provider import OpenAIModelProvider
     from providers.openrouter import OpenRouterProvider
     from providers.xai import XAIModelProvider
     from utils.model_restrictions import get_restriction_service
@@ -450,7 +456,7 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[TextCon
     This function serves as the central orchestrator for multi-turn AI-to-AI conversations:
 
     1. THREAD RESUMPTION: When continuation_id is present, it reconstructs complete conversation
-       context from Redis including conversation history and file references
+       context from in-memory storage including conversation history and file references
 
     2. CROSS-TOOL CONTINUATION: Enables seamless handoffs between different tools (analyze →
        codereview → debug) while preserving full conversation context and file references
@@ -465,7 +471,7 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[TextCon
 
     STATELESS TO STATEFUL BRIDGE:
     The MCP protocol is inherently stateless, but this function bridges the gap by:
-    - Loading persistent conversation state from Redis
+    - Loading persistent conversation state from in-memory storage
     - Reconstructing full multi-turn context for tool execution
     - Enabling tools to access previous exchanges and file references
     - Supporting conversation chains across different tool types
@@ -700,13 +706,13 @@ async def reconstruct_thread_context(arguments: dict[str, Any]) -> dict[str, Any
     Reconstruct conversation context for stateless-to-stateful thread continuation.
 
     This is a critical function that transforms the inherently stateless MCP protocol into
-    stateful multi-turn conversations. It loads persistent conversation state from Redis
-    and rebuilds complete conversation context using the sophisticated dual prioritization
+    stateful multi-turn conversations. It loads persistent conversation state from in-memory
+    storage and rebuilds complete conversation context using the sophisticated dual prioritization
     strategy implemented in the conversation memory system.
 
     CONTEXT RECONSTRUCTION PROCESS:
 
-    1. THREAD RETRIEVAL: Loads complete ThreadContext from Redis using continuation_id
+    1. THREAD RETRIEVAL: Loads complete ThreadContext from storage using continuation_id
        - Includes all conversation turns with tool attribution
        - Preserves file references and cross-tool context
        - Handles conversation chains across multiple linked threads
@@ -742,7 +748,7 @@ async def reconstruct_thread_context(arguments: dict[str, Any]) -> dict[str, Any
 
     ERROR HANDLING & RECOVERY:
     - Thread expiration: Provides clear instructions for conversation restart
-    - Redis unavailability: Graceful degradation with error messaging
+    - Storage unavailability: Graceful degradation with error messaging
     - Invalid continuation_id: Security validation and user-friendly errors
 
     Args:
@@ -762,7 +768,7 @@ async def reconstruct_thread_context(arguments: dict[str, Any]) -> dict[str, Any
                    Includes user-friendly recovery instructions
 
     Performance Characteristics:
-        - O(1) thread lookup in Redis
+        - O(1) thread lookup in memory
         - O(n) conversation history reconstruction where n = number of turns
         - Intelligent token budgeting prevents context window overflow
         - Optimized file deduplication minimizes redundant content
@@ -778,12 +784,12 @@ async def reconstruct_thread_context(arguments: dict[str, Any]) -> dict[str, Any
 
     continuation_id = arguments["continuation_id"]
 
-    # Get thread context from Redis
-    logger.debug(f"[CONVERSATION_DEBUG] Looking up thread {continuation_id} in Redis")
+    # Get thread context from storage
+    logger.debug(f"[CONVERSATION_DEBUG] Looking up thread {continuation_id} in storage")
     context = get_thread(continuation_id)
     if not context:
         logger.warning(f"Thread not found: {continuation_id}")
-        logger.debug(f"[CONVERSATION_DEBUG] Thread {continuation_id} not found in Redis or expired")
+        logger.debug(f"[CONVERSATION_DEBUG] Thread {continuation_id} not found in storage or expired")
 
         # Log to activity file for monitoring
         try:
@@ -795,8 +801,8 @@ async def reconstruct_thread_context(arguments: dict[str, Any]) -> dict[str, Any
         # Return error asking Claude to restart conversation with full context
         raise ValueError(
             f"Conversation thread '{continuation_id}' was not found or has expired. "
-            f"This may happen if the conversation was created more than 1 hour ago or if there was an issue "
-            f"with Redis storage. "
+            f"This may happen if the conversation was created more than 3 hours ago or if the "
+            f"server was restarted. "
             f"Please restart the conversation by providing your full question/prompt without the "
             f"continuation_id parameter. "
             f"This will create a new conversation thread that can continue with follow-up exchanges."
@@ -1165,7 +1171,7 @@ async def main():
     # Validate and configure providers based on available API keys
     configure_providers()
 
-    # Log startup message for Docker log monitoring
+    # Log startup message
     logger.info("Zen MCP Server starting up...")
     logger.info(f"Log level: {log_level}")
 

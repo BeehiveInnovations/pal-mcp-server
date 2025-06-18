@@ -11,8 +11,8 @@ body:
     id: version
     attributes:
       label: Project Version
-      description: "Which version are you using? (e.g., Docker image tag like `latest` or `v1.2.3`, or a git commit SHA)"
-      placeholder: "e.g., ghcr.io/beehiveinnovations/zen-mcp-server:latest"
+      description: "Which version are you using? (To see version: ./run-server.sh -v)"
+      placeholder: "e.g., 5.1.0"
     validations:
       required: true
 
@@ -29,7 +29,7 @@ body:
     id: logs
     attributes:
       label: Relevant Log Output
-      description: "Please copy and paste any relevant log output. You can obtain these from the MCP folder by running `docker compose logs`."
+      description: "Please copy and paste any relevant log output. Logs are stored under the `logs` folder in the zen folder. You an also use `./run-server.sh -f` to see logs"
       render: shell
 
   - type: dropdown

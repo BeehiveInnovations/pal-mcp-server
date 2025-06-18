@@ -42,8 +42,8 @@ The tool provides:
 **System Information:**
 - Server uptime and status
 - Memory and resource usage (if available)
-- Connection status with Redis (for conversation memory)
-- Docker container information
+- Conversation memory status
+- Server process information
 
 ## Example Output
 
@@ -58,7 +58,7 @@ The tool provides:
 ⚙️ Configuration:
 • Default Model: auto
 • Providers: Google ✅, OpenAI ✅, Custom ✅
-• Conversation Memory: Redis ✅
+• Conversation Memory: Active ✅
 • Web Search: Enabled
 
 🛠️ Available Tools (12):
@@ -77,8 +77,8 @@ The tool provides:
 
 🔍 System Status:
 • Server Uptime: 2h 35m
-• Redis Connection: Active
-• Docker Container: zen-mcp-server (running)
+• Memory Storage: Active
+• Server Process: Running
 ```
 
 ## When to Use Version Tool
@@ -106,7 +106,7 @@ The version tool can help diagnose common issues:
 **Performance Troubleshooting:**
 - Server uptime and stability
 - Resource usage patterns
-- Redis connection health
+- Memory storage health
 
 ## Tool Parameters
 

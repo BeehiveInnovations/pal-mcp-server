@@ -80,11 +80,11 @@ class TestImageSupportIntegration:
         expected = ["shared.png", "new_diagram.png", "middle.png", "old_diagram.png"]
         assert image_list == expected
 
-    @patch("utils.conversation_memory.get_redis_client")
-    def test_add_turn_with_images(self, mock_redis):
+    @patch("utils.conversation_memory.get_storage")
+    def test_add_turn_with_images(self, mock_storage):
         """Test adding a conversation turn with images."""
         mock_client = Mock()
-        mock_redis.return_value = mock_client
+        mock_storage.return_value = mock_client
 
         # Mock the Redis operations to return success
         mock_client.set.return_value = True
@@ -348,11 +348,11 @@ class TestImageSupportIntegration:
             importlib.reload(config)
             ModelProviderRegistry._instance = None
 
-    @patch("utils.conversation_memory.get_redis_client")
-    def test_cross_tool_image_context_preservation(self, mock_redis):
+    @patch("utils.conversation_memory.get_storage")
+    def test_cross_tool_image_context_preservation(self, mock_storage):
         """Test that images are preserved across different tools in conversation."""
         mock_client = Mock()
-        mock_redis.return_value = mock_client
+        mock_storage.return_value = mock_client
 
         # Mock the Redis operations to return success
         mock_client.set.return_value = True
@@ -521,11 +521,11 @@ class TestImageSupportIntegration:
         result = tool._validate_image_limits(None, "test_model")
         assert result is None
 
-    @patch("utils.conversation_memory.get_redis_client")
-    def test_conversation_memory_thread_chaining_with_images(self, mock_redis):
+    @patch("utils.conversation_memory.get_storage")
+    def test_conversation_memory_thread_chaining_with_images(self, mock_storage):
         """Test that images work correctly with conversation thread chaining."""
         mock_client = Mock()
-        mock_redis.return_value = mock_client
+        mock_storage.return_value = mock_client
 
         # Mock the Redis operations to return success
         mock_client.set.return_value = True

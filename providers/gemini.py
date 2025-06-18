@@ -453,19 +453,12 @@ class GeminiModelProvider(ModelProvider):
                 mime_type = header.split(";")[0].split(":")[1]
                 return {"inline_data": {"mime_type": mime_type, "data": data}}
             else:
-                # Handle file path - translate for Docker environment
+                # Handle file path
                 from utils.file_types import get_image_mime_type
-                from utils.file_utils import translate_path_for_environment
 
-                translated_path = translate_path_for_environment(image_path)
-                logger.debug(f"Translated image path from '{image_path}' to '{translated_path}'")
-
-                if not os.path.exists(translated_path):
-                    logger.warning(f"Image file not found: {translated_path} (original: {image_path})")
+                if not os.path.exists(image_path):
+                    logger.warning(f"Image file not found: {image_path}")
                     return None
-
-                # Use translated path for all subsequent operations
-                image_path = translated_path
 
                 # Detect MIME type from file extension using centralized mappings
                 ext = os.path.splitext(image_path)[1].lower()

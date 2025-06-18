@@ -33,7 +33,7 @@ body:
     attributes:
       label: What is wrong with the documentation?
       description: "Please describe the problem. Be specific about what is unclear, incorrect, or missing."
-      placeholder: "The Docker setup command in the README is missing the `--pull=always` flag, which means users might use an outdated image version."
+      placeholder: "README is missing some details"
     validations:
       required: true
 
@@ -42,16 +42,8 @@ body:
     attributes:
       label: Suggested Improvement
       description: "How can we make it better? If you can, please provide the exact text or changes you'd like to see."
-      placeholder: |
-        Change:
-        ```
-        docker run ghcr.io/beehiveinnovations/zen-mcp-server:latest
-        ```
-        
-        To:
-        ```
-        docker run --pull=always ghcr.io/beehiveinnovations/zen-mcp-server:latest
-        ```
+      placeholder: "Please improve...."
+
 
   - type: dropdown
     id: audience

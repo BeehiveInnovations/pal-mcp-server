@@ -9,14 +9,57 @@ set -e  # Exit on any error
 echo "🔍 Running Code Quality Checks for Zen MCP Server"
 echo "================================================="
 
-# Check if virtual environment is activated
-if [[ "$VIRTUAL_ENV" == "" ]]; then
-    echo "❌ Virtual environment not activated!"
-    echo "Please run: source venv/bin/activate"
+# Determine Python command
+if [[ -f ".zen_venv/bin/python" ]]; then
+    PYTHON_CMD=".zen_venv/bin/python"
+    PIP_CMD=".zen_venv/bin/pip"
+    echo "✅ Using venv"
+elif [[ -n "$VIRTUAL_ENV" ]]; then
+    PYTHON_CMD="python"
+    PIP_CMD="pip"
+    echo "✅ Using activated virtual environment: $VIRTUAL_ENV"
+else
+    echo "❌ No virtual environment found!"
+    echo "Please run: ./run-server.sh first to set up the environment"
     exit 1
 fi
+echo ""
 
-echo "✅ Virtual environment detected: $VIRTUAL_ENV"
+# Check and install dev dependencies if needed
+echo "🔍 Checking development dependencies..."
+DEV_DEPS_NEEDED=false
+
+# Check each dev dependency
+for tool in ruff black isort pytest; do
+    # Check if tool exists in venv or in PATH
+    if [[ -f ".zen_venv/bin/$tool" ]] || command -v $tool &> /dev/null; then
+        continue
+    else
+        DEV_DEPS_NEEDED=true
+        break
+    fi
+done
+
+if [ "$DEV_DEPS_NEEDED" = true ]; then
+    echo "📦 Installing development dependencies..."
+    $PIP_CMD install -q -r requirements-dev.txt
+    echo "✅ Development dependencies installed"
+else
+    echo "✅ Development dependencies already installed"
+fi
+
+# Set tool paths
+if [[ -f ".zen_venv/bin/ruff" ]]; then
+    RUFF=".zen_venv/bin/ruff"
+    BLACK=".zen_venv/bin/black"
+    ISORT=".zen_venv/bin/isort"
+    PYTEST=".zen_venv/bin/pytest"
+else
+    RUFF="ruff"
+    BLACK="black"
+    ISORT="isort"
+    PYTEST="pytest"
+fi
 echo ""
 
 # Step 1: Linting and Formatting
@@ -24,16 +67,16 @@ echo "📋 Step 1: Running Linting and Formatting Checks"
 echo "--------------------------------------------------"
 
 echo "🔧 Running ruff linting with auto-fix..."
-ruff check --fix
+$RUFF check --fix
 
 echo "🎨 Running black code formatting..."
-black .
+$BLACK .
 
 echo "📦 Running import sorting with isort..."
-isort .
+$ISORT . --skip-glob=".zen_venv/*"
 
 echo "✅ Verifying all linting passes..."
-ruff check
+$RUFF check
 
 echo "✅ Step 1 Complete: All linting and formatting checks passed!"
 echo ""
@@ -42,8 +85,8 @@ echo ""
 echo "🧪 Step 2: Running Complete Unit Test Suite"
 echo "---------------------------------------------"
 
-echo "🏃 Running all 361 unit tests..."
-python -m pytest tests/ -v
+echo "🏃 Running all unit tests..."
+$PYTHON_CMD -m pytest tests/ -v -x
 
 echo "✅ Step 2 Complete: All unit tests passed!"
 echo ""
@@ -54,7 +97,7 @@ echo "=================================="
 echo "✅ Linting (ruff): PASSED"
 echo "✅ Formatting (black): PASSED" 
 echo "✅ Import sorting (isort): PASSED"
-echo "✅ Unit tests (361 tests): PASSED"
+echo "✅ Unit tests: PASSED"
 echo ""
 echo "🚀 Your code is ready for commit and GitHub Actions!"
 echo "💡 Remember to add simulator tests if you modified tools"

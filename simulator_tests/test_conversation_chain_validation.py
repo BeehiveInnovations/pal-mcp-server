@@ -21,8 +21,6 @@ This validates the conversation threading system's ability to:
 - Properly traverse parent relationships for history reconstruction
 """
 
-import re
-import subprocess
 
 from .base_test import BaseSimulatorTest
 
@@ -37,53 +35,6 @@ class ConversationChainValidationTest(BaseSimulatorTest):
     @property
     def test_description(self) -> str:
         return "Conversation chain and threading validation"
-
-    def get_recent_server_logs(self) -> str:
-        """Get recent server logs from the log file directly"""
-        try:
-            cmd = ["docker", "exec", self.container_name, "tail", "-n", "500", "/tmp/mcp_server.log"]
-            result = subprocess.run(cmd, capture_output=True, text=True)
-
-            if result.returncode == 0:
-                return result.stdout
-            else:
-                self.logger.warning(f"Failed to read server logs: {result.stderr}")
-                return ""
-        except Exception as e:
-            self.logger.error(f"Failed to get server logs: {e}")
-            return ""
-
-    def extract_thread_creation_logs(self, logs: str) -> list[dict[str, str]]:
-        """Extract thread creation logs with parent relationships"""
-        thread_logs = []
-
-        lines = logs.split("\n")
-        for line in lines:
-            if "[THREAD] Created new thread" in line:
-                # Parse: [THREAD] Created new thread 9dc779eb-645f-4850-9659-34c0e6978d73 with parent a0ce754d-c995-4b3e-9103-88af429455aa
-                match = re.search(r"\[THREAD\] Created new thread ([a-f0-9-]+) with parent ([a-f0-9-]+|None)", line)
-                if match:
-                    thread_id = match.group(1)
-                    parent_id = match.group(2) if match.group(2) != "None" else None
-                    thread_logs.append({"thread_id": thread_id, "parent_id": parent_id, "log_line": line})
-
-        return thread_logs
-
-    def extract_history_traversal_logs(self, logs: str) -> list[dict[str, str]]:
-        """Extract conversation history traversal logs"""
-        traversal_logs = []
-
-        lines = logs.split("\n")
-        for line in lines:
-            if "[THREAD] Retrieved chain of" in line:
-                # Parse: [THREAD] Retrieved chain of 3 threads for 9dc779eb-645f-4850-9659-34c0e6978d73
-                match = re.search(r"\[THREAD\] Retrieved chain of (\d+) threads for ([a-f0-9-]+)", line)
-                if match:
-                    chain_length = int(match.group(1))
-                    thread_id = match.group(2)
-                    traversal_logs.append({"thread_id": thread_id, "chain_length": chain_length, "log_line": line})
-
-        return traversal_logs
 
     def run_test(self) -> bool:
         """Test conversation chain and threading functionality"""

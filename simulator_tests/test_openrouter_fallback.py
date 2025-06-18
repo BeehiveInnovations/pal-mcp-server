@@ -8,7 +8,6 @@ Tests that verify the system correctly falls back to OpenRouter when:
 - Auto mode correctly selects OpenRouter models
 """
 
-import subprocess
 
 from .base_test import BaseSimulatorTest
 
@@ -24,53 +23,28 @@ class OpenRouterFallbackTest(BaseSimulatorTest):
     def test_description(self) -> str:
         return "OpenRouter fallback behavior when only provider"
 
-    def get_recent_server_logs(self) -> str:
-        """Get recent server logs from the log file directly"""
-        try:
-            cmd = ["docker", "exec", self.container_name, "tail", "-n", "300", "/tmp/mcp_server.log"]
-            result = subprocess.run(cmd, capture_output=True, text=True)
-
-            if result.returncode == 0:
-                return result.stdout
-            else:
-                self.logger.warning(f"Failed to read server logs: {result.stderr}")
-                return ""
-        except Exception as e:
-            self.logger.error(f"Failed to get server logs: {e}")
-            return ""
-
     def run_test(self) -> bool:
         """Test OpenRouter fallback behavior"""
         try:
             self.logger.info("Test: OpenRouter fallback behavior when only provider available")
 
             # Check if ONLY OpenRouter API key is configured (this is a fallback test)
-            check_cmd = [
-                "docker",
-                "exec",
-                self.container_name,
-                "python",
-                "-c",
-                'import os; print("OPENROUTER_KEY:" + str(bool(os.environ.get("OPENROUTER_API_KEY"))) + "|GEMINI_KEY:" + str(bool(os.environ.get("GEMINI_API_KEY"))) + "|OPENAI_KEY:" + str(bool(os.environ.get("OPENAI_API_KEY"))))',
-            ]
-            result = subprocess.run(check_cmd, capture_output=True, text=True)
+            import os
 
-            if result.returncode == 0:
-                output = result.stdout.strip()
-                has_openrouter = "OPENROUTER_KEY:True" in output
-                has_gemini = "GEMINI_KEY:True" in output
-                has_openai = "OPENAI_KEY:True" in output
+            has_openrouter = bool(os.environ.get("OPENROUTER_API_KEY"))
+            has_gemini = bool(os.environ.get("GEMINI_API_KEY"))
+            has_openai = bool(os.environ.get("OPENAI_API_KEY"))
 
-                if not has_openrouter:
-                    self.logger.info("  ⚠️  OpenRouter API key not configured - skipping test")
-                    self.logger.info("  ℹ️  This test requires OPENROUTER_API_KEY to be set in .env")
-                    return True  # Return True to indicate test is skipped, not failed
+            if not has_openrouter:
+                self.logger.info("  ⚠️  OpenRouter API key not configured - skipping test")
+                self.logger.info("  ℹ️  This test requires OPENROUTER_API_KEY to be set in .env")
+                return True  # Return True to indicate test is skipped, not failed
 
-                if has_gemini or has_openai:
-                    self.logger.info("  ⚠️  Other API keys configured - this is not a fallback scenario")
-                    self.logger.info("  ℹ️  This test requires ONLY OpenRouter to be configured (no Gemini/OpenAI keys)")
-                    self.logger.info("  ℹ️  Current setup has multiple providers, so fallback behavior doesn't apply")
-                    return True  # Return True to indicate test is skipped, not failed
+            if has_gemini or has_openai:
+                self.logger.info("  ⚠️  Other API keys configured - this is not a fallback scenario")
+                self.logger.info("  ℹ️  This test requires ONLY OpenRouter to be configured (no Gemini/OpenAI keys)")
+                self.logger.info("  ℹ️  Current setup has multiple providers, so fallback behavior doesn't apply")
+                return True  # Return True to indicate test is skipped, not failed
 
             # Setup test files
             self.setup_test_files()

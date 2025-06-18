@@ -9,7 +9,6 @@ Tests custom API endpoint functionality with Ollama-style local models, includin
 - Model alias resolution for local models
 """
 
-import subprocess
 
 from .base_test import BaseSimulatorTest
 
@@ -30,14 +29,15 @@ class OllamaCustomUrlTest(BaseSimulatorTest):
         try:
             self.logger.info("Test: Ollama custom URL functionality")
 
-            # Check if custom URL is configured in the Docker container
-            custom_url = self._check_docker_custom_url()
+            # Check if custom URL is configured
+            import os
+
+            custom_url = os.environ.get("CUSTOM_API_URL")
             if not custom_url:
-                self.logger.warning("CUSTOM_API_URL not set in Docker container, skipping Ollama test")
+                self.logger.warning("CUSTOM_API_URL not set, skipping Ollama test")
                 self.logger.info("To enable this test, add to .env file:")
-                self.logger.info("CUSTOM_API_URL=http://host.docker.internal:11434/v1")
+                self.logger.info("CUSTOM_API_URL=http://localhost:11434/v1")
                 self.logger.info("CUSTOM_API_KEY=")
-                self.logger.info("Then restart docker-compose")
                 return True  # Skip gracefully
 
             self.logger.info(f"Testing with custom URL: {custom_url}")
@@ -172,25 +172,6 @@ if __name__ == "__main__":
         finally:
             self.cleanup_test_files()
 
-    def _check_docker_custom_url(self) -> str:
-        """Check if CUSTOM_API_URL is set in the Docker container"""
-        try:
-            result = subprocess.run(
-                ["docker", "exec", self.container_name, "printenv", "CUSTOM_API_URL"],
-                capture_output=True,
-                text=True,
-                timeout=10,
-            )
-
-            if result.returncode == 0 and result.stdout.strip():
-                return result.stdout.strip()
-
-            return ""
-
-        except Exception as e:
-            self.logger.debug(f"Failed to check Docker CUSTOM_API_URL: {e}")
-            return ""
-
     def validate_successful_response(self, response: str, test_name: str, files_provided: bool = False) -> bool:
         """Validate that the response indicates success, not an error
 
@@ -201,7 +182,7 @@ if __name__ == "__main__":
         """
         if not response:
             self.logger.error(f"No response received for {test_name}")
-            self._check_docker_logs_for_errors()
+            self._check_server_logs_for_errors()
             return False
 
         # Check for common error indicators
@@ -227,7 +208,7 @@ if __name__ == "__main__":
         ]
 
         # Special handling for clarification requests from local models
-        if "clarification_required" in response.lower():
+        if "files_required_to_continue" in response.lower():
             if files_provided:
                 # If we provided actual files, clarification request is a FAILURE
                 self.logger.error(
@@ -243,7 +224,7 @@ if __name__ == "__main__":
                 self.logger.debug(f"Clarification response: {response[:200]}...")
                 return True
 
-        # Check for SSRF security restriction - this is expected for local URLs from Docker
+        # Check for SSRF security restriction - this is expected for local URLs
         if "restricted IP address" in response and "security risk (SSRF)" in response:
             self.logger.info(
                 f"✅ Custom URL routing working - {test_name} correctly attempted to connect to custom API"
@@ -256,19 +237,19 @@ if __name__ == "__main__":
             if error.lower() in response_lower:
                 self.logger.error(f"Error detected in {test_name}: {error}")
                 self.logger.debug(f"Full response: {response}")
-                self._check_docker_logs_for_errors()
+                self._check_server_logs_for_errors()
                 return False
 
         # Response should be substantial (more than just a few words)
         if len(response.strip()) < 10:
             self.logger.error(f"Response too short for {test_name}: {response}")
-            self._check_docker_logs_for_errors()
+            self._check_server_logs_for_errors()
             return False
 
         # Verify this looks like a real AI response, not just an error message
         if not self._validate_ai_response_content(response):
             self.logger.error(f"Response doesn't look like valid AI output for {test_name}")
-            self._check_docker_logs_for_errors()
+            self._check_server_logs_for_errors()
             return False
 
         self.logger.debug(f"Successful response for {test_name}: {response[:100]}...")
@@ -329,24 +310,23 @@ if __name__ == "__main__":
 
         return True
 
-    def _check_docker_logs_for_errors(self):
-        """Check Docker logs for any error messages that might explain failures"""
+    def _check_server_logs_for_errors(self):
+        """Check server logs for any error messages that might explain failures"""
         try:
-            # Get recent logs from the container
-            result = subprocess.run(
-                ["docker", "logs", "--tail", "50", self.container_name], capture_output=True, text=True, timeout=10
-            )
+            # Get recent logs from the log file
+            log_file_path = "logs/mcp_server.log"
+            with open(log_file_path) as f:
+                lines = f.readlines()
+                recent_logs = lines[-50:]  # Last 50 lines
 
-            if result.returncode == 0 and result.stderr:
-                recent_logs = result.stderr.strip()
-                if recent_logs:
-                    self.logger.info("Recent container logs:")
-                    for line in recent_logs.split("\n")[-10:]:  # Last 10 lines
-                        if line.strip():
-                            self.logger.info(f"  {line}")
+            if recent_logs:
+                self.logger.info("Recent server logs:")
+                for line in recent_logs[-10:]:  # Last 10 lines
+                    if line.strip():
+                        self.logger.info(f"  {line.strip()}")
 
         except Exception as e:
-            self.logger.debug(f"Failed to check Docker logs: {e}")
+            self.logger.debug(f"Failed to check server logs: {e}")
 
     def validate_local_model_response(self, response: str) -> bool:
         """Validate that response appears to come from a local model"""

@@ -12,7 +12,6 @@ Validates:
 5. Proper tool chaining with context
 """
 
-import subprocess
 
 from .base_test import BaseSimulatorTest
 
@@ -27,40 +26,6 @@ class CrossToolComprehensiveTest(BaseSimulatorTest):
     @property
     def test_description(self) -> str:
         return "Comprehensive cross-tool file deduplication and continuation"
-
-    def get_docker_logs_since(self, since_time: str) -> str:
-        """Get docker logs since a specific timestamp"""
-        try:
-            # Check both main server and log monitor for comprehensive logs
-            cmd_server = ["docker", "logs", "--since", since_time, self.container_name]
-            cmd_monitor = ["docker", "logs", "--since", since_time, "zen-mcp-log-monitor"]
-
-            result_server = subprocess.run(cmd_server, capture_output=True, text=True)
-            result_monitor = subprocess.run(cmd_monitor, capture_output=True, text=True)
-
-            # Get the internal log files which have more detailed logging
-            server_log_result = subprocess.run(
-                ["docker", "exec", self.container_name, "cat", "/tmp/mcp_server.log"], capture_output=True, text=True
-            )
-
-            activity_log_result = subprocess.run(
-                ["docker", "exec", self.container_name, "cat", "/tmp/mcp_activity.log"], capture_output=True, text=True
-            )
-
-            # Combine all logs
-            combined_logs = (
-                result_server.stdout
-                + "\n"
-                + result_monitor.stdout
-                + "\n"
-                + server_log_result.stdout
-                + "\n"
-                + activity_log_result.stdout
-            )
-            return combined_logs
-        except Exception as e:
-            self.logger.error(f"Failed to get docker logs: {e}")
-            return ""
 
     def run_test(self) -> bool:
         """Comprehensive cross-tool test with all MCP tools"""
@@ -247,7 +212,7 @@ def secure_login(user, pwd):
 
             # Validate comprehensive results
             self.logger.info("  📋 Validating comprehensive cross-tool results...")
-            logs = self.get_docker_logs_since(start_time)
+            logs = self.get_server_logs_since(start_time)
 
             # Validation criteria
             tools_used = [r[0] for r in responses]

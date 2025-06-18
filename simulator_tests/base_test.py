@@ -11,6 +11,8 @@ import os
 import subprocess
 from typing import Optional
 
+from .log_utils import LogUtils
+
 
 class BaseSimulatorTest:
     """Base class for all communication simulator tests"""
@@ -19,13 +21,24 @@ class BaseSimulatorTest:
         self.verbose = verbose
         self.test_files = {}
         self.test_dir = None
-        self.container_name = "zen-mcp-server"
-        self.redis_container = "zen-mcp-redis"
+        self.python_path = self._get_python_path()
 
         # Configure logging
         log_level = logging.DEBUG if verbose else logging.INFO
         logging.basicConfig(level=log_level, format="%(asctime)s - %(levelname)s - %(message)s")
         self.logger = logging.getLogger(self.__class__.__name__)
+
+    def _get_python_path(self) -> str:
+        """Get the Python path for the virtual environment"""
+        current_dir = os.getcwd()
+        venv_python = os.path.join(current_dir, ".zen_venv", "bin", "python")
+
+        if os.path.exists(venv_python):
+            return venv_python
+
+        # Fallback to system python if venv doesn't exist
+        self.logger.warning("Virtual environment not found, using system python")
+        return "python"
 
     def setup_test_files(self):
         """Create test files for the simulation"""
@@ -100,7 +113,7 @@ class Calculator:
         self.logger.debug(f"Created test files with absolute paths: {list(self.test_files.values())}")
 
     def call_mcp_tool(self, tool_name: str, params: dict) -> tuple[Optional[str], Optional[str]]:
-        """Call an MCP tool via Claude CLI (docker exec)"""
+        """Call an MCP tool via standalone server"""
         try:
             # Prepare the MCP initialization and tool call sequence
             init_request = {
@@ -131,8 +144,8 @@ class Calculator:
             # Join with newlines as MCP expects
             input_data = "\n".join(messages) + "\n"
 
-            # Simulate Claude CLI calling the MCP server via docker exec
-            docker_cmd = ["docker", "exec", "-i", self.container_name, "python", "server.py"]
+            # Call the standalone MCP server directly
+            server_cmd = [self.python_path, "server.py"]
 
             self.logger.debug(f"Calling MCP tool {tool_name} with proper initialization")
 
@@ -140,7 +153,7 @@ class Calculator:
             # For consensus tool and other long-running tools, we need to ensure
             # the subprocess doesn't close prematurely
             result = subprocess.run(
-                docker_cmd,
+                server_cmd,
                 input=input_data,
                 text=True,
                 capture_output=True,
@@ -149,7 +162,7 @@ class Calculator:
             )
 
             if result.returncode != 0:
-                self.logger.error(f"Docker exec failed with return code {result.returncode}")
+                self.logger.error(f"Standalone server failed with return code {result.returncode}")
                 self.logger.error(f"Stderr: {result.stderr}")
                 # Still try to parse stdout as the response might have been written before the error
                 self.logger.debug(f"Attempting to parse stdout despite error: {result.stdout[:500]}")
@@ -262,6 +275,56 @@ class Calculator:
 
             shutil.rmtree(self.test_dir)
             self.logger.debug(f"Removed test files directory: {self.test_dir}")
+
+    # ============================================================================
+    # Log Utility Methods (delegate to LogUtils)
+    # ============================================================================
+
+    def get_server_logs_since(self, since_time: Optional[str] = None) -> str:
+        """Get server logs from both main and activity log files."""
+        return LogUtils.get_server_logs_since(since_time)
+
+    def get_recent_server_logs(self, lines: int = 500) -> str:
+        """Get recent server logs from the main log file."""
+        return LogUtils.get_recent_server_logs(lines)
+
+    def get_server_logs_subprocess(self, lines: int = 500) -> str:
+        """Get server logs using subprocess (alternative method)."""
+        return LogUtils.get_server_logs_subprocess(lines)
+
+    def check_server_logs_for_errors(self, lines: int = 500) -> list[str]:
+        """Check server logs for error messages."""
+        return LogUtils.check_server_logs_for_errors(lines)
+
+    def extract_conversation_usage_logs(self, logs: str) -> list[dict[str, int]]:
+        """Extract token budget calculation information from logs."""
+        return LogUtils.extract_conversation_usage_logs(logs)
+
+    def extract_conversation_token_usage(self, logs: str) -> list[int]:
+        """Extract conversation token usage values from logs."""
+        return LogUtils.extract_conversation_token_usage(logs)
+
+    def extract_thread_creation_logs(self, logs: str) -> list[dict[str, str]]:
+        """Extract thread creation logs with parent relationships."""
+        return LogUtils.extract_thread_creation_logs(logs)
+
+    def extract_history_traversal_logs(self, logs: str) -> list[dict[str, any]]:
+        """Extract conversation history traversal logs."""
+        return LogUtils.extract_history_traversal_logs(logs)
+
+    def validate_file_deduplication_in_logs(self, logs: str, tool_name: str, test_file: str) -> bool:
+        """Validate that logs show file deduplication behavior."""
+        return LogUtils.validate_file_deduplication_in_logs(logs, tool_name, test_file)
+
+    def search_logs_for_pattern(
+        self, pattern: str, logs: Optional[str] = None, case_sensitive: bool = False
+    ) -> list[str]:
+        """Search logs for a specific pattern."""
+        return LogUtils.search_logs_for_pattern(pattern, logs, case_sensitive)
+
+    def get_log_file_info(self) -> dict[str, dict[str, any]]:
+        """Get information about log files."""
+        return LogUtils.get_log_file_info()
 
     def run_test(self) -> bool:
         """Run the test - to be implemented by subclasses"""

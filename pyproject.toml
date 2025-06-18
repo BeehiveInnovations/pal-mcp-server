@@ -27,7 +27,7 @@ force_grid_wrap = 0
 use_parentheses = true
 ensure_newline_before_comments = true
 line_length = 120
-skip_glob = ["venv/*", ".venv/*"]
+skip_glob = ["venv/*", ".venv/*", ".zen_venv/*"]
 
 [tool.ruff]
 target-version = "py39"

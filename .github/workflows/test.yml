@@ -25,6 +25,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+        pip install -r requirements-dev.txt
     
     - name: Run unit tests
       run: |
@@ -49,7 +50,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install ruff black
+        pip install -r requirements-dev.txt
     
     - name: Run black formatter check
       run: black --check .
@@ -57,61 +58,3 @@ jobs:
     - name: Run ruff linter
       run: ruff check .
 
-  simulation-tests:
-    runs-on: ubuntu-latest
-    # Only run simulation tests on main branch pushes (requires manual API key setup)
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.11"
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-    
-    - name: Check API key availability
-      id: check-key
-      run: |
-        has_key=false
-        if [ -n "${{ secrets.GEMINI_API_KEY }}" ] || [ -n "${{ secrets.OPENAI_API_KEY }}" ]; then
-          has_key=true
-          echo "✅ API key(s) found - running simulation tests"
-        else
-          echo "⚠️ No API keys configured - skipping simulation tests"
-        fi
-        echo "api_key_available=$has_key" >> $GITHUB_OUTPUT
-    
-    - name: Set up Docker
-      if: steps.check-key.outputs.api_key_available == 'true'
-      uses: docker/setup-buildx-action@v3
-    
-    - name: Build Docker image
-      if: steps.check-key.outputs.api_key_available == 'true'
-      run: |
-        docker compose build
-    
-    - name: Run simulation tests
-      if: steps.check-key.outputs.api_key_available == 'true'
-      run: |
-        # Start services
-        docker compose up -d
-        
-        # Wait for services to be ready
-        sleep 10
-        
-        # Run communication simulator tests
-        python communication_simulator_test.py --skip-docker
-      env:
-        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-    
-    - name: Skip simulation tests
-      if: steps.check-key.outputs.api_key_available == 'false'
-      run: |
-        echo "🔒 Simulation tests skipped (no API keys configured)"
-        echo "To enable simulation tests, add GEMINI_API_KEY and/or OPENAI_API_KEY as repository secrets"

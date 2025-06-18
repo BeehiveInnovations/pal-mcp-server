@@ -56,7 +56,7 @@ The tool displays:
 
 🔹 Custom/Local - ✅ Configured
   • local-llama (llama3.2) - 128K context, local inference
-  • Available at: http://host.docker.internal:11434/v1
+  • Available at: http://localhost:11434/v1
 
 🔹 OpenRouter - ❌ Not configured
   Set OPENROUTER_API_KEY to enable access to Claude, GPT-4, and more models

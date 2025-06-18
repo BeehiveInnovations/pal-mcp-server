@@ -1,12 +1,12 @@
 name: 🛠️ New Gemini Tool Proposal
-description: Propose a new Gemini MCP tool (e.g., `summarize`, `testgen`, `refactor`)
+description: Propose a new Zen MCP tool (e.g., `summarize`, `fixer`, `refactor`)
 labels: ["enhancement", "new-tool"]
 body:
   - type: input
     id: tool-name
     attributes:
       label: Proposed Tool Name
-      description: "What would the tool be called? (e.g., `summarize`, `testgen`, `refactor`)"
+      description: "What would the tool be called? (e.g., `summarize`, `docgen`, `refactor`)"
       placeholder: "e.g., `docgen`"
     validations:
       required: true
@@ -15,7 +15,7 @@ body:
     id: purpose
     attributes:
       label: What is the primary purpose of this tool?
-      description: "Explain the tool's core function and the value it provides to developers using Claude + Gemini."
+      description: "Explain the tool's core function and the value it provides to developers using Claude + Zen."
       placeholder: "This tool will automatically generate comprehensive documentation from code, extracting class and function signatures, docstrings, and creating usage examples."
     validations:
       required: true
@@ -27,9 +27,9 @@ body:
       description: "Show how a user would invoke this tool through Claude and what the expected output would look like."
       placeholder: |
         **User prompt to Claude:**
-        "Use gemini to generate documentation for my entire src/ directory"
+        "Use zen to generate documentation for my entire src/ directory"
 
-        **Expected Gemini tool behavior:**
+        **Expected behavior:**
         - Analyze all Python files in src/
         - Extract classes, functions, and their docstrings
         - Generate structured markdown documentation
@@ -61,7 +61,7 @@ body:
     id: system-prompt
     attributes:
       label: Proposed System Prompt (Optional)
-      description: "If you have ideas for how Gemini should be prompted for this tool, share them here."
+      description: "If you have ideas for how zen should be prompted for this tool, share them here."
       placeholder: |
         You are an expert technical documentation generator. Your task is to create comprehensive, user-friendly documentation from source code...
 

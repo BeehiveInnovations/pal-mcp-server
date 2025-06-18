@@ -8,7 +8,7 @@ import pytest
 from providers import ModelProviderRegistry, ModelResponse
 from providers.base import ProviderType
 from providers.gemini import GeminiModelProvider
-from providers.openai import OpenAIModelProvider
+from providers.openai_provider import OpenAIModelProvider
 
 
 class TestModelProviderRegistry:

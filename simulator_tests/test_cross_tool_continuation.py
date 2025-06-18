@@ -6,10 +6,10 @@ Tests comprehensive cross-tool continuation scenarios to ensure
 conversation context is maintained when switching between different tools.
 """
 
-from .base_test import BaseSimulatorTest
+from .conversation_base_test import ConversationBaseTest
 
 
-class CrossToolContinuationTest(BaseSimulatorTest):
+class CrossToolContinuationTest(ConversationBaseTest):
     """Test comprehensive cross-tool continuation scenarios"""
 
     @property
@@ -25,8 +25,8 @@ class CrossToolContinuationTest(BaseSimulatorTest):
         try:
             self.logger.info("🔧 Test: Cross-tool continuation scenarios")
 
-            # Setup test files
-            self.setup_test_files()
+            # Setup test environment for conversation testing
+            self.setUp()
 
             success_count = 0
             total_scenarios = 3
@@ -62,7 +62,7 @@ class CrossToolContinuationTest(BaseSimulatorTest):
             self.logger.info("  1: Testing chat -> thinkdeep -> codereview")
 
             # Start with chat
-            chat_response, chat_id = self.call_mcp_tool(
+            chat_response, chat_id = self.call_mcp_tool_direct(
                 "chat",
                 {
                     "prompt": "Please use low thinking mode. Look at this Python code and tell me what you think about it",
@@ -76,7 +76,7 @@ class CrossToolContinuationTest(BaseSimulatorTest):
                 return False
 
             # Continue with thinkdeep
-            thinkdeep_response, _ = self.call_mcp_tool(
+            thinkdeep_response, _ = self.call_mcp_tool_direct(
                 "thinkdeep",
                 {
                     "prompt": "Please use low thinking mode. Think deeply about potential performance issues in this code",
@@ -91,7 +91,7 @@ class CrossToolContinuationTest(BaseSimulatorTest):
                 return False
 
             # Continue with codereview
-            codereview_response, _ = self.call_mcp_tool(
+            codereview_response, _ = self.call_mcp_tool_direct(
                 "codereview",
                 {
                     "files": [self.test_files["python"]],  # Same file should be deduplicated
@@ -118,8 +118,13 @@ class CrossToolContinuationTest(BaseSimulatorTest):
             self.logger.info("  2: Testing analyze -> debug -> thinkdeep")
 
             # Start with analyze
-            analyze_response, analyze_id = self.call_mcp_tool(
-                "analyze", {"files": [self.test_files["python"]], "analysis_type": "code_quality", "model": "flash"}
+            analyze_response, analyze_id = self.call_mcp_tool_direct(
+                "analyze",
+                {
+                    "files": [self.test_files["python"]],
+                    "prompt": "Analyze this code for quality and performance issues",
+                    "model": "flash",
+                },
             )
 
             if not analyze_response or not analyze_id:
@@ -127,7 +132,7 @@ class CrossToolContinuationTest(BaseSimulatorTest):
                 return False
 
             # Continue with debug
-            debug_response, _ = self.call_mcp_tool(
+            debug_response, _ = self.call_mcp_tool_direct(
                 "debug",
                 {
                     "files": [self.test_files["python"]],  # Same file should be deduplicated
@@ -142,7 +147,7 @@ class CrossToolContinuationTest(BaseSimulatorTest):
                 return False
 
             # Continue with thinkdeep
-            final_response, _ = self.call_mcp_tool(
+            final_response, _ = self.call_mcp_tool_direct(
                 "thinkdeep",
                 {
                     "prompt": "Please use low thinking mode. Think deeply about the architectural implications of the issues we've found",
@@ -169,7 +174,7 @@ class CrossToolContinuationTest(BaseSimulatorTest):
             self.logger.info("  3: Testing multi-file cross-tool continuation")
 
             # Start with both files
-            multi_response, multi_id = self.call_mcp_tool(
+            multi_response, multi_id = self.call_mcp_tool_direct(
                 "chat",
                 {
                     "prompt": "Please use low thinking mode. Analyze both the Python code and configuration file",
@@ -183,7 +188,7 @@ class CrossToolContinuationTest(BaseSimulatorTest):
                 return False
 
             # Switch to codereview with same files (should use conversation history)
-            multi_review, _ = self.call_mcp_tool(
+            multi_review, _ = self.call_mcp_tool_direct(
                 "codereview",
                 {
                     "files": [self.test_files["python"], self.test_files["config"]],  # Same files

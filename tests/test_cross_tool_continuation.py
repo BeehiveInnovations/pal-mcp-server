@@ -93,12 +93,12 @@ class TestCrossToolContinuation:
         self.analysis_tool = MockAnalysisTool()
         self.review_tool = MockReviewTool()
 
-    @patch("utils.conversation_memory.get_redis_client")
+    @patch("utils.conversation_memory.get_storage")
     @patch.dict("os.environ", {"PYTEST_CURRENT_TEST": ""}, clear=False)
-    async def test_continuation_id_works_across_different_tools(self, mock_redis):
+    async def test_continuation_id_works_across_different_tools(self, mock_storage):
         """Test that a continuation_id from one tool can be used with another tool"""
         mock_client = Mock()
-        mock_redis.return_value = mock_client
+        mock_storage.return_value = mock_client
 
         # Step 1: Analysis tool creates a conversation with continuation offer
         with patch.object(self.analysis_tool, "get_model_provider") as mock_get_provider:
@@ -195,11 +195,11 @@ I'd be happy to review these security findings in detail if that would be helpfu
         assert second_turn["tool_name"] == "test_review"  # New tool name
         assert "Critical security vulnerability confirmed" in second_turn["content"]
 
-    @patch("utils.conversation_memory.get_redis_client")
-    def test_cross_tool_conversation_history_includes_tool_names(self, mock_redis):
+    @patch("utils.conversation_memory.get_storage")
+    def test_cross_tool_conversation_history_includes_tool_names(self, mock_storage):
         """Test that conversation history properly shows which tool was used for each turn"""
         mock_client = Mock()
-        mock_redis.return_value = mock_client
+        mock_storage.return_value = mock_client
 
         # Create a thread context with turns from different tools
         thread_context = ThreadContext(
@@ -247,13 +247,13 @@ I'd be happy to review these security findings in detail if that would be helpfu
         assert "Review complete: 2 critical, 1 minor issue" in history
         assert "Deep analysis: Root cause identified" in history
 
-    @patch("utils.conversation_memory.get_redis_client")
+    @patch("utils.conversation_memory.get_storage")
     @patch("utils.conversation_memory.get_thread")
     @patch.dict("os.environ", {"PYTEST_CURRENT_TEST": ""}, clear=False)
-    async def test_cross_tool_conversation_with_files_context(self, mock_get_thread, mock_redis):
+    async def test_cross_tool_conversation_with_files_context(self, mock_get_thread, mock_storage):
         """Test that file context is preserved across tool switches"""
         mock_client = Mock()
-        mock_redis.return_value = mock_client
+        mock_storage.return_value = mock_client
 
         # Create existing context with files from analysis tool
         existing_context = ThreadContext(
@@ -317,12 +317,12 @@ I'd be happy to review these security findings in detail if that would be helpfu
         analysis_turn = final_context["turns"][0]  # First turn (analysis tool)
         assert analysis_turn["files"] == ["/src/auth.py", "/src/utils.py"]
 
-    @patch("utils.conversation_memory.get_redis_client")
+    @patch("utils.conversation_memory.get_storage")
     @patch("utils.conversation_memory.get_thread")
-    def test_thread_preserves_original_tool_name(self, mock_get_thread, mock_redis):
+    def test_thread_preserves_original_tool_name(self, mock_get_thread, mock_storage):
         """Test that the thread's original tool_name is preserved even when other tools contribute"""
         mock_client = Mock()
-        mock_redis.return_value = mock_client
+        mock_storage.return_value = mock_client
 
         # Create existing thread from analysis tool
         existing_context = ThreadContext(

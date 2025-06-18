@@ -33,7 +33,7 @@ body:
       label: Feature Category
       description: What type of enhancement is this?
       options:
-        - New Gemini tool (chat, codereview, debug, etc.)
+        - New tool (chat, codereview, debug, etc.)
         - Workflow improvement
         - Integration enhancement
         - Performance optimization

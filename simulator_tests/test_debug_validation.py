@@ -378,35 +378,28 @@ The code looks correct to me, but something is causing valid sessions to be trea
             # Validate logs
             self.logger.info("  📋 Validating execution logs...")
 
-            # Get server logs from the actual log file inside the container
-            result = self.run_command(
-                ["docker", "exec", self.container_name, "tail", "-500", "/tmp/mcp_server.log"], capture_output=True
-            )
+            # Get server logs using inherited method
+            logs = self.get_recent_server_logs(500)
 
-            if result.returncode == 0:
-                logs = result.stdout.decode() + result.stderr.decode()
+            # Look for debug tool execution patterns
+            debug_patterns = [
+                "debug tool",
+                "[DEBUG]",
+                "systematic investigation",
+                "Token budget",
+                "Essential files for debugging",
+            ]
 
-                # Look for debug tool execution patterns
-                debug_patterns = [
-                    "debug tool",
-                    "[DEBUG]",
-                    "systematic investigation",
-                    "Token budget",
-                    "Essential files for debugging",
-                ]
+            patterns_found = 0
+            for pattern in debug_patterns:
+                if pattern in logs:
+                    patterns_found += 1
+                    self.logger.debug(f"  ✅ Found log pattern: {pattern}")
 
-                patterns_found = 0
-                for pattern in debug_patterns:
-                    if pattern in logs:
-                        patterns_found += 1
-                        self.logger.debug(f"  ✅ Found log pattern: {pattern}")
-
-                if patterns_found >= 3:
-                    self.logger.info(f"  ✅ Log validation passed ({patterns_found}/{len(debug_patterns)} patterns)")
-                else:
-                    self.logger.warning(f"  ⚠️ Only found {patterns_found}/{len(debug_patterns)} log patterns")
+            if patterns_found >= 3:
+                self.logger.info(f"  ✅ Log validation passed ({patterns_found}/{len(debug_patterns)} patterns)")
             else:
-                self.logger.warning("  ⚠️ Could not retrieve Docker logs")
+                self.logger.warning(f"  ⚠️ Only found {patterns_found}/{len(debug_patterns)} log patterns")
 
             # Test continuation if available
             if continuation_id:

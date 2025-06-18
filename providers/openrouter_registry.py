@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
-from utils.file_utils import read_json_file, translate_path_for_environment
+from utils.file_utils import read_json_file
 
 from .base import ModelCapabilities, ProviderType, RangeTemperatureConstraint
 
@@ -59,19 +59,17 @@ class OpenRouterModelRegistry:
 
         # Determine config path
         if config_path:
-            # Direct config_path parameter - translate for Docker if needed
-            translated_path = translate_path_for_environment(config_path)
-            self.config_path = Path(translated_path)
+            # Direct config_path parameter
+            self.config_path = Path(config_path)
         else:
             # Check environment variable first
             env_path = os.getenv("CUSTOM_MODELS_CONFIG_PATH")
             if env_path:
-                # Environment variable path - translate for Docker if needed
-                translated_path = translate_path_for_environment(env_path)
-                self.config_path = Path(translated_path)
+                # Environment variable path
+                self.config_path = Path(env_path)
             else:
                 # Default to conf/custom_models.json - use relative path from this file
-                # This works both in development and container environments
+                # This works in development environment
                 self.config_path = Path(__file__).parent.parent / "conf" / "custom_models.json"
 
         # Load configuration

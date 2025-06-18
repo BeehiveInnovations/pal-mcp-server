@@ -320,32 +320,7 @@ def _get_api_key_for_provider(cls, provider_type: ProviderType) -> Optional[str]
     # ... rest of the method
 ```
 
-### 4. Configure Docker Environment Variables
-
-**CRITICAL**: You must add your provider's environment variables to `docker-compose.yml` for them to be available in the Docker container.
-
-Add your API key and restriction variables to the `environment` section:
-
-```yaml
-services:
-  zen-mcp:
-    # ... other configuration ...
-    environment:
-      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      - EXAMPLE_API_KEY=${EXAMPLE_API_KEY:-}  # Add this line
-      # OpenRouter support
-      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
-      # ... other variables ...
-      # Model usage restrictions
-      - OPENAI_ALLOWED_MODELS=${OPENAI_ALLOWED_MODELS:-}
-      - GOOGLE_ALLOWED_MODELS=${GOOGLE_ALLOWED_MODELS:-}
-      - EXAMPLE_ALLOWED_MODELS=${EXAMPLE_ALLOWED_MODELS:-}  # Add this line
-```
-
-⚠️ **Without this step**, the Docker container won't have access to your environment variables, and your provider won't be registered even if the API key is set in your `.env` file.
-
-### 5. Register Provider in server.py
+### 4. Register Provider in server.py
 
 The `configure_providers()` function in `server.py` handles provider registration. You need to:
 
@@ -672,7 +647,7 @@ if __name__ == "__main__":
 ```
 
 The simulator test is crucial because it:
-- Validates your provider works in the actual Docker environment
+- Validates your provider works in the actual server environment
 - Tests real API integration, not just mocked behavior
 - Verifies model name resolution works correctly
 - Checks conversation continuity across requests
@@ -799,7 +774,7 @@ Before submitting your PR:
 - [ ] Provider implementation complete with all required methods
 - [ ] API key mapping added to `_get_api_key_for_provider()` in `providers/registry.py`
 - [ ] Provider added to `PROVIDER_PRIORITY_ORDER` in `registry.py` (if native provider)
-- [ ] **Environment variables added to `docker-compose.yml`** (API key and restrictions)
+- [ ] **Environment variables added to `.env` file** (API key and restrictions)
 - [ ] Provider imported and registered in `server.py`'s `configure_providers()`
 - [ ] API key checking added to `configure_providers()` function
 - [ ] Error message updated to include new provider

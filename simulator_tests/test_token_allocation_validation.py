@@ -11,7 +11,6 @@ This test validates that:
 
 import datetime
 import re
-import subprocess
 
 from .base_test import BaseSimulatorTest
 
@@ -26,78 +25,6 @@ class TokenAllocationValidationTest(BaseSimulatorTest):
     @property
     def test_description(self) -> str:
         return "Token allocation and conversation history validation"
-
-    def get_recent_server_logs(self) -> str:
-        """Get recent server logs from the log file directly"""
-        try:
-            cmd = ["docker", "exec", self.container_name, "tail", "-n", "300", "/tmp/mcp_server.log"]
-            result = subprocess.run(cmd, capture_output=True, text=True)
-
-            if result.returncode == 0:
-                return result.stdout
-            else:
-                self.logger.warning(f"Failed to read server logs: {result.stderr}")
-                return ""
-        except Exception as e:
-            self.logger.error(f"Failed to get server logs: {e}")
-            return ""
-
-    def extract_conversation_usage_logs(self, logs: str) -> list[dict[str, int]]:
-        """Extract actual conversation token usage from server logs"""
-        usage_logs = []
-
-        # Look for conversation debug logs that show actual usage
-        lines = logs.split("\n")
-
-        for i, line in enumerate(lines):
-            if "[CONVERSATION_DEBUG] Token budget calculation:" in line:
-                # Found start of token budget log, extract the following lines
-                usage = {}
-                for j in range(1, 8):  # Next 7 lines contain the usage details
-                    if i + j < len(lines):
-                        detail_line = lines[i + j]
-
-                        # Parse Total capacity: 1,048,576
-                        if "Total capacity:" in detail_line:
-                            match = re.search(r"Total capacity:\s*([\d,]+)", detail_line)
-                            if match:
-                                usage["total_capacity"] = int(match.group(1).replace(",", ""))
-
-                        # Parse Content allocation: 838,860
-                        elif "Content allocation:" in detail_line:
-                            match = re.search(r"Content allocation:\s*([\d,]+)", detail_line)
-                            if match:
-                                usage["content_allocation"] = int(match.group(1).replace(",", ""))
-
-                        # Parse Conversation tokens: 12,345
-                        elif "Conversation tokens:" in detail_line:
-                            match = re.search(r"Conversation tokens:\s*([\d,]+)", detail_line)
-                            if match:
-                                usage["conversation_tokens"] = int(match.group(1).replace(",", ""))
-
-                        # Parse Remaining tokens: 825,515
-                        elif "Remaining tokens:" in detail_line:
-                            match = re.search(r"Remaining tokens:\s*([\d,]+)", detail_line)
-                            if match:
-                                usage["remaining_tokens"] = int(match.group(1).replace(",", ""))
-
-                if usage:  # Only add if we found some usage data
-                    usage_logs.append(usage)
-
-        return usage_logs
-
-    def extract_conversation_token_usage(self, logs: str) -> list[int]:
-        """Extract conversation token usage from logs"""
-        usage_values = []
-
-        # Look for conversation token usage logs
-        pattern = r"Conversation history token usage:\s*([\d,]+)"
-        matches = re.findall(pattern, logs)
-
-        for match in matches:
-            usage_values.append(int(match.replace(",", "")))
-
-        return usage_values
 
     def run_test(self) -> bool:
         """Test token allocation and conversation history functionality"""

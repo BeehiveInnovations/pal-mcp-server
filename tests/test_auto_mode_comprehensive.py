@@ -61,7 +61,7 @@ class TestAutoModeComprehensive:
 
         # Re-register providers for subsequent tests (like conftest.py does)
         from providers.gemini import GeminiModelProvider
-        from providers.openai import OpenAIModelProvider
+        from providers.openai_provider import OpenAIModelProvider
         from providers.xai import XAIModelProvider
 
         ModelProviderRegistry.register_provider(ProviderType.GOOGLE, GeminiModelProvider)
@@ -178,7 +178,7 @@ class TestAutoModeComprehensive:
 
             # Register providers based on configuration
             from providers.gemini import GeminiModelProvider
-            from providers.openai import OpenAIModelProvider
+            from providers.openai_provider import OpenAIModelProvider
             from providers.openrouter import OpenRouterProvider
             from providers.xai import XAIModelProvider
 
@@ -349,7 +349,7 @@ class TestAutoModeComprehensive:
 
             # Register all native providers
             from providers.gemini import GeminiModelProvider
-            from providers.openai import OpenAIModelProvider
+            from providers.openai_provider import OpenAIModelProvider
             from providers.xai import XAIModelProvider
 
             ModelProviderRegistry.register_provider(ProviderType.GOOGLE, GeminiModelProvider)
@@ -460,7 +460,7 @@ class TestAutoModeComprehensive:
 
             # Register providers
             from providers.gemini import GeminiModelProvider
-            from providers.openai import OpenAIModelProvider
+            from providers.openai_provider import OpenAIModelProvider
 
             ModelProviderRegistry.register_provider(ProviderType.GOOGLE, GeminiModelProvider)
             ModelProviderRegistry.register_provider(ProviderType.OPENAI, OpenAIModelProvider)

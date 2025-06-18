@@ -5,9 +5,7 @@ This project includes comprehensive test coverage through unit tests and integra
 ## Running Tests
 
 ### Prerequisites
-- Python virtual environment activated: `source venv/bin/activate`
-- All dependencies installed: `pip install -r requirements.txt`
-- Docker containers running (for simulator tests): `./run-server.sh`
+- Environment set up: `./run-server.sh`
   - Use `./run-server.sh -f` to automatically follow logs after starting
 
 ### Unit Tests
@@ -23,9 +21,9 @@ python -m pytest tests/test_providers.py -xvs
 
 ### Simulator Tests
 
-Simulator tests replicate real-world Claude CLI interactions with the MCP server running in Docker. Unlike unit tests that test isolated functions, simulator tests validate the complete end-to-end flow including:
+Simulator tests replicate real-world Claude CLI interactions with the standalone MCP server. Unlike unit tests that test isolated functions, simulator tests validate the complete end-to-end flow including:
 - Actual MCP protocol communication
-- Docker container interactions
+- Standalone server interactions
 - Multi-turn conversations across tools
 - Log output validation
 
@@ -33,7 +31,7 @@ Simulator tests replicate real-world Claude CLI interactions with the MCP server
 
 #### Monitoring Logs During Tests
 
-**Important**: The MCP stdio protocol interferes with stderr output during tool execution. While server startup logs appear in `docker compose logs`, tool execution logs are only written to file-based logs inside the container. This is a known limitation of the stdio-based MCP protocol and cannot be fixed without changing the MCP implementation.
+**Important**: The MCP stdio protocol interferes with stderr output during tool execution. Tool execution logs are written to local log files. This is a known limitation of the stdio-based MCP protocol.
 
 To monitor logs during test execution:
 
@@ -42,20 +40,20 @@ To monitor logs during test execution:
 ./run-server.sh -f
 
 # Or manually monitor main server logs (includes all tool execution details)
-docker exec zen-mcp-server tail -f -n 500 /tmp/mcp_server.log
+tail -f -n 500 logs/mcp_server.log
 
 # Monitor MCP activity logs (tool calls and completions)  
-docker exec zen-mcp-server tail -f /tmp/mcp_activity.log
+tail -f logs/mcp_activity.log
 
 # Check log file sizes (logs rotate at 20MB)
-docker exec zen-mcp-server ls -lh /tmp/mcp_*.log*
+ls -lh logs/mcp_*.log*
 ```
 
 **Log Rotation**: All log files are configured with automatic rotation at 20MB to prevent disk space issues. The server keeps:
 - 10 rotated files for mcp_server.log (200MB total)
 - 5 rotated files for mcp_activity.log (100MB total)
 
-**Why logs don't appear in docker compose logs**: The MCP stdio_server captures stderr during tool execution to prevent interference with the JSON-RPC protocol communication. This means that while you'll see startup logs in `docker compose logs`, you won't see tool execution logs there.
+**Why logs appear in files**: The MCP stdio_server captures stderr during tool execution to prevent interference with the JSON-RPC protocol communication. This means tool execution logs are written to files rather than displayed in console output.
 
 #### Running All Simulator Tests
 ```bash
@@ -65,7 +63,7 @@ python communication_simulator_test.py
 # Run with verbose output for debugging
 python communication_simulator_test.py --verbose
 
-# Keep Docker logs after tests for inspection
+# Keep server logs after tests for inspection
 python communication_simulator_test.py --keep-logs
 ```
 
@@ -79,7 +77,7 @@ python communication_simulator_test.py --individual basic_conversation
 # Examples of available tests:
 python communication_simulator_test.py --individual content_validation
 python communication_simulator_test.py --individual cross_tool_continuation
-python communication_simulator_test.py --individual redis_validation
+python communication_simulator_test.py --individual memory_validation
 ```
 
 #### Other Options
@@ -90,8 +88,6 @@ python communication_simulator_test.py --list-tests
 # Run multiple specific tests (not all)
 python communication_simulator_test.py --tests basic_conversation content_validation
 
-# Force Docker environment rebuild before running tests
-python communication_simulator_test.py --rebuild
 ```
 
 ### Code Quality Checks
@@ -135,11 +131,8 @@ For detailed contribution guidelines, testing requirements, and code quality sta
 ### Quick Testing Reference
 
 ```bash
-# Activate virtual environment
-source venv/bin/activate
-
-# Run linting checks
-ruff check . && black --check . && isort --check-only .
+# Run quality checks
+./code_quality_checks.sh
 
 # Run unit tests
 python -m pytest -xvs

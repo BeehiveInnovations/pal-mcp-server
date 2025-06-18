@@ -35,7 +35,7 @@ class ToolOutput(BaseModel):
     status: Literal[
         "success",
         "error",
-        "clarification_required",
+        "files_required_to_continue",
         "full_codereview_required",
         "focused_review_required",
         "test_sample_needed",
@@ -55,11 +55,11 @@ class ToolOutput(BaseModel):
     )
 
 
-class ClarificationRequest(BaseModel):
-    """Request for additional context or clarification"""
+class FilesNeededRequest(BaseModel):
+    """Request for missing files / code to continue"""
 
-    status: Literal["clarification_required"] = "clarification_required"
-    question: str = Field(..., description="Question to ask Claude for more context")
+    status: Literal["files_required_to_continue"] = "files_required_to_continue"
+    mandatory_instructions: str = Field(..., description="Critical instructions for Claude regarding required context")
     files_needed: Optional[list[str]] = Field(
         default_factory=list, description="Specific files that are needed for analysis"
     )
@@ -362,7 +362,7 @@ class NoBugFound(BaseModel):
 
 # Registry mapping status strings to their corresponding Pydantic models
 SPECIAL_STATUS_MODELS = {
-    "clarification_required": ClarificationRequest,
+    "files_required_to_continue": FilesNeededRequest,
     "full_codereview_required": FullCodereviewRequired,
     "focused_review_required": FocusedReviewRequired,
     "test_sample_needed": TestSampleNeeded,

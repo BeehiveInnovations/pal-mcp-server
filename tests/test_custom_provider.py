@@ -31,8 +31,9 @@ class TestCustomProvider:
 
     def test_provider_initialization_missing_url(self):
         """Test CustomProvider raises error when URL is missing."""
-        with pytest.raises(ValueError, match="Custom API URL must be provided"):
-            CustomProvider(api_key="test-key")
+        with patch.dict(os.environ, {"CUSTOM_API_URL": ""}, clear=False):
+            with pytest.raises(ValueError, match="Custom API URL must be provided"):
+                CustomProvider(api_key="test-key")
 
     def test_validate_model_names_always_true(self):
         """Test CustomProvider accepts any model name."""

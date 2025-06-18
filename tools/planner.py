@@ -76,7 +76,8 @@ logger = logging.getLogger(__name__)
 PLANNER_FIELD_DESCRIPTIONS = {
     # Interactive planning fields for step-by-step planning
     "step": (
-        "Your current planning step. For the first step, describe the task/problem to plan. "
+        "Your current planning step. For the first step, describe the task/problem to plan and be extremely expressive "
+        "so that subsequent steps can break this down into simpler steps. "
         "For subsequent steps, provide the actual planning step content. Can include: regular planning steps, "
         "revisions of previous steps, questions about previous decisions, realizations about needing more analysis, "
         "changes in approach, etc."

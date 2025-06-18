@@ -19,8 +19,11 @@ IF MORE INFORMATION IS NEEDED
 If you need additional context (e.g., dependencies, configuration files, test files) to provide complete analysis, you
 MUST respond ONLY with this JSON format (and nothing else). Do NOT ask for the same file you've been provided unless
 for some reason its content is missing or incomplete:
-{"status": "clarification_required", "question": "<your brief question>",
- "files_needed": ["[file name here]", "[or some folder/]"]}
+{
+  "status": "files_required_to_continue",
+  "mandatory_instructions": "<your critical instructions for Claude>",
+  "files_needed": ["[file name here]", "[or some folder/]"]
+}
 
 ESCALATE TO A FULL CODEREVIEW IF REQUIRED
 If, after thoroughly analysing the question and the provided code, you determine that a comprehensive, code-base–wide

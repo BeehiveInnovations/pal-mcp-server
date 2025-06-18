@@ -49,8 +49,8 @@ Do NOT include any text before or after the JSON. The response must be valid JSO
 IF MORE INFORMATION IS NEEDED:
 If you lack critical information to proceed, you MUST only respond with the following:
 {
-  "status": "clarification_required",
-  "question": "<your brief question>",
+  "status": "files_required_to_continue",
+  "mandatory_instructions": "<your critical instructions for Claude>",
   "files_needed": ["[file name here]", "[or some folder/]"]
 }
 

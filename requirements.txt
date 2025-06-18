@@ -1,10 +1,10 @@
 mcp>=1.0.0
 google-genai>=1.19.0
-openai>=1.0.0
+openai>=1.55.2  # Minimum version for httpx 0.28.0 compatibility
 pydantic>=2.0.0
-redis>=5.0.0
+python-dotenv>=1.0.0
 
-# Development dependencies
-pytest>=7.4.0
-pytest-asyncio>=0.21.0
-pytest-mock>=3.11.0
+# Development dependencies (install with pip install -r requirements-dev.txt)
+# pytest>=7.4.0
+# pytest-asyncio>=0.21.0
+# pytest-mock>=3.11.0

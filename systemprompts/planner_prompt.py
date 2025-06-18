@@ -23,8 +23,11 @@ If Claude is discussing specific code, functions, or project components that was
 and you need additional context (e.g., related files, configuration, dependencies, test files) to provide meaningful
 collaboration, you MUST respond ONLY with this JSON format (and nothing else). Do NOT ask for the same file you've been
 provided unless for some reason its content is missing or incomplete:
-{"status": "clarification_required", "question": "<your brief question>",
- "files_needed": ["[file name here]", "[or some folder/]"]}
+{
+  "status": "files_required_to_continue",
+  "mandatory_instructions": "<your critical instructions for Claude>",
+  "files_needed": ["[file name here]", "[or some folder/]"]
+}
 
 PLANNING METHODOLOGY:
 
@@ -63,8 +66,8 @@ Do NOT include any text before or after the JSON. The response must be valid JSO
 IF MORE INFORMATION IS NEEDED:
 If you lack critical information to proceed with planning, you MUST only respond with:
 {
-  "status": "clarification_required",
-  "question": "<your brief question>",
+  "status": "files_required_to_continue",
+  "mandatory_instructions": "<your critical instructions for Claude>",
   "files_needed": ["<file name here>", "<or some folder/>"]
 }
 

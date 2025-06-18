@@ -86,7 +86,7 @@ class TestAutoModeProviderSelection:
                 os.environ.pop(key, None)
 
             # Register only OpenAI provider
-            from providers.openai import OpenAIModelProvider
+            from providers.openai_provider import OpenAIModelProvider
 
             ModelProviderRegistry.register_provider(ProviderType.OPENAI, OpenAIModelProvider)
 
@@ -127,7 +127,7 @@ class TestAutoModeProviderSelection:
 
             # Register both providers
             from providers.gemini import GeminiModelProvider
-            from providers.openai import OpenAIModelProvider
+            from providers.openai_provider import OpenAIModelProvider
 
             ModelProviderRegistry.register_provider(ProviderType.GOOGLE, GeminiModelProvider)
             ModelProviderRegistry.register_provider(ProviderType.OPENAI, OpenAIModelProvider)
@@ -212,7 +212,7 @@ class TestAutoModeProviderSelection:
 
             # Register both providers
             from providers.gemini import GeminiModelProvider
-            from providers.openai import OpenAIModelProvider
+            from providers.openai_provider import OpenAIModelProvider
 
             ModelProviderRegistry.register_provider(ProviderType.GOOGLE, GeminiModelProvider)
             ModelProviderRegistry.register_provider(ProviderType.OPENAI, OpenAIModelProvider)
@@ -256,7 +256,7 @@ class TestAutoModeProviderSelection:
 
             # Register all providers
             from providers.gemini import GeminiModelProvider
-            from providers.openai import OpenAIModelProvider
+            from providers.openai_provider import OpenAIModelProvider
             from providers.xai import XAIModelProvider
 
             ModelProviderRegistry.register_provider(ProviderType.GOOGLE, GeminiModelProvider)
@@ -307,7 +307,7 @@ class TestAutoModeProviderSelection:
 
             # Register all providers
             from providers.gemini import GeminiModelProvider
-            from providers.openai import OpenAIModelProvider
+            from providers.openai_provider import OpenAIModelProvider
             from providers.xai import XAIModelProvider
 
             ModelProviderRegistry.register_provider(ProviderType.GOOGLE, GeminiModelProvider)

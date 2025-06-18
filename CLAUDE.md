@@ -20,31 +20,31 @@ This script automatically runs:
 - Ruff linting with auto-fix
 - Black code formatting 
 - Import sorting with isort
-- Complete unit test suite (361 tests)
+- Complete unit test suite
 - Verification that all checks pass 100%
 
 ### Server Management
 
-#### Start/Restart the Server
+#### Setup/Update the Server
 ```bash
-# Start or restart the Docker containers
+# Run setup script (handles everything)
 ./run-server.sh
 ```
 
 This script will:
-- Build/rebuild Docker images if needed
-- Start the MCP server container (`zen-mcp-server`)
-- Start the Redis container (`zen-mcp-redis`)
-- Set up proper networking and volumes
+- Set up Python virtual environment
+- Install all dependencies
+- Create/update .env file
+- Configure MCP with Claude
+- Verify API keys
 
-#### Check Server Status
+#### View Logs
 ```bash
-# Check if containers are running
-docker ps
+# Follow logs in real-time
+./run-server.sh -f
 
-# Look for these containers:
-# - zen-mcp-server
-# - zen-mcp-redis
+# Or manually view logs
+tail -f logs/mcp_server.log
 ```
 
 ### Log Management
@@ -52,26 +52,26 @@ docker ps
 #### View Server Logs
 ```bash
 # View last 500 lines of server logs
-docker exec zen-mcp-server tail -n 500 /tmp/mcp_server.log
+tail -n 500 logs/mcp_server.log
 
 # Follow logs in real-time
-docker exec zen-mcp-server tail -f /tmp/mcp_server.log
+tail -f logs/mcp_server.log
 
-# View specific number of lines (replace 100 with desired count)
-docker exec zen-mcp-server tail -n 100 /tmp/mcp_server.log
+# View specific number of lines
+tail -n 100 logs/mcp_server.log
 
 # Search logs for specific patterns
-docker exec zen-mcp-server grep "ERROR" /tmp/mcp_server.log
-docker exec zen-mcp-server grep "tool_name" /tmp/mcp_server.log
+grep "ERROR" logs/mcp_server.log
+grep "tool_name" logs/mcp_activity.log
 ```
 
 #### Monitor Tool Executions Only
 ```bash
 # View tool activity log (focused on tool calls and completions)
-docker exec zen-mcp-server tail -n 100 /tmp/mcp_activity.log
+tail -n 100 logs/mcp_activity.log
 
 # Follow tool activity in real-time
-docker exec zen-mcp-server tail -f /tmp/mcp_activity.log
+tail -f logs/mcp_activity.log
 
 # Use the dedicated log monitor (shows tool calls, completions, errors)
 python log_monitor.py
@@ -86,36 +86,21 @@ The `log_monitor.py` script provides a real-time view of:
 #### All Available Log Files
 ```bash
 # Main server log (all activity)
-docker exec zen-mcp-server tail -f /tmp/mcp_server.log
+tail -f logs/mcp_server.log
 
 # Tool activity only (TOOL_CALL, TOOL_COMPLETED, etc.)
-docker exec zen-mcp-server tail -f /tmp/mcp_activity.log
+tail -f logs/mcp_activity.log
 
-# Debug information
-docker exec zen-mcp-server tail -f /tmp/gemini_debug.log
-
-# Overflow logs (when main log gets too large)
-docker exec zen-mcp-server tail -f /tmp/mcp_server_overflow.log
-```
-
-#### Debug Container Issues
-```bash
-# Check container logs (Docker level)
-docker logs zen-mcp-server
-
-# Execute interactive shell in container
-docker exec -it zen-mcp-server /bin/bash
-
-# Check Redis container logs
-docker logs zen-mcp-redis
+# Debug information (if configured)
+tail -f logs/debug.log
 ```
 
 ### Testing
 
 Simulation tests are available to test the MCP server in a 'live' scenario, using your configured
 API keys to ensure the models are working and the server is able to communicate back and forth. 
-IMPORTANT: Any time any code is changed or updated, you MUST first restart it with ./run-server.sh OR
-pass `--rebuild` to the `communication_simulator_test.py` script (if running it for the first time after changes) so that it's able to restart and use the latest code.
+
+**IMPORTANT**: After any code changes, restart your Claude session for the changes to take effect.
 
 #### Run All Simulator Tests
 ```bash
@@ -124,9 +109,6 @@ python communication_simulator_test.py
 
 # Run tests with verbose output
 python communication_simulator_test.py --verbose
-
-# Force rebuild environment before testing
-python communication_simulator_test.py --rebuild
 ```
 
 #### Run Individual Simulator Tests (Recommended)
@@ -138,17 +120,13 @@ python communication_simulator_test.py --list-tests
 python communication_simulator_test.py --individual basic_conversation
 python communication_simulator_test.py --individual content_validation
 python communication_simulator_test.py --individual cross_tool_continuation
-python communication_simulator_test.py --individual logs_validation
-python communication_simulator_test.py --individual redis_validation
+python communication_simulator_test.py --individual memory_validation
 
-# Run multiple specific tests (alternative approach)
+# Run multiple specific tests
 python communication_simulator_test.py --tests basic_conversation content_validation
 
 # Run individual test with verbose output for debugging
-python communication_simulator_test.py --individual logs_validation --verbose
-
-# Individual tests provide full Docker setup and teardown per test
-# This ensures clean state and better error isolation
+python communication_simulator_test.py --individual memory_validation --verbose
 ```
 
 Available simulator tests include:
@@ -158,8 +136,7 @@ Available simulator tests include:
 - `cross_tool_continuation` - Cross-tool conversation continuation scenarios
 - `cross_tool_comprehensive` - Comprehensive cross-tool file deduplication and continuation
 - `line_number_validation` - Line number handling validation across tools
-- `logs_validation` - Docker logs validation
-- `redis_validation` - Redis conversation memory validation
+- `memory_validation` - Conversation memory validation
 - `model_thinking_config` - Model-specific thinking configuration behavior
 - `o3_model_selection` - O3 model selection and usage validation
 - `ollama_custom_url` - Ollama custom URL endpoint functionality
@@ -193,12 +170,13 @@ python -m pytest tests/ --cov=. --cov-report=html
 #### Before Making Changes
 1. Ensure virtual environment is activated: `source venv/bin/activate`
 2. Run quality checks: `./code_quality_checks.sh`
-3. Check server is running: `./run-server.sh`
+3. Check logs to ensure server is healthy: `tail -n 50 logs/mcp_server.log`
 
 #### After Making Changes
 1. Run quality checks again: `./code_quality_checks.sh`
 2. Run relevant simulator tests: `python communication_simulator_test.py --individual <test_name>`
-3. Check logs for any issues: `docker exec zen-mcp-server tail -n 100 /tmp/mcp_server.log`
+3. Check logs for any issues: `tail -n 100 logs/mcp_server.log`
+4. Restart Claude session to use updated code
 
 #### Before Committing/PR
 1. Final quality check: `./code_quality_checks.sh`
@@ -207,18 +185,17 @@ python -m pytest tests/ --cov=. --cov-report=html
 
 ### Common Troubleshooting
 
-#### Container Issues
+#### Server Issues
 ```bash
-# Restart containers if they're not responding
-docker stop zen-mcp-server zen-mcp-redis
+# Check if Python environment is set up correctly
 ./run-server.sh
 
-# Check container resource usage
-docker stats zen-mcp-server
+# View recent errors
+grep "ERROR" logs/mcp_server.log | tail -20
 
-# Remove containers and rebuild from scratch
-docker rm -f zen-mcp-server zen-mcp-redis
-./run-server.sh
+# Check virtual environment
+which python
+# Should show: .../zen-mcp-server/.zen_venv/bin/python
 ```
 
 #### Test Failures
@@ -227,10 +204,10 @@ docker rm -f zen-mcp-server zen-mcp-redis
 python communication_simulator_test.py --individual <test_name> --verbose
 
 # Check server logs during test execution
-docker exec zen-mcp-server tail -f /tmp/mcp_server.log
+tail -f logs/mcp_server.log
 
-# Run tests while keeping containers running for debugging
-python communication_simulator_test.py --keep-logs
+# Run tests with debug output
+LOG_LEVEL=DEBUG python communication_simulator_test.py --individual <test_name>
 ```
 
 #### Linting Issues
@@ -249,19 +226,19 @@ isort --check-only .
 ### File Structure Context
 
 - `./code_quality_checks.sh` - Comprehensive quality check script
-- `./run-server.sh` - Docker container setup and management
+- `./run-server.sh` - Server setup and management
 - `communication_simulator_test.py` - End-to-end testing framework
 - `simulator_tests/` - Individual test modules
 - `tests/` - Unit test suite
 - `tools/` - MCP tool implementations
 - `providers/` - AI provider implementations
 - `systemprompts/` - System prompt definitions
+- `logs/` - Server log files
 
 ### Environment Requirements
 
-- Python 3.8+ with virtual environment activated
-- Docker and Docker Compose installed
+- Python 3.9+ with virtual environment
 - All dependencies from `requirements.txt` installed
-- Proper API keys configured in environment or config files
+- Proper API keys configured in `.env` file
 
 This guide provides everything needed to efficiently work with the Zen MCP Server codebase using Claude. Always run quality checks before and after making changes to ensure code integrity.

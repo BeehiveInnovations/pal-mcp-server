@@ -15,8 +15,8 @@ from .base import BaseTool, ToolRequest
 # Field descriptions to avoid duplication between Pydantic and JSON schema
 TRACER_FIELD_DESCRIPTIONS = {
     "prompt": (
-        "Detailed description of what to trace and WHY you need this analysis. Include context about what "
-        "you're trying to understand, debug, or analyze. For precision mode: describe the specific "
+        "Detailed description of what to trace and WHY you need this analysis. MUST include context about what "
+        "you're trying to understand, debug, analyze or find. For precision mode: describe the specific "
         "method/function and what aspect of its execution flow you need to understand. For dependencies "
         "mode: describe the class/module and what relationships you need to map. Example: 'I need to "
         "understand how BookingManager.finalizeInvoice method is called throughout the system and what "

@@ -241,35 +241,28 @@ def handle_everything(user_input, config, database):
             # Validate logs
             self.logger.info("  📋 Validating execution logs...")
 
-            # Get server logs from the actual log file inside the container
-            result = self.run_command(
-                ["docker", "exec", self.container_name, "tail", "-500", "/tmp/mcp_server.log"], capture_output=True
-            )
+            # Get server logs using inherited method
+            logs = self.get_recent_server_logs(500)
 
-            if result.returncode == 0:
-                logs = result.stdout.decode() + result.stderr.decode()
+            # Look for refactor tool execution patterns
+            refactor_patterns = [
+                "[REFACTOR]",
+                "refactor tool",
+                "codesmells",
+                "Token budget",
+                "Code files embedded successfully",
+            ]
 
-                # Look for refactor tool execution patterns
-                refactor_patterns = [
-                    "[REFACTOR]",
-                    "refactor tool",
-                    "codesmells",
-                    "Token budget",
-                    "Code files embedded successfully",
-                ]
+            patterns_found = 0
+            for pattern in refactor_patterns:
+                if pattern in logs:
+                    patterns_found += 1
+                    self.logger.debug(f"  ✅ Found log pattern: {pattern}")
 
-                patterns_found = 0
-                for pattern in refactor_patterns:
-                    if pattern in logs:
-                        patterns_found += 1
-                        self.logger.debug(f"  ✅ Found log pattern: {pattern}")
-
-                if patterns_found >= 3:
-                    self.logger.info(f"  ✅ Log validation passed ({patterns_found}/{len(refactor_patterns)} patterns)")
-                else:
-                    self.logger.warning(f"  ⚠️ Only found {patterns_found}/{len(refactor_patterns)} log patterns")
+            if patterns_found >= 3:
+                self.logger.info(f"  ✅ Log validation passed ({patterns_found}/{len(refactor_patterns)} patterns)")
             else:
-                self.logger.warning("  ⚠️ Could not retrieve Docker logs")
+                self.logger.warning(f"  ⚠️ Only found {patterns_found}/{len(refactor_patterns)} log patterns")
 
             self.logger.info("  ✅ Refactor tool validation completed successfully")
             return True

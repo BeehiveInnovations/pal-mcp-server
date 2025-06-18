@@ -6,18 +6,18 @@ by simulating real Claude CLI communications and validating conversation
 continuity, file handling, deduplication features, and clarification scenarios.
 
 Test Flow:
-1. Setup fresh Docker environment with clean containers
+1. Setup standalone server environment
 2. Load and run individual test modules
-3. Validate system behavior through logs and Redis
+3. Validate system behavior through logs and memory
 4. Cleanup and report results
 
 Usage:
-    python communication_simulator_test.py [--verbose] [--keep-logs] [--tests TEST_NAME...] [--individual TEST_NAME] [--rebuild]
+    python communication_simulator_test.py [--verbose] [--keep-logs] [--tests TEST_NAME...] [--individual TEST_NAME] [--setup]
 
     --tests: Run specific tests only (space-separated)
     --list-tests: List all available tests
     --individual: Run a single test individually
-    --rebuild: Force rebuild Docker environment using run-server.sh
+    --setup: Force setup standalone server environment using run-server.sh
 
 Available tests:
     basic_conversation          - Basic conversation flow with chat tool
@@ -25,8 +25,8 @@ Available tests:
     per_tool_deduplication      - File deduplication for individual tools
     cross_tool_continuation     - Cross-tool conversation continuation scenarios
     cross_tool_comprehensive    - Comprehensive cross-tool integration testing
-    logs_validation             - Docker logs validation
-    redis_validation            - Redis conversation memory validation
+    line_number_validation      - Line number handling validation across tools
+    memory_validation           - Conversation memory validation
     model_thinking_config       - Model thinking configuration testing
     o3_model_selection          - O3 model selection and routing testing
     ollama_custom_url           - Ollama custom URL configuration testing
@@ -45,11 +45,11 @@ Examples:
     # Run only basic conversation and content validation tests
     python communication_simulator_test.py --tests basic_conversation content_validation
 
-    # Run a single test individually (with full Docker setup)
+    # Run a single test individually (with full standalone setup)
     python communication_simulator_test.py --individual content_validation
 
-    # Force rebuild Docker environment before running tests
-    python communication_simulator_test.py --rebuild
+    # Force setup standalone server environment before running tests
+    python communication_simulator_test.py --setup
 
     # List available tests
     python communication_simulator_test.py --list-tests
@@ -68,15 +68,15 @@ class CommunicationSimulator:
     """Simulates real-world Claude CLI communication with MCP Gemini server"""
 
     def __init__(
-        self, verbose: bool = False, keep_logs: bool = False, selected_tests: list[str] = None, rebuild: bool = False
+        self, verbose: bool = False, keep_logs: bool = False, selected_tests: list[str] = None, setup: bool = False
     ):
         self.verbose = verbose
         self.keep_logs = keep_logs
         self.selected_tests = selected_tests or []
-        self.rebuild = rebuild
+        self.setup = setup
         self.temp_dir = None
-        self.container_name = "zen-mcp-server"
-        self.redis_container = "zen-mcp-redis"
+        self.server_process = None
+        self.python_path = self._get_python_path()
 
         # Import test registry
         from simulator_tests import TEST_REGISTRY
@@ -95,6 +95,23 @@ class CommunicationSimulator:
         log_level = logging.DEBUG if verbose else logging.INFO
         logging.basicConfig(level=log_level, format="%(asctime)s - %(levelname)s - %(message)s")
         self.logger = logging.getLogger(__name__)
+
+    def _get_python_path(self) -> str:
+        """Get the Python path for the virtual environment"""
+        current_dir = os.getcwd()
+        venv_python = os.path.join(current_dir, "venv", "bin", "python")
+
+        if os.path.exists(venv_python):
+            return venv_python
+
+        # Try .zen_venv as fallback
+        zen_venv_python = os.path.join(current_dir, ".zen_venv", "bin", "python")
+        if os.path.exists(zen_venv_python):
+            return zen_venv_python
+
+        # Fallback to system python if venv doesn't exist
+        self.logger.warning("Virtual environment not found, using system python")
+        return "python"
 
     def _create_test_runner(self, test_class):
         """Create a test runner function for a test class"""
@@ -118,13 +135,13 @@ class CommunicationSimulator:
             self.temp_dir = tempfile.mkdtemp(prefix="mcp_test_")
             self.logger.debug(f"Created temp directory: {self.temp_dir}")
 
-            # Only run run-server.sh if rebuild is requested
-            if self.rebuild:
+            # Only run run-server.sh if setup is requested
+            if self.setup:
                 if not self._run_server_script():
                     return False
 
-            # Always verify containers are running (regardless of rebuild)
-            return self._verify_existing_containers()
+            # Always verify server environment is available
+            return self._verify_server_environment()
 
         except Exception as e:
             self.logger.error(f"Failed to setup test environment: {e}")
@@ -160,29 +177,40 @@ class CommunicationSimulator:
             self.logger.error(f"Failed to run run-server.sh: {e}")
             return False
 
-    def _verify_existing_containers(self) -> bool:
-        """Verify that required containers are already running (no setup)"""
+    def _verify_server_environment(self) -> bool:
+        """Verify that server environment is ready"""
         try:
-            self.logger.info("Verifying existing Docker containers...")
+            self.logger.info("Verifying standalone server environment...")
 
-            result = self._run_command(["docker", "ps", "--format", "{{.Names}}"], capture_output=True)
-            running_containers = result.stdout.decode().strip().split("\n")
+            # Check if server.py exists
+            server_file = "server.py"
+            if not os.path.exists(server_file):
+                self.logger.error(f"Server file not found: {server_file}")
+                self.logger.error("Please ensure you're in the correct directory and server.py exists")
+                return False
 
-            required = [self.container_name, self.redis_container]
-            for container in required:
-                if container not in running_containers:
-                    self.logger.error(f"Required container not running: {container}")
-                    self.logger.error(
-                        "Please start Docker containers first, or use --rebuild to set them up automatically"
-                    )
+            # Check if virtual environment is available
+            if not os.path.exists(self.python_path):
+                self.logger.error(f"Python executable not found: {self.python_path}")
+                self.logger.error("Please run ./run-server.sh first to set up the environment")
+                return False
+
+            # Check if required dependencies are available
+            try:
+                result = self._run_command([self.python_path, "-c", "import json; print('OK')"], capture_output=True)
+                if result.returncode != 0:
+                    self.logger.error("Python environment validation failed")
                     return False
+            except Exception as e:
+                self.logger.error(f"Python environment check failed: {e}")
+                return False
 
-            self.logger.info(f"All required containers are running: {required}")
+            self.logger.info("Standalone server environment is ready")
             return True
 
         except Exception as e:
-            self.logger.error(f"Container verification failed: {e}")
-            self.logger.error("Please ensure Docker is running and containers are available, or use --rebuild")
+            self.logger.error(f"Server environment verification failed: {e}")
+            self.logger.error("Please ensure the server environment is set up correctly, or use --setup")
             return False
 
     def simulate_claude_cli_session(self) -> bool:
@@ -348,11 +376,20 @@ class CommunicationSimulator:
         try:
             self.logger.info("Cleaning up test environment...")
 
-            # Note: We don't stop Docker services ourselves - let run-server.sh handle Docker lifecycle
+            # Stop any running server processes
+            if self.server_process and self.server_process.poll() is None:
+                self.logger.info("Stopping server process...")
+                self.server_process.terminate()
+                try:
+                    self.server_process.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    self.server_process.kill()
+                    self.server_process.wait()
+
             if not self.keep_logs:
-                self.logger.info("Test completed. Docker containers left running (use run-server.sh to manage)")
+                self.logger.info("Test completed. Standalone server process stopped.")
             else:
-                self.logger.info("Keeping logs and Docker services running for inspection")
+                self.logger.info("Keeping logs for inspection")
 
             # Remove temp directory
             if self.temp_dir and os.path.exists(self.temp_dir):
@@ -374,11 +411,13 @@ def parse_arguments():
     """Parse and validate command line arguments"""
     parser = argparse.ArgumentParser(description="Zen MCP Communication Simulator Test")
     parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose logging")
-    parser.add_argument("--keep-logs", action="store_true", help="Keep Docker services running for log inspection")
+    parser.add_argument("--keep-logs", action="store_true", help="Keep logs for inspection after test completion")
     parser.add_argument("--tests", "-t", nargs="+", help="Specific tests to run (space-separated)")
     parser.add_argument("--list-tests", action="store_true", help="List available tests and exit")
     parser.add_argument("--individual", "-i", help="Run a single test individually")
-    parser.add_argument("--rebuild", action="store_true", help="Force rebuild Docker environment using run-server.sh")
+    parser.add_argument(
+        "--setup", action="store_true", help="Force setup standalone server environment using run-server.sh"
+    )
 
     return parser.parse_args()
 
@@ -453,7 +492,7 @@ def main():
 
     # Initialize simulator consistently for all use cases
     simulator = CommunicationSimulator(
-        verbose=args.verbose, keep_logs=args.keep_logs, selected_tests=args.tests, rebuild=args.rebuild
+        verbose=args.verbose, keep_logs=args.keep_logs, selected_tests=args.tests, setup=args.setup
     )
 
     # Determine execution mode and run

@@ -25,14 +25,16 @@ from .base import BaseTool, ToolRequest
 
 # Field descriptions to avoid duplication between Pydantic and JSON schema
 CODEREVIEW_FIELD_DESCRIPTIONS = {
-    "files": "Code files or directories to review (must be FULL absolute paths to real files / folders - DO NOT SHORTEN)",
+    "files": "Code files or directories to review that are relevant to the code that needs review or are closely "
+    "related to the code or component that needs to be reviewed (must be FULL absolute paths to real files / folders - DO NOT SHORTEN)."
+    "Validate that these files exist on disk before sharing and only share code that is relevant.",
     "prompt": (
         "User's summary of what the code does, expected behavior, constraints, and review objectives. "
-        "IMPORTANT: Before using this tool, Claude should first perform its own preliminary review - "
+        "IMPORTANT: Before using this tool, you should first perform its own preliminary review - "
         "examining the code structure, identifying potential issues, understanding the business logic, "
-        "and noting areas of concern. Include Claude's initial observations about code quality, potential "
+        "and noting areas of concern. Include your initial observations about code quality, potential "
         "bugs, architectural patterns, and specific areas that need deeper scrutiny. This dual-perspective "
-        "approach (Claude's analysis + external model's review) provides more comprehensive feedback and "
+        "approach (your analysis + external model's review) provides more comprehensive feedback and "
         "catches issues that either reviewer might miss alone."
     ),
     "images": (
@@ -299,7 +301,7 @@ Please provide a code review aligned with the user's context and expectations, f
 
 ---
 
-**Claude's Next Steps:**
+**Your Next Steps:**
 
 1. **Understand the Context**: First examine the specific functions, files, and code sections mentioned in """
         """the review to understand each issue thoroughly.

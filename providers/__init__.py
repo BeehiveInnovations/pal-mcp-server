@@ -2,8 +2,8 @@
 
 from .base import ModelCapabilities, ModelProvider, ModelResponse
 from .gemini import GeminiModelProvider
-from .openai import OpenAIModelProvider
 from .openai_compatible import OpenAICompatibleProvider
+from .openai_provider import OpenAIModelProvider
 from .openrouter import OpenRouterProvider
 from .registry import ModelProviderRegistry
 

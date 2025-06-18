@@ -40,7 +40,7 @@ class CustomProvider(OpenAICompatibleProvider):
             api_key: API key for the custom endpoint. Can be empty string for
                     providers that don't require authentication (like Ollama).
                     Falls back to CUSTOM_API_KEY environment variable if not provided.
-            base_url: Base URL for the custom API endpoint (e.g., 'http://host.docker.internal:11434/v1').
+            base_url: Base URL for the custom API endpoint (e.g., 'http://localhost:11434/v1').
                      Falls back to CUSTOM_API_URL environment variable if not provided.
             **kwargs: Additional configuration passed to parent OpenAI-compatible provider
 

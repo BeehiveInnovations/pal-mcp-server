@@ -19,11 +19,6 @@ OPENAI_API_KEY=your-openai-key
 
 **Workspace Root:**
 ```env
-# Required: Workspace root directory for file access
-WORKSPACE_ROOT=/Users/your-username
-```
-- Path that contains all files Claude might reference
-- Defaults to `$HOME` for direct usage, auto-configured for Docker
 
 ### API Keys (At least one required)
 
@@ -55,15 +50,14 @@ OPENROUTER_API_KEY=your_openrouter_api_key_here
 **Option 3: Custom API Endpoints (Local models)**
 ```env
 # For Ollama, vLLM, LM Studio, etc.
-# IMPORTANT: Use host.docker.internal, NOT localhost (Docker requirement)
-CUSTOM_API_URL=http://host.docker.internal:11434/v1  # Ollama example
+CUSTOM_API_URL=http://localhost:11434/v1  # Ollama example
 CUSTOM_API_KEY=                                      # Empty for Ollama
 CUSTOM_MODEL_NAME=llama3.2                          # Default model
 ```
 
-**Docker Network Requirements:**
-- ❌ WRONG: `http://localhost:11434/v1` (Docker containers cannot reach localhost)
-- ✅ CORRECT: `http://host.docker.internal:11434/v1` (Docker can reach host services)
+**Local Model Connection:**
+- Use standard localhost URLs since the server runs natively
+- Example: `http://localhost:11434/v1` for Ollama
 
 ### Model Configuration
 
@@ -165,16 +159,12 @@ XAI_ALLOWED_MODELS=grok,grok-3-fast
 CUSTOM_MODELS_CONFIG_PATH=/path/to/your/custom_models.json
 ```
 
-**Redis Configuration:**
-```env
-# Redis URL for conversation threading (auto-configured for Docker)
-REDIS_URL=redis://redis:6379/0
-```
-
 **Conversation Settings:**
 ```env
-# How long AI-to-AI conversation threads persist (hours)
-CONVERSATION_TIMEOUT_HOURS=3
+# How long AI-to-AI conversation threads persist in memory (hours)
+# Conversations are auto-purged when claude closes its MCP connection or 
+# when a session is quit / re-launched 
+CONVERSATION_TIMEOUT_HOURS=5
 
 # Maximum conversation turns (each exchange = 2 turns)
 MAX_CONVERSATION_TURNS=20
@@ -215,7 +205,7 @@ CONVERSATION_TIMEOUT_HOURS=3
 ```env
 # Local models only
 DEFAULT_MODEL=llama3.2
-CUSTOM_API_URL=http://host.docker.internal:11434/v1
+CUSTOM_API_URL=http://localhost:11434/v1
 CUSTOM_API_KEY=
 CUSTOM_MODEL_NAME=llama3.2
 LOG_LEVEL=DEBUG
@@ -232,9 +222,9 @@ LOG_LEVEL=INFO
 
 ## Important Notes
 
-**Docker Networking:**
-- Always use `host.docker.internal` instead of `localhost` for custom APIs
-- The server runs in Docker and cannot access `localhost` directly
+**Local Networking:**
+- Use standard localhost URLs for local models
+- The server runs as a native Python process
 
 **API Key Priority:**
 - Native APIs take priority over OpenRouter when both are configured

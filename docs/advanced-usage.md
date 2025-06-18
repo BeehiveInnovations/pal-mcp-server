@@ -239,9 +239,9 @@ All tools that work with files support **both individual files and entire direct
 
 **The Zen MCP Server's most revolutionary feature** is its ability to maintain conversation context even after Claude's memory resets. This enables truly persistent AI collaboration across multiple sessions and context boundaries.
 
-### 🔥 **The Breakthrough**
+### **The Breakthrough**
 
-Even when Claude's context resets or compacts, conversations can continue seamlessly because other models (O3, Gemini) have access to the complete conversation history stored in Redis and can "remind" Claude of everything that was discussed.
+Even when Claude's context resets or compacts, conversations can continue seamlessly because other models (O3, Gemini) have access to the complete conversation history stored in memory and can "remind" Claude of everything that was discussed.
 
 ### Key Benefits
 

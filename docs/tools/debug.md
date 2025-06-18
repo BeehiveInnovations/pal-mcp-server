@@ -79,7 +79,7 @@ bug hunting and reduces the chance of wasting precious tokens back and forth.
 
 **Runtime Environment Issues:**
 ```
-"Debug deployment issues with Docker container startup failures, here's the runtime info: [environment details]"
+"Debug deployment issues with server startup failures, here's the runtime info: [environment details]"
 ```
 
 ## Debugging Methodology

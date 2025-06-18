@@ -80,7 +80,7 @@ OPENROUTER_API_KEY=your-openrouter-api-key
 > **Note:** Control which models can be used directly in your OpenRouter dashboard at [openrouter.ai](https://openrouter.ai/). 
 > This gives you centralized control over model access and spending limits.
 
-That's it! Docker Compose already includes all necessary configuration.
+That's it! The setup script handles all necessary configuration automatically.
 
 ### Option 2: Custom API Setup (Ollama, vLLM, etc.)
 
@@ -102,49 +102,46 @@ python -m vllm.entrypoints.openai.api_server --model meta-llama/Llama-2-7b-chat-
 #### 2. Configure Environment Variables
 ```bash
 # Add to your .env file
-CUSTOM_API_URL=http://host.docker.internal:11434/v1  # Ollama example
+CUSTOM_API_URL=http://localhost:11434/v1  # Ollama example
 CUSTOM_API_KEY=                                      # Empty for Ollama (no auth needed)
 CUSTOM_MODEL_NAME=llama3.2                          # Default model to use
 ```
 
-**Important: Docker URL Configuration**
+**Local Model Connection**
 
-Since the Zen MCP server always runs in Docker, you must use `host.docker.internal` instead of `localhost` to connect to local models running on your host machine:
+The Zen MCP server runs natively, so you can use standard localhost URLs to connect to local models:
 
 ```bash
-# For Ollama, vLLM, LM Studio, etc. running on your host machine
-CUSTOM_API_URL=http://host.docker.internal:11434/v1  # Ollama default port (NOT localhost!)
+# For Ollama, vLLM, LM Studio, etc. running on your machine
+CUSTOM_API_URL=http://localhost:11434/v1  # Ollama default port
 ```
-
-❌ **Never use:** `http://localhost:11434/v1` - Docker containers cannot reach localhost  
-✅ **Always use:** `http://host.docker.internal:11434/v1` - This allows Docker to access host services
 
 #### 3. Examples for Different Platforms
 
 **Ollama:**
 ```bash
-CUSTOM_API_URL=http://host.docker.internal:11434/v1
+CUSTOM_API_URL=http://localhost:11434/v1
 CUSTOM_API_KEY=
 CUSTOM_MODEL_NAME=llama3.2
 ```
 
 **vLLM:**
 ```bash
-CUSTOM_API_URL=http://host.docker.internal:8000/v1
+CUSTOM_API_URL=http://localhost:8000/v1
 CUSTOM_API_KEY=
 CUSTOM_MODEL_NAME=meta-llama/Llama-2-7b-chat-hf
 ```
 
 **LM Studio:**
 ```bash
-CUSTOM_API_URL=http://host.docker.internal:1234/v1
+CUSTOM_API_URL=http://localhost:1234/v1
 CUSTOM_API_KEY=lm-studio  # Or any value, LM Studio often requires some key
 CUSTOM_MODEL_NAME=local-model
 ```
 
 **text-generation-webui (with OpenAI extension):**
 ```bash
-CUSTOM_API_URL=http://host.docker.internal:5001/v1
+CUSTOM_API_URL=http://localhost:5001/v1
 CUSTOM_API_KEY=
 CUSTOM_MODEL_NAME=your-loaded-model
 ```

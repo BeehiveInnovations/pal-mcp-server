@@ -37,7 +37,7 @@ from utils.conversation_memory import (
     get_conversation_file_list,
     get_thread,
 )
-from utils.file_utils import read_file_content, read_files, translate_path_for_environment
+from utils.file_utils import read_file_content, read_files
 
 from .models import SPECIAL_STATUS_MODELS, ContinuationOffer, ToolOutput
 
@@ -1229,15 +1229,13 @@ When recommending searches, be specific about what information you need and why 
         updated_files = []
 
         for file_path in files:
-            # Translate path for current environment (Docker/direct)
-            translated_path = translate_path_for_environment(file_path)
 
             # Check if the filename is exactly "prompt.txt"
             # This ensures we don't match files like "myprompt.txt" or "prompt.txt.bak"
-            if os.path.basename(translated_path) == "prompt.txt":
+            if os.path.basename(file_path) == "prompt.txt":
                 try:
                     # Read prompt.txt content and extract just the text
-                    content, _ = read_file_content(translated_path)
+                    content, _ = read_file_content(file_path)
                     # Extract the content between the file markers
                     if "--- BEGIN FILE:" in content and "--- END FILE:" in content:
                         lines = content.split("\n")
@@ -1567,6 +1565,17 @@ When recommending searches, be specific about what information you need and why 
                         # Use Pydantic for robust validation of the special status
                         parsed_status = status_model.model_validate(potential_json)
                         logger.debug(f"{self.name} tool detected special status: {status_key}")
+
+                        # Enhance mandatory_instructions for files_required_to_continue
+                        if status_key == "files_required_to_continue" and hasattr(
+                            parsed_status, "mandatory_instructions"
+                        ):
+                            original_instructions = parsed_status.mandatory_instructions
+                            enhanced_instructions = self._enhance_mandatory_instructions(original_instructions)
+                            # Create a new model instance with enhanced instructions
+                            enhanced_data = parsed_status.model_dump()
+                            enhanced_data["mandatory_instructions"] = enhanced_instructions
+                            parsed_status = status_model.model_validate(enhanced_data)
 
                         # Extract model information for metadata
                         metadata = {
@@ -1936,7 +1945,7 @@ When recommending searches, be specific about what information you need and why 
             elif "gpt" in model_name.lower() or "o3" in model_name.lower():
                 # Register OpenAI provider if not already registered
                 from providers.base import ProviderType
-                from providers.openai import OpenAIModelProvider
+                from providers.openai_provider import OpenAIModelProvider
 
                 ModelProviderRegistry.register_provider(ProviderType.OPENAI, OpenAIModelProvider)
                 provider = ModelProviderRegistry.get_provider(ProviderType.OPENAI)
@@ -1948,3 +1957,28 @@ When recommending searches, be specific about what information you need and why 
             )
 
         return provider
+
+    def _enhance_mandatory_instructions(self, original_instructions: str) -> str:
+        """
+        Enhance mandatory instructions for files_required_to_continue responses.
+
+        This adds generic guidance to help Claude understand the importance
+        of providing the requested files and context.
+
+        Args:
+            original_instructions: The original instructions from the model
+
+        Returns:
+            str: Enhanced instructions with additional guidance
+        """
+        generic_guidance = (
+            "\n\nIMPORTANT GUIDANCE:\n"
+            "• The requested files are CRITICAL for providing accurate analysis\n"
+            "• Please include ALL files mentioned in the files_needed list\n"
+            "• Use FULL absolute paths to real files/folders - DO NOT SHORTEN paths - and confirm that these exist\n"
+            "• If you cannot locate specific files or the files are extremely large, think hard, study the code and provide similar/related files that might contain the needed information\n"
+            "• After providing the files, use the same tool again with the continuation_id to continue the analysis\n"
+            "• The tool cannot proceed to perform its function accurately without this additional context"
+        )
+
+        return f"{original_instructions}{generic_guidance}"

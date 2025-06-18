@@ -275,7 +275,7 @@ class PlannerValidationTest(BaseSimulatorTest):
             response3, _ = self.call_mcp_tool(
                 "planner",
                 {
-                    "step": "Revision: Actually, let me revise the Kubernetes approach. I'll use a simpler Docker Swarm deployment initially, then migrate to Kubernetes later.",
+                    "step": "Revision: Actually, let me revise the Kubernetes approach. I'll use a simpler deployment initially, then migrate to Kubernetes later.",
                     "step_number": 3,
                     "total_steps": 4,
                     "next_step_required": True,
@@ -311,7 +311,7 @@ class PlannerValidationTest(BaseSimulatorTest):
             return False
 
     def call_mcp_tool(self, tool_name: str, params: dict) -> tuple[Optional[str], Optional[str]]:
-        """Call an MCP tool via Claude CLI (docker exec) - override for planner-specific response handling"""
+        """Call an MCP tool via standalone server - override for planner-specific response handling"""
         # Use parent implementation to get the raw response
         response_text, _ = super().call_mcp_tool(tool_name, params)
 

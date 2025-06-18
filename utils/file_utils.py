@@ -45,7 +45,7 @@ from pathlib import Path
 from typing import Callable, Optional
 
 from .file_types import BINARY_EXTENSIONS, CODE_EXTENSIONS, IMAGE_EXTENSIONS, TEXT_EXTENSIONS
-from .security_config import CONTAINER_WORKSPACE, EXCLUDED_DIRS, MCP_SIGNATURE_FILES, SECURITY_ROOT, WORKSPACE_ROOT
+from .security_config import EXCLUDED_DIRS, is_dangerous_path
 from .token_utils import DEFAULT_CONTEXT_WINDOW, estimate_tokens
 
 
@@ -92,44 +92,32 @@ def is_mcp_directory(path: Path) -> bool:
         path: Directory path to check
 
     Returns:
-        True if this appears to be the MCP directory
+        True if this is the MCP server directory or a subdirectory
     """
     if not path.is_dir():
         return False
 
-    # Check for multiple signature files to be sure
-    matches = 0
-    for sig_file in MCP_SIGNATURE_FILES:
-        if (path / sig_file).exists():
-            matches += 1
-            if matches >= 3:  # Require at least 3 matches to be certain
-                logger.info(f"Detected MCP directory at {path}, will exclude from scanning")
-                return True
-    return False
+    # Get the directory where the MCP server is running from
+    # __file__ is utils/file_utils.py, so parent.parent is the MCP root
+    mcp_server_dir = Path(__file__).parent.parent.resolve()
+
+    # Check if the given path is the MCP server directory or a subdirectory
+    try:
+        path.resolve().relative_to(mcp_server_dir)
+        logger.info(f"Detected MCP server directory at {path}, will exclude from scanning")
+        return True
+    except ValueError:
+        # Not a subdirectory of MCP server
+        return False
 
 
 def get_user_home_directory() -> Optional[Path]:
     """
-    Get the user's home directory based on environment variables.
-
-    In Docker, USER_HOME should be set to the mounted home path.
-    Outside Docker, we use Path.home() or environment variables.
+    Get the user's home directory.
 
     Returns:
-        User's home directory path or None if not determinable
+        User's home directory path
     """
-    # Check for explicit USER_HOME env var (set in docker-compose.yml)
-    user_home = os.environ.get("USER_HOME")
-    if user_home:
-        return Path(user_home).resolve()
-
-    # In container, check if we're running in Docker
-    if CONTAINER_WORKSPACE.exists():
-        # We're in Docker but USER_HOME not set - use WORKSPACE_ROOT as fallback
-        if WORKSPACE_ROOT:
-            return Path(WORKSPACE_ROOT).resolve()
-
-    # Outside Docker, use system home
     return Path.home()
 
 
@@ -291,153 +279,49 @@ def _add_line_numbers(content: str) -> str:
     return "\n".join(numbered_lines)
 
 
-def translate_path_for_environment(path_str: str) -> str:
-    """
-    Translate paths between host and container environments as needed.
-
-    This is the unified path translation function that should be used by all
-    tools and utilities throughout the codebase. It handles:
-    1. Docker host-to-container path translation (host paths -> /workspace/...)
-    2. Direct mode (no translation needed)
-    3. Internal server files (conf/custom_models.json)
-    4. Security validation and error handling
-
-    Docker Path Translation Logic:
-    - Input: /Users/john/project/src/file.py (host path from Claude)
-    - WORKSPACE_ROOT: /Users/john/project (host path in env var)
-    - Output: /workspace/src/file.py (container path for file operations)
-
-    Args:
-        path_str: Original path string from the client (absolute host path)
-
-    Returns:
-        Translated path appropriate for the current environment
-    """
-    # Handle built-in server config file - no translation needed
-    if _is_builtin_custom_models_config(path_str):
-        return path_str
-    if not WORKSPACE_ROOT or not WORKSPACE_ROOT.strip() or not CONTAINER_WORKSPACE.exists():
-        if path_str.startswith("/app/"):
-            # Convert Docker internal paths to local relative paths for standalone mode
-            relative_path = path_str[5:]  # Remove "/app/" prefix
-            if relative_path.startswith("/"):
-                relative_path = relative_path[1:]  # Remove leading slash if present
-            return "./" + relative_path
-        # No other translation needed for standalone mode
-        return path_str
-
-    # Check if the path is already a container path (starts with /workspace)
-    if path_str.startswith(str(CONTAINER_WORKSPACE) + "/") or path_str == str(CONTAINER_WORKSPACE):
-        # Path is already translated to container format, return as-is
-        return path_str
-
-    try:
-        # Use os.path.realpath for security - it resolves symlinks completely
-        # This prevents symlink attacks that could escape the workspace
-        real_workspace_root = Path(os.path.realpath(WORKSPACE_ROOT))
-        # For the host path, we can't use realpath if it doesn't exist in the container
-        # So we'll use Path().resolve(strict=False) instead
-        real_host_path = Path(path_str).resolve(strict=False)
-
-        # Security check: ensure the path is within the mounted workspace
-        # This prevents path traversal attacks (e.g., ../../../etc/passwd)
-        relative_path = real_host_path.relative_to(real_workspace_root)
-
-        # Construct the container path
-        container_path = CONTAINER_WORKSPACE / relative_path
-
-        # Log the translation for debugging (but not sensitive paths)
-        if str(container_path) != path_str:
-            logger.info(f"Translated host path to container: {path_str} -> {container_path}")
-
-        return str(container_path)
-
-    except ValueError:
-        # Path is not within the host's WORKSPACE_ROOT
-        # In Docker, we cannot access files outside the mounted volume
-        logger.warning(
-            f"Path '{path_str}' is outside the mounted workspace '{WORKSPACE_ROOT}'. "
-            f"Docker containers can only access files within the mounted directory."
-        )
-        # Return a clear error path that will fail gracefully
-        return f"/inaccessible/outside/mounted/volume{path_str}"
-    except Exception as e:
-        # Log unexpected errors but don't expose internal details to clients
-        logger.warning(f"Path translation failed for '{path_str}': {type(e).__name__}")
-        # Return a clear error path that will fail gracefully
-        return f"/inaccessible/translation/error{path_str}"
-
-
 def resolve_and_validate_path(path_str: str) -> Path:
     """
-    Resolves, translates, and validates a path against security policies.
+    Resolves and validates a path against security policies.
 
-    This is the primary security function that ensures all file access
-    is properly sandboxed. It enforces three critical policies:
-    1. Translate host paths to container paths if applicable (Docker environment)
-    2. All paths must be absolute (no ambiguity)
-    3. All paths must resolve to within PROJECT_ROOT (sandboxing)
+    This function ensures safe file access by:
+    1. Requiring absolute paths (no ambiguity)
+    2. Resolving symlinks to prevent deception
+    3. Blocking access to dangerous system directories
 
     Args:
         path_str: Path string (must be absolute)
 
     Returns:
-        Resolved Path object that is guaranteed to be within PROJECT_ROOT
+        Resolved Path object that is safe to access
 
     Raises:
         ValueError: If path is not absolute or otherwise invalid
-        PermissionError: If path is outside allowed directory
+        PermissionError: If path is in a dangerous location
     """
-    # Step 1: Translate Docker paths first (if applicable)
-    # This must happen before any other validation
-    translated_path_str = translate_path_for_environment(path_str)
+    # Step 1: Create a Path object
+    user_path = Path(path_str)
 
-    # Step 2: Create a Path object from the (potentially translated) path
-    user_path = Path(translated_path_str)
-
-    # Step 3: Security Policy - Require absolute paths
+    # Step 2: Security Policy - Require absolute paths
     # Relative paths could be interpreted differently depending on working directory
     if not user_path.is_absolute():
         raise ValueError(f"Relative paths are not supported. Please provide an absolute path.\nReceived: {path_str}")
 
-    # Step 4: Resolve the absolute path (follows symlinks, removes .. and .)
+    # Step 3: Resolve the absolute path (follows symlinks, removes .. and .)
     # This is critical for security as it reveals the true destination of symlinks
     resolved_path = user_path.resolve()
 
-    # Step 5: Security Policy - Ensure the resolved path is within PROJECT_ROOT
-    # This prevents directory traversal attacks (e.g., /project/../../../etc/passwd)
-    try:
-        resolved_path.relative_to(SECURITY_ROOT)
-    except ValueError:
-        # Provide detailed error for debugging while avoiding information disclosure
-        logger.warning(
-            f"Access denied - path outside workspace. "
-            f"Requested: {path_str}, Resolved: {resolved_path}, Workspace: {SECURITY_ROOT}"
-        )
+    # Step 4: Check against dangerous paths
+    if is_dangerous_path(resolved_path):
+        logger.warning(f"Access denied - dangerous path: {resolved_path}")
+        raise PermissionError(f"Access to system directory denied: {path_str}")
+
+    # Step 5: Check if it's the home directory root
+    if is_home_directory_root(resolved_path):
         raise PermissionError(
-            f"Path outside workspace: {path_str}\nWorkspace: {SECURITY_ROOT}\nResolved path: {resolved_path}"
+            f"Cannot scan entire home directory: {path_str}\n" f"Please specify a subdirectory within your home folder."
         )
 
     return resolved_path
-
-
-def translate_file_paths(file_paths: Optional[list[str]]) -> Optional[list[str]]:
-    """
-    Translate a list of file paths for the current environment.
-
-    This function should be used by all tools to consistently handle path translation
-    for file lists. It applies the unified path translation to each path in the list.
-
-    Args:
-        file_paths: List of file paths to translate, or None
-
-    Returns:
-        List of translated paths, or None if input was None
-    """
-    if not file_paths:
-        return file_paths
-
-    return [translate_path_for_environment(path) for path in file_paths]
 
 
 def expand_paths(paths: list[str], extensions: Optional[set[str]] = None) -> list[str]:
@@ -474,23 +358,12 @@ def expand_paths(paths: list[str], extensions: Optional[set[str]] = None) -> lis
 
         # Safety checks for directory scanning
         if path_obj.is_dir():
-            resolved_workspace = SECURITY_ROOT.resolve()
-            resolved_path = path_obj.resolve()
-
-            # Check 1: Prevent reading entire workspace root
-            if resolved_path == resolved_workspace:
-                logger.warning(
-                    f"Ignoring request to read entire workspace directory: {path}. "
-                    f"Please specify individual files or subdirectories instead."
-                )
-                continue
-
-            # Check 2: Prevent scanning user's home directory root
+            # Check 1: Prevent scanning user's home directory root
             if is_home_directory_root(path_obj):
                 logger.warning(f"Skipping home directory root: {path}. Please specify a project subdirectory instead.")
                 continue
 
-            # Check 3: Skip if this is the MCP's own directory
+            # Check 2: Skip if this is the MCP's own directory
             if is_mcp_directory(path_obj):
                 logger.info(
                     f"Skipping MCP server directory: {path}. The MCP server code is excluded from project scans."
@@ -573,15 +446,6 @@ def read_file_content(
         # Return error in a format that provides context to the AI
         logger.debug(f"[FILES] Path validation failed for {file_path}: {type(e).__name__}: {e}")
         error_msg = str(e)
-        # Add Docker-specific help if we're in Docker and path is inaccessible
-        if WORKSPACE_ROOT and CONTAINER_WORKSPACE.exists():
-            # We're in Docker
-            error_msg = (
-                f"File is outside the Docker mounted directory. "
-                f"When running in Docker, only files within the mounted workspace are accessible. "
-                f"Current mounted directory: {WORKSPACE_ROOT}. "
-                f"To access files in a different directory, please run Claude from that directory."
-            )
         content = f"\n--- ERROR ACCESSING FILE: {file_path} ---\nError: {error_msg}\n--- END FILE ---\n"
         tokens = estimate_tokens(content)
         logger.debug(f"[FILES] Returning error content for {file_path}: {tokens} tokens")
@@ -761,12 +625,10 @@ def estimate_file_tokens(file_path: str) -> int:
         Estimated token count for the file
     """
     try:
-        translated_path = translate_path_for_environment(file_path)
-
-        if not os.path.exists(translated_path) or not os.path.isfile(translated_path):
+        if not os.path.exists(file_path) or not os.path.isfile(file_path):
             return 0
 
-        file_size = os.path.getsize(translated_path)
+        file_size = os.path.getsize(file_path)
 
         # Get the appropriate ratio for this file type
         from .file_types import get_token_estimation_ratio
@@ -911,11 +773,10 @@ def read_json_file(file_path: str) -> Optional[dict]:
         Parsed JSON data as dict, or None if file doesn't exist or invalid
     """
     try:
-        translated_path = translate_path_for_environment(file_path)
-        if not os.path.exists(translated_path):
+        if not os.path.exists(file_path):
             return None
 
-        with open(translated_path, encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             return json.load(f)
     except (json.JSONDecodeError, OSError):
         return None
@@ -934,10 +795,9 @@ def write_json_file(file_path: str, data: dict, indent: int = 2) -> bool:
         True if successful, False otherwise
     """
     try:
-        translated_path = translate_path_for_environment(file_path)
-        os.makedirs(os.path.dirname(translated_path), exist_ok=True)
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
-        with open(translated_path, "w", encoding="utf-8") as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=indent, ensure_ascii=False)
         return True
     except (OSError, TypeError):
@@ -955,9 +815,8 @@ def get_file_size(file_path: str) -> int:
         File size in bytes, or 0 if file doesn't exist or error
     """
     try:
-        translated_path = translate_path_for_environment(file_path)
-        if os.path.exists(translated_path) and os.path.isfile(translated_path):
-            return os.path.getsize(translated_path)
+        if os.path.exists(file_path) and os.path.isfile(file_path):
+            return os.path.getsize(file_path)
         return 0
     except OSError:
         return 0
@@ -974,8 +833,7 @@ def ensure_directory_exists(file_path: str) -> bool:
         True if directory exists or was created, False on error
     """
     try:
-        translated_path = translate_path_for_environment(file_path)
-        directory = os.path.dirname(translated_path)
+        directory = os.path.dirname(file_path)
         if directory:
             os.makedirs(directory, exist_ok=True)
         return True
@@ -1010,15 +868,14 @@ def read_file_safely(file_path: str, max_size: int = 10 * 1024 * 1024) -> Option
         File content as string, or None if file too large or unreadable
     """
     try:
-        translated_path = translate_path_for_environment(file_path)
-        if not os.path.exists(translated_path) or not os.path.isfile(translated_path):
+        if not os.path.exists(file_path) or not os.path.isfile(file_path):
             return None
 
-        file_size = os.path.getsize(translated_path)
+        file_size = os.path.getsize(file_path)
         if file_size > max_size:
             return None
 
-        with open(translated_path, encoding="utf-8", errors="ignore") as f:
+        with open(file_path, encoding="utf-8", errors="ignore") as f:
             return f.read()
     except OSError:
         return None

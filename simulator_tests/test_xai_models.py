@@ -9,7 +9,6 @@ Tests that verify X.AI GROK functionality including:
 - API integration and response validation
 """
 
-import subprocess
 
 from .base_test import BaseSimulatorTest
 
@@ -25,44 +24,18 @@ class XAIModelsTest(BaseSimulatorTest):
     def test_description(self) -> str:
         return "X.AI GROK model functionality and integration"
 
-    def get_recent_server_logs(self) -> str:
-        """Get recent server logs from the log file directly"""
-        try:
-            # Read logs directly from the log file
-            cmd = ["docker", "exec", self.container_name, "tail", "-n", "500", "/tmp/mcp_server.log"]
-            result = subprocess.run(cmd, capture_output=True, text=True)
-
-            if result.returncode == 0:
-                return result.stdout
-            else:
-                self.logger.warning(f"Failed to read server logs: {result.stderr}")
-                return ""
-        except Exception as e:
-            self.logger.error(f"Failed to get server logs: {e}")
-            return ""
-
     def run_test(self) -> bool:
         """Test X.AI GROK model functionality"""
         try:
             self.logger.info("Test: X.AI GROK model functionality and integration")
 
             # Check if X.AI API key is configured and not empty
-            check_cmd = [
-                "docker",
-                "exec",
-                self.container_name,
-                "python",
-                "-c",
-                """
-import os
-xai_key = os.environ.get("XAI_API_KEY", "")
-is_valid = bool(xai_key and xai_key != "your_xai_api_key_here" and xai_key.strip())
-print(f"XAI_KEY_VALID:{is_valid}")
-                """.strip(),
-            ]
-            result = subprocess.run(check_cmd, capture_output=True, text=True)
+            import os
 
-            if result.returncode == 0 and "XAI_KEY_VALID:False" in result.stdout:
+            xai_key = os.environ.get("XAI_API_KEY", "")
+            is_valid = bool(xai_key and xai_key != "your_xai_api_key_here" and xai_key.strip())
+
+            if not is_valid:
                 self.logger.info("  ⚠️  X.AI API key not configured or empty - skipping test")
                 self.logger.info("  ℹ️  This test requires XAI_API_KEY to be set in .env with a valid key")
                 return True  # Return True to indicate test is skipped, not failed

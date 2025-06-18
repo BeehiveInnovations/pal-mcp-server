@@ -5,12 +5,10 @@ Test file protection mechanisms to ensure MCP doesn't scan:
 3. Excluded directories
 """
 
-import os
 from pathlib import Path
 from unittest.mock import patch
 
 from utils.file_utils import (
-    MCP_SIGNATURE_FILES,
     expand_paths,
     get_user_home_directory,
     is_home_directory_root,
@@ -21,25 +19,31 @@ from utils.file_utils import (
 class TestMCPDirectoryDetection:
     """Test MCP self-detection to prevent scanning its own code."""
 
-    def test_detect_mcp_directory_with_all_signatures(self, tmp_path):
-        """Test detection when all signature files are present."""
-        # Create a fake MCP directory with signature files
-        for sig_file in list(MCP_SIGNATURE_FILES)[:4]:  # Use 4 files
-            if "/" in sig_file:
-                (tmp_path / sig_file).parent.mkdir(parents=True, exist_ok=True)
-            (tmp_path / sig_file).touch()
+    def test_detect_mcp_directory_dynamically(self, tmp_path):
+        """Test dynamic MCP directory detection based on script location."""
+        # The is_mcp_directory function now uses __file__ to detect MCP location
+        # It checks if the given path is a subdirectory of the MCP server
+        from pathlib import Path
 
-        assert is_mcp_directory(tmp_path) is True
+        import utils.file_utils
 
-    def test_no_detection_with_few_signatures(self, tmp_path):
-        """Test no detection with only 1-2 signature files."""
-        # Create only 2 signature files (less than threshold)
-        for sig_file in list(MCP_SIGNATURE_FILES)[:2]:
-            if "/" in sig_file:
-                (tmp_path / sig_file).parent.mkdir(parents=True, exist_ok=True)
-            (tmp_path / sig_file).touch()
+        # Get the actual MCP server directory
+        mcp_server_dir = Path(utils.file_utils.__file__).parent.parent.resolve()
 
-        assert is_mcp_directory(tmp_path) is False
+        # Test that the MCP server directory itself is detected
+        assert is_mcp_directory(mcp_server_dir) is True
+
+        # Test that a subdirectory of MCP is also detected
+        if (mcp_server_dir / "tools").exists():
+            assert is_mcp_directory(mcp_server_dir / "tools") is True
+
+    def test_no_detection_on_non_mcp_directory(self, tmp_path):
+        """Test no detection on directories outside MCP."""
+        # Any directory outside the MCP server should not be detected
+        non_mcp_dir = tmp_path / "some_other_project"
+        non_mcp_dir.mkdir()
+
+        assert is_mcp_directory(non_mcp_dir) is False
 
     def test_no_detection_on_regular_directory(self, tmp_path):
         """Test no detection on regular project directories."""
@@ -59,7 +63,11 @@ class TestMCPDirectoryDetection:
 
     def test_mcp_directory_excluded_from_scan(self, tmp_path):
         """Test that MCP directories are excluded during path expansion."""
-        # Create a project with MCP as subdirectory
+        # For this test, we need to mock is_mcp_directory since we can't
+        # actually create the MCP directory structure in tmp_path
+        from unittest.mock import patch as mock_patch
+
+        # Create a project with a subdirectory we'll pretend is MCP
         project_root = tmp_path / "my_project"
         project_root.mkdir()
 
@@ -67,19 +75,18 @@ class TestMCPDirectoryDetection:
         (project_root / "app.py").write_text("# My app")
         (project_root / "config.py").write_text("# Config")
 
-        # Create MCP subdirectory
-        mcp_dir = project_root / "gemini-mcp-server"
-        mcp_dir.mkdir()
-        for sig_file in list(MCP_SIGNATURE_FILES)[:4]:
-            if "/" in sig_file:
-                (mcp_dir / sig_file).parent.mkdir(parents=True, exist_ok=True)
-            (mcp_dir / sig_file).write_text("# MCP file")
+        # Create a subdirectory that we'll mock as MCP
+        fake_mcp_dir = project_root / "gemini-mcp-server"
+        fake_mcp_dir.mkdir()
+        (fake_mcp_dir / "server.py").write_text("# MCP server")
+        (fake_mcp_dir / "test.py").write_text("# Should not be included")
 
-        # Also add a regular file to MCP dir
-        (mcp_dir / "test.py").write_text("# Should not be included")
+        # Mock is_mcp_directory to return True for our fake MCP dir
+        def mock_is_mcp(path):
+            return str(path).endswith("gemini-mcp-server")
 
-        # Scan the project - use parent as SECURITY_ROOT to avoid workspace root check
-        with patch("utils.file_utils.SECURITY_ROOT", tmp_path):
+        # Scan the project with mocked MCP detection
+        with mock_patch("utils.file_utils.is_mcp_directory", side_effect=mock_is_mcp):
             files = expand_paths([str(project_root)])
 
         # Verify project files are included but MCP files are not
@@ -135,42 +142,45 @@ class TestHomeDirectoryProtection:
         """Test that home directory root is excluded during path expansion."""
         with patch("utils.file_utils.get_user_home_directory") as mock_home:
             mock_home.return_value = tmp_path
-            with patch("utils.file_utils.SECURITY_ROOT", tmp_path):
-                # Try to scan home directory
-                files = expand_paths([str(tmp_path)])
-                # Should return empty as home root is skipped
-                assert files == []
+            # Try to scan home directory
+            files = expand_paths([str(tmp_path)])
+            # Should return empty as home root is skipped
+            assert files == []
 
 
 class TestUserHomeEnvironmentVariable:
     """Test USER_HOME environment variable handling."""
 
-    def test_user_home_from_env(self):
-        """Test USER_HOME is used when set."""
-        test_home = "/Users/dockeruser"
-        with patch.dict(os.environ, {"USER_HOME": test_home}):
+    def test_user_home_from_pathlib(self):
+        """Test that get_user_home_directory uses Path.home()."""
+        with patch("pathlib.Path.home") as mock_home:
+            mock_home.return_value = Path("/Users/testuser")
             home = get_user_home_directory()
-            assert home == Path(test_home).resolve()
+            assert home == Path("/Users/testuser")
 
-    def test_fallback_to_workspace_root_in_docker(self):
-        """Test fallback to WORKSPACE_ROOT in Docker when USER_HOME not set."""
-        with patch("utils.file_utils.WORKSPACE_ROOT", "/Users/realuser"):
-            with patch("utils.file_utils.CONTAINER_WORKSPACE") as mock_container:
-                mock_container.exists.return_value = True
-                # Clear USER_HOME to test fallback
-                with patch.dict(os.environ, {"USER_HOME": ""}, clear=False):
-                    home = get_user_home_directory()
-                    assert str(home) == "/Users/realuser"
+    def test_get_home_directory_uses_pathlib(self):
+        """Test that get_user_home_directory always uses Path.home()."""
+        with patch("pathlib.Path.home") as mock_home:
+            mock_home.return_value = Path("/home/testuser")
+            home = get_user_home_directory()
+            assert home == Path("/home/testuser")
+            # Verify Path.home() was called
+            mock_home.assert_called_once()
 
-    def test_fallback_to_system_home(self):
-        """Test fallback to system home when not in Docker."""
-        with patch.dict(os.environ, {}, clear=True):
-            with patch("utils.file_utils.CONTAINER_WORKSPACE") as mock_container:
-                mock_container.exists.return_value = False
-                with patch("pathlib.Path.home") as mock_home:
-                    mock_home.return_value = Path("/home/user")
-                    home = get_user_home_directory()
-                    assert home == Path("/home/user")
+    def test_home_directory_on_different_platforms(self):
+        """Test home directory detection on different platforms."""
+        # Test different platform home directories
+        test_homes = [
+            Path("/Users/john"),  # macOS
+            Path("/home/ubuntu"),  # Linux
+            Path("C:\\Users\\John"),  # Windows
+        ]
+
+        for test_home in test_homes:
+            with patch("pathlib.Path.home") as mock_home:
+                mock_home.return_value = test_home
+                home = get_user_home_directory()
+                assert home == test_home
 
 
 class TestExcludedDirectories:
@@ -198,8 +208,7 @@ class TestExcludedDirectories:
         src.mkdir()
         (src / "utils.py").write_text("# Utils")
 
-        with patch("utils.file_utils.SECURITY_ROOT", tmp_path):
-            files = expand_paths([str(project)])
+        files = expand_paths([str(project)])
 
         file_names = [Path(f).name for f in files]
 
@@ -226,8 +235,7 @@ class TestExcludedDirectories:
         # Create an allowed file
         (project / "index.js").write_text("// Index")
 
-        with patch("utils.file_utils.SECURITY_ROOT", tmp_path):
-            files = expand_paths([str(project)])
+        files = expand_paths([str(project)])
 
         file_names = [Path(f).name for f in files]
 
@@ -254,10 +262,12 @@ class TestIntegrationScenarios:
         # MCP cloned inside the project
         mcp = user_project / "tools" / "gemini-mcp-server"
         mcp.mkdir(parents=True)
-        for sig_file in list(MCP_SIGNATURE_FILES)[:4]:
-            if "/" in sig_file:
-                (mcp / sig_file).parent.mkdir(parents=True, exist_ok=True)
-            (mcp / sig_file).write_text("# MCP code")
+        # Create typical MCP files
+        (mcp / "server.py").write_text("# MCP server code")
+        (mcp / "config.py").write_text("# MCP config")
+        tools_dir = mcp / "tools"
+        tools_dir.mkdir()
+        (tools_dir / "chat.py").write_text("# Chat tool")
         (mcp / "LICENSE").write_text("MIT License")
         (mcp / "README.md").write_text("# Gemini MCP")
 
@@ -266,7 +276,11 @@ class TestIntegrationScenarios:
         node_modules.mkdir()
         (node_modules / "package.json").write_text("{}")
 
-        with patch("utils.file_utils.SECURITY_ROOT", tmp_path):
+        # Mock is_mcp_directory for this test
+        def mock_is_mcp(path):
+            return "gemini-mcp-server" in str(path)
+
+        with patch("utils.file_utils.is_mcp_directory", side_effect=mock_is_mcp):
             files = expand_paths([str(user_project)])
 
         file_paths = [str(f) for f in files]
@@ -278,23 +292,28 @@ class TestIntegrationScenarios:
 
         # MCP files should NOT be included
         assert not any("gemini-mcp-server" in p for p in file_paths)
-        assert not any("zen_server.py" in p for p in file_paths)
+        assert not any("server.py" in p for p in file_paths)
 
         # node_modules should NOT be included
         assert not any("node_modules" in p for p in file_paths)
 
-    def test_cannot_scan_above_workspace_root(self, tmp_path):
-        """Test that we cannot scan outside the workspace root."""
-        workspace = tmp_path / "workspace"
-        workspace.mkdir()
+    def test_security_without_workspace_root(self, tmp_path):
+        """Test that security still works with the new security model."""
+        # The system now relies on is_dangerous_path and is_home_directory_root
+        # for security protection
 
-        # Create a file in workspace
-        (workspace / "allowed.py").write_text("# Allowed")
+        # Test that we can scan regular project directories
+        project_dir = tmp_path / "my_project"
+        project_dir.mkdir()
+        (project_dir / "app.py").write_text("# App")
 
-        # Create a file outside workspace
-        (tmp_path / "outside.py").write_text("# Outside")
+        files = expand_paths([str(project_dir)])
+        assert len(files) == 1
+        assert "app.py" in files[0]
 
-        with patch("utils.file_utils.SECURITY_ROOT", workspace):
-            # Try to expand paths outside workspace - should return empty list
+        # Test that home directory root is still protected
+        with patch("utils.file_utils.get_user_home_directory") as mock_home:
+            mock_home.return_value = tmp_path
+            # Scanning home root should return empty
             files = expand_paths([str(tmp_path)])
-            assert files == []  # Path outside workspace is skipped silently
+            assert files == []

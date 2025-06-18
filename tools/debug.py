@@ -17,34 +17,37 @@ from .base import BaseTool, ToolRequest
 # Field descriptions to avoid duplication between Pydantic and JSON schema
 DEBUG_FIELD_DESCRIPTIONS = {
     "prompt": (
-        "Claud - you MUST first think deep. Issue description. Include what you can provide: "
+        "MANDATORY: You MUST first think deep about the issue, what it is, why it might be happening, what code might be involved, "
+        "is it an error stemming out of the code directly or is it a side-effect of some part of the existing code. If it's an error "
+        "message, could it be coming from an external resource and NOT directly from the project? What part of the code seems most likely"
+        "the culprit. MUST try and ZERO IN on the issue and surrounding code. Include all the details into the prompt that you can provide: "
         "error messages, symptoms, when it occurs, steps to reproduce, environment details, "
         "recent changes, and any other relevant information. Mention any previous attempts at fixing this issue, "
         "including any past fix that was in place but has now regressed. "
         "The more context available, the better the analysis. "
-        "SYSTEMATIC INVESTIGATION: Claude MUST begin by thinking hard and performing a thorough investigation using a systematic approach. "
+        "PERFORM SYSTEMATIC INVESTIGATION: You MUST begin by thinking hard and performing a thorough investigation using a systematic approach. "
         "First understand the issue, find the code that may be causing it or code that is breaking, as well as any related code that could have caused this as a side effect. "
-        "Claude MUST maintain detailed investigation notes in a DEBUGGING_{issue_description}.md file within the project folder, "
+        "You MUST maintain detailed investigation notes in a DEBUGGING_{issue_description}.md file within the project folder, "
         "updating it as it performs step-by-step analysis of the code, trying to determine the actual root cause and understanding how a minimal, appropriate fix can be found. "
-        "This file MUST contain functions, methods, files visited OR determined to be part of the problem. Claude MUST update this and remove any references that it finds to be irrelevant during its investigation. "
-        "CRITICAL: If after thorough investigation Claude has very high confidence that NO BUG EXISTS that correlates to the reported symptoms, "
-        "Claude should consider the possibility that the reported issue may not actually be present, may be a misunderstanding, or may be conflated with something else entirely. "
-        "In such cases, Claude should gather more information from the user through targeted questioning rather than continue hunting for non-existent bugs. "
-        "Once complete, Claude MUST provide Zen's debug tool with this file passed into the files parameter. "
-        "It is ESSENTIAL that this detailed work is performed by Claude before sharing all the relevant details with its development assistant. This will greatly help in zeroing in on the root cause."
+        "This file MUST contain functions, methods, files visited OR determined to be part of the problem. You MUST update this and remove any references that it finds to be irrelevant during its investigation. "
+        "CRITICAL: If after thorough investigation You has very high confidence that NO BUG EXISTS that correlates to the reported symptoms, "
+        "You should consider the possibility that the reported issue may not actually be present, may be a misunderstanding, or may be conflated with something else entirely. "
+        "In such cases, you should gather more information from the user through targeted questioning rather than continue hunting for non-existent bugs. "
+        "Once complete, you MUST provide also pass in this file into the files parameter of this tool. "
+        "It is ESSENTIAL that this detailed work is performed by you before sharing all the relevant details with its development assistant. This will greatly help in zeroing in on the root cause."
     ),
     "findings": (
-        "Claude MUST first perform its own investigation, gather its findings and analysis. Include: steps taken to analyze the issue, "
+        "You MUST first perform its own investigation, gather its findings and analysis. Include: steps taken to analyze the issue, "
         "code patterns discovered, initial hypotheses formed, any relevant classes/functions/methods examined, "
         "and any preliminary conclusions. If investigation yields no concrete evidence of a bug correlating to the reported symptoms, "
-        "Claude should clearly state this finding and consider that the issue may not exist as described. "
+        "You should clearly state this finding and consider that the issue may not exist as described. "
         "This provides context for the assistant model's analysis."
     ),
     "files": (
         "Essential files for debugging - ONLY include files that are directly related to the issue, "
         "contain the problematic code, or are necessary for understanding the root cause. "
         "This can include any relevant log files, error description documents, investigation documents, "
-        "claude's own findings as a document, related code that may help with analysis."
+        "Your own findings as a document, related code that may help with analysis."
         "DO NOT include every file scanned during investigation (must be FULL absolute paths - DO NOT SHORTEN)."
     ),
     "error_context": "Stack trace, snippet from logs, or additional error context. For very large text you MUST instead"
@@ -77,13 +80,13 @@ class DebugIssueTool(BaseTool):
             "trace errors, or diagnose issues. "
             "MANDATORY: Claud you MUST first think deep and follow these instructions when using this tool"
             "SYSTEMATIC INVESTIGATION WORKFLOW: "
-            "Claude MUST begin by thinking hard and performing a thorough investigation using a systematic approach. "
+            "You MUST begin by thinking hard and performing a thorough investigation using a systematic approach. "
             "First understand the issue, find the code that may be causing it or code that is breaking, as well as any related code that could have caused this as a side effect. "
-            "Claude MUST maintain detailed investigation notes while it performs its analysis, "
+            "You MUST maintain detailed investigation notes while it performs its analysis, "
             "updating it as it performs step-by-step analysis of the code, trying to determine the actual root cause and understanding how a minimal, appropriate fix can be found. "
-            "This file MUST contain functions, methods, files visited OR determined to be part of the problem. Claude MUST update this and remove any references that it finds to be irrelevant during its investigation. "
-            "Once complete, Claude MUST provide Zen's debug tool with this file passed into the files parameter. "
-            "1. INVESTIGATE SYSTEMATICALLY: Claude MUST think and use a methodical approach to trace through error reports, "
+            "This file MUST contain functions, methods, files visited OR determined to be part of the problem. You MUST update this and remove any references that it finds to be irrelevant during its investigation. "
+            "Once complete, You MUST provide Zen's debug tool with this file passed into the files parameter. "
+            "1. INVESTIGATE SYSTEMATICALLY: You MUST think and use a methodical approach to trace through error reports, "
             "examine code, and gather evidence step by step "
             "2. DOCUMENT FINDINGS: Maintain detailed investigation notes to "
             "keep the user informed during its initial investigation. This investigation MUST be shared with this tool for the assistant "
@@ -299,7 +302,7 @@ with comprehensive findings for expert analysis."""
 
     def format_response(self, response: str, request: DebugIssueRequest, model_info: Optional[dict] = None) -> str:
         """Format the debugging response for Claude to present to user"""
-        # The base class automatically handles structured responses like 'clarification_required'
+        # The base class automatically handles structured responses like 'files_required_to_continue'
         # and 'analysis_complete' via SPECIAL_STATUS_MODELS, so we only handle normal text responses here
 
         model_name = self._get_model_name(model_info)

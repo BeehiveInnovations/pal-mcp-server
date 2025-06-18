@@ -21,7 +21,6 @@ from pydantic import Field
 
 from config import TEMPERATURE_ANALYTICAL
 from systemprompts import TESTGEN_PROMPT
-from utils.file_utils import translate_file_paths
 
 from .base import BaseTool, ToolRequest
 
@@ -30,7 +29,8 @@ logger = logging.getLogger(__name__)
 # Field descriptions to avoid duplication between Pydantic and JSON schema
 TESTGEN_FIELD_DESCRIPTIONS = {
     "files": "Code files or directories to generate tests for (must be FULL absolute paths to real files / folders - DO NOT SHORTEN)",
-    "prompt": "Description of what to test, testing objectives, and specific scope/focus areas",
+    "prompt": "Description of what to test, testing objectives, and specific scope/focus areas. Be specific about any "
+    "particular component, module, class of function you would like to generate tests for.",
     "test_examples": (
         "Optional existing test files or directories to use as style/pattern reference (must be FULL absolute paths to real files / folders - DO NOT SHORTEN). "
         "If not provided, the tool will determine the best testing approach based on the code structure. "
@@ -164,9 +164,7 @@ class TestGenerationTool(BaseTool):
             logger.info(f"[TESTGEN] All {len(test_examples)} test examples already in conversation history")
             return "", ""
 
-        # Translate file paths for Docker environment before accessing files
-        translated_examples = translate_file_paths(examples_to_process)
-        logger.debug(f"[TESTGEN] Translated {len(examples_to_process)} file paths for container access")
+        logger.debug(f"[TESTGEN] Processing {len(examples_to_process)} file paths")
 
         # Calculate token budget for test examples (25% of available tokens, or fallback)
         if available_tokens:
@@ -184,13 +182,11 @@ class TestGenerationTool(BaseTool):
         )
 
         # Sort by file size (smallest first) for pattern-focused selection
-        # Use translated paths for file system operations, but keep original paths for processing
         file_sizes = []
-        for i, file_path in enumerate(examples_to_process):
-            translated_path = translated_examples[i]
+        for file_path in examples_to_process:
             try:
-                size = os.path.getsize(translated_path)
-                file_sizes.append((file_path, size))  # Keep original path for consistency
+                size = os.path.getsize(file_path)
+                file_sizes.append((file_path, size))
                 logger.debug(f"[TESTGEN] Test example {os.path.basename(file_path)}: {size:,} bytes")
             except (OSError, FileNotFoundError) as e:
                 # If we can't get size, put it at the end

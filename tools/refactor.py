@@ -23,7 +23,6 @@ from pydantic import Field
 
 from config import TEMPERATURE_ANALYTICAL
 from systemprompts import REFACTOR_PROMPT
-from utils.file_utils import translate_file_paths
 
 from .base import BaseTool, ToolRequest
 
@@ -32,8 +31,10 @@ logger = logging.getLogger(__name__)
 
 # Field descriptions to avoid duplication between Pydantic and JSON schema
 REFACTOR_FIELD_DESCRIPTIONS = {
-    "files": "Code files or directories to analyze for refactoring opportunities (must be FULL absolute paths to real files / folders - DO NOT SHORTEN)",
-    "prompt": "Description of refactoring goals, context, and specific areas of focus",
+    "files": "Code files or directories to analyze for refactoring opportunities. MUST be FULL absolute paths to real files / folders - DO NOT SHORTEN."
+    "The files also MUST directly involve the classes, functions etc that need to be refactored. Closely related or dependent files"
+    "will also help.",
+    "prompt": "Description of refactoring goals, context, and specific areas of focus.",
     "refactor_type": "Type of refactoring analysis to perform",
     "focus_areas": "Specific areas to focus on (e.g., 'performance', 'readability', 'maintainability', 'security')",
     "style_guide_examples": (
@@ -285,9 +286,7 @@ class RefactorTool(BaseTool):
             logger.info(f"[REFACTOR] All {len(style_examples)} style examples already in conversation history")
             return "", ""
 
-        # Translate file paths for Docker environment before accessing files
-        translated_examples = translate_file_paths(examples_to_process)
-        logger.debug(f"[REFACTOR] Translated {len(examples_to_process)} file paths for container access")
+        logger.debug(f"[REFACTOR] Processing {len(examples_to_process)} file paths")
 
         # Calculate token budget for style examples (20% of available tokens, or fallback)
         if available_tokens:
@@ -306,10 +305,9 @@ class RefactorTool(BaseTool):
 
         # Sort by file size (smallest first) for pattern-focused selection
         file_sizes = []
-        for i, file_path in enumerate(examples_to_process):
-            translated_path = translated_examples[i]
+        for file_path in examples_to_process:
             try:
-                size = os.path.getsize(translated_path)
+                size = os.path.getsize(file_path)
                 file_sizes.append((file_path, size))
                 logger.debug(f"[REFACTOR] Style example {os.path.basename(file_path)}: {size:,} bytes")
             except (OSError, FileNotFoundError) as e:

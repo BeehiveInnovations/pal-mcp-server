@@ -4,7 +4,6 @@ Enhanced tests for precommit tool using mock storage to test real logic
 
 import os
 import tempfile
-from pathlib import Path
 from typing import Optional
 from unittest.mock import patch
 
@@ -50,21 +49,18 @@ class TestPrecommitToolWithMockStore:
     """Test precommit tool with mock storage to validate actual logic"""
 
     @pytest.fixture
-    def mock_redis(self):
+    def mock_storage(self):
         """Create mock Redis client"""
         return MockRedisClient()
 
     @pytest.fixture
-    def tool(self, mock_redis, temp_repo):
+    def tool(self, mock_storage, temp_repo):
         """Create tool instance with mocked Redis"""
         temp_dir, _ = temp_repo
         tool = Precommit()
 
-        # Mock the Redis client getter and SECURITY_ROOT to allow access to temp files
-        with (
-            patch("utils.conversation_memory.get_redis_client", return_value=mock_redis),
-            patch("utils.file_utils.SECURITY_ROOT", Path(temp_dir).resolve()),
-        ):
+        # Mock the Redis client getter to use our mock storage
+        with patch("utils.conversation_memory.get_storage", return_value=mock_storage):
             yield tool
 
     @pytest.fixture
@@ -112,7 +108,7 @@ TEMPERATURE_ANALYTICAL = 0.2  # For code review, debugging
         shutil.rmtree(temp_dir)
 
     @pytest.mark.asyncio
-    async def test_no_duplicate_file_content_in_prompt(self, tool, temp_repo, mock_redis):
+    async def test_no_duplicate_file_content_in_prompt(self, tool, temp_repo, mock_storage):
         """Test that file content appears in expected locations
 
         This test validates our design decision that files can legitimately appear in both:
@@ -145,12 +141,12 @@ TEMPERATURE_ANALYTICAL = 0.2  # For code review, debugging
         # This is intentional and provides comprehensive context to the AI
 
     @pytest.mark.asyncio
-    async def test_conversation_memory_integration(self, tool, temp_repo, mock_redis):
+    async def test_conversation_memory_integration(self, tool, temp_repo, mock_storage):
         """Test that conversation memory works with mock storage"""
         temp_dir, config_path = temp_repo
 
         # Mock conversation memory functions to use our mock redis
-        with patch("utils.conversation_memory.get_redis_client", return_value=mock_redis):
+        with patch("utils.conversation_memory.get_storage", return_value=mock_storage):
             # First request - should embed file content
             PrecommitRequest(path=temp_dir, files=[config_path], prompt="First review")
 
@@ -173,7 +169,7 @@ TEMPERATURE_ANALYTICAL = 0.2  # For code review, debugging
             assert len(files_to_embed_2) == 0, "Continuation should skip already embedded files"
 
     @pytest.mark.asyncio
-    async def test_prompt_structure_integrity(self, tool, temp_repo, mock_redis):
+    async def test_prompt_structure_integrity(self, tool, temp_repo, mock_storage):
         """Test that the prompt structure is well-formed and doesn't have content duplication"""
         temp_dir, config_path = temp_repo
 
@@ -227,7 +223,7 @@ TEMPERATURE_ANALYTICAL = 0.2  # For code review, debugging
         assert '__version__ = "1.0.0"' not in after_file_section
 
     @pytest.mark.asyncio
-    async def test_file_content_formatting(self, tool, temp_repo, mock_redis):
+    async def test_file_content_formatting(self, tool, temp_repo, mock_storage):
         """Test that file content is properly formatted without duplication"""
         temp_dir, config_path = temp_repo
 
@@ -254,18 +250,18 @@ TEMPERATURE_ANALYTICAL = 0.2  # For code review, debugging
         assert file_content.count('__version__ = "1.0.0"') == 1
 
 
-def test_mock_redis_basic_operations():
+def test_mock_storage_basic_operations():
     """Test that our mock Redis implementation works correctly"""
-    mock_redis = MockRedisClient()
+    mock_storage = MockRedisClient()
 
     # Test basic operations
-    assert mock_redis.get("nonexistent") is None
-    assert mock_redis.exists("nonexistent") == 0
+    assert mock_storage.get("nonexistent") is None
+    assert mock_storage.exists("nonexistent") == 0
 
-    mock_redis.set("test_key", "test_value")
-    assert mock_redis.get("test_key") == "test_value"
-    assert mock_redis.exists("test_key") == 1
+    mock_storage.set("test_key", "test_value")
+    assert mock_storage.get("test_key") == "test_value"
+    assert mock_storage.exists("test_key") == 1
 
-    assert mock_redis.delete("test_key") == 1
-    assert mock_redis.get("test_key") is None
-    assert mock_redis.delete("test_key") == 0  # Already deleted
+    assert mock_storage.delete("test_key") == 1
+    assert mock_storage.get("test_key") is None
+    assert mock_storage.delete("test_key") == 0  # Already deleted

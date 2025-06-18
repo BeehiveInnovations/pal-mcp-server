@@ -7,7 +7,6 @@ and builds conversation context correctly when using continuation_id.
 """
 
 import json
-import subprocess
 
 from .base_test import BaseSimulatorTest
 
@@ -23,19 +22,16 @@ class TestConsensusConversation(BaseSimulatorTest):
     def test_description(self) -> str:
         return "Test consensus tool conversation building and continuation"
 
-    def get_docker_logs(self):
-        """Get Docker container logs"""
+    def get_server_logs(self):
+        """Get server logs from local log file"""
         try:
-            result = subprocess.run(
-                ["docker", "logs", "--tail", "100", self.container_name], capture_output=True, text=True, timeout=30
-            )
-            if result.returncode == 0:
-                return result.stdout.split("\n")
-            else:
-                self.logger.warning(f"Failed to get Docker logs: {result.stderr}")
-                return []
+            log_file_path = "logs/mcp_server.log"
+            with open(log_file_path) as f:
+                lines = f.readlines()
+                # Return last 100 lines
+                return [line.strip() for line in lines[-100:]]
         except Exception as e:
-            self.logger.warning(f"Exception getting Docker logs: {e}")
+            self.logger.warning(f"Exception getting server logs: {e}")
             return []
 
     def run_test(self) -> bool:
@@ -121,9 +117,9 @@ class TestConsensusConversation(BaseSimulatorTest):
             self.logger.info("Phase 3: Checking server logs for conversation building")
 
             # Check for conversation-related log entries
-            logs = self.get_docker_logs()
+            logs = self.get_server_logs()
             if not logs:
-                self.logger.warning("Could not retrieve Docker logs for verification")
+                self.logger.warning("Could not retrieve server logs for verification")
             else:
                 # Look for conversation building indicators
                 conversation_logs = [

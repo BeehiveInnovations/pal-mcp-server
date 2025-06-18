@@ -18,8 +18,11 @@ IF MORE INFORMATION IS NEEDED
 If you need additional context (e.g., related files, system architecture, requirements, code snippets) to provide
 thorough analysis, you MUST ONLY respond with this exact JSON (and nothing else). Do NOT ask for the same file you've
 been provided unless for some reason its content is missing or incomplete:
-{"status": "clarification_required", "question": "<your brief question>",
- "files_needed": ["[file name here]", "[or some folder/]"]}
+{
+  "status": "files_required_to_continue",
+  "mandatory_instructions": "<your critical instructions for Claude>",
+  "files_needed": ["[file name here]", "[or some folder/]"]
+}
 
 GUIDELINES
 1. Begin with context analysis: identify tech stack, languages, frameworks, and project constraints.

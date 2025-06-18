@@ -1,17 +1,13 @@
 {
-  "comment": "Windows configuration using WSL with Docker",
-  "comment2": "Ensure Docker Desktop is running and WSL integration is enabled",
-  "comment3": "Run './run-server.sh' in WSL first to set up the environment",
+  "comment": "Windows configuration using WSL with standalone server",
+  "comment2": "Run './run-server.sh' in WSL to set up the environment and get exact paths",
+  "comment3": "Use './run-server.sh -c' to display the correct configuration",
   "mcpServers": {
     "zen": {
       "command": "wsl.exe",
       "args": [
-        "docker",
-        "exec",
-        "-i",
-        "zen-mcp-server",
-        "python",
-        "server.py"
+        "/path/to/zen-mcp-server/.zen_venv/bin/python",
+        "/path/to/zen-mcp-server/server.py"
       ]
     }
   }

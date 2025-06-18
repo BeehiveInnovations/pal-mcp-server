@@ -17,15 +17,17 @@ from .base import BaseTool, ToolRequest
 # Field descriptions to avoid duplication between Pydantic and JSON schema
 THINKDEEP_FIELD_DESCRIPTIONS = {
     "prompt": (
-        "Your current thinking/analysis to extend and validate. IMPORTANT: Before using this tool, Claude MUST "
-        "first think hard and establish a deep understanding of the topic and question by thinking through all "
-        "relevant details, context, constraints, and implications. Share these extended thoughts and ideas in "
-        "the prompt so the model has comprehensive information to work with for the best analysis."
+        "MANDATORY: you MUST first think hard and establish a deep understanding of the topic and question by thinking through all "
+        "relevant details, context, constraints, and implications. Provide your thought-partner all of your current thinking/analysis "
+        "to extend and validate. Share these extended thoughts and ideas in "
+        "the prompt so your assistant has comprehensive information to work with for the best analysis."
     ),
-    "problem_context": "Additional context about the problem or goal. Be as expressive as possible.",
+    "problem_context": "Provate additional context about the problem or goal. Be as expressive as possible. More information will "
+    "be very helpful to your thought-partner.",
     "focus_areas": "Specific aspects to focus on (architecture, performance, security, etc.)",
-    "files": "Optional file paths or directories for additional context (must be FULL absolute paths to real files / folders - DO NOT SHORTEN)",
-    "images": "Optional images for visual analysis - diagrams, charts, system architectures, or any visual information to analyze",
+    "files": "Optional absolute file paths or directories for additional context (must be FULL absolute paths to real files / folders - DO NOT SHORTEN)",
+    "images": "Optional images for visual analysis - diagrams, charts, system architectures, or any visual information to analyze. "
+    "(must be FULL absolute paths to real files / folders - DO NOT SHORTEN)",
 }
 
 

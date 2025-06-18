@@ -8,9 +8,7 @@ Thank you for your interest in contributing to Zen MCP Server! This guide will h
 2. **Clone your fork** locally
 3. **Set up the development environment**:
    ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   pip install -r requirements.txt
+   ./run-server.sh
    ```
 4. **Create a feature branch** from `main`:
    ```bash
@@ -28,9 +26,6 @@ We maintain high code quality standards. **All contributions must pass our autom
 Before submitting any PR, run our automated quality check script:
 
 ```bash
-# Activate virtual environment first
-source venv/bin/activate
-
 # Run the comprehensive quality checks script
 ./code_quality_checks.sh
 ```
@@ -78,7 +73,7 @@ python communication_simulator_test.py
 2. **Tool changes require simulator tests**:
    - Add simulator tests in `simulator_tests/` for new or modified tools
    - Use realistic prompts that demonstrate the feature
-   - Validate output through Docker logs
+   - Validate output through server logs
    
 3. **Bug fixes require regression tests**:
    - Add a test that would have caught the bug
@@ -94,7 +89,7 @@ python communication_simulator_test.py
 
 Your PR title MUST follow one of these formats:
 
-**Version Bumping Prefixes** (trigger Docker build + version bump):
+**Version Bumping Prefixes** (trigger version bump):
 - `feat: <description>` - New features (MINOR version bump)
 - `fix: <description>` - Bug fixes (PATCH version bump)
 - `breaking: <description>` or `BREAKING CHANGE: <description>` - Breaking changes (MAJOR version bump)
@@ -108,10 +103,9 @@ Your PR title MUST follow one of these formats:
 - `ci: <description>` - CI/CD changes
 - `style: <description>` - Code style changes
 
-**Docker Build Options**:
-- `docker: <description>` - Force Docker build without version bump
-- `docs+docker: <description>` - Documentation + Docker build
-- `chore+docker: <description>` - Maintenance + Docker build
+**Other Options**:
+- `docs: <description>` - Documentation changes only
+- `chore: <description>` - Maintenance tasks
 
 #### PR Checklist
 
@@ -216,7 +210,7 @@ isort .
 ### Test Failures
 - Check test output for specific errors
 - Run individual tests for debugging: `pytest tests/test_specific.py -xvs`
-- Ensure Docker is running for simulator tests
+- Ensure server environment is set up for simulator tests
 
 ### Import Errors
 - Verify virtual environment is activated

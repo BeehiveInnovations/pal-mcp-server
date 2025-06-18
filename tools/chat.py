@@ -17,8 +17,8 @@ from .base import BaseTool, ToolRequest
 # Field descriptions to avoid duplication between Pydantic and JSON schema
 CHAT_FIELD_DESCRIPTIONS = {
     "prompt": (
-        "Your thorough, expressive question with as much context as possible. Remember: you're talking to "
-        "another Claude assistant who has deep expertise and can provide nuanced insights. Include your "
+        "You MUST provide a thorough, expressive question or share an idea with as much context as possible. "
+        "Remember: you're talking to an assistant who has deep expertise and can provide nuanced insights. Include your "
         "current thinking, specific challenges, background context, what you've already tried, and what "
         "kind of response would be most helpful. The more context and detail you provide, the more "
         "valuable and targeted the response will be."
@@ -26,7 +26,7 @@ CHAT_FIELD_DESCRIPTIONS = {
     "files": "Optional files for context (must be FULL absolute paths to real files / folders - DO NOT SHORTEN)",
     "images": (
         "Optional images for visual context. Useful for UI discussions, diagrams, visual problems, "
-        "error screens, or architectural mockups."
+        "error screens, or architectural mockups. (must be FULL absolute paths to real files / folders - DO NOT SHORTEN - OR these can be bas64 data)"
     ),
 }
 

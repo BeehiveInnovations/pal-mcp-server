@@ -12,7 +12,7 @@ This server enables **true AI collaboration** between Claude and multiple AI mod
 - **Cross-tool continuation** - Start with one tool (e.g., `analyze`) and continue with another (e.g., `codereview`) using the same conversation thread
 - **Both AIs coordinate their approaches** - questioning assumptions, validating solutions, and building on each other's insights
 - Each conversation maintains full context while only sending incremental updates
-- Conversations are automatically managed with Redis for persistence
+- Conversations are automatically managed in memory for the session duration
 
 ## Example: Multi-Model AI Coordination
 
@@ -52,7 +52,7 @@ This server enables **true AI collaboration** between Claude and multiple AI mod
 **Conversation Management:**
 - Up to 10 exchanges per conversation (configurable via `MAX_CONVERSATION_TURNS`)
 - 3-hour expiry (configurable via `CONVERSATION_TIMEOUT_HOURS`)
-- Thread-safe with Redis persistence across all tools
+- Thread-safe with in-memory persistence across all tools
 - **Image context preservation** - Images and visual references are maintained across conversation turns and tool switches
 
 ## Cross-Tool & Cross-Model Continuation Example

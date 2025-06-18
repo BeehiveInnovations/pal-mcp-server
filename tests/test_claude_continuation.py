@@ -61,16 +61,16 @@ class TestClaudeContinuationOffers:
         # Set default model to avoid effective auto mode
         self.tool.default_model = "gemini-2.5-flash-preview-05-20"
 
-    @patch("utils.conversation_memory.get_redis_client")
+    @patch("utils.conversation_memory.get_storage")
     @patch.dict("os.environ", {"PYTEST_CURRENT_TEST": ""}, clear=False)
-    async def test_new_conversation_offers_continuation(self, mock_redis):
+    async def test_new_conversation_offers_continuation(self, mock_storage):
         """Test that new conversations offer Claude continuation opportunity"""
         # Create tool AFTER providers are registered (in conftest.py fixture)
         tool = ClaudeContinuationTool()
         tool.default_model = "gemini-2.5-flash-preview-05-20"
 
         mock_client = Mock()
-        mock_redis.return_value = mock_client
+        mock_storage.return_value = mock_client
 
         # Mock the model
         with patch.object(tool, "get_model_provider") as mock_get_provider:
@@ -97,12 +97,12 @@ class TestClaudeContinuationOffers:
             assert "continuation_offer" in response_data
             assert response_data["continuation_offer"]["remaining_turns"] == MAX_CONVERSATION_TURNS - 1
 
-    @patch("utils.conversation_memory.get_redis_client")
+    @patch("utils.conversation_memory.get_storage")
     @patch.dict("os.environ", {"PYTEST_CURRENT_TEST": ""}, clear=False)
-    async def test_existing_conversation_still_offers_continuation(self, mock_redis):
+    async def test_existing_conversation_still_offers_continuation(self, mock_storage):
         """Test that existing threaded conversations still offer continuation if turns remain"""
         mock_client = Mock()
-        mock_redis.return_value = mock_client
+        mock_storage.return_value = mock_client
 
         # Mock existing thread context with 2 turns
         from utils.conversation_memory import ConversationTurn, ThreadContext
@@ -155,12 +155,12 @@ class TestClaudeContinuationOffers:
             # MAX_CONVERSATION_TURNS - 2 existing - 1 new = remaining
             assert response_data["continuation_offer"]["remaining_turns"] == MAX_CONVERSATION_TURNS - 3
 
-    @patch("utils.conversation_memory.get_redis_client")
+    @patch("utils.conversation_memory.get_storage")
     @patch.dict("os.environ", {"PYTEST_CURRENT_TEST": ""}, clear=False)
-    async def test_full_response_flow_with_continuation_offer(self, mock_redis):
+    async def test_full_response_flow_with_continuation_offer(self, mock_storage):
         """Test complete response flow that creates continuation offer"""
         mock_client = Mock()
-        mock_redis.return_value = mock_client
+        mock_storage.return_value = mock_client
 
         # Mock the model to return a response without follow-up question
         with patch.object(self.tool, "get_model_provider") as mock_get_provider:
@@ -193,12 +193,12 @@ class TestClaudeContinuationOffers:
             assert "You have" in offer["note"]
             assert "more exchange(s) available" in offer["note"]
 
-    @patch("utils.conversation_memory.get_redis_client")
+    @patch("utils.conversation_memory.get_storage")
     @patch.dict("os.environ", {"PYTEST_CURRENT_TEST": ""}, clear=False)
-    async def test_continuation_always_offered_with_natural_language(self, mock_redis):
+    async def test_continuation_always_offered_with_natural_language(self, mock_storage):
         """Test that continuation is always offered with natural language prompts"""
         mock_client = Mock()
-        mock_redis.return_value = mock_client
+        mock_storage.return_value = mock_client
 
         # Mock the model to return a response with natural language follow-up
         with patch.object(self.tool, "get_model_provider") as mock_get_provider:
@@ -229,12 +229,12 @@ I'd be happy to examine the error handling patterns in more detail if that would
             assert "continuation_offer" in response_data
             assert response_data["continuation_offer"]["remaining_turns"] == MAX_CONVERSATION_TURNS - 1
 
-    @patch("utils.conversation_memory.get_redis_client")
+    @patch("utils.conversation_memory.get_storage")
     @patch.dict("os.environ", {"PYTEST_CURRENT_TEST": ""}, clear=False)
-    async def test_threaded_conversation_with_continuation_offer(self, mock_redis):
+    async def test_threaded_conversation_with_continuation_offer(self, mock_storage):
         """Test that threaded conversations still get continuation offers when turns remain"""
         mock_client = Mock()
-        mock_redis.return_value = mock_client
+        mock_storage.return_value = mock_client
 
         # Mock existing thread context
         from utils.conversation_memory import ThreadContext
@@ -274,12 +274,12 @@ I'd be happy to examine the error handling patterns in more detail if that would
             assert response_data.get("continuation_offer") is not None
             assert response_data["continuation_offer"]["remaining_turns"] == MAX_CONVERSATION_TURNS - 1
 
-    @patch("utils.conversation_memory.get_redis_client")
+    @patch("utils.conversation_memory.get_storage")
     @patch.dict("os.environ", {"PYTEST_CURRENT_TEST": ""}, clear=False)
-    async def test_max_turns_reached_no_continuation_offer(self, mock_redis):
+    async def test_max_turns_reached_no_continuation_offer(self, mock_storage):
         """Test that no continuation is offered when max turns would be exceeded"""
         mock_client = Mock()
-        mock_redis.return_value = mock_client
+        mock_storage.return_value = mock_client
 
         # Mock existing thread context at max turns
         from utils.conversation_memory import ConversationTurn, ThreadContext
@@ -338,12 +338,12 @@ class TestContinuationIntegration:
         # Set default model to avoid effective auto mode
         self.tool.default_model = "gemini-2.5-flash-preview-05-20"
 
-    @patch("utils.conversation_memory.get_redis_client")
+    @patch("utils.conversation_memory.get_storage")
     @patch.dict("os.environ", {"PYTEST_CURRENT_TEST": ""}, clear=False)
-    async def test_continuation_offer_creates_proper_thread(self, mock_redis):
+    async def test_continuation_offer_creates_proper_thread(self, mock_storage):
         """Test that continuation offers create properly formatted threads"""
         mock_client = Mock()
-        mock_redis.return_value = mock_client
+        mock_storage.return_value = mock_client
 
         # Mock the get call that add_turn makes to retrieve the existing thread
         # We'll set this up after the first setex call
@@ -402,12 +402,12 @@ class TestContinuationIntegration:
             assert thread_context["initial_context"]["prompt"] == "Initial analysis"
             assert thread_context["initial_context"]["files"] == ["/test/file.py"]
 
-    @patch("utils.conversation_memory.get_redis_client")
+    @patch("utils.conversation_memory.get_storage")
     @patch.dict("os.environ", {"PYTEST_CURRENT_TEST": ""}, clear=False)
-    async def test_claude_can_use_continuation_id(self, mock_redis):
+    async def test_claude_can_use_continuation_id(self, mock_storage):
         """Test that Claude can use the provided continuation_id in subsequent calls"""
         mock_client = Mock()
-        mock_redis.return_value = mock_client
+        mock_storage.return_value = mock_client
 
         # Step 1: Initial request creates continuation offer
         with patch.object(self.tool, "get_model_provider") as mock_get_provider:

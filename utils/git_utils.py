@@ -55,7 +55,7 @@ def find_git_repositories(start_path: str, max_depth: int = 5) -> list[str]:
 
     try:
         # Create Path object - no need to resolve yet since the path might be
-        # a translated Docker path that doesn't exist on the host
+        # a translated path that doesn't exist
         start_path = Path(start_path)
 
         # Basic validation - must be absolute

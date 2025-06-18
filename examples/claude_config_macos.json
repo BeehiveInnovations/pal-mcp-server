@@ -1,17 +1,11 @@
 {
-  "comment": "macOS configuration using Docker",
-  "comment2": "Ensure Docker is running and containers are started",
-  "comment3": "Run './run-server.sh' first to set up the environment",
+  "comment": "macOS configuration using standalone server",
+  "comment2": "Run './run-server.sh' to set up the environment and get exact paths",
+  "comment3": "Use './run-server.sh -c' to display the correct configuration",
   "mcpServers": {
     "zen": {
-      "command": "docker",
-      "args": [
-        "exec",
-        "-i",
-        "zen-mcp-server",
-        "python",
-        "server.py"
-      ]
+      "command": "/path/to/zen-mcp-server/.zen_venv/bin/python",
+      "args": ["/path/to/zen-mcp-server/server.py"]
     }
   }
 }
