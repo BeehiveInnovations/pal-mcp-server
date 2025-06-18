@@ -158,8 +158,14 @@ The final implementation resulted in a 26% improvement in JSON parsing performan
 git clone https://github.com/BeehiveInnovations/zen-mcp-server.git
 cd zen-mcp-server
 
-# One-command setup
+# One-command setup installs Zen in Claude
 ./run-server.sh
+
+# To view MCP configuration for Claude
+./run-server.sh -c
+
+# See help for more
+./run-server.sh --help
 ```
 
 **What this does:**
