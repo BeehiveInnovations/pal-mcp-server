@@ -379,7 +379,7 @@ class TestAbsolutePathValidation:
         assert len(result) == 1
         response = json.loads(result[0].text)
         assert response["status"] == "error"
-        assert "must be absolute" in response["content"]
+        assert "must be FULL absolute paths" in response["content"]
         assert "./relative/path.py" in response["content"]
 
     @pytest.mark.asyncio
@@ -397,7 +397,7 @@ class TestAbsolutePathValidation:
         assert len(result) == 1
         response = json.loads(result[0].text)
         assert response["status"] == "error"
-        assert "must be absolute" in response["content"]
+        assert "must be FULL absolute paths" in response["content"]
         assert "../parent/file.py" in response["content"]
 
     @pytest.mark.asyncio
@@ -414,7 +414,7 @@ class TestAbsolutePathValidation:
         assert len(result) == 1
         response = json.loads(result[0].text)
         assert response["status"] == "error"
-        assert "must be absolute" in response["content"]
+        assert "must be FULL absolute paths" in response["content"]
         assert "src/main.py" in response["content"]
 
     @pytest.mark.asyncio
@@ -426,7 +426,7 @@ class TestAbsolutePathValidation:
         assert len(result) == 1
         response = json.loads(result[0].text)
         assert response["status"] == "error"
-        assert "must be absolute" in response["content"]
+        assert "must be FULL absolute paths" in response["content"]
         assert "./local/file.py" in response["content"]
 
     @pytest.mark.asyncio
@@ -443,7 +443,7 @@ class TestAbsolutePathValidation:
         assert len(result) == 1
         response = json.loads(result[0].text)
         assert response["status"] == "error"
-        assert "must be absolute" in response["content"]
+        assert "must be FULL absolute paths" in response["content"]
         assert "code.py" in response["content"]
 
     @pytest.mark.asyncio
@@ -459,7 +459,7 @@ class TestAbsolutePathValidation:
         assert len(result) == 1
         response = json.loads(result[0].text)
         assert response["status"] == "error"
-        assert "must be absolute" in response["content"]
+        assert "must be FULL absolute paths" in response["content"]
         assert "src/main.py" in response["content"]
 
     @pytest.mark.asyncio

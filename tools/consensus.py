@@ -19,62 +19,69 @@ from .base import BaseTool, ToolRequest
 
 logger = logging.getLogger(__name__)
 
+# Field descriptions to avoid duplication between Pydantic and JSON schema
+CONSENSUS_FIELD_DESCRIPTIONS = {
+    "prompt": (
+        "Description of what to get consensus on, testing objectives, and specific scope/focus areas. "
+        "Be as detailed as possible about the proposal, plan, or idea you want multiple perspectives on."
+    ),
+    "models": (
+        "List of model configurations for consensus analysis. Each model can have a specific stance and custom instructions. "
+        "Example: [{'model': 'o3', 'stance': 'for', 'stance_prompt': 'Focus on benefits and opportunities...'}, "
+        "{'model': 'flash', 'stance': 'against', 'stance_prompt': 'Identify risks and challenges...'}]. "
+        "Maximum 2 instances per model+stance combination."
+    ),
+    "files": "Optional files or directories for additional context (must be FULL absolute paths - DO NOT SHORTEN)",
+    "images": (
+        "Optional images showing expected UI changes, design requirements, "
+        "or visual references for the consensus analysis"
+    ),
+    "focus_areas": "Specific aspects to focus on (e.g., 'performance', 'security', 'user experience')",
+    "model_config_model": "Model name to use (e.g., 'o3', 'flash', 'pro')",
+    "model_config_stance": (
+        "Stance for this model. Supportive: 'for', 'support', 'favor'. "
+        "Critical: 'against', 'oppose', 'critical'. Neutral: 'neutral'. "
+        "Defaults to 'neutral'."
+    ),
+    "model_config_stance_prompt": (
+        "Custom stance-specific instructions for this model. "
+        "If provided, this will be used instead of the default stance prompt. "
+        "Should be clear, specific instructions about how this model should approach the analysis."
+    ),
+    "model_config_stance_schema": "Stance for this model: supportive ('for', 'support', 'favor'), critical ('against', 'oppose', 'critical'), or 'neutral'",
+}
+
 
 class ModelConfig(BaseModel):
     """Enhanced model configuration for consensus tool"""
 
-    model: str = Field(..., description="Model name to use (e.g., 'o3', 'flash', 'pro')")
+    model: str = Field(..., description=CONSENSUS_FIELD_DESCRIPTIONS["model_config_model"])
     stance: Optional[str] = Field(
         default="neutral",
-        description=(
-            "Stance for this model. Supportive: 'for', 'support', 'favor'. "
-            "Critical: 'against', 'oppose', 'critical'. Neutral: 'neutral'. "
-            "Defaults to 'neutral'."
-        ),
+        description=CONSENSUS_FIELD_DESCRIPTIONS["model_config_stance"],
     )
     stance_prompt: Optional[str] = Field(
         default=None,
-        description=(
-            "Custom stance-specific instructions for this model. "
-            "If provided, this will be used instead of the default stance prompt. "
-            "Should be clear, specific instructions about how this model should approach the analysis."
-        ),
+        description=CONSENSUS_FIELD_DESCRIPTIONS["model_config_stance_prompt"],
     )
 
 
 class ConsensusRequest(ToolRequest):
     """Request model for consensus tool"""
 
-    prompt: str = Field(
-        ...,
-        description=(
-            "Description of what to get consensus on, testing objectives, and specific scope/focus areas. "
-            "Be as detailed as possible about the proposal, plan, or idea you want multiple perspectives on."
-        ),
-    )
-    models: list[ModelConfig] = Field(
-        ...,
-        description=(
-            "List of model configurations for consensus analysis. Each model can have a specific stance and custom instructions. "
-            "Example: [{'model': 'o3', 'stance': 'for', 'stance_prompt': 'Focus on benefits and opportunities...'}, "
-            "{'model': 'flash', 'stance': 'against', 'stance_prompt': 'Identify risks and challenges...'}]. "
-            "Maximum 2 instances per model+stance combination."
-        ),
-    )
+    prompt: str = Field(..., description=CONSENSUS_FIELD_DESCRIPTIONS["prompt"])
+    models: list[ModelConfig] = Field(..., description=CONSENSUS_FIELD_DESCRIPTIONS["models"])
     files: Optional[list[str]] = Field(
         default_factory=list,
-        description="Optional files or directories for additional context (must be FULL absolute paths - DO NOT SHORTEN)",
+        description=CONSENSUS_FIELD_DESCRIPTIONS["files"],
     )
     images: Optional[list[str]] = Field(
         default_factory=list,
-        description=(
-            "Optional images showing expected UI changes, design requirements, "
-            "or visual references for the consensus analysis"
-        ),
+        description=CONSENSUS_FIELD_DESCRIPTIONS["images"],
     )
     focus_areas: Optional[list[str]] = Field(
         default_factory=list,
-        description="Specific aspects to focus on (e.g., 'performance', 'security', 'user experience')",
+        description=CONSENSUS_FIELD_DESCRIPTIONS["focus_areas"],
     )
 
     @field_validator("models")
@@ -111,10 +118,7 @@ class ConsensusTool(BaseTool):
             "properties": {
                 "prompt": {
                     "type": "string",
-                    "description": (
-                        "Description of what to get consensus on, testing objectives, and specific scope/focus areas. "
-                        "Be as detailed as possible about the proposal, plan, or idea you want multiple perspectives on."
-                    ),
+                    "description": CONSENSUS_FIELD_DESCRIPTIONS["prompt"],
                 },
                 "models": {
                     "type": "array",
@@ -123,45 +127,37 @@ class ConsensusTool(BaseTool):
                         "properties": {
                             "model": {
                                 "type": "string",
-                                "description": "Model name to use (e.g., 'o3', 'flash', 'pro')",
+                                "description": CONSENSUS_FIELD_DESCRIPTIONS["model_config_model"],
                             },
                             "stance": {
                                 "type": "string",
                                 "enum": ["for", "support", "favor", "against", "oppose", "critical", "neutral"],
-                                "description": "Stance for this model: supportive ('for', 'support', 'favor'), critical ('against', 'oppose', 'critical'), or 'neutral'",
+                                "description": CONSENSUS_FIELD_DESCRIPTIONS["model_config_stance_schema"],
                                 "default": "neutral",
                             },
                             "stance_prompt": {
                                 "type": "string",
-                                "description": "Custom stance-specific instructions for this model. If provided, this will be used instead of the default stance prompt.",
+                                "description": CONSENSUS_FIELD_DESCRIPTIONS["model_config_stance_prompt"],
                             },
                         },
                         "required": ["model"],
                     },
-                    "description": (
-                        "List of model configurations for consensus analysis. Each model can have a specific stance and custom instructions. "
-                        "Example: [{'model': 'o3', 'stance': 'for', 'stance_prompt': 'Focus on benefits and opportunities...'}, "
-                        "{'model': 'flash', 'stance': 'against', 'stance_prompt': 'Identify risks and challenges...'}]. "
-                        "Maximum 2 instances per model+stance combination."
-                    ),
+                    "description": CONSENSUS_FIELD_DESCRIPTIONS["models"],
                 },
                 "files": {
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "Optional files or directories for additional context (must be FULL absolute paths - DO NOT SHORTEN)",
+                    "description": CONSENSUS_FIELD_DESCRIPTIONS["files"],
                 },
                 "images": {
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": (
-                        "Optional images showing expected UI changes, design requirements, "
-                        "or visual references for the consensus analysis"
-                    ),
+                    "description": CONSENSUS_FIELD_DESCRIPTIONS["images"],
                 },
                 "focus_areas": {
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "Specific aspects to focus on (e.g., 'performance', 'security', 'user experience')",
+                    "description": CONSENSUS_FIELD_DESCRIPTIONS["focus_areas"],
                 },
                 "temperature": {
                     "type": "number",

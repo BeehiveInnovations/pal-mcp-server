@@ -26,62 +26,65 @@ from .base import BaseTool, ToolRequest
 # Conservative fallback for token limits
 DEFAULT_CONTEXT_WINDOW = 200_000
 
+# Field descriptions to avoid duplication between Pydantic and JSON schema
+PRECOMMIT_FIELD_DESCRIPTIONS = {
+    "path": "Starting directory to search for git repositories (must be FULL absolute paths - DO NOT SHORTEN).",
+    "prompt": (
+        "The original user request description for the changes. Provides critical context for the review. "
+        "If original request is limited or not available, you MUST study the changes carefully, think deeply "
+        "about the implementation intent, analyze patterns across all modifications, infer the logic and "
+        "requirements from the code changes and provide a thorough starting point."
+    ),
+    "compare_to": (
+        "Optional: A git ref (branch, tag, commit hash) to compare against. If not provided, reviews local "
+        "staged and unstaged changes."
+    ),
+    "include_staged": "Include staged changes in the review. Only applies if 'compare_to' is not set.",
+    "include_unstaged": "Include uncommitted (unstaged) changes in the review. Only applies if 'compare_to' is not set.",
+    "focus_on": "Specific aspects to focus on (e.g., 'logic for user authentication', 'database query efficiency').",
+    "review_type": "Type of review to perform on the changes.",
+    "severity_filter": "Minimum severity level to report on the changes.",
+    "max_depth": "Maximum depth to search for nested git repositories to prevent excessive recursion.",
+    "temperature": "Temperature for the response (0.0 to 1.0). Lower values are more focused and deterministic.",
+    "thinking_mode": "Thinking depth mode for the assistant.",
+    "files": (
+        "Optional files or directories to provide as context (must be FULL absolute paths - DO NOT SHORTEN). "
+        "These files are not part of the changes but provide helpful context like configs, docs, or related code."
+    ),
+    "images": (
+        "Optional images showing expected UI changes, design requirements, or visual references for the changes "
+        "being validated"
+    ),
+}
+
 
 class PrecommitRequest(ToolRequest):
     """Request model for precommit tool"""
 
-    path: str = Field(
-        ...,
-        description="Starting directory to search for git repositories (must be FULL absolute paths - DO NOT SHORTEN).",
-    )
-    prompt: Optional[str] = Field(
-        None,
-        description="The original user request description for the changes. Provides critical context for the review. If original request is limited or not available, you MUST study the changes carefully, think deeply about the implementation intent, analyze patterns across all modifications, infer the logic and requirements from the code changes and provide a thorough starting point.",
-    )
-    compare_to: Optional[str] = Field(
-        None,
-        description="Optional: A git ref (branch, tag, commit hash) to compare against. If not provided, reviews local staged and unstaged changes.",
-    )
-    include_staged: bool = Field(
-        True,
-        description="Include staged changes in the review. Only applies if 'compare_to' is not set.",
-    )
-    include_unstaged: bool = Field(
-        True,
-        description="Include uncommitted (unstaged) changes in the review. Only applies if 'compare_to' is not set.",
-    )
-    focus_on: Optional[str] = Field(
-        None,
-        description="Specific aspects to focus on (e.g., 'logic for user authentication', 'database query efficiency').",
-    )
+    path: str = Field(..., description=PRECOMMIT_FIELD_DESCRIPTIONS["path"])
+    prompt: Optional[str] = Field(None, description=PRECOMMIT_FIELD_DESCRIPTIONS["prompt"])
+    compare_to: Optional[str] = Field(None, description=PRECOMMIT_FIELD_DESCRIPTIONS["compare_to"])
+    include_staged: bool = Field(True, description=PRECOMMIT_FIELD_DESCRIPTIONS["include_staged"])
+    include_unstaged: bool = Field(True, description=PRECOMMIT_FIELD_DESCRIPTIONS["include_unstaged"])
+    focus_on: Optional[str] = Field(None, description=PRECOMMIT_FIELD_DESCRIPTIONS["focus_on"])
     review_type: Literal["full", "security", "performance", "quick"] = Field(
-        "full", description="Type of review to perform on the changes."
+        "full", description=PRECOMMIT_FIELD_DESCRIPTIONS["review_type"]
     )
     severity_filter: Literal["critical", "high", "medium", "low", "all"] = Field(
-        "all",
-        description="Minimum severity level to report on the changes.",
+        "all", description=PRECOMMIT_FIELD_DESCRIPTIONS["severity_filter"]
     )
-    max_depth: int = Field(
-        5,
-        description="Maximum depth to search for nested git repositories to prevent excessive recursion.",
-    )
+    max_depth: int = Field(5, description=PRECOMMIT_FIELD_DESCRIPTIONS["max_depth"])
     temperature: Optional[float] = Field(
         None,
-        description="Temperature for the response (0.0 to 1.0). Lower values are more focused and deterministic.",
+        description=PRECOMMIT_FIELD_DESCRIPTIONS["temperature"],
         ge=0.0,
         le=1.0,
     )
     thinking_mode: Optional[Literal["minimal", "low", "medium", "high", "max"]] = Field(
-        None, description="Thinking depth mode for the assistant."
+        None, description=PRECOMMIT_FIELD_DESCRIPTIONS["thinking_mode"]
     )
-    files: Optional[list[str]] = Field(
-        None,
-        description="Optional files or directories to provide as context (must be FULL absolute paths - DO NOT SHORTEN). These files are not part of the changes but provide helpful context like configs, docs, or related code.",
-    )
-    images: Optional[list[str]] = Field(
-        None,
-        description="Optional images showing expected UI changes, design requirements, or visual references for the changes being validated",
-    )
+    files: Optional[list[str]] = Field(None, description=PRECOMMIT_FIELD_DESCRIPTIONS["files"])
+    images: Optional[list[str]] = Field(None, description=PRECOMMIT_FIELD_DESCRIPTIONS["images"])
 
 
 class Precommit(BaseTool):
@@ -116,68 +119,68 @@ class Precommit(BaseTool):
             "properties": {
                 "path": {
                     "type": "string",
-                    "description": "Starting directory to search for git repositories (must be FULL absolute paths - DO NOT SHORTEN).",
+                    "description": PRECOMMIT_FIELD_DESCRIPTIONS["path"],
                 },
                 "model": self.get_model_field_schema(),
                 "prompt": {
                     "type": "string",
-                    "description": "The original user request description for the changes. Provides critical context for the review. If original request is limited or not available, you MUST study the changes carefully, think deeply about the implementation intent, analyze patterns across all modifications, infer the logic and requirements from the code changes and provide a thorough starting point.",
+                    "description": PRECOMMIT_FIELD_DESCRIPTIONS["prompt"],
                 },
                 "compare_to": {
                     "type": "string",
-                    "description": "Optional: A git ref (branch, tag, commit hash) to compare against. If not provided, reviews local staged and unstaged changes.",
+                    "description": PRECOMMIT_FIELD_DESCRIPTIONS["compare_to"],
                 },
                 "include_staged": {
                     "type": "boolean",
                     "default": True,
-                    "description": "Include staged changes in the review. Only applies if 'compare_to' is not set.",
+                    "description": PRECOMMIT_FIELD_DESCRIPTIONS["include_staged"],
                 },
                 "include_unstaged": {
                     "type": "boolean",
                     "default": True,
-                    "description": "Include uncommitted (unstaged) changes in the review. Only applies if 'compare_to' is not set.",
+                    "description": PRECOMMIT_FIELD_DESCRIPTIONS["include_unstaged"],
                 },
                 "focus_on": {
                     "type": "string",
-                    "description": "Specific aspects to focus on (e.g., 'logic for user authentication', 'database query efficiency').",
+                    "description": PRECOMMIT_FIELD_DESCRIPTIONS["focus_on"],
                 },
                 "review_type": {
                     "type": "string",
                     "enum": ["full", "security", "performance", "quick"],
                     "default": "full",
-                    "description": "Type of review to perform on the changes.",
+                    "description": PRECOMMIT_FIELD_DESCRIPTIONS["review_type"],
                 },
                 "severity_filter": {
                     "type": "string",
                     "enum": ["critical", "high", "medium", "low", "all"],
                     "default": "all",
-                    "description": "Minimum severity level to report on the changes.",
+                    "description": PRECOMMIT_FIELD_DESCRIPTIONS["severity_filter"],
                 },
                 "max_depth": {
                     "type": "integer",
                     "default": 5,
-                    "description": "Maximum depth to search for nested git repositories to prevent excessive recursion.",
+                    "description": PRECOMMIT_FIELD_DESCRIPTIONS["max_depth"],
                 },
                 "temperature": {
                     "type": "number",
-                    "description": "Temperature for the response (0.0 to 1.0). Lower values are more focused and deterministic.",
+                    "description": PRECOMMIT_FIELD_DESCRIPTIONS["temperature"],
                     "minimum": 0,
                     "maximum": 1,
                 },
                 "thinking_mode": {
                     "type": "string",
                     "enum": ["minimal", "low", "medium", "high", "max"],
-                    "description": "Thinking depth mode for the assistant.",
+                    "description": PRECOMMIT_FIELD_DESCRIPTIONS["thinking_mode"],
                 },
                 "files": {
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "Optional files or directories to provide as context (must be FULL absolute paths - DO NOT SHORTEN). These files are not part of the changes but provide helpful context like configs, docs, or related code.",
+                    "description": PRECOMMIT_FIELD_DESCRIPTIONS["files"],
                 },
                 "images": {
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "Optional images showing expected UI changes, design requirements, or visual references for the changes being validated",
+                    "description": PRECOMMIT_FIELD_DESCRIPTIONS["images"],
                 },
                 "use_websearch": {
                     "type": "boolean",

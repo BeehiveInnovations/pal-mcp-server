@@ -27,6 +27,18 @@ from .base import BaseTool, ToolRequest
 
 logger = logging.getLogger(__name__)
 
+# Field descriptions to avoid duplication between Pydantic and JSON schema
+TESTGEN_FIELD_DESCRIPTIONS = {
+    "files": "Code files or directories to generate tests for (must be FULL absolute paths to real files / folders - DO NOT SHORTEN)",
+    "prompt": "Description of what to test, testing objectives, and specific scope/focus areas",
+    "test_examples": (
+        "Optional existing test files or directories to use as style/pattern reference (must be FULL absolute paths to real files / folders - DO NOT SHORTEN). "
+        "If not provided, the tool will determine the best testing approach based on the code structure. "
+        "For large test directories, only the smallest representative tests should be included to determine testing patterns. "
+        "If similar tests exist for the code being tested, include those for the most relevant patterns."
+    ),
+}
+
 
 class TestGenerationRequest(ToolRequest):
     """
@@ -37,23 +49,9 @@ class TestGenerationRequest(ToolRequest):
     test examples for style consistency.
     """
 
-    files: list[str] = Field(
-        ...,
-        description="Code files or directories to generate tests for (must be FULL absolute paths to real files / folders - DO NOT SHORTEN)",
-    )
-    prompt: str = Field(
-        ...,
-        description="Description of what to test, testing objectives, and specific scope/focus areas",
-    )
-    test_examples: Optional[list[str]] = Field(
-        None,
-        description=(
-            "Optional existing test files or directories to use as style/pattern reference (must be FULL absolute paths to real files / folders - DO NOT SHORTEN). "
-            "If not provided, the tool will determine the best testing approach based on the code structure. "
-            "For large test directories, only the smallest representative tests should be included to determine testing patterns. "
-            "If similar tests exist for the code being tested, include those for the most relevant patterns."
-        ),
-    )
+    files: list[str] = Field(..., description=TESTGEN_FIELD_DESCRIPTIONS["files"])
+    prompt: str = Field(..., description=TESTGEN_FIELD_DESCRIPTIONS["prompt"])
+    test_examples: Optional[list[str]] = Field(None, description=TESTGEN_FIELD_DESCRIPTIONS["test_examples"])
 
 
 class TestGenerationTool(BaseTool):
@@ -91,22 +89,17 @@ class TestGenerationTool(BaseTool):
                 "files": {
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "Code files or directories to generate tests for (must be FULL absolute paths to real files / folders - DO NOT SHORTEN)",
+                    "description": TESTGEN_FIELD_DESCRIPTIONS["files"],
                 },
                 "model": self.get_model_field_schema(),
                 "prompt": {
                     "type": "string",
-                    "description": "Description of what to test, testing objectives, and specific scope/focus areas",
+                    "description": TESTGEN_FIELD_DESCRIPTIONS["prompt"],
                 },
                 "test_examples": {
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": (
-                        "Optional existing test files or directories to use as style/pattern reference (must be FULL absolute paths to real files / folders - DO NOT SHORTEN). "
-                        "If not provided, the tool will determine the best testing approach based on the code structure. "
-                        "For large test directories, only the smallest representative tests will be included to determine testing patterns. "
-                        "If similar tests exist for the code being tested, include those for the most relevant patterns."
-                    ),
+                    "description": TESTGEN_FIELD_DESCRIPTIONS["test_examples"],
                 },
                 "thinking_mode": {
                     "type": "string",
