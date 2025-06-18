@@ -79,7 +79,7 @@ It's happened more times than I can count, but I figured it’s time I start sav
 
 ⏺ The local-llama model says it doesn't have a specific model name and refers to itself as "the model" or "senior engineering thought-partner." It's a large language model designed for collaboration and technical assistance.
 
-> Tell it it's name will be ChooChoo
+> Tell it its name will be ChooChoo
 
 ⏺ zen:chat (MCP)(model: "local-llama", prompt: "Your name will be ChooChoo from now on.", continuation_id: "9e1f2efa-d27b-410d-809d-f3c9fab08867")
   ⎿ {
