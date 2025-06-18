@@ -90,18 +90,14 @@ class ModelRestrictionService:
             if not provider:
                 continue
 
-            # Get all supported models (including aliases)
-            supported_models = set()
-
-            # For OpenAI and Gemini, we can check their SUPPORTED_MODELS
-            if hasattr(provider, "SUPPORTED_MODELS"):
-                for model_name, config in provider.SUPPORTED_MODELS.items():
-                    # Add the model name (lowercase)
-                    supported_models.add(model_name.lower())
-
-                    # If it's an alias (string value), add the target too
-                    if isinstance(config, str):
-                        supported_models.add(config.lower())
+            # Get all supported models using the clean polymorphic interface
+            try:
+                # Use list_all_known_models to get both aliases and their targets
+                all_models = provider.list_all_known_models()
+                supported_models = {model.lower() for model in all_models}
+            except Exception as e:
+                logger.debug(f"Could not get model list from {provider_type.value} provider: {e}")
+                supported_models = set()
 
             # Check each allowed model
             for allowed_model in allowed_models:

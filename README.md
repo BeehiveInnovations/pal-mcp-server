@@ -365,12 +365,49 @@ and there may be more potential vulnerabilities. Find and share related code."
 **[📖 Read More](docs/tools/codereview.md)** - Professional review capabilities and parallel analysis
 
 ### 6. `precommit` - Pre-Commit Validation
-Comprehensive review of staged/unstaged git changes across multiple repositories. Validates changes against requirements and detects potential regressions.
+Comprehensive review of staged/unstaged git changes across multiple repositories. Validates changes against requirements 
+and detects potential regressions.
 
 ```
 Perform a thorough precommit with o3, we want to only highlight critical issues, no blockers, no regressions. I need
 100% confidence this covers all the edge cases listed in FIX_ISSUE_ABC.md
 ```
+
+#### Real Example:
+
+* I asked claude (sonnet-4) to refactor some code to fix a known bug; gave it exact instructions
+* The fix looked correct — and at a glance, so did the changes.
+* More importantly, all existing unit tests passed (540+ unit tests) without a hitch. Zero regressions. Claude seemed confident and eager to commit. Everything looked perfect.
+
+I then ran:
+
+```text
+Run a precommit with o3 confirm our changes are sound and diffs are valid. Confirm this won't cause breakage or 
+regressions and codesmells are out
+```
+
+This passed the tracked and untracked changes / diffs and the related code to o3 for a thorough review via Zen's `precommit` tool.
+
+Output:
+
+```text
+⏺ Precommit Analysis Results - CRITICAL ISSUE FOUND
+
+  The O3 model has identified one HIGH-severity regression and several medium/low issues in our refactor. Here's the summary:
+
+  🚨 HIGH SEVERITY - MUST FIX BEFORE COMMIT
+
+  ...
+```
+
+The reported issue was in fact a _very subtle bug_ that slipped through the quick glance — and a unit test for this exact case apparently 
+was missing (out of 540 existing tests!) - explains the zero reported regressions. The fix was ultimately simple, but the 
+fact Claude (and by extension, I) overlooked this, was a stark reminder: no number of eyeballs is ever enough. Fixed the 
+issue, ran `precommit` with o3 again and got:
+
+ **RECOMMENDATION: PROCEED WITH COMMIT**
+
+Nice!
 
 **[📖 Read More](docs/tools/precommit.md)** - Multi-repository validation and change analysis
 

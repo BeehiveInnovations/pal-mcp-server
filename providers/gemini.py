@@ -287,6 +287,56 @@ class GeminiModelProvider(ModelProvider):
 
         return int(max_thinking_tokens * self.THINKING_BUDGETS[thinking_mode])
 
+    def list_models(self, respect_restrictions: bool = True) -> list[str]:
+        """Return a list of model names supported by this provider.
+
+        Args:
+            respect_restrictions: Whether to apply provider-specific restriction logic.
+
+        Returns:
+            List of model names available from this provider
+        """
+        from utils.model_restrictions import get_restriction_service
+
+        restriction_service = get_restriction_service() if respect_restrictions else None
+        models = []
+
+        for model_name, config in self.SUPPORTED_MODELS.items():
+            # Handle both base models (dict configs) and aliases (string values)
+            if isinstance(config, str):
+                # This is an alias - check if the target model would be allowed
+                target_model = config
+                if restriction_service and not restriction_service.is_allowed(self.get_provider_type(), target_model):
+                    continue
+                # Allow the alias
+                models.append(model_name)
+            else:
+                # This is a base model with config dict
+                # Check restrictions if enabled
+                if restriction_service and not restriction_service.is_allowed(self.get_provider_type(), model_name):
+                    continue
+                models.append(model_name)
+
+        return models
+
+    def list_all_known_models(self) -> list[str]:
+        """Return all model names known by this provider, including alias targets.
+
+        Returns:
+            List of all model names and alias targets known by this provider
+        """
+        all_models = set()
+
+        for model_name, config in self.SUPPORTED_MODELS.items():
+            # Add the model name itself
+            all_models.add(model_name.lower())
+
+            # If it's an alias (string value), add the target model too
+            if isinstance(config, str):
+                all_models.add(config.lower())
+
+        return list(all_models)
+
     def _resolve_model_name(self, model_name: str) -> str:
         """Resolve model shorthand to full name."""
         # Check if it's a shorthand

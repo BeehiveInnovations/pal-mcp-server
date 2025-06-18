@@ -142,6 +142,7 @@ class TestModelRestrictionService:
                 "o3-mini": {"context_window": 200000},
                 "o4-mini": {"context_window": 200000},
             }
+            mock_provider.list_all_known_models.return_value = ["o3", "o3-mini", "o4-mini"]
 
             provider_instances = {ProviderType.OPENAI: mock_provider}
             service.validate_against_known_models(provider_instances)
@@ -444,12 +445,57 @@ class TestRegistryIntegration:
             "o3": {"context_window": 200000},
             "o3-mini": {"context_window": 200000},
         }
+        mock_openai.get_provider_type.return_value = ProviderType.OPENAI
+
+        def openai_list_models(respect_restrictions=True):
+            from utils.model_restrictions import get_restriction_service
+
+            restriction_service = get_restriction_service() if respect_restrictions else None
+            models = []
+            for model_name, config in mock_openai.SUPPORTED_MODELS.items():
+                if isinstance(config, str):
+                    target_model = config
+                    if restriction_service and not restriction_service.is_allowed(ProviderType.OPENAI, target_model):
+                        continue
+                    models.append(model_name)
+                else:
+                    if restriction_service and not restriction_service.is_allowed(ProviderType.OPENAI, model_name):
+                        continue
+                    models.append(model_name)
+            return models
+
+        mock_openai.list_models = openai_list_models
+        mock_openai.list_all_known_models.return_value = ["o3", "o3-mini"]
 
         mock_gemini = MagicMock()
         mock_gemini.SUPPORTED_MODELS = {
             "gemini-2.5-pro-preview-06-05": {"context_window": 1048576},
             "gemini-2.5-flash-preview-05-20": {"context_window": 1048576},
         }
+        mock_gemini.get_provider_type.return_value = ProviderType.GOOGLE
+
+        def gemini_list_models(respect_restrictions=True):
+            from utils.model_restrictions import get_restriction_service
+
+            restriction_service = get_restriction_service() if respect_restrictions else None
+            models = []
+            for model_name, config in mock_gemini.SUPPORTED_MODELS.items():
+                if isinstance(config, str):
+                    target_model = config
+                    if restriction_service and not restriction_service.is_allowed(ProviderType.GOOGLE, target_model):
+                        continue
+                    models.append(model_name)
+                else:
+                    if restriction_service and not restriction_service.is_allowed(ProviderType.GOOGLE, model_name):
+                        continue
+                    models.append(model_name)
+            return models
+
+        mock_gemini.list_models = gemini_list_models
+        mock_gemini.list_all_known_models.return_value = [
+            "gemini-2.5-pro-preview-06-05",
+            "gemini-2.5-flash-preview-05-20",
+        ]
 
         def get_provider_side_effect(provider_type):
             if provider_type == ProviderType.OPENAI:
@@ -569,6 +615,27 @@ class TestAutoModeWithRestrictions:
             "o3-mini": {"context_window": 200000},
             "o4-mini": {"context_window": 200000},
         }
+        mock_openai.get_provider_type.return_value = ProviderType.OPENAI
+
+        def openai_list_models(respect_restrictions=True):
+            from utils.model_restrictions import get_restriction_service
+
+            restriction_service = get_restriction_service() if respect_restrictions else None
+            models = []
+            for model_name, config in mock_openai.SUPPORTED_MODELS.items():
+                if isinstance(config, str):
+                    target_model = config
+                    if restriction_service and not restriction_service.is_allowed(ProviderType.OPENAI, target_model):
+                        continue
+                    models.append(model_name)
+                else:
+                    if restriction_service and not restriction_service.is_allowed(ProviderType.OPENAI, model_name):
+                        continue
+                    models.append(model_name)
+            return models
+
+        mock_openai.list_models = openai_list_models
+        mock_openai.list_all_known_models.return_value = ["o3", "o3-mini", "o4-mini"]
 
         def get_provider_side_effect(provider_type):
             if provider_type == ProviderType.OPENAI:

@@ -233,8 +233,9 @@ class TestOpenRouterAutoMode:
         os.environ["DEFAULT_MODEL"] = "auto"
 
         mock_provider_class = Mock()
-        mock_provider_instance = Mock(spec=["get_provider_type"])
+        mock_provider_instance = Mock(spec=["get_provider_type", "list_models"])
         mock_provider_instance.get_provider_type.return_value = ProviderType.OPENROUTER
+        mock_provider_instance.list_models.return_value = []
         mock_provider_class.return_value = mock_provider_instance
 
         ModelProviderRegistry.register_provider(ProviderType.OPENROUTER, mock_provider_class)

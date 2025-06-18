@@ -276,3 +276,56 @@ class CustomProvider(OpenAICompatibleProvider):
             False (custom models generally don't support thinking mode)
         """
         return False
+
+    def list_models(self, respect_restrictions: bool = True) -> list[str]:
+        """Return a list of model names supported by this provider.
+
+        Args:
+            respect_restrictions: Whether to apply provider-specific restriction logic.
+
+        Returns:
+            List of model names available from this provider
+        """
+        from utils.model_restrictions import get_restriction_service
+
+        restriction_service = get_restriction_service() if respect_restrictions else None
+        models = []
+
+        if self._registry:
+            # Get all models from the registry
+            all_models = self._registry.list_models()
+            aliases = self._registry.list_aliases()
+
+            # Add models that are validated by the custom provider
+            for model_name in all_models + aliases:
+                # Use the provider's validation logic to determine if this model
+                # is appropriate for the custom endpoint
+                if self.validate_model_name(model_name):
+                    # Check restrictions if enabled
+                    if restriction_service and not restriction_service.is_allowed(self.get_provider_type(), model_name):
+                        continue
+
+                    models.append(model_name)
+
+        return models
+
+    def list_all_known_models(self) -> list[str]:
+        """Return all model names known by this provider, including alias targets.
+
+        Returns:
+            List of all model names and alias targets known by this provider
+        """
+        all_models = set()
+
+        if self._registry:
+            # Get all models and aliases from the registry
+            all_models.update(model.lower() for model in self._registry.list_models())
+            all_models.update(alias.lower() for alias in self._registry.list_aliases())
+
+            # For each alias, also add its target
+            for alias in self._registry.list_aliases():
+                config = self._registry.resolve(alias)
+                if config:
+                    all_models.add(config.model_name.lower())
+
+        return list(all_models)
