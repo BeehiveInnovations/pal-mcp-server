@@ -21,52 +21,48 @@ logger = logging.getLogger(__name__)
 # Field descriptions for the investigation steps
 DEBUG_INVESTIGATION_FIELD_DESCRIPTIONS = {
     "step": (
-        "Your current investigation step. For the first step, describe the issue/error to investigate. "
-        "For subsequent steps, describe what you're investigating, what code you're examining, "
-        "what patterns you're looking for, or what hypothesis you're testing."
+        "Describe what you're currently investigating. In step 1, clearly state the issue to investigate and begin "
+        "thinking deeply about where the problem might originate. In all subsequent steps, continue uncovering relevant "
+        "code, examining patterns, and formulating hypotheses with deliberate attention to detail."
     ),
-    "step_number": "Current step number in the investigation sequence (starts at 1)",
-    "total_steps": "Current estimate of total investigation steps needed (can be adjusted as investigation progresses)",
-    "next_step_required": "Whether another investigation step is required",
+    "step_number": "Current step number in the investigation sequence (starts at 1).",
+    "total_steps": "Estimate of total investigation steps expected (adjustable as the process evolves).",
+    "next_step_required": "Whether another investigation step is needed after this one.",
     "findings": (
-        "Current findings from this investigation step. Include code patterns discovered, "
-        "potential causes identified, hypotheses formed, or evidence gathered."
+        "Summarize discoveries in this step. Think critically and include relevant code behavior, suspicious patterns, "
+        "evidence collected, and any partial conclusions or leads."
     ),
     "files_checked": (
-        "List of files you've examined so far in the investigation (cumulative list). "
-        "Include all files you've looked at, even if they turned out to be irrelevant."
+        "List all files examined during the investigation so far. Include even files ruled out, as this tracks your exploration path."
     ),
     "relevant_files": (
-        "List of files that are definitely related to the issue (subset of files_checked). "
-        "Only include files that contain code directly related to the problem."
+        "Subset of files_checked that contain code directly relevant to the issue. Only list those that are directly tied to the root cause or its effects."
     ),
     "relevant_methods": (
-        "List of specific methods/functions that are involved in the issue. "
-        "Format: 'ClassName.methodName' or 'functionName'"
+        "List specific methods/functions clearly tied to the issue. Use 'ClassName.methodName' or 'functionName' format."
     ),
     "hypothesis": (
-        "Your current working hypothesis about the root cause. This can be updated/revised "
-        "as the investigation progresses."
+        "Formulate your current best guess about the underlying cause. This is a working theory and may evolve based on further evidence."
     ),
-    "confidence": "Your confidence level in the current hypothesis: 'low', 'medium', or 'high'",
-    "backtrack_from_step": "If you need to revise a previous finding, which step number to backtrack from",
-    "continuation_id": "Thread continuation ID for multi-turn investigation sessions",
+    "confidence": "How confident you are in the current hypothesis: 'low', 'medium', or 'high'.",
+    "backtrack_from_step": "If a previous step needs revision, specify the step number to backtrack from.",
+    "continuation_id": "Continuation token used for linking multi-step investigations.",
     "images": (
-        "Optional images showing error screens, UI issues, logs displays, or visual debugging information "
-        "that help understand the issue (must be FULL absolute paths - DO NOT SHORTEN)"
+        "Optional. Include full absolute paths to visual debugging images (UI issues, logs, error screens) that help clarify the issue."
     ),
 }
 
-# Field descriptions for the final debug request
 DEBUG_FIELD_DESCRIPTIONS = {
-    "initial_issue": "The original issue description that started the investigation",
-    "investigation_summary": "Complete summary of the systematic investigation performed",
-    "findings": "Consolidated findings from all investigation steps",
-    "files": "Essential files identified during investigation (must be FULL absolute paths - DO NOT SHORTEN)",
-    "error_context": "Stack trace, logs, or error context discovered during investigation",
-    "relevant_methods": "List of methods/functions identified as involved in the issue",
-    "hypothesis": "Final hypothesis about the root cause after investigation",
-    "images": "Optional images showing error screens, UI issues, or visual debugging information",
+    "initial_issue": "Describe the original problem that triggered the investigation.",
+    "investigation_summary": (
+        "Full overview of the systematic investigation process. Reflect deep thinking and each step's contribution to narrowing down the issue."
+    ),
+    "findings": "Final list of critical insights and discoveries across all steps.",
+    "files": "Essential files referenced during investigation (must be full absolute paths).",
+    "error_context": "Logs, tracebacks, or execution details that support the root cause hypothesis.",
+    "relevant_methods": "List of all methods/functions identified as directly involved.",
+    "hypothesis": "Final, most likely explanation of the root cause based on evidence.",
+    "images": "Optional screenshots or visual materials that helped diagnose the issue.",
 }
 
 
@@ -268,7 +264,9 @@ class DebugIssueTool(BaseTool):
 
             # Create thread for first step
             if not continuation_id and request.step_number == 1:
-                continuation_id = create_thread("debug", arguments)
+                # Clean arguments to remove non-serializable fields
+                clean_args = {k: v for k, v in arguments.items() if k not in ["_model_context", "_resolved_model_name"]}
+                continuation_id = create_thread("debug", clean_args)
                 # Store initial issue description
                 self.initial_issue = request.step
 
@@ -356,8 +354,9 @@ class DebugIssueTool(BaseTool):
                     final_hypothesis=request.hypothesis,
                     error_context=self._extract_error_context(),
                     images=list(set(self.consolidated_findings["images"])),  # Unique images
-                    model_info=arguments.get("_model_context"),
-                    model_override=arguments.get("model"),  # Pass model selection from final step
+                    model_info=arguments.get("_model_context"),  # Use pre-resolved model context from server.py
+                    arguments=arguments,  # Pass arguments for model resolution
+                    request=request,  # Pass request for model resolution
                 )
 
                 # Combine investigation and expert analysis
@@ -478,9 +477,36 @@ class DebugIssueTool(BaseTool):
         error_context: Optional[str],
         images: list[str],
         model_info: Optional[Any] = None,
-        model_override: Optional[str] = None,
+        arguments: Optional[dict] = None,
+        request: Optional[Any] = None,
     ) -> dict:
         """Call AI model for expert analysis of the investigation"""
+        # Set up model context when we actually need it for expert analysis
+        # Use the same model resolution logic as the base class
+        if model_info:
+            # Use pre-resolved model context from server.py (normal case)
+            self._model_context = model_info
+            model_name = model_info.model_name
+        else:
+            # Use centralized model resolution from base class
+            if arguments and request:
+                try:
+                    model_name, model_context = self._resolve_model_context(arguments, request)
+                    self._model_context = model_context
+                except ValueError as e:
+                    # Model resolution failed, return error
+                    return {"error": f"Model resolution failed: {str(e)}", "status": "model_resolution_error"}
+            else:
+                # Last resort fallback if no arguments/request provided
+                from config import DEFAULT_MODEL
+                from utils.model_context import ModelContext
+                model_name = DEFAULT_MODEL
+                self._model_context = ModelContext(model_name)
+
+        # Store model name for use by other methods
+        self._current_model_name = model_name
+        provider = self.get_model_provider(model_name)
+
         # Prepare the debug prompt with all investigation context
         prompt_parts = [
             f"=== ISSUE DESCRIPTION ===\n{initial_issue}\n=== END DESCRIPTION ===",
@@ -516,16 +542,6 @@ class DebugIssueTool(BaseTool):
                 )
 
         full_prompt = "\n".join(prompt_parts)
-
-        # Get appropriate model and provider
-        from config import DEFAULT_MODEL
-        from providers.registry import ModelProviderRegistry
-
-        model_name = model_override or DEFAULT_MODEL  # Use override if provided
-        provider = ModelProviderRegistry.get_provider_for_model(model_name)
-
-        if not provider:
-            return {"error": f"No provider available for model {model_name}", "status": "provider_error"}
 
         # Generate AI response
         try:

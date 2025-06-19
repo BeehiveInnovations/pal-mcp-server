@@ -512,3 +512,91 @@ class TestDebugToolIntegration:
         assert parsed_response["status"] == "investigation_in_progress"
         assert parsed_response["step_number"] == 1
         assert parsed_response["continuation_id"] == "debug-flow-uuid"
+
+    @pytest.mark.asyncio
+    async def test_model_context_initialization_in_expert_analysis(self):
+        """Real integration test that model context is properly initialized when expert analysis is called."""
+        tool = DebugIssueTool()
+
+        # Do NOT manually set up model context - let the method do it itself
+
+        # Set up investigation state for final step
+        tool.initial_issue = "Memory leak investigation"
+        tool.investigation_history = [
+            {
+                "step_number": 1,
+                "step": "Initial investigation",
+                "findings": "Found memory issues",
+                "files_checked": [],
+            }
+        ]
+        tool.consolidated_findings = {
+            "files_checked": set(),
+            "relevant_files": set(),  # No files to avoid file I/O in this test
+            "relevant_methods": {"process_data"},
+            "findings": ["Step 1: Found memory issues"],
+            "hypotheses": [],
+            "images": [],
+        }
+
+        # Test the _call_expert_analysis method directly to verify ModelContext is properly handled
+        # This is the real test - we're testing that the method can be called without the ModelContext error
+        try:
+            # Only mock the API call itself, not the model resolution infrastructure
+            from unittest.mock import MagicMock
+
+            mock_provider = MagicMock()
+            mock_response = MagicMock()
+            mock_response.content = '{"status": "analysis_complete", "summary": "Test completed"}'
+            mock_provider.generate_content.return_value = mock_response
+
+            # Use the real get_model_provider method but override its result to avoid API calls
+            original_get_provider = tool.get_model_provider
+            tool.get_model_provider = lambda model_name: mock_provider
+
+            try:
+                # Create mock arguments and request for model resolution
+                from tools.debug import DebugInvestigationRequest
+                mock_arguments = {"model": None}  # No model specified, should fall back to DEFAULT_MODEL
+                mock_request = DebugInvestigationRequest(
+                    step="Test step",
+                    step_number=1,
+                    total_steps=1,
+                    next_step_required=False,
+                    findings="Test findings"
+                )
+
+                # This should NOT raise a ModelContext error - the method should set up context itself
+                result = await tool._call_expert_analysis(
+                    initial_issue="Test issue",
+                    investigation_summary="Test summary",
+                    relevant_files=[],  # Empty to avoid file operations
+                    relevant_methods=["test_method"],
+                    final_hypothesis="Test hypothesis",
+                    error_context=None,
+                    images=[],
+                    model_info=None,  # No pre-resolved model info
+                    arguments=mock_arguments,  # Provide arguments for model resolution
+                    request=mock_request,  # Provide request for model resolution
+                )
+
+                # Should complete without ModelContext error
+                assert "error" not in result
+                assert result["status"] == "analysis_complete"
+
+                # Verify the model context was actually set up
+                assert hasattr(tool, "_model_context")
+                assert hasattr(tool, "_current_model_name")
+                # Should use DEFAULT_MODEL when no model specified
+                from config import DEFAULT_MODEL
+                assert tool._current_model_name == DEFAULT_MODEL
+
+            finally:
+                # Restore original method
+                tool.get_model_provider = original_get_provider
+
+        except RuntimeError as e:
+            if "ModelContext not initialized" in str(e):
+                pytest.fail("ModelContext error still occurs - the fix is not working properly")
+            else:
+                raise  # Re-raise other RuntimeErrors
