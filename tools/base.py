@@ -214,6 +214,18 @@ class BaseTool(ABC):
         """
         pass
 
+    def requires_model(self) -> bool:
+        """
+        Return whether this tool requires AI model access.
+
+        Tools that override execute() to do pure data processing (like planner)
+        should return False to skip model resolution at the MCP boundary.
+
+        Returns:
+            bool: True if tool needs AI model access (default), False for data-only tools
+        """
+        return True
+
     @classmethod
     def _get_openrouter_registry(cls):
         """Get cached OpenRouter registry instance."""

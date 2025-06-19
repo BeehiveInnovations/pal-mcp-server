@@ -555,6 +555,12 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[TextCon
         # Consensus tool handles its own model configuration validation
         # No special handling needed at server level
 
+        # Skip model resolution for tools that don't require models (e.g., planner)
+        if not tool.requires_model():
+            logger.debug(f"Tool {name} doesn't require model resolution - skipping model validation")
+            # Execute tool directly without model context
+            return await tool.execute(arguments)
+
         # Handle auto mode at MCP boundary - resolve to specific model
         if model_name.lower() == "auto":
             # Get tool category to determine appropriate model

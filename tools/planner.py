@@ -244,6 +244,16 @@ class PlannerTool(BaseTool):
     def get_default_thinking_mode(self) -> str:
         return "high"  # Default to high thinking for comprehensive planning
 
+    def requires_model(self) -> bool:
+        """
+        Planner tool doesn't require AI model access - it's pure data processing.
+
+        This prevents the server from trying to resolve model names like "auto"
+        when the planner tool is used, since it overrides execute() and doesn't
+        make any AI API calls.
+        """
+        return False
+
     async def execute(self, arguments: dict[str, Any]) -> list:
         """
         Override execute to work like original TypeScript tool - no AI calls, just data processing.

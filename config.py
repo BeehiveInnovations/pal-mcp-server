@@ -14,9 +14,9 @@ import os
 # These values are used in server responses and for tracking releases
 # IMPORTANT: This is the single source of truth for version and author info
 # Semantic versioning: MAJOR.MINOR.PATCH
-__version__ = "5.1.2"
+__version__ = "5.1.3"
 # Last update date in ISO format
-__updated__ = "2025-06-18"
+__updated__ = "2025-06-19"
 # Primary maintainer
 __author__ = "Fahad Gilani"
 
@@ -61,9 +61,7 @@ MODEL_CAPABILITIES_DESC = {
     "grokfast": "GROK-3 Fast (131K context) - Higher performance variant, faster processing but more expensive",
     # Full model names also supported (for explicit specification)
     "gemini-2.5-flash": "Ultra-fast (1M context) - Quick analysis, simple queries, rapid iterations",
-    "gemini-2.5-pro": (
-        "Deep reasoning + thinking mode (1M context) - Complex problems, architecture, deep analysis"
-    ),
+    "gemini-2.5-pro": ("Deep reasoning + thinking mode (1M context) - Complex problems, architecture, deep analysis"),
 }
 
 # OpenRouter/Custom API Fallback Behavior:

@@ -148,9 +148,7 @@ class TestGeminiProvider:
 
         provider = GeminiModelProvider(api_key="test-key")
 
-        response = provider.generate_content(
-            prompt="Test prompt", model_name="gemini-2.5-flash", temperature=0.7
-        )
+        response = provider.generate_content(prompt="Test prompt", model_name="gemini-2.5-flash", temperature=0.7)
 
         assert isinstance(response, ModelResponse)
         assert response.content == "Generated content"

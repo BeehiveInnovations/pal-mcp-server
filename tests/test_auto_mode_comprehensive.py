@@ -567,9 +567,7 @@ class TestAutoModeComprehensive:
             mock_response.model_name = "gemini-2.5-flash"  # The resolved name
             mock_response.usage = {"input_tokens": 10, "output_tokens": 5}
             # Mock _resolve_model_name to simulate alias resolution
-            mock_provider._resolve_model_name = lambda alias: (
-                "gemini-2.5-flash" if alias == "flash" else alias
-            )
+            mock_provider._resolve_model_name = lambda alias: ("gemini-2.5-flash" if alias == "flash" else alias)
             mock_provider.generate_content.return_value = mock_response
 
             with patch.object(ModelProviderRegistry, "get_provider_for_model", return_value=mock_provider):
