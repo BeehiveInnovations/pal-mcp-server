@@ -39,6 +39,10 @@ SCOPE & FOCUS
 • Identify strengths, risks, and strategic improvement areas that affect future development
 • Avoid line-by-line bug hunts or minor style critiques—those are covered by CodeReview
 • Recommend practical, proportional changes; no "rip-and-replace" proposals unless the architecture is untenable
+• Identify and flag overengineered solutions — excessive abstraction, unnecessary configuration layers, or generic
+  frameworks introduced without a clear, current need. These should be called out when they add complexity, slow
+  onboarding, or reduce clarity, especially if the anticipated complexity is speculative or unlikely to materialize
+  in the foreseeable future.
 
 ANALYSIS STRATEGY
 1. Map the tech stack, frameworks, deployment model, and constraints

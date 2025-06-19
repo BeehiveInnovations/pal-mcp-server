@@ -19,7 +19,8 @@ from config import MCP_PROMPT_SIZE_LIMIT
 from tools.analyze import AnalyzeTool
 from tools.chat import ChatTool
 from tools.codereview import CodeReviewTool
-from tools.debug import DebugIssueTool
+
+# from tools.debug import DebugIssueTool  # Commented out - debug tool refactored
 from tools.precommit import Precommit
 from tools.thinkdeep import ThinkDeepTool
 
@@ -250,25 +251,30 @@ class TestLargePromptHandling:
         # The core fix ensures large prompts are detected at the right time
         assert output["status"] in ["success", "files_required_to_continue", "resend_prompt"]
 
-    @pytest.mark.asyncio
-    async def test_debug_large_error_description(self, large_prompt):
-        """Test that debug tool detects large error_description."""
-        tool = DebugIssueTool()
-        result = await tool.execute({"prompt": large_prompt})
+    # NOTE: Debug tool tests have been commented out because the debug tool has been
+    # refactored to use a self-investigation pattern instead of accepting a prompt field.
+    # The new debug tool requires fields like: step, step_number, total_steps, next_step_required, findings
+    # and doesn't have the "resend_prompt" functionality for large prompts.
 
-        assert len(result) == 1
-        output = json.loads(result[0].text)
-        assert output["status"] == "resend_prompt"
+    # @pytest.mark.asyncio
+    # async def test_debug_large_error_description(self, large_prompt):
+    #     """Test that debug tool detects large error_description."""
+    #     tool = DebugIssueTool()
+    #     result = await tool.execute({"prompt": large_prompt})
+    #
+    #     assert len(result) == 1
+    #     output = json.loads(result[0].text)
+    #     assert output["status"] == "resend_prompt"
 
-    @pytest.mark.asyncio
-    async def test_debug_large_error_context(self, large_prompt, normal_prompt):
-        """Test that debug tool detects large error_context."""
-        tool = DebugIssueTool()
-        result = await tool.execute({"prompt": normal_prompt, "error_context": large_prompt})
-
-        assert len(result) == 1
-        output = json.loads(result[0].text)
-        assert output["status"] == "resend_prompt"
+    # @pytest.mark.asyncio
+    # async def test_debug_large_error_context(self, large_prompt, normal_prompt):
+    #     """Test that debug tool detects large error_context."""
+    #     tool = DebugIssueTool()
+    #     result = await tool.execute({"prompt": normal_prompt, "error_context": large_prompt})
+    #
+    #     assert len(result) == 1
+    #     output = json.loads(result[0].text)
+    #     assert output["status"] == "resend_prompt"
 
     @pytest.mark.asyncio
     async def test_analyze_large_question(self, large_prompt):

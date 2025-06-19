@@ -53,6 +53,9 @@ REVIEW METHOD
 4. Flag bugs, regressions, crash risks, data loss, or race conditions.
 5. Recommend specific fixes for each issue raised; include code where helpful.
 6. Acknowledge sound patterns to reinforce best practices.
+7. Remember: Overengineering is an anti-pattern — avoid suggesting solutions that introduce unnecessary abstraction,
+   indirection, or configuration in anticipation of complexity that does not yet exist, is not clearly justified by the
+   current scope, and may not arise in the foreseeable future.
 
 CORE ANALYSIS (adapt to diff and stack)
 • Security – injection risks, auth flaws, exposure of sensitive data, unsafe dependencies, memory safety
@@ -62,6 +65,11 @@ CORE ANALYSIS (adapt to diff and stack)
 
 ADDITIONAL ANALYSIS (only when relevant)
 • Language/runtime concerns – memory management, concurrency, exception handling
+    • Carefully assess the code's context and purpose before raising concurrency-related concerns. Confirm the presence
+    of shared state, race conditions, or unsafe access patterns before flagging any issues to avoid false positives.
+    • Also carefully evaluate concurrency and parallelism risks only after confirming that the code runs in an environment
+     where such concerns are applicable. Avoid flagging issues unless shared state, asynchronous execution, or multi-threaded
+     access are clearly possible based on context.
 • System/integration – config handling, external calls, operational impact
 • Testing – coverage gaps for new logic
     • If no tests are found in the project, do not flag test coverage as an issue unless the change introduces logic

@@ -6,7 +6,7 @@ import json
 
 import pytest
 
-from tools import AnalyzeTool, ChatTool, CodeReviewTool, DebugIssueTool, ThinkDeepTool
+from tools import AnalyzeTool, ChatTool, CodeReviewTool, ThinkDeepTool
 
 
 class TestThinkDeepTool:
@@ -183,94 +183,6 @@ class TestCodeReviewTool:
             ModelProviderRegistry._instance = None
 
 
-class TestDebugIssueTool:
-    """Test the debug tool"""
-
-    @pytest.fixture
-    def tool(self):
-        return DebugIssueTool()
-
-    def test_tool_metadata(self, tool):
-        """Test tool metadata"""
-        assert tool.get_name() == "debug"
-        assert "DEBUG & ROOT CAUSE ANALYSIS" in tool.get_description()
-        assert tool.get_default_temperature() == 0.2
-
-        schema = tool.get_input_schema()
-        assert "prompt" in schema["properties"]
-        assert schema["required"] == ["prompt"]
-
-    @pytest.mark.asyncio
-    async def test_execute_with_context(self, tool):
-        """Test execution with error context using real integration testing"""
-        import importlib
-        import os
-
-        # Save original environment
-        original_env = {
-            "OPENAI_API_KEY": os.environ.get("OPENAI_API_KEY"),
-            "DEFAULT_MODEL": os.environ.get("DEFAULT_MODEL"),
-        }
-
-        try:
-            # Set up environment for real provider resolution
-            os.environ["OPENAI_API_KEY"] = "sk-test-key-debug-context-test-not-real"
-            os.environ["DEFAULT_MODEL"] = "o3-mini"
-
-            # Clear other provider keys to isolate to OpenAI
-            for key in ["GEMINI_API_KEY", "XAI_API_KEY", "OPENROUTER_API_KEY"]:
-                os.environ.pop(key, None)
-
-            # Reload config and clear registry
-            import config
-
-            importlib.reload(config)
-            from providers.registry import ModelProviderRegistry
-
-            ModelProviderRegistry._instance = None
-
-            # Test with real provider resolution
-            try:
-                result = await tool.execute(
-                    {
-                        "prompt": "Test fails intermittently",
-                        "error_context": "AssertionError in test_async",
-                        "previous_attempts": "Added sleep, still fails",
-                        "model": "o3-mini",
-                    }
-                )
-
-                # If we get here, check the response format
-                assert len(result) == 1
-                # Should contain debug analysis
-                assert result[0].text is not None
-
-            except Exception as e:
-                # Expected: API call will fail with fake key
-                error_msg = str(e)
-                # Should NOT be a mock-related error
-                assert "MagicMock" not in error_msg
-                assert "'<' not supported between instances" not in error_msg
-
-                # Should be a real provider error
-                assert any(
-                    phrase in error_msg
-                    for phrase in ["API", "key", "authentication", "provider", "network", "connection"]
-                )
-
-        finally:
-            # Restore environment
-            for key, value in original_env.items():
-                if value is not None:
-                    os.environ[key] = value
-                else:
-                    os.environ.pop(key, None)
-
-            # Reload config and clear registry
-            importlib.reload(config)
-            ModelProviderRegistry._instance = None
-
-
 class TestAnalyzeTool:
     """Test the analyze tool"""
 
@@ -399,23 +311,6 @@ class TestAbsolutePathValidation:
         assert response["status"] == "error"
         assert "must be FULL absolute paths" in response["content"]
         assert "../parent/file.py" in response["content"]
-
-    @pytest.mark.asyncio
-    async def test_debug_tool_relative_path_rejected(self):
-        """Test that debug tool rejects relative paths"""
-        tool = DebugIssueTool()
-        result = await tool.execute(
-            {
-                "prompt": "Something broke",
-                "files": ["src/main.py"],  # relative path
-            }
-        )
-
-        assert len(result) == 1
-        response = json.loads(result[0].text)
-        assert response["status"] == "error"
-        assert "must be FULL absolute paths" in response["content"]
-        assert "src/main.py" in response["content"]
 
     @pytest.mark.asyncio
     async def test_thinkdeep_tool_relative_path_rejected(self):

@@ -55,6 +55,9 @@ Your review approach:
   - Ways to reduce the overall complexity while maintaining and retaining functionality without introducing regression
 8. Where further investigation and analysis is required, be direct and suggest which code or related file needs to be
 reviewed
+9. Remember: Overengineering is an anti-pattern — avoid suggesting solutions that introduce unnecessary abstraction,
+   indirection, or configuration in anticipation of complexity that does not yet exist, is not clearly justified by the
+   current scope, and may not arise in the foreseeable future.
 
 SEVERITY DEFINITIONS
 🔴 CRITICAL: Security flaws or defects that cause crashes, data loss, or undefined behavior

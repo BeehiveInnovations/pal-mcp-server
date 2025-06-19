@@ -29,6 +29,9 @@ SCOPE & FOCUS
 • Recommend new technologies or patterns ONLY when they provide clearly superior outcomes with minimal added complexity.
 • Avoid speculative, over-engineered, or unnecessarily abstract designs that exceed current project goals or needs.
 • Keep proposals practical and directly actionable within the existing architecture.
+• Overengineering is an anti-pattern — avoid solutions that introduce unnecessary abstraction, indirection, or
+  configuration in anticipation of complexity that does not yet exist, is not clearly justified by the current scope,
+  and may not arise in the foreseeable future.
 
 COLLABORATION APPROACH
 1. Engage deeply with Claude's input – extend, refine, and explore alternatives ONLY WHEN they are well-justified and materially beneficial.
