@@ -21,9 +21,14 @@ logger = logging.getLogger(__name__)
 # Field descriptions for the investigation steps
 DEBUG_INVESTIGATION_FIELD_DESCRIPTIONS = {
     "step": (
-        "Describe what you're currently investigating. In step 1, clearly state the issue to investigate and begin "
-        "thinking deeply about where the problem might originate. In all subsequent steps, continue uncovering relevant "
-        "code, examining patterns, and formulating hypotheses with deliberate attention to detail."
+        "Describe what you're currently investigating by beginning to think deeply about the issue, its root cause"
+        "and possible reasons. Prepare and learn about the related code first. In step 1, clearly state the issue to investigate and begin "
+        "thinking deeply about not just the described issue, but possible underlying causes, side-effects, or external "
+        "components that might contribute to it. Follow the code flow carefully—bugs may originate "
+        "in one part of the code-dependencies, or upstream logic may not be immediately visible. Bugs and issues can "
+        "arise due to poor logic, incorrect assumptions, bad input or failures elsewhere."
+        "In all subsequent steps, continue uncovering relevant code, examining patterns, and formulating hypotheses "
+        "with deliberate attention to detail."
     ),
     "step_number": "Current step number in the investigation sequence (starts at 1).",
     "total_steps": "Estimate of total investigation steps expected (adjustable as the process evolves).",
@@ -33,10 +38,11 @@ DEBUG_INVESTIGATION_FIELD_DESCRIPTIONS = {
         "evidence collected, and any partial conclusions or leads."
     ),
     "files_checked": (
-        "List all files examined during the investigation so far. Include even files ruled out, as this tracks your exploration path."
+        "List all files (as absolute paths, do not clip or shrink file names) examined during the investigation so far. "
+        "Include even files ruled out, as this tracks your exploration path."
     ),
     "relevant_files": (
-        "Subset of files_checked that contain code directly relevant to the issue. Only list those that are directly tied to the root cause or its effects."
+        "Subset of files_checked (as full absolute paths) that contain code directly relevant to the issue. Only list those that are directly tied to the root cause or its effects."
     ),
     "relevant_methods": (
         "List specific methods/functions clearly tied to the issue. Use 'ClassName.methodName' or 'functionName' format."
@@ -46,7 +52,7 @@ DEBUG_INVESTIGATION_FIELD_DESCRIPTIONS = {
     ),
     "confidence": "How confident you are in the current hypothesis: 'low', 'medium', or 'high'.",
     "backtrack_from_step": "If a previous step needs revision, specify the step number to backtrack from.",
-    "continuation_id": "Continuation token used for linking multi-step investigations.",
+    "continuation_id": "Continuation token used for linking multi-step investigations and continuing conversations after discovery.",
     "images": (
         "Optional. Include full absolute paths to visual debugging images (UI issues, logs, error screens) that help clarify the issue."
     ),
@@ -100,8 +106,7 @@ class DebugInvestigationRequest(ToolRequest):
     # Optional images for visual debugging
     images: Optional[list[str]] = Field(default=None, description=DEBUG_INVESTIGATION_FIELD_DESCRIPTIONS["images"])
 
-    # Override inherited fields to exclude them
-    model: Optional[str] = Field(default=None, exclude=True)
+    # Override inherited fields to exclude them from schema (except model which needs to be available)
     temperature: Optional[float] = Field(default=None, exclude=True)
     thinking_mode: Optional[str] = Field(default=None, exclude=True)
     use_websearch: Optional[bool] = Field(default=None, exclude=True)
@@ -209,9 +214,12 @@ class DebugIssueTool(BaseTool):
                     "items": {"type": "string"},
                     "description": DEBUG_INVESTIGATION_FIELD_DESCRIPTIONS["images"],
                 },
+                # Add model field for proper model selection
+                "model": self.get_model_field_schema(),
             },
             # Required fields for investigation
-            "required": ["step", "step_number", "total_steps", "next_step_required", "findings"],
+            "required": ["step", "step_number", "total_steps", "next_step_required", "findings"]
+            + (["model"] if self.is_effective_auto_mode() else []),
         }
         return schema
 
@@ -232,10 +240,9 @@ class DebugIssueTool(BaseTool):
 
     def requires_model(self) -> bool:
         """
-        Debug tool manages its own model interactions.
-        It doesn't need model during investigation steps, only for final analysis.
+        Debug tool requires a model for expert analysis after investigation.
         """
-        return False
+        return True
 
     async def execute(self, arguments: dict[str, Any]) -> list:
         """

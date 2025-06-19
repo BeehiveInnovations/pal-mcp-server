@@ -21,7 +21,7 @@ class TestDebugTool:
         assert "DEBUG & ROOT CAUSE ANALYSIS" in tool.get_description()
         assert tool.get_default_temperature() == 0.2  # TEMPERATURE_ANALYTICAL
         assert tool.get_model_category() == ToolModelCategory.EXTENDED_REASONING
-        assert tool.requires_model() is False  # Since it manages its own model calls
+        assert tool.requires_model() is True  # Requires model resolution for expert analysis
 
     def test_request_validation(self):
         """Test Pydantic request model validation."""
@@ -83,8 +83,9 @@ class TestDebugTool:
         assert "continuation_id" in schema["properties"]
         assert "images" in schema["properties"]  # Now supported for visual debugging
 
+        # Check model field is present (fixed from previous bug)
+        assert "model" in schema["properties"]
         # Check excluded fields are NOT present
-        assert "model" not in schema["properties"]
         assert "temperature" not in schema["properties"]
         assert "thinking_mode" not in schema["properties"]
         assert "use_websearch" not in schema["properties"]

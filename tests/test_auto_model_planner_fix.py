@@ -198,20 +198,17 @@ class TestAutoModelPlannerFix:
         Verify that other tools still properly require model resolution.
 
         This ensures our fix doesn't break existing functionality.
-        Note: Debug tool now manages its own model calls like planner.
+        Note: Debug tool requires model resolution for expert analysis phase.
         """
         from tools.analyze import AnalyzeTool
         from tools.chat import ChatTool
         from tools.debug import DebugIssueTool
 
         # Test various tools still require models
-        tools_requiring_models = [ChatTool(), AnalyzeTool()]
+        tools_requiring_models = [ChatTool(), AnalyzeTool(), DebugIssueTool()]
 
         for tool in tools_requiring_models:
             assert tool.requires_model() is True, f"{tool.get_name()} should require model resolution"
 
-        # Test tools that manage their own model calls
-        tools_managing_own_models = [DebugIssueTool()]
-
-        for tool in tools_managing_own_models:
-            assert tool.requires_model() is False, f"{tool.get_name()} should manage its own model calls"
+        # Note: Debug tool requires model resolution for expert analysis phase
+        # Only planner truly manages its own model calls and doesn't need resolution
