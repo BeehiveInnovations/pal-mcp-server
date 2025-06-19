@@ -31,19 +31,19 @@ readonly LOG_FILE="mcp_server.log"
 
 # Print colored output
 print_success() {
-    echo -e "${GREEN}✓${NC} $1"
+    echo -e "${GREEN}✓${NC} $1" >&2
 }
 
 print_error() {
-    echo -e "${RED}✗${NC} $1"
+    echo -e "${RED}✗${NC} $1" >&2
 }
 
 print_warning() {
-    echo -e "${YELLOW}!${NC} $1"
+    echo -e "${YELLOW}!${NC} $1" >&2
 }
 
 print_info() {
-    echo -e "${YELLOW}$1${NC}"
+    echo -e "${YELLOW}$1${NC}" >&2
 }
 
 # Get the script's directory (works on all platforms)
@@ -235,7 +235,7 @@ setup_venv() {
     # Always use venv Python
     if [[ -f "$venv_python" ]]; then
         if [[ -n "${VIRTUAL_ENV:-}" ]]; then
-            print_success "Using activated virtual environment" >&2
+            print_success "Using activated virtual environment"
         fi
         # Convert to absolute path for MCP registration
         local abs_venv_python=$(cd "$(dirname "$venv_python")" && pwd)/$(basename "$venv_python")
@@ -410,13 +410,13 @@ validate_api_keys() {
     
     if [[ "$has_key" == false ]]; then
         print_error "No API keys found in .env!"
-        echo ""
-        echo "Please edit .env and add at least one API key:"
-        echo "  GEMINI_API_KEY=your-actual-key"
-        echo "  OPENAI_API_KEY=your-actual-key"
-        echo "  XAI_API_KEY=your-actual-key"
-        echo "  OPENROUTER_API_KEY=your-actual-key"
-        echo ""
+        echo "" >&2
+        echo "Please edit .env and add at least one API key:" >&2
+        echo "  GEMINI_API_KEY=your-actual-key" >&2
+        echo "  OPENAI_API_KEY=your-actual-key" >&2
+        echo "  XAI_API_KEY=your-actual-key" >&2
+        echo "  OPENROUTER_API_KEY=your-actual-key" >&2
+        echo "" >&2
         return 1
     fi
     
@@ -784,7 +784,7 @@ main() {
             ;;
         *)
             print_error "Unknown option: $arg"
-            echo ""
+            echo "" >&2
             show_help
             exit 1
             ;;
