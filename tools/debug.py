@@ -22,12 +22,14 @@ logger = logging.getLogger(__name__)
 DEBUG_INVESTIGATION_FIELD_DESCRIPTIONS = {
     "step": (
         "Describe what you're currently investigating by thinking deeply about the issue and its possible causes. "
-        "In step 1, clearly state the issue and begin forming an investigative direction. Consider not only obvious "
-        "failures, but also subtle contributing factors like upstream logic, invalid inputs, missing preconditions, "
-        "or hidden side effects. Map out the flow of related functions or modules. Identify call paths where input "
-        "values or branching logic could cause instability. In concurrent systems, watch for race conditions, shared "
-        "state, or timing dependencies. In all later steps, continue exploring with precision: trace deeper "
-        "dependencies, verify hypotheses, and adapt your understanding as you uncover more evidence."
+        "In step 1, clearly state the issue and begin forming an investigative direction. CRITICAL: Remember that "
+        "reported symptoms might originate from code far from where they manifest. Also be aware that after thorough "
+        "investigation, you might find NO BUG EXISTS - it could be a misunderstanding or expectation mismatch. "
+        "Consider not only obvious failures, but also subtle contributing factors like upstream logic, invalid inputs, "
+        "missing preconditions, or hidden side effects. Map out the flow of related functions or modules. Identify "
+        "call paths where input values or branching logic could cause instability. In concurrent systems, watch for "
+        "race conditions, shared state, or timing dependencies. In all later steps, continue exploring with precision: "
+        "trace deeper dependencies, verify hypotheses, and adapt your understanding as you uncover more evidence."
     ),
     "step_number": (
         "The index of the current step in the investigation sequence, beginning at 1. Each step should build upon or "
@@ -43,7 +45,9 @@ DEBUG_INVESTIGATION_FIELD_DESCRIPTIONS = {
     "findings": (
         "Summarize everything discovered in this step. Include new clues, unexpected behavior, evidence from code or "
         "logs, or disproven theories. Be specific and avoid vague language—document what you now know and how it "
-        "affects your hypothesis. In later steps, confirm or disprove past findings with reason."
+        "affects your hypothesis. IMPORTANT: If you find no evidence supporting the reported issue after thorough "
+        "investigation, document this clearly. Finding 'no bug' is a valid outcome if the investigation was comprehensive. "
+        "In later steps, confirm or disprove past findings with reason."
     ),
     "files_checked": (
         "List all files (as absolute paths, do not clip or shrink file names) examined during the investigation so far. "
@@ -60,8 +64,11 @@ DEBUG_INVESTIGATION_FIELD_DESCRIPTIONS = {
     ),
     "hypothesis": (
         "A concrete theory for what's causing the issue based on the evidence so far. This can include suspected "
-        "failures, incorrect assumptions, or violated constraints. You are encouraged to revise or abandon it in later "
-        "steps as needed."
+        "failures, incorrect assumptions, or violated constraints. VALID HYPOTHESES INCLUDE: 'No bug found - possible "
+        "user misunderstanding' or 'Symptoms appear unrelated to any code issue' if evidence supports this. When "
+        "no bug is found, consider suggesting: 'Recommend discussing with thought partner/engineering assistant for "
+        "clarification of expected behavior.' You are encouraged to revise or abandon hypotheses in later steps as "
+        "needed based on evidence."
     ),
     "confidence": (
         "Indicate your current confidence in the hypothesis. Use: 'exploring' (starting out), 'low' (early idea), "
@@ -448,10 +455,12 @@ class DebugIssueTool(BaseTool):
                     ]
                     response_data["next_steps"] = (
                         f"MANDATORY: DO NOT call the debug tool again immediately. You MUST first investigate "
-                        f"the codebase using appropriate tools. Search for relevant code, examine implementations, "
-                        f"understand the logic flow. Only call debug again AFTER you have gathered concrete evidence "
-                        f"and examined actual code. When you call debug next time, use step_number: {request.step_number + 1} "
-                        f"and report the specific files you've examined and findings you've discovered."
+                        f"the codebase using appropriate tools. CRITICAL AWARENESS: The reported symptoms might be "
+                        f"caused by issues elsewhere in the code, not where symptoms appear. Also, after thorough "
+                        f"investigation, it's possible NO BUG EXISTS - the issue might be a misunderstanding or "
+                        f"user expectation mismatch. Search broadly, examine implementations, understand the logic flow. "
+                        f"Only call debug again AFTER gathering concrete evidence. When you call debug next time, "
+                        f"use step_number: {request.step_number + 1} and report specific files examined and findings discovered."
                     )
                 elif request.step_number >= 2 and request.confidence in ["exploring", "low"]:
                     # Need deeper investigation
@@ -484,7 +493,10 @@ class DebugIssueTool(BaseTool):
                         f"2. Trace backwards: how does data get to this point? What transforms it?\n"
                         f"3. Check all assumptions: are inputs validated? Are nulls handled?\n"
                         f"4. Look for the EXACT line where expected != actual behavior\n"
-                        f"Document these findings with specific file:line references, then call debug with step_number: {request.step_number + 1}."
+                        f"REMEMBER: If you cannot find concrete evidence of a bug causing the reported symptoms, "
+                        f"'no bug found' is a valid conclusion. Consider suggesting discussion with your thought partner "
+                        f"or engineering assistant for clarification. Document findings with specific file:line references, "
+                        f"then call debug with step_number: {request.step_number + 1}."
                     )
                 else:
                     # General investigation needed
@@ -498,7 +510,8 @@ class DebugIssueTool(BaseTool):
                         f"PAUSE INVESTIGATION. Before calling debug step {request.step_number + 1}, you MUST examine code. "
                         f"Required: Read files from your files_checked list, search for patterns in your hypothesis, "
                         f"trace execution flow. Your next debug call (step_number: {request.step_number + 1}) must include "
-                        f"NEW evidence from actual code examination, not just theories. NO recursive debug calls without investigation work!"
+                        f"NEW evidence from actual code examination, not just theories. If no bug evidence is found, suggesting "
+                        f"collaboration with thought partner is valuable. NO recursive debug calls without investigation work!"
                     )
 
             # Store in conversation memory
