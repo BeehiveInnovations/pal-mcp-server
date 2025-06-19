@@ -6,7 +6,7 @@ import json
 import logging
 from typing import TYPE_CHECKING, Any, Optional
 
-from pydantic import Field
+from pydantic import Field, field_validator
 
 if TYPE_CHECKING:
     from tools.models import ToolModelCategory
@@ -139,6 +139,15 @@ class DebugInvestigationRequest(ToolRequest):
     temperature: Optional[float] = Field(default=None, exclude=True)
     thinking_mode: Optional[str] = Field(default=None, exclude=True)
     use_websearch: Optional[bool] = Field(default=None, exclude=True)
+
+    @field_validator("files_checked", "relevant_files", "relevant_methods", mode="before")
+    @classmethod
+    def convert_string_to_list(cls, v):
+        """Convert string inputs to empty lists to handle malformed inputs gracefully."""
+        if isinstance(v, str):
+            logger.warning(f"Field received string '{v}' instead of list, converting to empty list")
+            return []
+        return v
 
 
 class DebugIssueTool(BaseTool):

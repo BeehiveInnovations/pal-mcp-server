@@ -389,6 +389,50 @@ class TestDebugTool:
         assert parsed_response["status"] == "investigation_failed"
         assert "error" in parsed_response
 
+    @pytest.mark.asyncio
+    async def test_execute_with_string_instead_of_list_fields(self):
+        """Test execute method handles string inputs for list fields gracefully."""
+        tool = DebugIssueTool()
+        arguments = {
+            "step": "Investigating issue with string inputs",
+            "step_number": 1,
+            "total_steps": 3,
+            "next_step_required": True,
+            "findings": "Testing string input handling",
+            # These should be lists but passing strings to test the fix
+            "files_checked": "relevant_files",  # String instead of list
+            "relevant_files": "some_string",  # String instead of list
+            "relevant_methods": "another_string",  # String instead of list
+        }
+
+        # Mock conversation memory functions
+        with patch("utils.conversation_memory.create_thread", return_value="debug-string-test"):
+            with patch("utils.conversation_memory.add_turn"):
+                # Should handle gracefully without crashing
+                result = await tool.execute(arguments)
+
+        # Should return a valid response
+        assert len(result) == 1
+        assert result[0].type == "text"
+
+        # Parse the JSON response
+        import json
+
+        parsed_response = json.loads(result[0].text)
+
+        # Should complete successfully with empty lists
+        assert parsed_response["status"] == "pause_for_investigation"
+        assert parsed_response["step_number"] == 1
+        assert parsed_response["investigation_status"]["files_checked"] == 0  # Empty due to string conversion
+        assert parsed_response["investigation_status"]["relevant_files"] == 0
+        assert parsed_response["investigation_status"]["relevant_methods"] == 0
+
+        # Verify internal state - should have empty sets, not individual characters
+        assert tool.consolidated_findings["files_checked"] == set()
+        assert tool.consolidated_findings["relevant_files"] == set()
+        assert tool.consolidated_findings["relevant_methods"] == set()
+        # Should NOT have individual characters like {'r', 'e', 'l', 'e', 'v', 'a', 'n', 't', '_', 'f', 'i', 'l', 'e', 's'}
+
     def test_prepare_investigation_summary(self):
         """Test investigation summary preparation."""
         tool = DebugIssueTool()
