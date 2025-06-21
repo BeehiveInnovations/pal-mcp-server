@@ -79,14 +79,14 @@ class TestOpenRouterProvider:
         assert provider._resolve_model_name("o4-mini") == "openai/o4-mini"
         assert provider._resolve_model_name("o4-mini-high") == "openai/o4-mini-high"
         assert provider._resolve_model_name("claude") == "anthropic/claude-3-sonnet"
-        assert provider._resolve_model_name("mistral") == "mistral/mistral-large"
+        assert provider._resolve_model_name("mistral") == "mistralai/mistral-large-2411"
         assert provider._resolve_model_name("deepseek") == "deepseek/deepseek-r1-0528"
         assert provider._resolve_model_name("r1") == "deepseek/deepseek-r1-0528"
 
         # Test case-insensitive
         assert provider._resolve_model_name("OPUS") == "anthropic/claude-3-opus"
         assert provider._resolve_model_name("O3") == "openai/o3"
-        assert provider._resolve_model_name("Mistral") == "mistral/mistral-large"
+        assert provider._resolve_model_name("Mistral") == "mistralai/mistral-large-2411"
         assert provider._resolve_model_name("CLAUDE") == "anthropic/claude-3-sonnet"
 
         # Test direct model names (should pass through unchanged)
