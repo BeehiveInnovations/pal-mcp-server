@@ -1640,7 +1640,15 @@ When recommending searches, be specific about what information you need and why 
                             # TEST COVERAGE: tests/test_provider_routing_bugs.py::TestProviderMetadataBug
                             provider = model_info.get("provider")
                             if provider:
-                                metadata["provider_used"] = provider.get_provider_type().value
+                                # Handle both provider objects and string values
+                                if isinstance(provider, str):
+                                    metadata["provider_used"] = provider
+                                else:
+                                    try:
+                                        metadata["provider_used"] = provider.get_provider_type().value
+                                    except AttributeError:
+                                        # Fallback if provider doesn't have get_provider_type method
+                                        metadata["provider_used"] = str(provider)
 
                         return ToolOutput(
                             status=status_key,
@@ -1684,7 +1692,15 @@ When recommending searches, be specific about what information you need and why 
             if model_info:
                 provider = model_info.get("provider")
                 if provider:
-                    model_provider = provider.get_provider_type().value
+                    # Handle both provider objects and string values
+                    if isinstance(provider, str):
+                        model_provider = provider
+                    else:
+                        try:
+                            model_provider = provider.get_provider_type().value
+                        except AttributeError:
+                            # Fallback if provider doesn't have get_provider_type method
+                            model_provider = str(provider)
                 model_name = model_info.get("model_name")
                 model_response = model_info.get("model_response")
                 if model_response:
@@ -1721,7 +1737,15 @@ When recommending searches, be specific about what information you need and why 
             # FEATURE: Add provider_used metadata (Added for Issue #98)
             provider = model_info.get("provider")
             if provider:
-                metadata["provider_used"] = provider.get_provider_type().value
+                # Handle both provider objects and string values
+                if isinstance(provider, str):
+                    metadata["provider_used"] = provider
+                else:
+                    try:
+                        metadata["provider_used"] = provider.get_provider_type().value
+                    except AttributeError:
+                        # Fallback if provider doesn't have get_provider_type method
+                        metadata["provider_used"] = str(provider)
 
         return ToolOutput(
             status="success",
@@ -1814,7 +1838,15 @@ When recommending searches, be specific about what information you need and why 
             if model_info:
                 provider = model_info.get("provider")
                 if provider:
-                    model_provider = provider.get_provider_type().value
+                    # Handle both provider objects and string values
+                    if isinstance(provider, str):
+                        model_provider = provider
+                    else:
+                        try:
+                            model_provider = provider.get_provider_type().value
+                        except AttributeError:
+                            # Fallback if provider doesn't have get_provider_type method
+                            model_provider = str(provider)
                 model_name = model_info.get("model_name")
                 model_response = model_info.get("model_response")
                 if model_response:
@@ -1860,7 +1892,15 @@ When recommending searches, be specific about what information you need and why 
                 # FEATURE: Add provider_used metadata (Added for Issue #98)
                 provider = model_info.get("provider")
                 if provider:
-                    metadata["provider_used"] = provider.get_provider_type().value
+                    # Handle both provider objects and string values
+                    if isinstance(provider, str):
+                        metadata["provider_used"] = provider
+                    else:
+                        try:
+                            metadata["provider_used"] = provider.get_provider_type().value
+                        except AttributeError:
+                            # Fallback if provider doesn't have get_provider_type method
+                            metadata["provider_used"] = str(provider)
 
             return ToolOutput(
                 status="continuation_available",
@@ -1883,7 +1923,15 @@ When recommending searches, be specific about what information you need and why 
                 # FEATURE: Add provider_used metadata (Added for Issue #98)
                 provider = model_info.get("provider")
                 if provider:
-                    metadata["provider_used"] = provider.get_provider_type().value
+                    # Handle both provider objects and string values
+                    if isinstance(provider, str):
+                        metadata["provider_used"] = provider
+                    else:
+                        try:
+                            metadata["provider_used"] = provider.get_provider_type().value
+                        except AttributeError:
+                            # Fallback if provider doesn't have get_provider_type method
+                            metadata["provider_used"] = str(provider)
 
             return ToolOutput(
                 status="success",

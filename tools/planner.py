@@ -445,9 +445,23 @@ class PlannerTool(WorkflowTool):
             step_data = self.prepare_step_data(request)
             self.branches[request.branch_id].append(step_data)
 
-            # Update metadata to reflect the new branch
-            if "metadata" in response_data:
-                response_data["metadata"]["branches"] = list(self.branches.keys())
+        # Ensure metadata exists and preserve existing metadata from build_base_response
+        if "metadata" not in response_data:
+            response_data["metadata"] = {}
+
+        # Store planner-specific metadata that should persist through workflow metadata addition
+        planner_metadata = {
+            "branches": list(self.branches.keys()),
+            "is_step_revision": request.is_step_revision or False,
+            "revises_step_number": request.revises_step_number,
+            "is_branch_point": request.is_branch_point or False,
+            "branch_from_step": request.branch_from_step,
+            "branch_id": request.branch_id,
+            "more_steps_needed": request.more_steps_needed or False,
+        }
+
+        # Update metadata while preserving existing values
+        response_data["metadata"].update(planner_metadata)
 
         # Add planner-specific output instructions for final steps
         if not request.next_step_required:

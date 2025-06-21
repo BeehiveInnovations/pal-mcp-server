@@ -170,7 +170,7 @@ class TestOpenRouterAutoMode:
         assert len(available_models) > 0, "Should find OpenRouter models in auto mode"
         assert all(provider_type == ProviderType.OPENROUTER for provider_type in available_models.values())
 
-        expected_models = mock_registry.list_models()
+        expected_models = mock_registry.list_models.return_value
         for model in expected_models:
             assert model in available_models, f"Model {model} should be available"
 
@@ -190,12 +190,18 @@ class TestOpenRouterAutoMode:
         utils.model_restrictions._restriction_service = None
 
         mock_registry = Mock()
-        mock_registry.list_models.return_value = [
+        mock_models = [
             "google/gemini-2.5-flash",
             "google/gemini-2.5-pro",
             "anthropic/claude-3-opus",
             "anthropic/claude-3-sonnet",
         ]
+        mock_registry.list_models.return_value = mock_models
+
+        # Mock the resolve method to return model configs with aliases
+        mock_model_config = Mock()
+        mock_model_config.aliases = []  # Empty aliases for simplicity
+        mock_registry.resolve.return_value = mock_model_config
 
         ModelProviderRegistry.register_provider(ProviderType.OPENROUTER, OpenRouterProvider)
 

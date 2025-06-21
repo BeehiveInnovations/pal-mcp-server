@@ -371,7 +371,7 @@ issue, ran `precommit` with o3 again and got:
 
  **RECOMMENDATION: PROCEED WITH COMMIT**
 
-Nice!
+Nice! This is just one instance - take a look at [another example here](docs/tools/precommit.md).
 
 **[📖 Read More](docs/tools/precommit.md)** - Multi-repository validation and change analysis
 
