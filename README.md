@@ -1,6 +1,6 @@
 # Zen MCP: One Context. Many Minds.
 
-https://github.com/user-attachments/assets/8097e18e-b926-4d8b-ba14-a979e4c58bda
+[zen_web.webm](https://github.com/user-attachments/assets/851e3911-7f06-47c0-a4ab-a2601236697c)
 
 <div align="center">  
   <b>🤖 Claude + [Gemini / OpenAI / Grok / OpenRouter / Ollama / Any Model] = Your Ultimate AI Development Team</b>
