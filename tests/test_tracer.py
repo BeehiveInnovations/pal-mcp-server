@@ -82,7 +82,16 @@ class TestTracerTool:
 
     def test_get_required_actions(self, tracer_tool):
         """Test that required actions are provided for each step"""
-        # Step 1 - initial investigation
+        # Step 1 - initial investigation (in ask mode by default)
+        actions = tracer_tool.get_required_actions(1, "exploring", "Initial findings", 3)
+        assert len(actions) > 0
+        # Default is ask mode, so should ask for mode selection
+        if tracer_tool.get_trace_mode() == "ask":
+            assert any("ask user" in action.lower() for action in actions)
+            assert any("precision mode" in action.lower() for action in actions)
+
+        # Test with initialized trace_config for non-ask mode
+        tracer_tool.trace_config = {"trace_mode": "precision"}
         actions = tracer_tool.get_required_actions(1, "exploring", "Initial findings", 3)
         assert len(actions) > 0
         assert any("search" in action.lower() for action in actions)

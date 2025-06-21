@@ -39,11 +39,12 @@ logger = logging.getLogger(__name__)
 TRACER_WORKFLOW_FIELD_DESCRIPTIONS = {
     "step": (
         "Describe what you're currently investigating for code tracing by thinking deeply about the code structure, "
-        "execution paths, and dependencies. In step 1, clearly state your tracing plan and begin forming a systematic "
-        "approach after thinking carefully about what needs to be analyzed. CRITICAL: For precision mode, focus on "
-        "execution flow, call chains, and usage patterns. For dependencies mode, focus on structural relationships "
-        "and bidirectional dependencies. Map out the code structure, understand the business logic, and identify "
-        "areas requiring deeper tracing. In all later steps, continue exploring with precision: trace dependencies, "
+        "execution paths, and dependencies. In step 1, if trace_mode is 'ask', MUST prompt user to choose between "
+        "precision or dependencies mode with clear explanations. Otherwise, clearly state your tracing plan and begin "
+        "forming a systematic approach after thinking carefully about what needs to be analyzed. CRITICAL: For precision "
+        "mode, focus on execution flow, call chains, and usage patterns. For dependencies mode, focus on structural "
+        "relationships and bidirectional dependencies. Map out the code structure, understand the business logic, and "
+        "identify areas requiring deeper tracing. In all later steps, continue exploring with precision: trace dependencies, "
         "verify call paths, and adapt your understanding as you uncover more evidence."
     ),
     "step_number": (
@@ -88,7 +89,7 @@ TRACER_WORKFLOW_FIELD_DESCRIPTIONS = {
         "'complete' (tracing analysis finished and ready for output). Do NOT use 'complete' unless the tracing "
         "analysis is thoroughly finished and you have a comprehensive understanding of the code relationships."
     ),
-    "trace_mode": "Type of tracing: 'precision' (execution flow) or 'dependencies' (structural relationships)",
+    "trace_mode": "Type of tracing: 'ask' (default - prompts user to choose mode), 'precision' (execution flow) or 'dependencies' (structural relationships)",
     "target_description": (
         "Detailed description of what to trace and WHY you need this analysis. MUST include context about what "
         "you're trying to understand, debug, analyze or find."
@@ -123,8 +124,8 @@ class TracerRequest(WorkflowRequest):
     confidence: Optional[str] = Field("exploring", description=TRACER_WORKFLOW_FIELD_DESCRIPTIONS["confidence"])
 
     # Tracer-specific fields (used in step 1 to initialize)
-    trace_mode: Optional[Literal["precision", "dependencies"]] = Field(
-        None, description=TRACER_WORKFLOW_FIELD_DESCRIPTIONS["trace_mode"]
+    trace_mode: Optional[Literal["precision", "dependencies", "ask"]] = Field(
+        "ask", description=TRACER_WORKFLOW_FIELD_DESCRIPTIONS["trace_mode"]
     )
     target_description: Optional[str] = Field(
         None, description=TRACER_WORKFLOW_FIELD_DESCRIPTIONS["target_description"]
@@ -195,6 +196,7 @@ class TracerTool(WorkflowTool):
             "- The tool will specify which step number to use next\\n"
             "- Follow the required_actions list for investigation guidance\\n\\n"
             "TRACE MODES:\\n"
+            "- 'ask': Default mode - prompts you to choose between precision or dependencies modes with explanations\\n"
             "- 'precision': For methods/functions - traces execution flow, call chains, and usage patterns\\n"
             "- 'dependencies': For classes/modules - maps structural relationships and bidirectional dependencies\\n\\n"
             "Perfect for: method execution flow analysis, dependency mapping, call chain tracing, "
@@ -235,7 +237,7 @@ class TracerTool(WorkflowTool):
             # Tracer-specific fields
             "trace_mode": {
                 "type": "string",
-                "enum": ["precision", "dependencies"],
+                "enum": ["precision", "dependencies", "ask"],
                 "description": TRACER_WORKFLOW_FIELD_DESCRIPTIONS["trace_mode"],
             },
             "target_description": {
@@ -285,7 +287,16 @@ class TracerTool(WorkflowTool):
     def get_required_actions(self, step_number: int, confidence: str, findings: str, total_steps: int) -> list[str]:
         """Define required actions for each tracing phase."""
         if step_number == 1:
-            # Initial tracing investigation tasks
+            # Check if we're in ask mode and need to prompt for mode selection
+            if self.get_trace_mode() == "ask":
+                return [
+                    "MUST ask user to choose between precision or dependencies mode",
+                    "Explain precision mode: traces execution flow, call chains, and usage patterns (best for methods/functions)",
+                    "Explain dependencies mode: maps structural relationships and bidirectional dependencies (best for classes/modules)",
+                    "Wait for user's mode selection before proceeding with investigation",
+                ]
+
+            # Initial tracing investigation tasks (when mode is already selected)
             return [
                 "Search for and locate the target method/function/class/module in the codebase",
                 "Read and understand the implementation of the target code",
@@ -407,15 +418,30 @@ class TracerTool(WorkflowTool):
 
         # Generate step-specific guidance
         if request.step_number == 1:
-            response_data["next_steps"] = (
-                f"MANDATORY: DO NOT call the {self.get_name()} tool again immediately. You MUST first investigate "
-                f"the codebase to understand the target code. CRITICAL AWARENESS: You need to find and understand "
-                f"the target method/function/class/module, examine its implementation, and begin mapping its "
-                f"relationships. Use file reading tools, code search, and systematic examination to gather "
-                f"comprehensive information about the target. Only call {self.get_name()} again AFTER completing "
-                f"your investigation. When you call {self.get_name()} next time, use step_number: {request.step_number + 1} "
-                f"and report specific files examined, code structure discovered, and initial relationship findings."
-            )
+            # Check if we're in ask mode and need to prompt for mode selection
+            if self.get_trace_mode() == "ask":
+                response_data["next_steps"] = (
+                    f"STOP! You MUST ask the user to choose a tracing mode before proceeding. "
+                    f"Present these options clearly:\\n\\n"
+                    f"**PRECISION MODE**: Traces execution flow, call chains, and usage patterns. "
+                    f"Best for understanding how a specific method or function works, what it calls, "
+                    f"and how data flows through the execution path.\\n\\n"
+                    f"**DEPENDENCIES MODE**: Maps structural relationships and bidirectional dependencies. "
+                    f"Best for understanding how a class or module relates to other components, "
+                    f"what depends on it, and what it depends on.\\n\\n"
+                    f"After the user selects a mode, call {self.get_name()} again with step_number: 1 "
+                    f"but with the chosen trace_mode (either 'precision' or 'dependencies')."
+                )
+            else:
+                response_data["next_steps"] = (
+                    f"MANDATORY: DO NOT call the {self.get_name()} tool again immediately. You MUST first investigate "
+                    f"the codebase to understand the target code. CRITICAL AWARENESS: You need to find and understand "
+                    f"the target method/function/class/module, examine its implementation, and begin mapping its "
+                    f"relationships. Use file reading tools, code search, and systematic examination to gather "
+                    f"comprehensive information about the target. Only call {self.get_name()} again AFTER completing "
+                    f"your investigation. When you call {self.get_name()} next time, use step_number: {request.step_number + 1} "
+                    f"and report specific files examined, code structure discovered, and initial relationship findings."
+                )
         elif request.confidence in ["exploring", "low"]:
             next_step = request.step_number + 1
             response_data["next_steps"] = (
@@ -462,6 +488,11 @@ class TracerTool(WorkflowTool):
             if "metadata" in response_data:
                 response_data["metadata"]["trace_mode"] = request.trace_mode or "unknown"
                 response_data["metadata"]["target_description"] = request.target_description or ""
+
+            # If in ask mode, mark this as mode selection phase
+            if request.trace_mode == "ask":
+                response_data["mode_selection_required"] = True
+                response_data["status"] = "mode_selection_required"
 
         # Add tracer-specific output instructions for final steps
         if not request.next_step_required:
@@ -755,6 +786,13 @@ DTOClass ──uses──→ [TARGET_CLASS] ──uses──→ EntityClass
             return request.confidence or "exploring"
         except AttributeError:
             return "exploring"
+
+    def get_trace_mode(self) -> str:
+        """Get current trace mode. Override for custom trace mode handling."""
+        try:
+            return self.trace_config.get("trace_mode", "ask")
+        except AttributeError:
+            return "ask"
 
     # Required abstract methods from BaseTool
     def get_request_model(self):
