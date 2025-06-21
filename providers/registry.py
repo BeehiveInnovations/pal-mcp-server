@@ -179,7 +179,21 @@ class ModelProviderRegistry:
                 continue
 
             for model_name in available:
-                if restriction_service and not restriction_service.is_allowed(provider_type, model_name):
+                # =====================================================================================
+                # CRITICAL: Prevent double restriction filtering (Fixed Issue #98)
+                # =====================================================================================
+                # Previously, both the provider AND registry applied restrictions, causing
+                # double-filtering that resulted in "no models available" errors.
+                #
+                # Logic: If respect_restrictions=True, provider already filtered models,
+                # so registry should NOT filter them again.
+                # TEST COVERAGE: tests/test_provider_routing_bugs.py::TestOpenRouterAliasRestrictions
+                # =====================================================================================
+                if (
+                    restriction_service
+                    and not respect_restrictions  # Only filter if provider didn't already filter
+                    and not restriction_service.is_allowed(provider_type, model_name)
+                ):
                     logging.debug("Model %s filtered by restrictions", model_name)
                     continue
                 models[model_name] = provider_type

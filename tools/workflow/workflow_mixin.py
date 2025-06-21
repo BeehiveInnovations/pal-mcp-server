@@ -657,6 +657,9 @@ class BaseWorkflowMixin(ABC):
             # Allow tools to customize the final response
             response_data = self.customize_workflow_response(response_data, request)
 
+            # Add metadata (provider_used and model_used) to workflow response
+            self._add_workflow_metadata(response_data, arguments)
+
             # Store in conversation memory
             if continuation_id:
                 self.store_conversation_turn(continuation_id, response_data, request)
@@ -670,6 +673,10 @@ class BaseWorkflowMixin(ABC):
                 "error": str(e),
                 "step_number": arguments.get("step_number", 0),
             }
+
+            # Add metadata to error responses too
+            self._add_workflow_metadata(error_data, arguments)
+
             return [TextContent(type="text", text=json.dumps(error_data, indent=2))]
 
     # Hook methods for tool customization
@@ -1047,6 +1054,67 @@ class BaseWorkflowMixin(ABC):
             images=self.get_request_images(request),
         )
 
+    def _add_workflow_metadata(self, response_data: dict, arguments: dict[str, Any]) -> None:
+        """
+        Add metadata (provider_used and model_used) to workflow response.
+
+        This ensures workflow tools have the same metadata as regular tools,
+        making it consistent across all tool types for tracking which provider
+        and model were used for the response.
+
+        Args:
+            response_data: The response data dictionary to modify
+            arguments: The original arguments containing model context
+        """
+        try:
+            # Get model information from arguments (set by server.py)
+            resolved_model_name = arguments.get("_resolved_model_name")
+            model_context = arguments.get("_model_context")
+
+            if resolved_model_name and model_context:
+                # Extract provider information from model context
+                provider = model_context.provider
+                provider_name = provider.get_provider_type().value if provider else "unknown"
+
+                # Create metadata dictionary
+                metadata = {
+                    "tool_name": self.get_name(),
+                    "model_used": resolved_model_name,
+                    "provider_used": provider_name,
+                }
+
+                # Add metadata to response
+                response_data["metadata"] = metadata
+
+                logger.debug(
+                    f"[WORKFLOW_METADATA] {self.get_name()}: Added metadata - "
+                    f"model: {resolved_model_name}, provider: {provider_name}"
+                )
+            else:
+                # Fallback - try to get model info from request
+                request = self.get_workflow_request_model()(**arguments)
+                model_name = self.get_request_model_name(request)
+
+                # Basic metadata without provider info
+                metadata = {
+                    "tool_name": self.get_name(),
+                    "model_used": model_name,
+                    "provider_used": "unknown",
+                }
+
+                response_data["metadata"] = metadata
+
+                logger.debug(
+                    f"[WORKFLOW_METADATA] {self.get_name()}: Added fallback metadata - "
+                    f"model: {model_name}, provider: unknown"
+                )
+
+        except Exception as e:
+            # Don't fail the workflow if metadata addition fails
+            logger.warning(f"[WORKFLOW_METADATA] {self.get_name()}: Failed to add metadata: {e}")
+            # Still add basic metadata with tool name
+            response_data["metadata"] = {"tool_name": self.get_name()}
+
     def _extract_clean_workflow_content_for_history(self, response_data: dict) -> str:
         """
         Extract clean content from workflow response suitable for conversation history.
@@ -1393,19 +1461,23 @@ class BaseWorkflowMixin(ABC):
         try:
             # Common validation
             if not arguments:
-                return [
-                    TextContent(type="text", text=json.dumps({"status": "error", "content": "No arguments provided"}))
-                ]
+                error_data = {"status": "error", "content": "No arguments provided"}
+                # Add basic metadata even for validation errors
+                error_data["metadata"] = {"tool_name": self.get_name()}
+                return [TextContent(type="text", text=json.dumps(error_data))]
 
             # Delegate to execute_workflow
             return await self.execute_workflow(arguments)
 
         except Exception as e:
             logger.error(f"Error in {self.get_name()} tool execution: {e}", exc_info=True)
+            error_data = {"status": "error", "content": f"Error in {self.get_name()}: {str(e)}"}
+            # Add metadata to error responses
+            self._add_workflow_metadata(error_data, arguments)
             return [
                 TextContent(
                     type="text",
-                    text=json.dumps({"status": "error", "content": f"Error in {self.get_name()}: {str(e)}"}),
+                    text=json.dumps(error_data),
                 )
             ]
 

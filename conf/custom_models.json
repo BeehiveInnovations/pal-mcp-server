@@ -82,7 +82,7 @@
       "description": "Claude 3 Haiku - Fast and efficient with vision"
     },
     {
-      "model_name": "google/gemini-2.5-pro-preview",
+      "model_name": "google/gemini-2.5-pro",
       "aliases": ["pro","gemini-pro", "gemini", "pro-openrouter"],
       "context_window": 1048576,
       "supports_extended_thinking": false,

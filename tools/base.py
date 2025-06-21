@@ -1635,6 +1635,12 @@ When recommending searches, be specific about what information you need and why 
                             model_name = model_info.get("model_name")
                             if model_name:
                                 metadata["model_used"] = model_name
+                            # FEATURE: Add provider_used metadata (Added for Issue #98)
+                            # This shows which provider (google, openai, openrouter, etc.) handled the request
+                            # TEST COVERAGE: tests/test_provider_routing_bugs.py::TestProviderMetadataBug
+                            provider = model_info.get("provider")
+                            if provider:
+                                metadata["provider_used"] = provider.get_provider_type().value
 
                         return ToolOutput(
                             status=status_key,
@@ -1712,6 +1718,10 @@ When recommending searches, be specific about what information you need and why 
             model_name = model_info.get("model_name")
             if model_name:
                 metadata["model_used"] = model_name
+            # FEATURE: Add provider_used metadata (Added for Issue #98)
+            provider = model_info.get("provider")
+            if provider:
+                metadata["provider_used"] = provider.get_provider_type().value
 
         return ToolOutput(
             status="success",
@@ -1847,6 +1857,10 @@ When recommending searches, be specific about what information you need and why 
                 model_name = model_info.get("model_name")
                 if model_name:
                     metadata["model_used"] = model_name
+                # FEATURE: Add provider_used metadata (Added for Issue #98)
+                provider = model_info.get("provider")
+                if provider:
+                    metadata["provider_used"] = provider.get_provider_type().value
 
             return ToolOutput(
                 status="continuation_available",
@@ -1866,6 +1880,10 @@ When recommending searches, be specific about what information you need and why 
                 model_name = model_info.get("model_name")
                 if model_name:
                     metadata["model_used"] = model_name
+                # FEATURE: Add provider_used metadata (Added for Issue #98)
+                provider = model_info.get("provider")
+                if provider:
+                    metadata["provider_used"] = provider.get_provider_type().value
 
             return ToolOutput(
                 status="success",
@@ -2059,21 +2077,46 @@ When recommending searches, be specific about what information you need and why 
         provider = ModelProviderRegistry.get_provider_for_model(model_name)
 
         if not provider:
-            # Try to determine provider from model name patterns
+            # =====================================================================================
+            # CRITICAL FALLBACK LOGIC - HANDLES PROVIDER AUTO-REGISTRATION
+            # =====================================================================================
+            #
+            # This fallback logic auto-registers providers when no provider is found for a model.
+            #
+            # CRITICAL BUG PREVENTION (Fixed in Issue #98):
+            # - Previously, providers were registered without checking API key availability
+            # - This caused Google provider to be used for "flash" model even when only
+            #   OpenRouter API key was configured
+            # - The fix below validates API keys BEFORE registering any provider
+            #
+            # TEST COVERAGE: tests/test_provider_routing_bugs.py
+            # - test_fallback_routing_bug_reproduction()
+            # - test_fallback_should_not_register_without_api_key()
+            #
+            # DO NOT REMOVE API KEY VALIDATION - This prevents incorrect provider routing
+            # =====================================================================================
+            import os
+
             if "gemini" in model_name.lower() or model_name.lower() in ["flash", "pro"]:
-                # Register Gemini provider if not already registered
-                from providers.base import ProviderType
-                from providers.gemini import GeminiModelProvider
+                # CRITICAL: Validate API key before registering Google provider
+                # This prevents auto-registration when user only has OpenRouter configured
+                gemini_key = os.getenv("GEMINI_API_KEY")
+                if gemini_key and gemini_key.strip() and gemini_key != "your_gemini_api_key_here":
+                    from providers.base import ProviderType
+                    from providers.gemini import GeminiModelProvider
 
-                ModelProviderRegistry.register_provider(ProviderType.GOOGLE, GeminiModelProvider)
-                provider = ModelProviderRegistry.get_provider(ProviderType.GOOGLE)
+                    ModelProviderRegistry.register_provider(ProviderType.GOOGLE, GeminiModelProvider)
+                    provider = ModelProviderRegistry.get_provider(ProviderType.GOOGLE)
             elif "gpt" in model_name.lower() or "o3" in model_name.lower():
-                # Register OpenAI provider if not already registered
-                from providers.base import ProviderType
-                from providers.openai_provider import OpenAIModelProvider
+                # CRITICAL: Validate API key before registering OpenAI provider
+                # This prevents auto-registration when user only has OpenRouter configured
+                openai_key = os.getenv("OPENAI_API_KEY")
+                if openai_key and openai_key.strip() and openai_key != "your_openai_api_key_here":
+                    from providers.base import ProviderType
+                    from providers.openai_provider import OpenAIModelProvider
 
-                ModelProviderRegistry.register_provider(ProviderType.OPENAI, OpenAIModelProvider)
-                provider = ModelProviderRegistry.get_provider(ProviderType.OPENAI)
+                    ModelProviderRegistry.register_provider(ProviderType.OPENAI, OpenAIModelProvider)
+                    provider = ModelProviderRegistry.get_provider(ProviderType.OPENAI)
 
         if not provider:
             raise ValueError(

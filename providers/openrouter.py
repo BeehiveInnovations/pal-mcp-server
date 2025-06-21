@@ -207,9 +207,34 @@ class OpenRouterProvider(OpenAICompatibleProvider):
 
         if self._registry:
             for model_name in self._registry.list_models():
-                # Check restrictions if enabled
-                if restriction_service and not restriction_service.is_allowed(self.get_provider_type(), model_name):
-                    continue
+                # =====================================================================================
+                # CRITICAL ALIAS-AWARE RESTRICTION CHECKING (Fixed Issue #98)
+                # =====================================================================================
+                # Previously, restrictions only checked full model names (e.g., "google/gemini-2.5-pro")
+                # but users specify aliases in OPENROUTER_ALLOWED_MODELS (e.g., "pro").
+                # This caused "no models available" error even with valid restrictions.
+                #
+                # Fix: Check both model name AND all aliases against restrictions
+                # TEST COVERAGE: tests/test_provider_routing_bugs.py::TestOpenRouterAliasRestrictions
+                # =====================================================================================
+                if restriction_service:
+                    # Get model config to check aliases as well
+                    model_config = self._registry.resolve(model_name)
+                    allowed = False
+
+                    # Check if model name itself is allowed
+                    if restriction_service.is_allowed(self.get_provider_type(), model_name):
+                        allowed = True
+
+                    # CRITICAL: Also check aliases - this fixes the alias restriction bug
+                    if not allowed and model_config and model_config.aliases:
+                        for alias in model_config.aliases:
+                            if restriction_service.is_allowed(self.get_provider_type(), alias):
+                                allowed = True
+                                break
+
+                    if not allowed:
+                        continue
 
                 models.append(model_name)
 
