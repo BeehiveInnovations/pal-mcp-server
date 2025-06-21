@@ -72,6 +72,7 @@ Because these AI models [clearly aren't when they get chatty →](docs/ai_banter
 ## Why This Server?
 
 Claude is brilliant, but sometimes you need:
+- **Guided workflows** - Developer-centric processes that enforce systematic investigation, preventing rushed analysis by ensuring Claude examines code thoroughly at each phase ([`debug`](#7-debug---expert-debugging-assistant), [`precommit`](#6-precommit---pre-commit-validation), [`refactor`](#9-refactor---intelligent-code-refactoring), [`analyze`](#8-analyze---smart-file-analysis), [`codereview`](#5-codereview---professional-code-review))
 - **Multiple AI perspectives** - Let Claude orchestrate between different models to get the best analysis
 - **Automatic model selection** - Claude picks the right model for each task (or you can specify)
 - **A senior developer partner** to validate and extend ideas ([`chat`](#1-chat---general-development-chat--collaborative-thinking))
@@ -220,6 +221,13 @@ Just ask Claude naturally:
 - "First use local-llama for a quick local analysis, then use opus for a thorough security review" → Uses both providers in sequence
 
 ## Available Tools
+
+These aren't just tools—they're how you get Claude to think like a real developer. Instead of rushing to reply with 
+surface-level takes or shallow-insight, these workflows make Claude pause, dig into your code, and reason through 
+problems step by step. 
+
+It's the difference between a rushed guess and a focused second pair of eyes that actually understands your code. Try them 
+and feel the difference.
 
 **Quick Tool Selection Guide:**
 - **Need a thinking partner?** → `chat` (brainstorm ideas, get second opinions, validate approaches)
