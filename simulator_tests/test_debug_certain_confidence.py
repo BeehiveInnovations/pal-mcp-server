@@ -167,7 +167,7 @@ This happens every time a user tries to log in. The error occurs in the password
                 return False
 
             response1_data = self._parse_debug_response(response1)
-            if not self._validate_investigation_response(response1_data, 1, True, "investigation_in_progress"):
+            if not self._validate_investigation_response(response1_data, 1, True, "pause_for_investigation"):
                 return False
 
             self.logger.info(f"    ✅ Step 1 successful, continuation_id: {continuation_id}")
@@ -184,7 +184,7 @@ This happens every time a user tries to log in. The error occurs in the password
                     "findings": "Missing 'import hashlib' statement at the top of user_auth.py file. The error occurs because hashlib is used in hash_password() method on line 12 but never imported. Simple one-line fix: add 'import hashlib' after line 2.",
                     "files_checked": [self.error_log_file, self.missing_import_file],
                     "relevant_files": [self.missing_import_file],
-                    "relevant_methods": ["UserAuth.hash_password", "UserAuth.verify_password"],
+                    "relevant_context": ["UserAuth.hash_password", "UserAuth.verify_password"],
                     "hypothesis": "Missing 'import hashlib' statement causes NameError when hash_password method executes",
                     "confidence": "certain",  # Use certain - should skip expert analysis
                     "continuation_id": continuation_id,
@@ -264,7 +264,7 @@ This happens every time a user tries to log in. The error occurs in the password
                     "findings": "After thorough investigation, identified that the issue is caused by method name typo in Calculator.calculate_total() - calls self.add_number() instead of self.add_numbers(). Simple fix: change line 14 from 'add_number' to 'add_numbers'.",
                     "files_checked": [self.typo_bug_file],
                     "relevant_files": [self.typo_bug_file],
-                    "relevant_methods": ["Calculator.calculate_total", "Calculator.add_numbers"],
+                    "relevant_context": ["Calculator.calculate_total", "Calculator.add_numbers"],
                     "hypothesis": "Method name typo in calculate_total() calls non-existent add_number() instead of add_numbers()",
                     "confidence": "certain",  # Should always be trusted
                     "model": "flash",
@@ -318,7 +318,7 @@ This happens every time a user tries to log in. The error occurs in the password
                     "findings": "IndentationError in data_processor.py line 8 - results.append(processed) is incorrectly indented. Should align with the 'if' statement above it.",
                     "files_checked": [self.indentation_file],
                     "relevant_files": [self.indentation_file],
-                    "relevant_methods": ["process_data"],
+                    "relevant_context": ["process_data"],
                     "hypothesis": "Incorrect indentation causes IndentationError in process_data function",
                     "confidence": "high",  # Regular high confidence, NOT certain
                     "model": "flash",
@@ -400,7 +400,7 @@ This happens every time a user tries to log in. The error occurs in the password
                     "findings": "Found the issue: line 8 'results.append(processed)' is indented incorrectly. It should align with the 'if' statement, not be at the same level as the 'for' loop.",
                     "files_checked": [self.indentation_file],
                     "relevant_files": [self.indentation_file],
-                    "relevant_methods": ["process_data"],
+                    "relevant_context": ["process_data"],
                     "hypothesis": "Line 8 has incorrect indentation level causing IndentationError",
                     "confidence": "medium",
                     "continuation_id": continuation_id,
@@ -423,7 +423,7 @@ This happens every time a user tries to log in. The error occurs in the password
                     "findings": "Confirmed: line 8 'results.append(processed)' needs to be indented 4 more spaces to align with line 6 'if item > 0:'. This is a simple indentation fix.",
                     "files_checked": [self.indentation_file],
                     "relevant_files": [self.indentation_file],
-                    "relevant_methods": ["process_data"],
+                    "relevant_context": ["process_data"],
                     "hypothesis": "IndentationError on line 8 due to incorrect indentation level - needs 4 more spaces",
                     "confidence": "certain",  # Final step with certain
                     "continuation_id": continuation_id,
@@ -455,10 +455,10 @@ This happens every time a user tries to log in. The error occurs in the password
                 self.logger.error("Expected at least 1 step in complete investigation")
                 return False
 
-            # Check that investigation summary includes progression
-            investigation_summary = complete_investigation.get("investigation_summary", "")
-            if "Total steps:" not in investigation_summary and "Steps taken:" not in investigation_summary:
-                self.logger.error("Investigation summary should show steps information")
+            # Check that work summary includes progression
+            work_summary = complete_investigation.get("work_summary", "")
+            if "Total steps:" not in work_summary and "Steps taken:" not in work_summary:
+                self.logger.error("Work summary should show steps information")
                 return False
 
             self.logger.info("    ✅ Multi-step investigation with certain ending successful")

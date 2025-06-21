@@ -19,7 +19,7 @@ class TestThinkDeepTool:
     def test_tool_metadata(self, tool):
         """Test tool metadata"""
         assert tool.get_name() == "thinkdeep"
-        assert "EXTENDED THINKING" in tool.get_description()
+        assert "COMPREHENSIVE INVESTIGATION & REASONING" in tool.get_description()
         assert tool.get_default_temperature() == 0.7
 
         schema = tool.get_input_schema()

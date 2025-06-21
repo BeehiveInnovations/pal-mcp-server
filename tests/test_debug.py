@@ -30,15 +30,14 @@ class TestDebugTool:
             findings="Found potential null reference in user authentication flow",
             files_checked=["/src/UserService.java"],
             relevant_files=["/src/UserService.java"],
-            relevant_methods=["authenticate", "validateUser"],
+            relevant_context=["authenticate", "validateUser"],
             confidence="medium",
             hypothesis="Null pointer occurs when user object is not properly validated",
         )
 
         assert step_request.step_number == 1
         assert step_request.confidence == "medium"
-        assert len(step_request.relevant_methods) == 2
-        assert len(step_request.relevant_context) == 2  # Should be mapped from relevant_methods
+        assert len(step_request.relevant_context) == 2
 
     def test_input_schema_generation(self):
         """Test that input schema is generated correctly."""
@@ -51,33 +50,31 @@ class TestDebugTool:
         assert "total_steps" in schema["properties"]
         assert "next_step_required" in schema["properties"]
         assert "findings" in schema["properties"]
-        assert "relevant_methods" in schema["properties"]
+        assert "relevant_context" in schema["properties"]
 
         # Verify field types
         assert schema["properties"]["step"]["type"] == "string"
         assert schema["properties"]["step_number"]["type"] == "integer"
         assert schema["properties"]["next_step_required"]["type"] == "boolean"
-        assert schema["properties"]["relevant_methods"]["type"] == "array"
+        assert schema["properties"]["relevant_context"]["type"] == "array"
 
     def test_model_category_for_debugging(self):
         """Test that debug tool correctly identifies as extended reasoning category."""
         tool = DebugIssueTool()
         assert tool.get_model_category() == ToolModelCategory.EXTENDED_REASONING
 
-    def test_field_mapping_relevant_methods_to_context(self):
-        """Test that relevant_methods maps to relevant_context internally."""
+    def test_relevant_context_handling(self):
+        """Test that relevant_context is handled correctly."""
         request = DebugInvestigationRequest(
             step="Test investigation",
             step_number=1,
             total_steps=2,
             next_step_required=True,
             findings="Test findings",
-            relevant_methods=["method1", "method2"],
+            relevant_context=["method1", "method2"],
         )
 
-        # External API should have relevant_methods
-        assert request.relevant_methods == ["method1", "method2"]
-        # Internal processing should map to relevant_context
+        # Should have relevant_context directly
         assert request.relevant_context == ["method1", "method2"]
 
         # Test step data preparation

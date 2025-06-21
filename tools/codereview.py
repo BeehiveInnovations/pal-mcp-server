@@ -37,7 +37,8 @@ CODEREVIEW_WORKFLOW_FIELD_DESCRIPTIONS = {
     "step": (
         "Describe what you're currently investigating for code review by thinking deeply about the code structure, "
         "patterns, and potential issues. In step 1, clearly state your review plan and begin forming a systematic "
-        "approach after thinking carefully about what needs to be analyzed. CRITICAL: Remember to thoroughly examine "
+        "approach after thinking carefully about what needs to be analyzed. You must begin by passing the file path "
+        "for the initial code you are about to review in relevant_files. CRITICAL: Remember to thoroughly examine "
         "code quality, security implications, performance concerns, and architectural patterns. Consider not only "
         "obvious bugs and issues but also subtle concerns like over-engineering, unnecessary complexity, design "
         "patterns that could be simplified, areas where architecture might not scale well, missing abstractions, "

@@ -56,6 +56,14 @@ get_version() {
     grep -E '^__version__ = ' config.py 2>/dev/null | sed 's/__version__ = "\(.*\)"/\1/' || echo "unknown"
 }
 
+# Clear Python cache files to prevent import issues
+clear_python_cache() {
+    print_info "Clearing Python cache files..."
+    find . -name "*.pyc" -delete 2>/dev/null || true
+    find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+    print_success "Python cache cleared"
+}
+
 # ----------------------------------------------------------------------------
 # Platform Detection Functions
 # ----------------------------------------------------------------------------
@@ -780,12 +788,14 @@ show_help() {
     echo "  -v, --version   Show version information"
     echo "  -f, --follow    Follow server logs in real-time"
     echo "  -c, --config    Show configuration instructions for Claude clients"
+    echo "  --clear-cache   Clear Python cache and exit (helpful for import issues)"
     echo ""
     echo "Examples:"
     echo "  $0              Setup and start the MCP server"
     echo "  $0 -f           Setup and follow logs"
     echo "  $0 -c           Show configuration instructions"
     echo "  $0 --version    Show version only"
+    echo "  $0 --clear-cache Clear Python cache (fixes import issues)"
     echo ""
     echo "For more information, visit:"
     echo "  https://github.com/BeehiveInnovations/zen-mcp-server"
@@ -844,6 +854,14 @@ main() {
         -f|--follow)
             # Continue with normal setup then follow logs
             ;;
+        --clear-cache)
+            # Clear cache and exit
+            clear_python_cache
+            print_success "Cache cleared successfully"
+            echo ""
+            echo "You can now run './run-server.sh' normally"
+            exit 0
+            ;;
         "")
             # Normal setup without following logs
             ;;
@@ -872,6 +890,9 @@ main() {
     
     # Step 1: Docker cleanup
     cleanup_docker
+    
+    # Step 1.5: Clear Python cache to prevent import issues
+    clear_python_cache
     
     # Step 2: Find Python
     local python_cmd

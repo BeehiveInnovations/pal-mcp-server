@@ -214,7 +214,8 @@ class GeminiModelProvider(ModelProvider):
                 time.sleep(delay)
 
         # If we get here, all retries failed
-        error_msg = f"Gemini API error for model {resolved_name} after {max_retries} attempts: {str(last_exception)}"
+        actual_attempts = attempt + 1  # Convert from 0-based index to human-readable count
+        error_msg = f"Gemini API error for model {resolved_name} after {actual_attempts} attempt{'s' if actual_attempts > 1 else ''}: {str(last_exception)}"
         raise RuntimeError(error_msg) from last_exception
 
     def count_tokens(self, text: str, model_name: str) -> int:

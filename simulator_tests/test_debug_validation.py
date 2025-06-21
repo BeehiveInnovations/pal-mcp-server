@@ -191,7 +191,7 @@ RuntimeError: dictionary changed size during iteration
                     "findings": "Found the issue: cleanup_expired_sessions modifies self.active_sessions dictionary while iterating over it with .items(). This causes RuntimeError when del is called during iteration.",
                     "files_checked": [self.error_file, self.buggy_file],
                     "relevant_files": [self.buggy_file],
-                    "relevant_methods": ["SessionManager.cleanup_expired_sessions"],
+                    "relevant_context": ["SessionManager.cleanup_expired_sessions"],
                     "hypothesis": "Dictionary is being modified during iteration causing RuntimeError",
                     "confidence": "high",
                     "continuation_id": continuation_id,
@@ -212,8 +212,8 @@ RuntimeError: dictionary changed size during iteration
                 self.logger.error("Files checked count not properly tracked")
                 return False
 
-            if investigation_status.get("relevant_methods", 0) != 1:
-                self.logger.error("Relevant methods not properly tracked")
+            if investigation_status.get("relevant_context", 0) != 1:
+                self.logger.error("Relevant context not properly tracked")
                 return False
 
             if investigation_status.get("current_confidence") != "high":
@@ -288,7 +288,7 @@ RuntimeError: dictionary changed size during iteration
                     "findings": "Found inefficient nested loops in data processor causing O(n²) complexity",
                     "files_checked": ["/processor/algorithm.py"],
                     "relevant_files": ["/processor/algorithm.py"],
-                    "relevant_methods": ["DataProcessor.process_batch"],
+                    "relevant_context": ["DataProcessor.process_batch"],
                     "hypothesis": "Inefficient algorithm causing performance issues",
                     "confidence": "medium",
                     "backtrack_from_step": 2,  # Backtrack from step 2
@@ -331,7 +331,7 @@ RuntimeError: dictionary changed size during iteration
                         "findings": "Found dictionary modification during iteration",
                         "files_checked": [self.buggy_file],
                         "relevant_files": [self.buggy_file],
-                        "relevant_methods": ["SessionManager.cleanup_expired_sessions"],
+                        "relevant_context": ["SessionManager.cleanup_expired_sessions"],
                     },
                 )
                 if not response0 or not continuation_id:
@@ -350,7 +350,7 @@ RuntimeError: dictionary changed size during iteration
                     "findings": "Root cause identified: del self.active_sessions[session_id] on line 46 modifies dictionary during iteration starting at line 44. Fix: collect expired IDs first, then delete.",
                     "files_checked": [self.buggy_file],
                     "relevant_files": [self.buggy_file],
-                    "relevant_methods": ["SessionManager.cleanup_expired_sessions"],
+                    "relevant_context": ["SessionManager.cleanup_expired_sessions"],
                     "hypothesis": "Dictionary modification during iteration causes RuntimeError in cleanup_expired_sessions",
                     "confidence": "high",
                     "continuation_id": continuation_id,
@@ -404,11 +404,11 @@ RuntimeError: dictionary changed size during iteration
                 return False
 
             complete_investigation = response_final_data["complete_investigation"]
-            if not complete_investigation.get("relevant_methods"):
-                self.logger.error("Missing relevant methods in complete investigation")
+            if not complete_investigation.get("relevant_context"):
+                self.logger.error("Missing relevant context in complete investigation")
                 return False
 
-            if "SessionManager.cleanup_expired_sessions" not in complete_investigation["relevant_methods"]:
+            if "SessionManager.cleanup_expired_sessions" not in complete_investigation["relevant_context"]:
                 self.logger.error("Expected method not found in investigation summary")
                 return False
 
@@ -436,7 +436,7 @@ RuntimeError: dictionary changed size during iteration
                     "findings": "The bug is on line 44-47: for loop iterates over dict.items() while del modifies the dict inside the loop. Fix is simple: collect expired IDs first, then delete after iteration.",
                     "files_checked": [self.buggy_file],
                     "relevant_files": [self.buggy_file],
-                    "relevant_methods": ["SessionManager.cleanup_expired_sessions"],
+                    "relevant_context": ["SessionManager.cleanup_expired_sessions"],
                     "hypothesis": "Dictionary modification during iteration causes RuntimeError - fix is straightforward",
                     "confidence": "certain",  # This should skip expert analysis
                     "model": "flash",
@@ -604,7 +604,7 @@ def validate_input(data):
                     "findings": "Initial analysis of data processing components",
                     "files_checked": [file1, file2],
                     "relevant_files": [file1],  # This should be referenced, not embedded
-                    "relevant_methods": ["process_data"],
+                    "relevant_context": ["process_data"],
                     "hypothesis": "Investigating data flow",
                     "confidence": "low",
                     "model": "flash",
@@ -644,7 +644,7 @@ def validate_input(data):
                     "findings": "Found potential issues in validation logic",
                     "files_checked": [file1, file2],
                     "relevant_files": [file1, file2],  # Both files referenced
-                    "relevant_methods": ["process_data", "validate_input"],
+                    "relevant_context": ["process_data", "validate_input"],
                     "hypothesis": "Validation might be too strict",
                     "confidence": "medium",
                     "model": "flash",
@@ -690,7 +690,7 @@ def validate_input(data):
                     "findings": "Root cause: validator is rejecting valid data due to strict type checking",
                     "files_checked": [file1, file2],
                     "relevant_files": [file1, file2],  # Should be fully embedded
-                    "relevant_methods": ["process_data", "validate_input"],
+                    "relevant_context": ["process_data", "validate_input"],
                     "hypothesis": "Validation logic is too restrictive for valid edge cases",
                     "confidence": "high",
                     "model": "flash",
@@ -797,7 +797,7 @@ class DatabaseServer:
                     "findings": "Application fails to start with configuration errors",
                     "files_checked": [config_file],
                     "relevant_files": [config_file],
-                    "relevant_methods": [],
+                    "relevant_context": [],
                     "hypothesis": "Configuration issue causing startup failure",
                     "confidence": "low",
                     "model": "flash",
@@ -831,7 +831,7 @@ class DatabaseServer:
                     "findings": "MAX_CONNECTIONS environment variable contains invalid value, causing CACHE_SIZE calculation to fail",
                     "files_checked": [config_file, server_file],
                     "relevant_files": [config_file, server_file],
-                    "relevant_methods": ["DatabaseServer.__init__"],
+                    "relevant_context": ["DatabaseServer.__init__"],
                     "hypothesis": "Invalid environment variable causing integer conversion error",
                     "confidence": "medium",
                     "model": "flash",
@@ -871,7 +871,7 @@ class DatabaseServer:
                     "findings": "Error occurs in config.py line 8 when MAX_CONNECTIONS is not numeric, then propagates to DatabaseServer.__init__",
                     "files_checked": [config_file, server_file],
                     "relevant_files": [config_file, server_file],
-                    "relevant_methods": ["DatabaseServer.__init__"],
+                    "relevant_context": ["DatabaseServer.__init__"],
                     "hypothesis": "Need proper error handling and validation for environment variables",
                     "confidence": "high",
                     "model": "flash",
@@ -905,7 +905,7 @@ class DatabaseServer:
                     "findings": "Root cause: config.py assumes MAX_CONNECTIONS env var is always a valid integer. Fix: add try/except with default value and proper validation.",
                     "files_checked": [config_file, server_file],
                     "relevant_files": [config_file, server_file],
-                    "relevant_methods": ["DatabaseServer.__init__"],
+                    "relevant_context": ["DatabaseServer.__init__"],
                     "hypothesis": "Environment variable validation needed with proper error handling",
                     "confidence": "high",
                     "model": "flash",

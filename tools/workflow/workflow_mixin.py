@@ -677,8 +677,6 @@ class BaseWorkflowMixin(ABC):
     def prepare_step_data(self, request) -> dict:
         """
         Prepare step data from request. Tools can override to customize field mapping.
-
-        For example, debug tool maps relevant_methods to relevant_context.
         """
         step_data = {
             "step": request.step,

@@ -18,7 +18,7 @@ Key features:
 import logging
 from typing import TYPE_CHECKING, Any, Optional
 
-from pydantic import Field, model_validator
+from pydantic import Field
 
 if TYPE_CHECKING:
     from tools.models import ToolModelCategory
@@ -127,9 +127,6 @@ class DebugInvestigationRequest(WorkflowRequest):
     relevant_context: list[str] = Field(
         default_factory=list, description=DEBUG_INVESTIGATION_FIELD_DESCRIPTIONS["relevant_context"]
     )
-    relevant_methods: list[str] = Field(
-        default_factory=list, description=DEBUG_INVESTIGATION_FIELD_DESCRIPTIONS["relevant_context"], exclude=True
-    )
     hypothesis: Optional[str] = Field(None, description=DEBUG_INVESTIGATION_FIELD_DESCRIPTIONS["hypothesis"])
     confidence: Optional[str] = Field("low", description=DEBUG_INVESTIGATION_FIELD_DESCRIPTIONS["confidence"])
 
@@ -145,14 +142,6 @@ class DebugInvestigationRequest(WorkflowRequest):
     temperature: Optional[float] = Field(default=None, exclude=True)
     thinking_mode: Optional[str] = Field(default=None, exclude=True)
     use_websearch: Optional[bool] = Field(default=None, exclude=True)
-
-    @model_validator(mode="after")
-    def map_relevant_methods_to_context(self):
-        """Map relevant_methods from external input to relevant_context for internal processing."""
-        # If relevant_context is empty but relevant_methods has values, use relevant_methods
-        if not self.relevant_context and self.relevant_methods:
-            self.relevant_context = self.relevant_methods[:]
-        return self
 
 
 class DebugIssueTool(WorkflowTool):
@@ -261,11 +250,6 @@ class DebugIssueTool(WorkflowTool):
                 "minimum": 1,
                 "description": DEBUG_INVESTIGATION_FIELD_DESCRIPTIONS["backtrack_from_step"],
             },
-            "relevant_methods": {
-                "type": "array",
-                "items": {"type": "string"},
-                "description": DEBUG_INVESTIGATION_FIELD_DESCRIPTIONS["relevant_context"],
-            },
             "images": {
                 "type": "array",
                 "items": {"type": "string"},
@@ -350,7 +334,7 @@ class DebugIssueTool(WorkflowTool):
         if error_context:
             context_parts.append(f"\n=== ERROR CONTEXT/STACK TRACE ===\n{error_context}\n=== END CONTEXT ===")
 
-        # Add relevant methods if available (map relevant_context back to relevant_methods)
+        # Add relevant methods/functions if available
         if consolidated_findings.relevant_context:
             methods_text = "\n".join(f"- {method}" for method in consolidated_findings.relevant_context)
             context_parts.append(f"\n=== RELEVANT METHODS/FUNCTIONS ===\n{methods_text}\n=== END METHODS ===")
@@ -466,7 +450,7 @@ class DebugIssueTool(WorkflowTool):
 
     def prepare_step_data(self, request) -> dict:
         """
-        Map debug-specific fields: relevant_methods -> relevant_context for internal processing.
+        Prepare debug-specific step data for processing.
         """
         step_data = {
             "step": request.step,
@@ -603,21 +587,12 @@ class DebugIssueTool(WorkflowTool):
         # Rename status field to match debug tool
         if f"{tool_name}_status" in response_data:
             response_data["investigation_status"] = response_data.pop(f"{tool_name}_status")
-            # Map relevant_context back to relevant_methods in status
-            if "relevant_context" in response_data["investigation_status"]:
-                response_data["investigation_status"]["relevant_methods"] = response_data["investigation_status"].pop(
-                    "relevant_context"
-                )
-                # Add debug-specific status fields
-                response_data["investigation_status"]["hypotheses_formed"] = len(self.consolidated_findings.hypotheses)
+            # Add debug-specific status fields
+            response_data["investigation_status"]["hypotheses_formed"] = len(self.consolidated_findings.hypotheses)
 
-        # Map relevant_context back to relevant_methods in complete investigation
+        # Rename complete investigation data
         if f"complete_{tool_name}" in response_data:
             response_data["complete_investigation"] = response_data.pop(f"complete_{tool_name}")
-            if "relevant_context" in response_data["complete_investigation"]:
-                response_data["complete_investigation"]["relevant_methods"] = response_data[
-                    "complete_investigation"
-                ].pop("relevant_context")
 
         # Map the completion flag to match original debug tool
         if f"{tool_name}_complete" in response_data:

@@ -139,14 +139,14 @@ class ThinkDeepTool(WorkflowTool):
 
     name = "thinkdeep"
     description = (
-        "EXTENDED THINKING & REASONING - Your deep thinking partner for complex problems. "
-        "Use this when you need to think deeper about a problem, extend your analysis, explore alternatives, "
-        "or validate approaches. Perfect for: architecture decisions, complex bugs, performance challenges, "
-        "security analysis. I'll challenge assumptions, find edge cases, and provide alternative solutions. "
-        "IMPORTANT: Choose the appropriate thinking_mode based on task complexity - 'low' for quick analysis, "
+        "COMPREHENSIVE INVESTIGATION & REASONING - Multi-stage workflow for complex problem analysis. "
+        "Use this when you need structured evidence-based investigation, systematic hypothesis testing, or expert validation. "
+        "Perfect for: architecture decisions, complex bugs, performance challenges, security analysis. "
+        "Provides methodical investigation with assumption validation, alternative solution exploration, and rigorous analysis. "
+        "IMPORTANT: Choose the appropriate mode based on task complexity - 'low' for quick investigation, "
         "'medium' for standard problems, 'high' for complex issues (default), 'max' for extremely complex "
-        "challenges requiring deepest analysis. When in doubt, err on the side of a higher mode for truly "
-        "deep thought and evaluation. Note: If you're not currently using a top-tier model such as Opus 4 or above, "
+        "challenges requiring exhaustive investigation. When in doubt, err on the side of a higher mode for thorough "
+        "systematic analysis and expert validation. Note: If you're not currently using a top-tier model such as Opus 4 or above, "
         "these tools can provide enhanced capabilities."
     )
 
@@ -218,11 +218,21 @@ class ThinkDeepTool(WorkflowTool):
         Customize the workflow response for thinkdeep-specific needs
         """
         # Store request parameters for later use in expert analysis
-        self.stored_request_params = {
-            "temperature": getattr(request, "temperature", None),
-            "thinking_mode": getattr(request, "thinking_mode", None),
-            "use_websearch": getattr(request, "use_websearch", None),
-        }
+        self.stored_request_params = {}
+        try:
+            self.stored_request_params["temperature"] = request.temperature
+        except AttributeError:
+            self.stored_request_params["temperature"] = None
+
+        try:
+            self.stored_request_params["thinking_mode"] = request.thinking_mode
+        except AttributeError:
+            self.stored_request_params["thinking_mode"] = None
+
+        try:
+            self.stored_request_params["use_websearch"] = request.use_websearch
+        except AttributeError:
+            self.stored_request_params["use_websearch"] = None
 
         # Add thinking-specific context to response
         response_data.update(
@@ -307,8 +317,8 @@ Your role is to validate the thinking process, identify any gaps, challenge assu
 additional insights or alternative perspectives.
 
 ANALYSIS SCOPE:
-- Problem Context: {getattr(request, 'problem_context', 'General analysis')}
-- Focus Areas: {', '.join(getattr(request, 'focus_areas', ['comprehensive analysis']))}
+- Problem Context: {self._get_problem_context(request)}
+- Focus Areas: {', '.join(self._get_focus_areas(request))}
 - Investigation Confidence: {request.confidence}
 - Steps Completed: {request.step_number} of {request.total_steps}
 
@@ -350,21 +360,47 @@ but also acknowledge strong insights and valid conclusions.
 
     def get_request_temperature(self, request) -> float:
         """Use stored temperature from initial request."""
-        if hasattr(self, "stored_request_params") and self.stored_request_params.get("temperature") is not None:
-            return self.stored_request_params["temperature"]
+        try:
+            stored_params = self.stored_request_params
+            if stored_params and stored_params.get("temperature") is not None:
+                return stored_params["temperature"]
+        except AttributeError:
+            pass
         return super().get_request_temperature(request)
 
     def get_request_thinking_mode(self, request) -> str:
         """Use stored thinking mode from initial request."""
-        if hasattr(self, "stored_request_params") and self.stored_request_params.get("thinking_mode") is not None:
-            return self.stored_request_params["thinking_mode"]
+        try:
+            stored_params = self.stored_request_params
+            if stored_params and stored_params.get("thinking_mode") is not None:
+                return stored_params["thinking_mode"]
+        except AttributeError:
+            pass
         return super().get_request_thinking_mode(request)
 
     def get_request_use_websearch(self, request) -> bool:
         """Use stored use_websearch from initial request."""
-        if hasattr(self, "stored_request_params") and self.stored_request_params.get("use_websearch") is not None:
-            return self.stored_request_params["use_websearch"]
+        try:
+            stored_params = self.stored_request_params
+            if stored_params and stored_params.get("use_websearch") is not None:
+                return stored_params["use_websearch"]
+        except AttributeError:
+            pass
         return super().get_request_use_websearch(request)
+
+    def _get_problem_context(self, request) -> str:
+        """Get problem context from request. Override for custom context handling."""
+        try:
+            return request.problem_context or "General analysis"
+        except AttributeError:
+            return "General analysis"
+
+    def _get_focus_areas(self, request) -> list[str]:
+        """Get focus areas from request. Override for custom focus area handling."""
+        try:
+            return request.focus_areas or ["comprehensive analysis"]
+        except AttributeError:
+            return ["comprehensive analysis"]
 
     def get_required_actions(self, step_number: int, confidence: str, findings: str, total_steps: int) -> list[str]:
         """
@@ -413,14 +449,20 @@ but also acknowledge strong insights and valid conclusions.
         """
         Determine if expert analysis should be called based on confidence and completion.
         """
-        if request and hasattr(request, "confidence"):
-            # Don't call expert analysis if confidence is "certain"
-            if request.confidence == "certain":
-                return False
+        if request:
+            try:
+                # Don't call expert analysis if confidence is "certain"
+                if request.confidence == "certain":
+                    return False
+            except AttributeError:
+                pass
 
         # Call expert analysis if investigation is complete (when next_step_required is False)
-        if request and hasattr(request, "next_step_required"):
-            return not request.next_step_required
+        if request:
+            try:
+                return not request.next_step_required
+            except AttributeError:
+                pass
 
         # Fallback: call expert analysis if we have meaningful findings
         return (
