@@ -521,6 +521,7 @@ Apache 2.0 License - see LICENSE file for details.
 ## Acknowledgments
 
 Built with the power of **Multi-Model AI** collaboration 🤝
+- **A**ctual **I**ntelligence by real Humans
 - [MCP (Model Context Protocol)](https://modelcontextprotocol.com) by Anthropic
 - [Claude Code](https://claude.ai/code) - Your AI coding assistant & orchestrator
 - [Gemini 2.5 Pro & 2.0 Flash](https://ai.google.dev/) - Extended thinking & fast analysis
