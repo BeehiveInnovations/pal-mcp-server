@@ -19,6 +19,22 @@ class GeminiModelProvider(ModelProvider):
 
     # Model configurations
     SUPPORTED_MODELS = {
+        "gemini-2.0-flash": {
+            "context_window": 1_048_576,  # 1M tokens
+            "supports_extended_thinking": True,  # Experimental thinking mode
+            "max_thinking_tokens": 24576,  # Same as 2.5 flash for consistency
+            "supports_images": True,  # Vision capability
+            "max_image_size_mb": 20.0,  # Conservative 20MB limit for reliability
+            "description": "Gemini 2.0 Flash (1M context) - Latest fast model with experimental thinking, supports audio/video input",
+        },
+        "gemini-2.0-flash-lite": {
+            "context_window": 1_048_576,  # 1M tokens
+            "supports_extended_thinking": False,  # Not supported per user request
+            "max_thinking_tokens": 0,  # No thinking support
+            "supports_images": False,  # Does not support images
+            "max_image_size_mb": 0.0,  # No image support
+            "description": "Gemini 2.0 Flash Lite (1M context) - Lightweight fast model, text-only",
+        },
         "gemini-2.5-flash": {
             "context_window": 1_048_576,  # 1M tokens
             "supports_extended_thinking": True,
@@ -37,6 +53,10 @@ class GeminiModelProvider(ModelProvider):
         },
         # Shorthands
         "flash": "gemini-2.5-flash",
+        "flash-2.0": "gemini-2.0-flash",
+        "flash2": "gemini-2.0-flash",
+        "flashlite": "gemini-2.0-flash-lite",
+        "flash-lite": "gemini-2.0-flash-lite",
         "pro": "gemini-2.5-pro",
     }
 

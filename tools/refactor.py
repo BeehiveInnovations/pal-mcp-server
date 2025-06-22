@@ -670,7 +670,7 @@ class RefactorTool(WorkflowTool):
             response_data["refactoring_status"]["opportunities_by_type"] = refactor_types
             response_data["refactoring_status"]["refactor_confidence"] = request.confidence
 
-        # Map complete_refactorworkflow to complete_refactoring
+        # Map complete_refactor to complete_refactoring
         if f"complete_{tool_name}" in response_data:
             response_data["complete_refactoring"] = response_data.pop(f"complete_{tool_name}")
 

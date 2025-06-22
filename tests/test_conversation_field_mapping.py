@@ -3,16 +3,16 @@ Test that conversation history is correctly mapped to tool-specific fields
 """
 
 from datetime import datetime
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
-from providers.base import ProviderType
 from server import reconstruct_thread_context
 from utils.conversation_memory import ConversationTurn, ThreadContext
 
 
 @pytest.mark.asyncio
+@pytest.mark.no_mock_provider
 async def test_conversation_history_field_mapping():
     """Test that enhanced prompts are mapped to prompt field for all tools"""
 
@@ -41,7 +41,7 @@ async def test_conversation_history_field_mapping():
     ]
 
     for test_case in test_cases:
-        # Create mock conversation context
+        # Create real conversation context
         mock_context = ThreadContext(
             thread_id="test-thread-123",
             tool_name=test_case["tool_name"],
@@ -66,54 +66,37 @@ async def test_conversation_history_field_mapping():
         # Mock get_thread to return our test context
         with patch("utils.conversation_memory.get_thread", return_value=mock_context):
             with patch("utils.conversation_memory.add_turn", return_value=True):
-                with patch("utils.conversation_memory.build_conversation_history") as mock_build:
-                    # Mock provider registry to avoid model lookup errors
-                    with patch("providers.registry.ModelProviderRegistry.get_provider_for_model") as mock_get_provider:
-                        from providers.base import ModelCapabilities
+                # Create arguments with continuation_id and use a test model
+                arguments = {
+                    "continuation_id": "test-thread-123",
+                    "prompt": test_case["original_value"],
+                    "files": ["/test/file2.py"],
+                    "model": "flash",  # Use test model to avoid provider errors
+                }
 
-                        mock_provider = MagicMock()
-                        mock_provider.get_capabilities.return_value = ModelCapabilities(
-                            provider=ProviderType.GOOGLE,
-                            model_name="gemini-2.5-flash",
-                            friendly_name="Gemini",
-                            context_window=200000,
-                            supports_extended_thinking=True,
-                        )
-                        mock_get_provider.return_value = mock_provider
-                        # Mock conversation history building
-                        mock_build.return_value = (
-                            "=== CONVERSATION HISTORY ===\nPrevious conversation content\n=== END HISTORY ===",
-                            1000,  # mock token count
-                        )
+                # Call reconstruct_thread_context
+                enhanced_args = await reconstruct_thread_context(arguments)
 
-                        # Create arguments with continuation_id
-                        arguments = {
-                            "continuation_id": "test-thread-123",
-                            "prompt": test_case["original_value"],
-                            "files": ["/test/file2.py"],
-                        }
+                # Verify the enhanced prompt is in the prompt field
+                assert "prompt" in enhanced_args
+                enhanced_value = enhanced_args["prompt"]
 
-                        # Call reconstruct_thread_context
-                        enhanced_args = await reconstruct_thread_context(arguments)
+                # Should contain conversation history
+                assert "=== CONVERSATION HISTORY" in enhanced_value  # Allow for both formats
+                assert "Previous user message" in enhanced_value
+                assert "Previous assistant response" in enhanced_value
 
-                        # Verify the enhanced prompt is in the prompt field
-                        assert "prompt" in enhanced_args
-                        enhanced_value = enhanced_args["prompt"]
+                # Should contain the new user input
+                assert "=== NEW USER INPUT ===" in enhanced_value
+                assert test_case["original_value"] in enhanced_value
 
-                        # Should contain conversation history
-                        assert "=== CONVERSATION HISTORY ===" in enhanced_value
-                        assert "Previous conversation content" in enhanced_value
-
-                        # Should contain the new user input
-                        assert "=== NEW USER INPUT ===" in enhanced_value
-                        assert test_case["original_value"] in enhanced_value
-
-                        # Should have token budget
-                        assert "_remaining_tokens" in enhanced_args
-                        assert enhanced_args["_remaining_tokens"] > 0
+                # Should have token budget
+                assert "_remaining_tokens" in enhanced_args
+                assert enhanced_args["_remaining_tokens"] > 0
 
 
 @pytest.mark.asyncio
+@pytest.mark.no_mock_provider
 async def test_unknown_tool_defaults_to_prompt():
     """Test that unknown tools default to using 'prompt' field"""
 
@@ -122,37 +105,37 @@ async def test_unknown_tool_defaults_to_prompt():
         tool_name="unknown_tool",
         created_at=datetime.now().isoformat(),
         last_updated_at=datetime.now().isoformat(),
-        turns=[],
+        turns=[
+            ConversationTurn(
+                role="user",
+                content="First message",
+                timestamp=datetime.now().isoformat(),
+            ),
+            ConversationTurn(
+                role="assistant",
+                content="First response",
+                timestamp=datetime.now().isoformat(),
+            ),
+        ],
         initial_context={},
     )
 
     with patch("utils.conversation_memory.get_thread", return_value=mock_context):
         with patch("utils.conversation_memory.add_turn", return_value=True):
-            with patch("utils.conversation_memory.build_conversation_history", return_value=("History", 500)):
-                # Mock ModelContext to avoid calculation errors
-                with patch("utils.model_context.ModelContext") as mock_model_context_class:
-                    mock_model_context = MagicMock()
-                    mock_model_context.model_name = "gemini-2.5-flash"
-                    mock_model_context.calculate_token_allocation.return_value = MagicMock(
-                        total_tokens=200000,
-                        content_tokens=120000,
-                        response_tokens=80000,
-                        file_tokens=48000,
-                        history_tokens=48000,
-                        available_for_prompt=24000,
-                    )
-                    mock_model_context_class.from_arguments.return_value = mock_model_context
+            arguments = {
+                "continuation_id": "test-thread-456",
+                "prompt": "User input",
+                "model": "flash",  # Use test model for real integration
+            }
 
-                    arguments = {
-                        "continuation_id": "test-thread-456",
-                        "prompt": "User input",
-                    }
+            enhanced_args = await reconstruct_thread_context(arguments)
 
-                    enhanced_args = await reconstruct_thread_context(arguments)
-
-                    # Should default to 'prompt' field
-                    assert "prompt" in enhanced_args
-                    assert "History" in enhanced_args["prompt"]
+            # Should default to 'prompt' field
+            assert "prompt" in enhanced_args
+            assert "=== CONVERSATION HISTORY" in enhanced_args["prompt"]  # Allow for both formats
+            assert "First message" in enhanced_args["prompt"]
+            assert "First response" in enhanced_args["prompt"]
+            assert "User input" in enhanced_args["prompt"]
 
 
 @pytest.mark.asyncio

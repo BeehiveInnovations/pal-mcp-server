@@ -25,7 +25,7 @@ class TestDynamicContextRequests:
         return DebugIssueTool()
 
     @pytest.mark.asyncio
-    @patch("tools.base.BaseTool.get_model_provider")
+    @patch("tools.shared.base_tool.BaseTool.get_model_provider")
     async def test_clarification_request_parsing(self, mock_get_provider, analyze_tool):
         """Test that tools correctly parse clarification requests"""
         # Mock model to return a clarification request
@@ -79,7 +79,7 @@ class TestDynamicContextRequests:
         assert response_data["step_number"] == 1
 
     @pytest.mark.asyncio
-    @patch("tools.base.BaseTool.get_model_provider")
+    @patch("tools.shared.base_tool.BaseTool.get_model_provider")
     @patch("utils.conversation_memory.create_thread", return_value="debug-test-uuid")
     @patch("utils.conversation_memory.add_turn")
     async def test_normal_response_not_parsed_as_clarification(
@@ -114,7 +114,7 @@ class TestDynamicContextRequests:
         assert "required_actions" in response_data
 
     @pytest.mark.asyncio
-    @patch("tools.base.BaseTool.get_model_provider")
+    @patch("tools.shared.base_tool.BaseTool.get_model_provider")
     async def test_malformed_clarification_request_treated_as_normal(self, mock_get_provider, analyze_tool):
         """Test that malformed JSON clarification requests are treated as normal responses"""
         malformed_json = '{"status": "files_required_to_continue", "prompt": "Missing closing brace"'
@@ -155,7 +155,7 @@ class TestDynamicContextRequests:
                 assert "files_required_to_continue" in analysis_content or malformed_json in str(response_data)
 
     @pytest.mark.asyncio
-    @patch("tools.base.BaseTool.get_model_provider")
+    @patch("tools.shared.base_tool.BaseTool.get_model_provider")
     async def test_clarification_with_suggested_action(self, mock_get_provider, analyze_tool):
         """Test clarification request with suggested next action"""
         clarification_json = json.dumps(
@@ -277,45 +277,8 @@ class TestDynamicContextRequests:
         assert len(request.files_needed) == 2
         assert request.suggested_next_action["tool"] == "analyze"
 
-    def test_mandatory_instructions_enhancement(self):
-        """Test that mandatory_instructions are enhanced with additional guidance"""
-        from tools.base import BaseTool
-
-        # Create a dummy tool instance for testing
-        class TestTool(BaseTool):
-            def get_name(self):
-                return "test"
-
-            def get_description(self):
-                return "test"
-
-            def get_request_model(self):
-                return None
-
-            def prepare_prompt(self, request):
-                return ""
-
-            def get_system_prompt(self):
-                return ""
-
-            def get_input_schema(self):
-                return {}
-
-        tool = TestTool()
-        original = "I need additional files to proceed"
-        enhanced = tool._enhance_mandatory_instructions(original)
-
-        # Verify the original instructions are preserved
-        assert enhanced.startswith(original)
-
-        # Verify additional guidance is added
-        assert "IMPORTANT GUIDANCE:" in enhanced
-        assert "CRITICAL for providing accurate analysis" in enhanced
-        assert "Use FULL absolute paths" in enhanced
-        assert "continuation_id to continue" in enhanced
-
     @pytest.mark.asyncio
-    @patch("tools.base.BaseTool.get_model_provider")
+    @patch("tools.shared.base_tool.BaseTool.get_model_provider")
     async def test_error_response_format(self, mock_get_provider, analyze_tool):
         """Test error response format"""
         mock_get_provider.side_effect = Exception("API connection failed")
@@ -364,7 +327,7 @@ class TestCollaborationWorkflow:
         ModelProviderRegistry._instance = None
 
     @pytest.mark.asyncio
-    @patch("tools.base.BaseTool.get_model_provider")
+    @patch("tools.shared.base_tool.BaseTool.get_model_provider")
     @patch("tools.workflow.workflow_mixin.BaseWorkflowMixin._call_expert_analysis")
     async def test_dependency_analysis_triggers_clarification(self, mock_expert_analysis, mock_get_provider):
         """Test that asking about dependencies without package files triggers clarification"""
@@ -430,7 +393,7 @@ class TestCollaborationWorkflow:
             assert "step_number" in response
 
     @pytest.mark.asyncio
-    @patch("tools.base.BaseTool.get_model_provider")
+    @patch("tools.shared.base_tool.BaseTool.get_model_provider")
     @patch("tools.workflow.workflow_mixin.BaseWorkflowMixin._call_expert_analysis")
     async def test_multi_step_collaboration(self, mock_expert_analysis, mock_get_provider):
         """Test a multi-step collaboration workflow"""

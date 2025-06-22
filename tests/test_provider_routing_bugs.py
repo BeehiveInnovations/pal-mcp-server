@@ -15,8 +15,8 @@ import pytest
 
 from providers.base import ProviderType
 from providers.registry import ModelProviderRegistry
-from tools.base import ToolRequest
 from tools.chat import ChatTool
+from tools.shared.base_models import ToolRequest
 
 
 class MockRequest(ToolRequest):
@@ -125,11 +125,11 @@ class TestProviderRoutingBugs:
             tool = ChatTool()
 
             # Test: Request 'flash' model with no API keys - should fail gracefully
-            with pytest.raises(ValueError, match="No provider found for model 'flash'"):
+            with pytest.raises(ValueError, match="Model 'flash' is not available"):
                 tool.get_model_provider("flash")
 
             # Test: Request 'o3' model with no API keys - should fail gracefully
-            with pytest.raises(ValueError, match="No provider found for model 'o3'"):
+            with pytest.raises(ValueError, match="Model 'o3' is not available"):
                 tool.get_model_provider("o3")
 
             # Verify no providers were auto-registered

@@ -147,6 +147,8 @@ class TestGenTool(WorkflowTool):
     including edge case identification, framework detection, and comprehensive coverage planning.
     """
 
+    __test__ = False  # Prevent pytest from collecting this class as a test
+
     def __init__(self):
         super().__init__()
         self.initial_request = None

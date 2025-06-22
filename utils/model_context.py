@@ -73,7 +73,8 @@ class ModelContext:
         if self._provider is None:
             self._provider = ModelProviderRegistry.get_provider_for_model(self.model_name)
             if not self._provider:
-                raise ValueError(f"No provider found for model: {self.model_name}")
+                available_models = ModelProviderRegistry.get_available_models()
+                raise ValueError(f"Model '{self.model_name}' is not available. Available models: {available_models}")
         return self._provider
 
     @property

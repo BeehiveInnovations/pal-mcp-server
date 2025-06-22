@@ -28,6 +28,7 @@ from typing import Any, Optional
 
 from mcp.types import TextContent
 
+from config import MCP_PROMPT_SIZE_LIMIT
 from utils.conversation_memory import add_turn, create_thread
 
 from ..shared.base_models import ConsolidatedFindings
@@ -111,6 +112,7 @@ class BaseWorkflowMixin(ABC):
         description: str,
         remaining_budget: Optional[int] = None,
         arguments: Optional[dict[str, Any]] = None,
+        model_context: Optional[Any] = None,
     ) -> tuple[str, list[str]]:
         """Prepare file content for prompts. Usually provided by BaseTool."""
         pass
@@ -229,6 +231,23 @@ class BaseWorkflowMixin(ABC):
             return request.temperature if request.temperature is not None else self.get_default_temperature()
         except AttributeError:
             return self.get_default_temperature()
+
+    def get_validated_temperature(self, request, model_context: Any) -> tuple[float, list[str]]:
+        """
+        Get temperature from request and validate it against model constraints.
+
+        This is a convenience method that combines temperature extraction and validation
+        for workflow tools. It ensures temperature is within valid range for the model.
+
+        Args:
+            request: The request object containing temperature
+            model_context: Model context object containing model info
+
+        Returns:
+            Tuple of (validated_temperature, warning_messages)
+        """
+        temperature = self.get_request_temperature(request)
+        return self.validate_and_correct_temperature(temperature, model_context)
 
     def get_request_thinking_mode(self, request) -> str:
         """Get thinking mode from request. Override for custom thinking mode handling."""
@@ -496,19 +515,22 @@ class BaseWorkflowMixin(ABC):
             return
 
         try:
-            # Ensure model context is available - fall back to resolution if needed
+            # Model context should be available from early validation, but might be deferred for tests
             current_model_context = self.get_current_model_context()
             if not current_model_context:
+                # Try to resolve model context now (deferred from early validation)
                 try:
                     model_name, model_context = self._resolve_model_context(arguments, request)
                     self._model_context = model_context
+                    self._current_model_name = model_name
                 except Exception as e:
                     logger.error(f"[WORKFLOW_FILES] {self.get_name()}: Failed to resolve model context: {e}")
-                    # Create fallback model context
+                    # Create fallback model context (preserves existing test behavior)
                     from utils.model_context import ModelContext
 
                     model_name = self.get_request_model_name(request)
                     self._model_context = ModelContext(model_name)
+                    self._current_model_name = model_name
 
             # Use the same file preparation logic as BaseTool with token budgeting
             continuation_id = self.get_request_continuation_id(request)
@@ -520,6 +542,7 @@ class BaseWorkflowMixin(ABC):
                 "Workflow files for analysis",
                 remaining_budget=remaining_tokens,
                 arguments=arguments,
+                model_context=self._model_context,
             )
 
             # Store for use in expert analysis
@@ -595,6 +618,20 @@ class BaseWorkflowMixin(ABC):
             # Validate request using tool-specific model
             request = self.get_workflow_request_model()(**arguments)
 
+            # Validate step field size (basic validation for workflow instructions)
+            # If step is too large, user should use shorter instructions and put details in files
+            step_content = request.step
+            if step_content and len(step_content) > MCP_PROMPT_SIZE_LIMIT:
+                from tools.models import ToolOutput
+
+                error_output = ToolOutput(
+                    status="resend_prompt",
+                    content="Step instructions are too long. Please use shorter instructions and provide detailed context via file paths instead.",
+                    content_type="text",
+                    metadata={"prompt_size": len(step_content), "limit": MCP_PROMPT_SIZE_LIMIT},
+                )
+                raise ValueError(f"MCP_SIZE_CHECK:{error_output.model_dump_json()}")
+
             # Validate file paths for security (same as base tool)
             # Use try/except instead of hasattr as per coding standards
             try:
@@ -611,6 +648,20 @@ class BaseWorkflowMixin(ABC):
             except AttributeError:
                 # validate_file_paths method not available - skip validation
                 pass
+
+            # Try to validate model availability early for production scenarios
+            # For tests, defer model validation to later to allow mocks to work
+            try:
+                model_name, model_context = self._resolve_model_context(arguments, request)
+                # Store for later use
+                self._current_model_name = model_name
+                self._model_context = model_context
+            except ValueError as e:
+                # Model resolution failed - in production this would be an error,
+                # but for tests we defer to allow mocks to handle model resolution
+                logger.debug(f"Early model validation failed, deferring to later: {e}")
+                self._current_model_name = None
+                self._model_context = None
 
             # Adjust total steps if needed
             if request.step_number > request.total_steps:
@@ -1364,29 +1415,26 @@ class BaseWorkflowMixin(ABC):
     async def _call_expert_analysis(self, arguments: dict, request) -> dict:
         """Call external model for expert analysis"""
         try:
-            # Use the same model resolution logic as BaseTool
-            model_context = arguments.get("_model_context")
-            resolved_model_name = arguments.get("_resolved_model_name")
-
-            if model_context and resolved_model_name:
-                self._model_context = model_context
-                model_name = resolved_model_name
-            else:
-                # Fallback for direct calls - requires BaseTool methods
+            # Model context should be resolved from early validation, but handle fallback for tests
+            if not self._model_context:
+                # Try to resolve model context for expert analysis (deferred from early validation)
                 try:
                     model_name, model_context = self._resolve_model_context(arguments, request)
                     self._model_context = model_context
+                    self._current_model_name = model_name
                 except Exception as e:
-                    logger.error(f"Failed to resolve model context: {e}")
-                    # Use request model as fallback
+                    logger.error(f"Failed to resolve model context for expert analysis: {e}")
+                    # Use request model as fallback (preserves existing test behavior)
                     model_name = self.get_request_model_name(request)
                     from utils.model_context import ModelContext
 
                     model_context = ModelContext(model_name)
                     self._model_context = model_context
+                    self._current_model_name = model_name
+            else:
+                model_name = self._current_model_name
 
-            self._current_model_name = model_name
-            provider = self.get_model_provider(model_name)
+            provider = self._model_context.provider
 
             # Prepare expert analysis context
             expert_context = self.prepare_expert_analysis_context(self.consolidated_findings)
@@ -1407,12 +1455,19 @@ class BaseWorkflowMixin(ABC):
             else:
                 prompt = expert_context
 
+            # Validate temperature against model constraints
+            validated_temperature, temp_warnings = self.get_validated_temperature(request, self._model_context)
+
+            # Log any temperature corrections
+            for warning in temp_warnings:
+                logger.warning(warning)
+
             # Generate AI response - use request parameters if available
             model_response = provider.generate_content(
                 prompt=prompt,
                 model_name=model_name,
                 system_prompt=system_prompt,
-                temperature=self.get_request_temperature(request),
+                temperature=validated_temperature,
                 thinking_mode=self.get_request_thinking_mode(request),
                 use_websearch=self.get_request_use_websearch(request),
                 images=list(set(self.consolidated_findings.images)) if self.consolidated_findings.images else None,

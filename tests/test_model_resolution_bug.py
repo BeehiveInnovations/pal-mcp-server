@@ -11,7 +11,7 @@ from unittest.mock import Mock, patch
 
 from providers.base import ProviderType
 from providers.openrouter import OpenRouterProvider
-from tools.consensus import ConsensusTool, ModelConfig
+from tools.consensus import ConsensusTool
 
 
 class TestModelResolutionBug:
@@ -41,7 +41,8 @@ class TestModelResolutionBug:
 
     @patch.dict("os.environ", {"OPENROUTER_API_KEY": "test_key"}, clear=False)
     def test_consensus_tool_model_resolution_bug_reproduction(self):
-        """Reproduce the actual bug: consensus tool with 'gemini' model should resolve correctly."""
+        """Test that the new consensus workflow tool properly handles OpenRouter model resolution."""
+        import asyncio
 
         # Create a mock OpenRouter provider that tracks what model names it receives
         mock_provider = Mock(spec=OpenRouterProvider)
@@ -64,39 +65,31 @@ class TestModelResolutionBug:
 
         # Mock the get_model_provider to return our mock
         with patch.object(self.consensus_tool, "get_model_provider", return_value=mock_provider):
-            # Mock the prepare_prompt method
-            with patch.object(self.consensus_tool, "prepare_prompt", return_value="test prompt"):
+            # Set initial prompt
+            self.consensus_tool.initial_prompt = "Test prompt"
 
-                # Create consensus request with 'gemini' model
-                model_config = ModelConfig(model="gemini", stance="neutral")
-                request = Mock()
-                request.models = [model_config]
-                request.prompt = "Test prompt"
-                request.temperature = 0.2
-                request.thinking_mode = "medium"
-                request.images = []
-                request.continuation_id = None
-                request.files = []
-                request.focus_areas = []
+            # Create a mock request
+            request = Mock()
+            request.relevant_files = []
+            request.continuation_id = None
+            request.images = None
 
-                # Mock the provider configs generation
-                provider_configs = [(mock_provider, model_config)]
+            # Test model consultation directly
+            result = asyncio.run(self.consensus_tool._consult_model({"model": "gemini", "stance": "neutral"}, request))
 
-                # Call the method that causes the bug
-                self.consensus_tool._get_consensus_responses(provider_configs, "test prompt", request)
+            # Verify that generate_content was called
+            assert len(received_model_names) == 1
 
-                # Verify that generate_content was called
-                assert len(received_model_names) == 1
+            # The consensus tool should pass the original alias "gemini"
+            # The OpenRouter provider should resolve it internally
+            received_model = received_model_names[0]
+            print(f"Model name passed to provider: {received_model}")
 
-                # THIS IS THE BUG: We expect the model name to still be "gemini"
-                # because the OpenRouter provider should handle resolution internally
-                # If this assertion fails, it means the bug is elsewhere
-                received_model = received_model_names[0]
-                print(f"Model name passed to provider: {received_model}")
+            assert received_model == "gemini", f"Expected 'gemini' to be passed to provider, got '{received_model}'"
 
-                # The consensus tool should pass the original alias "gemini"
-                # The OpenRouter provider should resolve it internally
-                assert received_model == "gemini", f"Expected 'gemini' to be passed to provider, got '{received_model}'"
+            # Verify the result structure
+            assert result["model"] == "gemini"
+            assert result["status"] == "success"
 
     def test_bug_reproduction_with_malformed_model_name(self):
         """Test what happens when 'gemini-2.5-pro' (malformed) is passed to OpenRouter."""

@@ -1,9 +1,12 @@
 """Base model provider interface and data classes."""
 
+import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Optional
+
+logger = logging.getLogger(__name__)
 
 
 class ProviderType(Enum):
@@ -227,6 +230,46 @@ class ModelProvider(ABC):
     def validate_model_name(self, model_name: str) -> bool:
         """Validate if the model name is supported by this provider."""
         pass
+
+    def get_effective_temperature(self, model_name: str, requested_temperature: float) -> Optional[float]:
+        """Get the effective temperature to use for a model given a requested temperature.
+
+        This method handles:
+        - Models that don't support temperature (returns None)
+        - Fixed temperature models (returns the fixed value)
+        - Clamping to min/max range for models with constraints
+
+        Args:
+            model_name: The model to get temperature for
+            requested_temperature: The temperature requested by the user/tool
+
+        Returns:
+            The effective temperature to use, or None if temperature shouldn't be passed
+        """
+        try:
+            capabilities = self.get_capabilities(model_name)
+
+            # Check if model supports temperature at all
+            if hasattr(capabilities, "supports_temperature") and not capabilities.supports_temperature:
+                return None
+
+            # Get temperature range
+            min_temp, max_temp = capabilities.temperature_range
+
+            # Clamp to valid range
+            if requested_temperature < min_temp:
+                logger.debug(f"Clamping temperature from {requested_temperature} to {min_temp} for model {model_name}")
+                return min_temp
+            elif requested_temperature > max_temp:
+                logger.debug(f"Clamping temperature from {requested_temperature} to {max_temp} for model {model_name}")
+                return max_temp
+            else:
+                return requested_temperature
+
+        except Exception as e:
+            logger.debug(f"Could not determine effective temperature for {model_name}: {e}")
+            # If we can't get capabilities, return the requested temperature
+            return requested_temperature
 
     def validate_parameters(self, model_name: str, temperature: float, **kwargs) -> None:
         """Validate model parameters against capabilities.

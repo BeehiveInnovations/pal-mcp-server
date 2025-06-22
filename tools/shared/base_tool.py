@@ -256,6 +256,7 @@ class BaseTool(ABC):
                 # Find all custom models (is_custom=true)
                 for alias in registry.list_aliases():
                     config = registry.resolve(alias)
+                    # Use hasattr for defensive programming - is_custom is optional with default False
                     if config and hasattr(config, "is_custom") and config.is_custom:
                         if alias not in all_models:
                             all_models.append(alias)
@@ -345,6 +346,7 @@ class BaseTool(ABC):
                     # Find all custom models (is_custom=true)
                     for alias in registry.list_aliases():
                         config = registry.resolve(alias)
+                        # Use hasattr for defensive programming - is_custom is optional with default False
                         if config and hasattr(config, "is_custom") and config.is_custom:
                             # Format context window
                             context_tokens = config.context_window
@@ -798,6 +800,23 @@ class BaseTool(ABC):
 
         return prompt_content, updated_files if updated_files else None
 
+    def get_prompt_content_for_size_validation(self, user_content: str) -> str:
+        """
+        Get the content that should be validated for MCP prompt size limits.
+
+        This hook method allows tools to specify what content should be checked
+        against the MCP transport size limit. By default, it returns the user content,
+        but can be overridden to exclude conversation history when needed.
+
+        Args:
+            user_content: The user content that would normally be validated
+
+        Returns:
+            The content that should actually be validated for size limits
+        """
+        # Default implementation: validate the full user content
+        return user_content
+
     def check_prompt_size(self, text: str) -> Optional[dict[str, Any]]:
         """
         Check if USER INPUT text is too large for MCP transport boundary.
@@ -841,6 +860,7 @@ class BaseTool(ABC):
         reserve_tokens: int = 1_000,
         remaining_budget: Optional[int] = None,
         arguments: Optional[dict] = None,
+        model_context: Optional[Any] = None,
     ) -> tuple[str, list[str]]:
         """
         Centralized file processing implementing dual prioritization strategy.
@@ -855,6 +875,7 @@ class BaseTool(ABC):
             reserve_tokens: Tokens to reserve for additional prompt content (default 1K)
             remaining_budget: Remaining token budget after conversation history (from server.py)
             arguments: Original tool arguments (used to extract _remaining_tokens if available)
+            model_context: Model context object with all model information including token allocation
 
         Returns:
             tuple[str, list[str]]: (formatted_file_content, actually_processed_files)
@@ -877,19 +898,18 @@ class BaseTool(ABC):
         elif max_tokens is not None:
             effective_max_tokens = max_tokens - reserve_tokens
         else:
-            # The execute() method is responsible for setting self._model_context.
-            # A missing context is a programming error, not a fallback case.
-            if not hasattr(self, "_model_context") or not self._model_context:
-                logger.error(
-                    f"[FILES] {self.name}: _prepare_file_content_for_prompt called without a valid model context. "
-                    "This indicates an incorrect call sequence in the tool's implementation."
-                )
-                # Fail fast to reveal integration issues. A silent fallback with arbitrary
-                # limits can hide bugs and lead to unexpected token usage or silent failures.
-                raise RuntimeError("ModelContext not initialized before file preparation.")
+            # Use model_context for token allocation
+            if not model_context:
+                # Try to get from stored attributes as fallback
+                model_context = getattr(self, "_model_context", None)
+                if not model_context:
+                    logger.error(
+                        f"[FILES] {self.name}: _prepare_file_content_for_prompt called without model_context. "
+                        "This indicates an incorrect call sequence in the tool's implementation."
+                    )
+                    raise RuntimeError("Model context not provided for file preparation.")
 
             # This is now the single source of truth for token allocation.
-            model_context = self._model_context
             try:
                 token_allocation = model_context.calculate_token_allocation()
                 # Standardize on `file_tokens` for consistency and correctness.
@@ -1221,6 +1241,220 @@ When recommending searches, be specific about what information you need and why 
             model_context = ModelContext(model_name)
 
         return model_name, model_context
+
+    def validate_and_correct_temperature(self, temperature: float, model_context: Any) -> tuple[float, list[str]]:
+        """
+        Validate and correct temperature for the specified model.
+
+        This method ensures that the temperature value is within the valid range
+        for the specific model being used. Different models have different temperature
+        constraints (e.g., o1 models require temperature=1.0, GPT models support 0-2).
+
+        Args:
+            temperature: Temperature value to validate
+            model_context: Model context object containing model name, provider, and capabilities
+
+        Returns:
+            Tuple of (corrected_temperature, warning_messages)
+        """
+        try:
+            # Use model context capabilities directly - clean OOP approach
+            capabilities = model_context.capabilities
+            constraint = capabilities.temperature_constraint
+
+            warnings = []
+            if not constraint.validate(temperature):
+                corrected = constraint.get_corrected_value(temperature)
+                warning = (
+                    f"Temperature {temperature} invalid for {model_context.model_name}. "
+                    f"{constraint.get_description()}. Using {corrected} instead."
+                )
+                warnings.append(warning)
+                return corrected, warnings
+
+            return temperature, warnings
+
+        except Exception as e:
+            # If validation fails for any reason, use the original temperature
+            # and log a warning (but don't fail the request)
+            logger.warning(f"Temperature validation failed for {model_context.model_name}: {e}")
+            return temperature, [f"Temperature validation failed: {e}"]
+
+    def _validate_image_limits(
+        self, images: Optional[list[str]], model_context: Optional[Any] = None, continuation_id: Optional[str] = None
+    ) -> Optional[dict]:
+        """
+        Validate image size and count against model capabilities.
+
+        This performs strict validation to ensure we don't exceed model-specific
+        image limits. Uses capability-based validation with actual model
+        configuration rather than hard-coded limits.
+
+        Args:
+            images: List of image paths/data URLs to validate
+            model_context: Model context object containing model name, provider, and capabilities
+            continuation_id: Optional continuation ID for conversation context
+
+        Returns:
+            Optional[dict]: Error response if validation fails, None if valid
+        """
+        if not images:
+            return None
+
+        # Import here to avoid circular imports
+        import base64
+        from pathlib import Path
+
+        # Handle legacy calls (positional model_name string)
+        if isinstance(model_context, str):
+            # Legacy call: _validate_image_limits(images, "model-name")
+            logger.warning(
+                "Legacy _validate_image_limits call with model_name string. Use model_context object instead."
+            )
+            try:
+                from utils.model_context import ModelContext
+
+                model_context = ModelContext(model_context)
+            except Exception as e:
+                logger.warning(f"Failed to create model context from legacy model_name: {e}")
+                # Generic error response for any unavailable model
+                return {
+                    "status": "error",
+                    "content": f"Model '{model_context}' is not available. {str(e)}",
+                    "content_type": "text",
+                    "metadata": {
+                        "error_type": "validation_error",
+                        "model_name": model_context,
+                        "supports_images": None,  # Unknown since model doesn't exist
+                        "image_count": len(images) if images else 0,
+                    },
+                }
+
+        if not model_context:
+            # Get from tool's stored context as fallback
+            model_context = getattr(self, "_model_context", None)
+            if not model_context:
+                logger.warning("No model context available for image validation")
+                return None
+
+        try:
+            # Use model context capabilities directly - clean OOP approach
+            capabilities = model_context.capabilities
+            model_name = model_context.model_name
+        except Exception as e:
+            logger.warning(f"Failed to get capabilities from model_context for image validation: {e}")
+            # Generic error response when capabilities cannot be accessed
+            model_name = getattr(model_context, "model_name", "unknown")
+            return {
+                "status": "error",
+                "content": f"Model '{model_name}' is not available. {str(e)}",
+                "content_type": "text",
+                "metadata": {
+                    "error_type": "validation_error",
+                    "model_name": model_name,
+                    "supports_images": None,  # Unknown since model capabilities unavailable
+                    "image_count": len(images) if images else 0,
+                },
+            }
+
+        # Check if model supports images
+        if not capabilities.supports_images:
+            return {
+                "status": "error",
+                "content": (
+                    f"Image support not available: Model '{model_name}' does not support image processing. "
+                    f"Please use a vision-capable model such as 'gemini-2.5-flash', 'o3', "
+                    f"or 'claude-3-opus' for image analysis tasks."
+                ),
+                "content_type": "text",
+                "metadata": {
+                    "error_type": "validation_error",
+                    "model_name": model_name,
+                    "supports_images": False,
+                    "image_count": len(images),
+                },
+            }
+
+        # Get model image limits from capabilities
+        max_images = 5  # Default max number of images
+        max_size_mb = capabilities.max_image_size_mb
+
+        # Check image count
+        if len(images) > max_images:
+            return {
+                "status": "error",
+                "content": (
+                    f"Too many images: Model '{model_name}' supports a maximum of {max_images} images, "
+                    f"but {len(images)} were provided. Please reduce the number of images."
+                ),
+                "content_type": "text",
+                "metadata": {
+                    "error_type": "validation_error",
+                    "model_name": model_name,
+                    "image_count": len(images),
+                    "max_images": max_images,
+                },
+            }
+
+        # Calculate total size of all images
+        total_size_mb = 0.0
+        for image_path in images:
+            try:
+                if image_path.startswith("data:image/"):
+                    # Handle data URL: data:image/png;base64,iVBORw0...
+                    _, data = image_path.split(",", 1)
+                    # Base64 encoding increases size by ~33%, so decode to get actual size
+                    actual_size = len(base64.b64decode(data))
+                    total_size_mb += actual_size / (1024 * 1024)
+                else:
+                    # Handle file path
+                    path = Path(image_path)
+                    if path.exists():
+                        file_size = path.stat().st_size
+                        total_size_mb += file_size / (1024 * 1024)
+                    else:
+                        logger.warning(f"Image file not found: {image_path}")
+                        # Assume a reasonable size for missing files to avoid breaking validation
+                        total_size_mb += 1.0  # 1MB assumption
+            except Exception as e:
+                logger.warning(f"Failed to get size for image {image_path}: {e}")
+                # Assume a reasonable size for problematic files
+                total_size_mb += 1.0  # 1MB assumption
+
+        # Apply 40MB cap for custom models if needed
+        effective_limit_mb = max_size_mb
+        try:
+            from providers.base import ProviderType
+
+            # ModelCapabilities dataclass has provider field defined
+            if capabilities.provider == ProviderType.CUSTOM:
+                effective_limit_mb = min(max_size_mb, 40.0)
+        except Exception:
+            pass
+
+        # Validate against size limit
+        if total_size_mb > effective_limit_mb:
+            return {
+                "status": "error",
+                "content": (
+                    f"Image size limit exceeded: Model '{model_name}' supports maximum {effective_limit_mb:.1f}MB "
+                    f"for all images combined, but {total_size_mb:.1f}MB was provided. "
+                    f"Please reduce image sizes or count and try again."
+                ),
+                "content_type": "text",
+                "metadata": {
+                    "error_type": "validation_error",
+                    "model_name": model_name,
+                    "total_size_mb": round(total_size_mb, 2),
+                    "limit_mb": round(effective_limit_mb, 2),
+                    "image_count": len(images),
+                    "supports_images": True,
+                },
+            }
+
+        # All validations passed
+        logger.debug(f"Image validation passed: {len(images)} images, {total_size_mb:.1f}MB total")
+        return None
 
     def _parse_response(self, raw_text: str, request, model_info: Optional[dict] = None):
         """Parse response - will be inherited for now."""

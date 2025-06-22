@@ -392,7 +392,7 @@ class TestThinkingModes:
 
     def test_thinking_budget_mapping(self):
         """Test that thinking modes map to correct budget values"""
-        from tools.base import BaseTool
+        from tools.shared.base_tool import BaseTool
 
         # Create a simple test tool
         class TestTool(BaseTool):

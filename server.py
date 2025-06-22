@@ -62,6 +62,7 @@ from tools import (  # noqa: E402
     CodeReviewTool,
     ConsensusTool,
     DebugIssueTool,
+    DocgenTool,
     ListModelsTool,
     PlannerTool,
     PrecommitTool,
@@ -69,6 +70,7 @@ from tools import (  # noqa: E402
     TestGenTool,
     ThinkDeepTool,
     TracerTool,
+    VersionTool,
 )
 from tools.models import ToolOutput  # noqa: E402
 
@@ -161,91 +163,93 @@ server: Server = Server("zen-server")
 # Each tool provides specialized functionality for different development tasks
 # Tools are instantiated once and reused across requests (stateless design)
 TOOLS = {
-    "thinkdeep": ThinkDeepTool(),  # Step-by-step deep thinking workflow with expert analysis
-    "codereview": CodeReviewTool(),  # Comprehensive step-by-step code review workflow with expert analysis
-    "debug": DebugIssueTool(),  # Root cause analysis and debugging assistance
-    "analyze": AnalyzeTool(),  # General-purpose file and code analysis
     "chat": ChatTool(),  # Interactive development chat and brainstorming
-    "consensus": ConsensusTool(),  # Multi-model consensus for diverse perspectives on technical proposals
-    "listmodels": ListModelsTool(),  # List all available AI models by provider
+    "thinkdeep": ThinkDeepTool(),  # Step-by-step deep thinking workflow with expert analysis
     "planner": PlannerTool(),  # Interactive sequential planner using workflow architecture
+    "consensus": ConsensusTool(),  # Step-by-step consensus workflow with multi-model analysis
+    "codereview": CodeReviewTool(),  # Comprehensive step-by-step code review workflow with expert analysis
     "precommit": PrecommitTool(),  # Step-by-step pre-commit validation workflow
-    "testgen": TestGenTool(),  # Step-by-step test generation workflow with expert validation
+    "debug": DebugIssueTool(),  # Root cause analysis and debugging assistance
+    "docgen": DocgenTool(),  # Step-by-step documentation generation with complexity analysis
+    "analyze": AnalyzeTool(),  # General-purpose file and code analysis
     "refactor": RefactorTool(),  # Step-by-step refactoring analysis workflow with expert validation
     "tracer": TracerTool(),  # Static call path prediction and control flow analysis
+    "testgen": TestGenTool(),  # Step-by-step test generation workflow with expert validation
+    "listmodels": ListModelsTool(),  # List all available AI models by provider
+    "version": VersionTool(),  # Display server version and system information
 }
 
 # Rich prompt templates for all tools
 PROMPT_TEMPLATES = {
-    "thinkdeep": {
-        "name": "thinkdeeper",
-        "description": "Step-by-step deep thinking workflow with expert analysis",
-        "template": "Start comprehensive deep thinking workflow with {model} using {thinking_mode} thinking mode",
-    },
-    "codereview": {
-        "name": "review",
-        "description": "Perform a comprehensive code review",
-        "template": "Perform a comprehensive code review with {model}",
-    },
-    "codereviewworkflow": {
-        "name": "reviewworkflow",
-        "description": "Step-by-step code review workflow with expert analysis",
-        "template": "Start comprehensive code review workflow with {model}",
-    },
-    "debug": {
-        "name": "debug",
-        "description": "Debug an issue or error",
-        "template": "Help debug this issue with {model}",
-    },
-    "analyze": {
-        "name": "analyze",
-        "description": "Analyze files and code structure",
-        "template": "Analyze these files with {model}",
-    },
-    "analyzeworkflow": {
-        "name": "analyzeworkflow",
-        "description": "Step-by-step analysis workflow with expert validation",
-        "template": "Start comprehensive analysis workflow with {model}",
-    },
     "chat": {
         "name": "chat",
         "description": "Chat and brainstorm ideas",
         "template": "Chat with {model} about this",
     },
-    "precommit": {
-        "name": "precommit",
-        "description": "Step-by-step pre-commit validation workflow",
-        "template": "Start comprehensive pre-commit validation workflow with {model}",
-    },
-    "testgen": {
-        "name": "testgen",
-        "description": "Generate comprehensive tests",
-        "template": "Generate comprehensive tests with {model}",
-    },
-    "refactor": {
-        "name": "refactor",
-        "description": "Refactor and improve code structure",
-        "template": "Refactor this code with {model}",
-    },
-    "refactorworkflow": {
-        "name": "refactorworkflow",
-        "description": "Step-by-step refactoring analysis workflow with expert validation",
-        "template": "Start comprehensive refactoring analysis workflow with {model}",
-    },
-    "tracer": {
-        "name": "tracer",
-        "description": "Trace code execution paths",
-        "template": "Generate tracer analysis with {model}",
+    "thinkdeep": {
+        "name": "thinkdeeper",
+        "description": "Step-by-step deep thinking workflow with expert analysis",
+        "template": "Start comprehensive deep thinking workflow with {model} using {thinking_mode} thinking mode",
     },
     "planner": {
         "name": "planner",
         "description": "Break down complex ideas, problems, or projects into multiple manageable steps",
         "template": "Create a detailed plan with {model}",
     },
+    "consensus": {
+        "name": "consensus",
+        "description": "Step-by-step consensus workflow with multi-model analysis",
+        "template": "Start comprehensive consensus workflow with {model}",
+    },
+    "codereview": {
+        "name": "review",
+        "description": "Perform a comprehensive code review",
+        "template": "Perform a comprehensive code review with {model}",
+    },
+    "precommit": {
+        "name": "precommit",
+        "description": "Step-by-step pre-commit validation workflow",
+        "template": "Start comprehensive pre-commit validation workflow with {model}",
+    },
+    "debug": {
+        "name": "debug",
+        "description": "Debug an issue or error",
+        "template": "Help debug this issue with {model}",
+    },
+    "docgen": {
+        "name": "docgen",
+        "description": "Generate comprehensive code documentation with complexity analysis",
+        "template": "Generate comprehensive documentation with {model}",
+    },
+    "analyze": {
+        "name": "analyze",
+        "description": "Analyze files and code structure",
+        "template": "Analyze these files with {model}",
+    },
+    "refactor": {
+        "name": "refactor",
+        "description": "Refactor and improve code structure",
+        "template": "Refactor this code with {model}",
+    },
+    "tracer": {
+        "name": "tracer",
+        "description": "Trace code execution paths",
+        "template": "Generate tracer analysis with {model}",
+    },
+    "testgen": {
+        "name": "testgen",
+        "description": "Generate comprehensive tests",
+        "template": "Generate comprehensive tests with {model}",
+    },
     "listmodels": {
         "name": "listmodels",
         "description": "List available AI models",
         "template": "List all available models",
+    },
+    "version": {
+        "name": "version",
+        "description": "Show server version and system information",
+        "template": "Show Zen MCP Server version",
     },
 }
 
@@ -889,7 +893,10 @@ async def reconstruct_thread_context(arguments: dict[str, Any]) -> dict[str, Any
 
     # Store the enhanced prompt in the prompt field
     enhanced_arguments["prompt"] = enhanced_prompt
+    # Store the original user prompt separately for size validation
+    enhanced_arguments["_original_user_prompt"] = original_prompt
     logger.debug("[CONVERSATION_DEBUG] Storing enhanced prompt in 'prompt' field")
+    logger.debug("[CONVERSATION_DEBUG] Storing original user prompt in '_original_user_prompt' field")
 
     # Calculate remaining token budget based on current model
     # (model_context was already created above for history building)

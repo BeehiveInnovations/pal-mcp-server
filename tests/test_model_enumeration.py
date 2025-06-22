@@ -71,10 +71,8 @@ class TestModelEnumeration:
 
         importlib.reload(config)
 
-        # Reload tools.base to ensure fresh state
-        import tools.base
-
-        importlib.reload(tools.base)
+        # Note: tools.base has been refactored to tools.shared.base_tool and tools.simple.base
+        # No longer need to reload as configuration is handled at provider level
 
     def test_no_models_when_no_providers_configured(self):
         """Test that no native models are included when no providers are configured."""
@@ -97,11 +95,6 @@ class TestModelEnumeration:
             len(non_openrouter_models) == 0
         ), f"No native models should be available without API keys, but found: {non_openrouter_models}"
 
-    @pytest.mark.skip(reason="Complex integration test - rely on simulator tests for provider testing")
-    def test_openrouter_models_with_api_key(self):
-        """Test that OpenRouter models are included when API key is configured."""
-        pass
-
     def test_openrouter_models_without_api_key(self):
         """Test that OpenRouter models are NOT included when API key is not configured."""
         self._setup_environment({})  # No OpenRouter key
@@ -115,11 +108,6 @@ class TestModelEnumeration:
 
         assert found_count == 0, "OpenRouter models should not be included without API key"
 
-    @pytest.mark.skip(reason="Integration test - rely on simulator tests for API testing")
-    def test_custom_models_with_custom_url(self):
-        """Test that custom models are included when CUSTOM_API_URL is configured."""
-        pass
-
     def test_custom_models_without_custom_url(self):
         """Test that custom models are NOT included when CUSTOM_API_URL is not configured."""
         self._setup_environment({})  # No custom URL
@@ -132,16 +120,6 @@ class TestModelEnumeration:
         found_count = sum(1 for m in custom_only_models if m in models)
 
         assert found_count == 0, "Custom models should not be included without CUSTOM_API_URL"
-
-    @pytest.mark.skip(reason="Integration test - rely on simulator tests for API testing")
-    def test_all_providers_combined(self):
-        """Test that all models are included when all providers are configured."""
-        pass
-
-    @pytest.mark.skip(reason="Integration test - rely on simulator tests for API testing")
-    def test_mixed_provider_combinations(self):
-        """Test various mixed provider configurations."""
-        pass
 
     def test_no_duplicates_with_overlapping_providers(self):
         """Test that models aren't duplicated when multiple providers offer the same model."""
@@ -163,11 +141,6 @@ class TestModelEnumeration:
         # Check no duplicates
         duplicates = {m: count for m, count in model_counts.items() if count > 1}
         assert len(duplicates) == 0, f"Found duplicate models: {duplicates}"
-
-    @pytest.mark.skip(reason="Integration test - rely on simulator tests for API testing")
-    def test_schema_enum_matches_get_available_models(self):
-        """Test that the schema enum matches what _get_available_models returns."""
-        pass
 
     @pytest.mark.parametrize(
         "model_name,should_exist",

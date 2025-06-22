@@ -60,6 +60,7 @@ Because these AI models [clearly aren't when they get chatty →](docs/ai_banter
   - [`refactor`](#9-refactor---intelligent-code-refactoring) - Code refactoring with decomposition focus
   - [`tracer`](#10-tracer---static-code-analysis-prompt-generator) - Call-flow mapping and dependency tracing
   - [`testgen`](#11-testgen---comprehensive-test-generation) - Test generation with edge cases
+  - [`docgen`](#12-docgen---comprehensive-documentation-generation) - Documentation generation with complexity analysis
 
 - **Advanced Usage**
   - [Advanced Features](#advanced-features) - AI-to-AI conversations, large prompts, web search
@@ -241,6 +242,7 @@ and feel the difference.
 - **Code needs refactoring?** → `refactor` (intelligent refactoring with decomposition focus)
 - **Need call-flow analysis?** → `tracer` (generates prompts for execution tracing and dependency mapping)
 - **Need comprehensive tests?** → `testgen` (generates test suites with edge cases)
+- **Code needs documentation?** → `docgen` (generates comprehensive documentation with complexity analysis)
 - **Which models are available?** → `listmodels` (shows all configured providers and models)
 - **Server info?** → `version` (version and configuration details)
 
@@ -267,8 +269,9 @@ and feel the difference.
 9. [`refactor`](docs/tools/refactor.md) - Code refactoring with decomposition focus
 10. [`tracer`](docs/tools/tracer.md) - Static code analysis prompt generator for call-flow mapping
 11. [`testgen`](docs/tools/testgen.md) - Comprehensive test generation with edge case coverage
-12. [`listmodels`](docs/tools/listmodels.md) - Display all available AI models organized by provider
-13. [`version`](docs/tools/version.md) - Get server version and configuration
+12. [`docgen`](docs/tools/docgen.md) - Comprehensive documentation generation with complexity analysis
+13. [`listmodels`](docs/tools/listmodels.md) - Display all available AI models organized by provider
+14. [`version`](docs/tools/version.md) - Get server version and configuration
 
 ### 1. `chat` - General Development Chat & Collaborative Thinking
 Your thinking partner for brainstorming, getting second opinions, and validating approaches. Perfect for technology comparisons, architecture discussions, and collaborative problem-solving.
@@ -422,7 +425,20 @@ Use zen to generate tests for User.login() method
 
 **[📖 Read More](docs/tools/testgen.md)** - Workflow-based test generation with comprehensive coverage
 
-### 12. `listmodels` - List Available Models
+### 12. `docgen` - Comprehensive Documentation Generation
+Generates thorough documentation with complexity analysis and gotcha identification. This workflow tool guides Claude through systematic investigation of code structure, function complexity, and documentation needs across multiple steps before generating comprehensive documentation that includes algorithmic complexity, call flow information, and unexpected behaviors that developers should know about.
+
+```
+# Includes complexity Big-O notiation, documents dependencies / code-flow, fixes existing stale docs 
+Use docgen to documentation the UserManager class
+
+# Includes complexity Big-O notiation, documents dependencies / code-flow
+Use docgen to add complexity analysis to all the new swift functions I added but don't update existing code
+```
+
+**[📖 Read More](docs/tools/docgen.md)** - Workflow-based documentation generation with gotcha detection
+
+### 13. `listmodels` - List Available Models
 Display all available AI models organized by provider, showing capabilities, context windows, and configuration status.
 
 ```
@@ -431,7 +447,7 @@ Use zen to list available models
 
 **[📖 Read More](docs/tools/listmodels.md)** - Model capabilities and configuration details
 
-### 13. `version` - Server Information
+### 14. `version` - Server Information
 Get server version, configuration details, and system status for debugging and troubleshooting.
 
 ```
@@ -454,6 +470,7 @@ Zen supports powerful structured prompts in Claude Code for quick access to tool
 - `/zen:codereview review for security module ABC` - Use codereview tool with auto-selected model
 - `/zen:debug table view is not scrolling properly, very jittery, I suspect the code is in my_controller.m` - Use debug tool with auto-selected model
 - `/zen:analyze examine these files and tell me what if I'm using the CoreAudio framework properly` - Use analyze tool with auto-selected model
+- `/zen:docgen generate comprehensive documentation for the UserManager class with complexity analysis` - Use docgen tool with auto-selected model
 
 #### Continuation Prompts
 - `/zen:chat continue and ask gemini pro if framework B is better` - Continue previous conversation using chat tool
@@ -464,12 +481,13 @@ Zen supports powerful structured prompts in Claude Code for quick access to tool
 - `/zen:consensus debate whether we should migrate to GraphQL for our API`
 - `/zen:precommit confirm these changes match our requirements in COOL_FEATURE.md`
 - `/zen:testgen write me tests for class ABC`
+- `/zen:docgen document the payment processing module with gotchas and complexity analysis`
 - `/zen:refactor propose a decomposition strategy, make a plan and save it in FIXES.md`
 
 #### Syntax Format
 The prompt format is: `/zen:[tool] [your_message]`
 
-- `[tool]` - Any available tool name (chat, thinkdeep, planner, consensus, codereview, debug, analyze, etc.)
+- `[tool]` - Any available tool name (chat, thinkdeep, planner, consensus, codereview, debug, analyze, docgen, etc.)
 - `[your_message]` - Your request, question, or instructions for the tool
 
 **Note:** All prompts will show as "(MCP) [tool]" in Claude Code to indicate they're provided by the MCP server.

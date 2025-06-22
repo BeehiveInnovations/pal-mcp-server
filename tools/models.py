@@ -23,9 +23,6 @@ class ContinuationOffer(BaseModel):
         ..., description="Thread continuation ID for multi-turn conversations across different tools"
     )
     note: str = Field(..., description="Message explaining continuation opportunity to Claude")
-    suggested_tool_params: Optional[dict[str, Any]] = Field(
-        None, description="Suggested parameters for continued tool usage"
-    )
     remaining_turns: int = Field(..., description="Number of conversation turns remaining")
 
 

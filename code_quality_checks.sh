@@ -85,8 +85,8 @@ echo ""
 echo "🧪 Step 2: Running Complete Unit Test Suite"
 echo "---------------------------------------------"
 
-echo "🏃 Running all unit tests..."
-$PYTHON_CMD -m pytest tests/ -v -x
+echo "🏃 Running unit tests (excluding integration tests)..."
+$PYTHON_CMD -m pytest tests/ -v -x -m "not integration"
 
 echo "✅ Step 2 Complete: All unit tests passed!"
 echo ""

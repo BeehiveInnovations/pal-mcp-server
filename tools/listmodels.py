@@ -12,8 +12,9 @@ from typing import Any, Optional
 
 from mcp.types import TextContent
 
-from tools.base import BaseTool, ToolRequest
 from tools.models import ToolModelCategory, ToolOutput
+from tools.shared.base_models import ToolRequest
+from tools.shared.base_tool import BaseTool
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +38,7 @@ class ListModelsTool(BaseTool):
             "LIST AVAILABLE MODELS - Display all AI models organized by provider. "
             "Shows which providers are configured, available models, their aliases, "
             "context windows, and capabilities. Useful for understanding what models "
-            "can be used and their characteristics."
+            "can be used and their characteristics. MANDATORY: Must display full output to the user."
         )
 
     def get_input_schema(self) -> dict[str, Any]:

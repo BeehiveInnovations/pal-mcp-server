@@ -327,7 +327,11 @@ class ModelProviderRegistry:
                 return xai_models[0]
             elif gemini_available and any("flash" in m for m in gemini_models):
                 # Find the flash model (handles full names)
-                return next(m for m in gemini_models if "flash" in m)
+                # Prefer 2.5 over 2.0 for backward compatibility
+                flash_models = [m for m in gemini_models if "flash" in m]
+                # Sort to ensure 2.5 comes before 2.0
+                flash_models_sorted = sorted(flash_models, reverse=True)
+                return flash_models_sorted[0]
             elif gemini_available and gemini_models:
                 # Fall back to any available Gemini model
                 return gemini_models[0]
@@ -353,7 +357,10 @@ class ModelProviderRegistry:
         elif xai_available and xai_models:
             return xai_models[0]
         elif gemini_available and any("flash" in m for m in gemini_models):
-            return next(m for m in gemini_models if "flash" in m)
+            # Prefer 2.5 over 2.0 for backward compatibility
+            flash_models = [m for m in gemini_models if "flash" in m]
+            flash_models_sorted = sorted(flash_models, reverse=True)
+            return flash_models_sorted[0]
         elif gemini_available and gemini_models:
             return gemini_models[0]
         elif openrouter_available:

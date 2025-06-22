@@ -947,37 +947,37 @@ class DataContainer:
             return False
 
     def call_mcp_tool(self, tool_name: str, params: dict) -> tuple[Optional[str], Optional[str]]:
-        """Call an MCP tool in-process - override for refactorworkflow-specific response handling"""
+        """Call an MCP tool in-process - override for -specific response handling"""
         # Use in-process implementation to maintain conversation memory
         response_text, _ = self.call_mcp_tool_direct(tool_name, params)
 
         if not response_text:
             return None, None
 
-        # Extract continuation_id from refactorworkflow response specifically
-        continuation_id = self._extract_refactorworkflow_continuation_id(response_text)
+        # Extract continuation_id from refactor response specifically
+        continuation_id = self._extract_refactor_continuation_id(response_text)
 
         return response_text, continuation_id
 
-    def _extract_refactorworkflow_continuation_id(self, response_text: str) -> Optional[str]:
-        """Extract continuation_id from refactorworkflow response"""
+    def _extract_refactor_continuation_id(self, response_text: str) -> Optional[str]:
+        """Extract continuation_id from refactor response"""
         try:
             # Parse the response
             response_data = json.loads(response_text)
             return response_data.get("continuation_id")
 
         except json.JSONDecodeError as e:
-            self.logger.debug(f"Failed to parse response for refactorworkflow continuation_id: {e}")
+            self.logger.debug(f"Failed to parse response for refactor continuation_id: {e}")
             return None
 
     def _parse_refactor_response(self, response_text: str) -> dict:
-        """Parse refactorworkflow tool JSON response"""
+        """Parse refactor tool JSON response"""
         try:
             # Parse the response - it should be direct JSON
             return json.loads(response_text)
 
         except json.JSONDecodeError as e:
-            self.logger.error(f"Failed to parse refactorworkflow response as JSON: {e}")
+            self.logger.error(f"Failed to parse refactor response as JSON: {e}")
             self.logger.error(f"Response text: {response_text[:500]}...")
             return {}
 
@@ -989,7 +989,7 @@ class DataContainer:
         expected_next_required: bool,
         expected_status: str,
     ) -> bool:
-        """Validate a refactorworkflow investigation step response structure"""
+        """Validate a refactor investigation step response structure"""
         try:
             # Check status
             if response_data.get("status") != expected_status:

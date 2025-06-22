@@ -316,7 +316,10 @@ class TestAutoModeComprehensive:
             if provider_count == 1 and os.getenv("GEMINI_API_KEY"):
                 # Only Gemini configured - should only show Gemini models
                 non_gemini_models = [
-                    m for m in available_models if not m.startswith("gemini") and m not in ["flash", "pro"]
+                    m
+                    for m in available_models
+                    if not m.startswith("gemini")
+                    and m not in ["flash", "pro", "flash-2.0", "flash2", "flashlite", "flash-lite"]
                 ]
                 assert (
                     len(non_gemini_models) == 0
@@ -430,9 +433,12 @@ class TestAutoModeComprehensive:
             response_data = json.loads(response_text)
 
             assert response_data["status"] == "error"
-            assert "Model parameter is required" in response_data["content"]
-            assert "flash" in response_data["content"]  # Should suggest flash for FAST_RESPONSE
-            assert "category: fast_response" in response_data["content"]
+            assert (
+                "Model parameter is required" in response_data["content"]
+                or "Model 'auto' is not available" in response_data["content"]
+            )
+            # Note: With the new SimpleTool-based Chat tool, the error format is simpler
+            # and doesn't include category-specific suggestions like the original tool did
 
     def test_model_availability_with_restrictions(self):
         """Test that auto mode respects model restrictions when selecting fallback models."""

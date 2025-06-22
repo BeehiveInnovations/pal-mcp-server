@@ -10,9 +10,9 @@ from unittest.mock import patch
 
 from mcp.types import TextContent
 
-from tools.base import BaseTool
 from tools.chat import ChatTool
 from tools.planner import PlannerTool
+from tools.shared.base_tool import BaseTool
 
 
 class TestAutoModelPlannerFix:
@@ -46,7 +46,7 @@ class TestAutoModelPlannerFix:
                 return "Mock prompt"
 
             def get_request_model(self):
-                from tools.base import ToolRequest
+                from tools.shared.base_models import ToolRequest
 
                 return ToolRequest
 

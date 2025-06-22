@@ -8,6 +8,7 @@ Each test is in its own file for better organization and maintainability.
 from .base_test import BaseSimulatorTest
 from .test_analyze_validation import AnalyzeValidationTest
 from .test_basic_conversation import BasicConversationTest
+from .test_chat_simple_validation import ChatSimpleValidationTest
 from .test_codereview_validation import CodeReviewValidationTest
 from .test_consensus_conversation import TestConsensusConversation
 from .test_consensus_stance import TestConsensusStance
@@ -30,6 +31,7 @@ from .test_per_tool_deduplication import PerToolDeduplicationTest
 from .test_planner_continuation_history import PlannerContinuationHistoryTest
 from .test_planner_validation import PlannerValidationTest
 from .test_precommitworkflow_validation import PrecommitWorkflowValidationTest
+from .test_prompt_size_limit_bug import PromptSizeLimitBugTest
 
 # Redis validation test removed - no longer needed for standalone server
 from .test_refactor_validation import RefactorValidationTest
@@ -42,6 +44,7 @@ from .test_xai_models import XAIModelsTest
 # Test registry for dynamic loading
 TEST_REGISTRY = {
     "basic_conversation": BasicConversationTest,
+    "chat_validation": ChatSimpleValidationTest,
     "codereview_validation": CodeReviewValidationTest,
     "content_validation": ContentValidationTest,
     "per_tool_deduplication": PerToolDeduplicationTest,
@@ -71,12 +74,14 @@ TEST_REGISTRY = {
     "consensus_stance": TestConsensusStance,
     "consensus_three_models": TestConsensusThreeModels,
     "analyze_validation": AnalyzeValidationTest,
+    "prompt_size_limit_bug": PromptSizeLimitBugTest,
     # "o3_pro_expensive": O3ProExpensiveTest,  # COMMENTED OUT - too expensive to run by default
 }
 
 __all__ = [
     "BaseSimulatorTest",
     "BasicConversationTest",
+    "ChatSimpleValidationTest",
     "CodeReviewValidationTest",
     "ContentValidationTest",
     "PerToolDeduplicationTest",
@@ -106,5 +111,6 @@ __all__ = [
     "TestConsensusStance",
     "TestConsensusThreeModels",
     "AnalyzeValidationTest",
+    "PromptSizeLimitBugTest",
     "TEST_REGISTRY",
 ]
