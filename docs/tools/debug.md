@@ -2,17 +2,19 @@
 
 **Step-by-step investigation followed by expert debugging assistance**
 
-The `debug` tool guides Claude through a systematic investigation process where Claude performs methodical code examination, evidence collection, and hypothesis formation across multiple steps. Once the investigation is complete, the tool provides expert analysis from the selected AI model based on all gathered findings.
-
-## Thinking Mode
-
-**Default is `medium` (8,192 tokens).** Use `high` for tricky bugs (investment in finding root cause) or `low` for simple errors (save tokens).
+The `debug` workflow guides Claude through a systematic investigation process where Claude performs methodical code 
+examination, evidence collection, and hypothesis formation across multiple steps. Once the investigation is complete, 
+the tool provides expert analysis from the selected AI model (optionally) based on all gathered findings.
 
 ## Example Prompts
 
-**Basic Usage:**
 ```
 Get gemini to debug why my API returns 400 errors randomly with the full stack trace: [paste traceback]
+```
+
+You can also ask it to debug on its own, no external model required (**recommended in most cases**).
+```
+Use debug tool to find out why the app is crashing, here are some app logs [paste app logs] and a crash trace: [paste crash trace]
 ```
 
 ## How It Works 
