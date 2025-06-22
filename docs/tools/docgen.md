@@ -4,19 +4,15 @@
 
 The `docgen` tool creates thorough documentation by analyzing your code structure, understanding function complexity, and documenting gotchas and unexpected behaviors that developers need to know. This workflow tool guides Claude through systematic investigation of code functionality, architectural patterns, and documentation needs across multiple steps before generating comprehensive documentation with complexity analysis and call flow information.
 
-## Thinking Mode
-
-**Default is `medium` (8,192 tokens) for extended thinking models.** Use `high` for complex systems with intricate architectures or `max` for comprehensive documentation projects requiring exhaustive analysis.
-
 ## How the Workflow Works
 
 The docgen tool implements a **structured workflow** for comprehensive documentation generation:
 
 **Investigation Phase (Claude-Led):**
-1. **Step 1**: Claude describes the documentation plan and begins analyzing code structure
-2. **Step 2+**: Claude examines functions, methods, complexity patterns, and documentation gaps
-3. **Throughout**: Claude tracks findings, documentation opportunities, and architectural insights
-4. **Completion**: Once investigation is thorough, Claude signals completion
+1. **Step 1 (Discovery)**: Claude discovers ALL files needing documentation and reports exact count
+2. **Step 2+ (Documentation)**: Claude documents files one-by-one with complete coverage validation
+3. **Throughout**: Claude tracks progress with counters and enforces modern documentation styles
+4. **Completion**: Only when all files are documented (num_files_documented = total_files_to_document)
 
 **Documentation Generation Phase:**
 After Claude completes the investigation:
@@ -43,31 +39,29 @@ Documentation generation excels with analytical models like Gemini Pro or O3, wh
 
 ## Key Features
 
-- **Incremental documentation approach** - Documents methods AS YOU ANALYZE them for immediate value
+- **Systematic file-by-file approach** - Complete documentation with progress tracking and validation
+- **Modern documentation styles** - Enforces /// for Objective-C/Swift, /** */ for Java/JavaScript, etc.
 - **Complexity analysis** - Big O notation for algorithms and performance characteristics
 - **Call flow documentation** - Dependencies and method relationships
-- **Gotchas and edge case documentation** - Hidden behaviors and unexpected parameter interactions
-- **Multi-agent workflow** analyzing code structure and identifying documentation needs
-- **Follows existing project documentation style** and conventions
-- **Supports multiple programming languages** with appropriate documentation formats
-- **Updates existing documentation** when found to be incorrect or incomplete
-- **Inline comments for complex logic** within functions and methods
+- **Counter-based completion** - Prevents stopping until all files are documented
+- **Large file handling** - Systematic portion-by-portion documentation for comprehensive coverage
+- **Final verification scan** - Mandatory check to ensure no functions are missed
+- **Bug tracking** - Surfaces code issues without altering logic
+- **Configuration parameters** - Control complexity analysis, call flow, and inline comments
 
 ## Tool Parameters
 
-**Workflow Investigation Parameters (used during step-by-step process):**
-- `step`: Current investigation step description (required for each step)
+**Workflow Parameters (used during step-by-step process):**
+- `step`: Current step description - discovery phase (step 1) or documentation phase (step 2+)
 - `step_number`: Current step number in documentation sequence (required)
-- `total_steps`: Estimated total investigation steps (adjustable)
-- `next_step_required`: Whether another investigation step is needed
+- `total_steps`: Dynamically calculated as 1 + total_files_to_document
+- `next_step_required`: Whether another step is needed
 - `findings`: Discoveries about code structure and documentation needs (required)
-- `files_checked`: All files examined during investigation
-- `relevant_files`: Files containing code requiring documentation (required in step 1)
-- `relevant_context`: Methods/functions/classes needing documentation
+- `relevant_files`: Files being actively documented in current step
+- `num_files_documented`: Counter tracking completed files (required)
+- `total_files_to_document`: Total count of files needing documentation (required)
 
-**Initial Configuration (used in step 1):**
-- `prompt`: Description of what to document and specific focus areas (required)
-- `model`: auto|pro|flash|o3|o3-mini|o4-mini|o4-mini-high|gpt4.1 (default: server default)
+**Configuration Parameters (required fields):**
 - `document_complexity`: Include Big O complexity analysis (default: true)
 - `document_flow`: Include call flow and dependency information (default: true)
 - `update_existing`: Update existing documentation when incorrect/incomplete (default: true)
@@ -162,15 +156,16 @@ Documentation generation excels with analytical models like Gemini Pro or O3, wh
 
 ## Language Support
 
-**Automatic Detection and Formatting:**
-- **Python**: Docstrings, type hints, Sphinx compatibility
-- **JavaScript**: JSDoc, TypeScript documentation
-- **Java**: Javadoc, annotation support
-- **C#**: XML documentation comments
-- **Swift**: Documentation comments, Swift-DocC
-- **Go**: Go doc conventions
-- **C/C++**: Doxygen-style documentation
-- **And more**: Adapts to language conventions
+**Modern Documentation Style Enforcement:**
+- **Python**: Triple-quote docstrings with type hints
+- **Objective-C**: /// comments
+- **Swift**: /// comments
+- **JavaScript/TypeScript**: /** */ JSDoc style
+- **Java**: /** */ Javadoc style  
+- **C#**: /// XML documentation comments
+- **C/C++**: /// for documentation comments
+- **Go**: // comments above functions/types
+- **Rust**: /// for documentation comments
 
 ## Documentation Quality Features
 
@@ -194,12 +189,12 @@ Documentation generation excels with analytical models like Gemini Pro or O3, wh
 
 ## Best Practices
 
-- **Be specific about scope**: Target specific classes/modules rather than entire codebases
-- **Focus on complexity**: Prioritize documenting complex algorithms and non-obvious behaviors
-- **Include context**: Provide architectural overview for better documentation strategy
-- **Document incrementally**: Let the tool document functions as it analyzes them
-- **Emphasize gotchas**: Request focus on edge cases and unexpected behaviors
-- **Follow project style**: Maintain consistency with existing documentation patterns
+- **Use systematic approach**: Tool now documents all files with progress tracking and validation
+- **Trust the counters**: Tool prevents premature completion until all files are documented
+- **Large files handled**: Tool automatically processes large files in systematic portions
+- **Modern styles enforced**: Tool ensures correct documentation style per language
+- **Configuration matters**: Enable complexity analysis and call flow for comprehensive docs
+- **Bug tracking**: Tool surfaces issues without altering code - review findings after completion
 
 ## When to Use DocGen vs Other Tools
 
