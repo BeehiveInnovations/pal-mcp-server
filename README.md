@@ -397,7 +397,7 @@ cause is and its fix
 ```
 
 You can also add `do not use another model` to make Claude perform the entire workflow on its own. This is recommended
-for most debugging workflows, as Claude is able to confidently find the bug by the time the workflow ends.
+for most debugging workflows, as Claude is usually able to confidently find the root cause by the time the workflow ends.
 
 When in doubt, you can always follow up with a new prompt and ask Claude to share its findings with another model:
 
