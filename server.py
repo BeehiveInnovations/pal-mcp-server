@@ -856,6 +856,16 @@ async def reconstruct_thread_context(arguments: dict[str, Any]) -> dict[str, Any
     # Create model context early to use for history building
     from utils.model_context import ModelContext
 
+    # Check if we should use the model from the previous conversation turn
+    model_from_args = arguments.get("model")
+    if not model_from_args and context.turns:
+        # Find the last assistant turn to get the model used
+        for turn in reversed(context.turns):
+            if turn.role == "assistant" and turn.model_name:
+                arguments["model"] = turn.model_name
+                logger.debug(f"[CONVERSATION_DEBUG] Using model from previous turn: {turn.model_name}")
+                break
+
     model_context = ModelContext.from_arguments(arguments)
 
     # Build conversation history with model-specific limits
