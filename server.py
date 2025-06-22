@@ -23,7 +23,6 @@ import logging
 import os
 import sys
 import time
-from datetime import datetime
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Any, Optional
@@ -52,8 +51,6 @@ from mcp.types import (  # noqa: E402
 
 from config import (  # noqa: E402
     DEFAULT_MODEL,
-    __author__,
-    __updated__,
     __version__,
 )
 from tools import (  # noqa: E402
@@ -446,21 +443,6 @@ async def handle_list_tools() -> list[Tool]:
             )
         )
 
-    # Add utility tools that provide server metadata and configuration info
-    # These tools don't require AI processing but are useful for clients
-    tools.extend(
-        [
-            Tool(
-                name="version",
-                description=(
-                    "VERSION & CONFIGURATION - Get server version, configuration details, "
-                    "and list of available tools. Useful for debugging and understanding capabilities."
-                ),
-                inputSchema={"type": "object", "properties": {}},
-            ),
-        ]
-    )
-
     # Log cache efficiency info
     if os.getenv("OPENROUTER_API_KEY") and os.getenv("OPENROUTER_API_KEY") != "your_openrouter_api_key_here":
         logger.debug("OpenRouter registry cache used efficiently across all tool schemas")
@@ -648,13 +630,6 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[TextCon
             mcp_activity_logger.info(f"TOOL_COMPLETED: {name}")
         except Exception:
             pass
-        return result
-
-    # Route to utility tools that provide server information
-    elif name == "version":
-        logger.info(f"Executing utility tool '{name}'")
-        result = await handle_version()
-        logger.info(f"Utility tool '{name}' execution completed")
         return result
 
     # Handle unknown tool requests gracefully
@@ -958,95 +933,6 @@ async def reconstruct_thread_context(arguments: dict[str, Any]) -> dict[str, Any
         pass
 
     return enhanced_arguments
-
-
-async def handle_version() -> list[TextContent]:
-    """
-    Get comprehensive version and configuration information about the server.
-
-    Provides details about the server version, configuration settings,
-    available tools, and runtime environment. Useful for debugging and
-    understanding the server's capabilities.
-
-    Returns:
-        Formatted text with version and configuration details
-    """
-    # Import thinking mode here to avoid circular imports
-    from config import DEFAULT_THINKING_MODE_THINKDEEP
-
-    # Gather comprehensive server information
-    version_info = {
-        "version": __version__,
-        "updated": __updated__,
-        "author": __author__,
-        "default_model": DEFAULT_MODEL,
-        "default_thinking_mode_thinkdeep": DEFAULT_THINKING_MODE_THINKDEEP,
-        "max_context_tokens": "Dynamic (model-specific)",
-        "python_version": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
-        "server_started": datetime.now().isoformat(),
-        "available_tools": list(TOOLS.keys()) + ["version"],
-    }
-
-    # Check configured providers and available models
-    from providers import ModelProviderRegistry
-    from providers.base import ProviderType
-
-    configured_providers = []
-    available_models = ModelProviderRegistry.get_available_models(respect_restrictions=True)
-
-    # Group models by provider
-    models_by_provider = {}
-    for model_name, provider_type in available_models.items():
-        if provider_type not in models_by_provider:
-            models_by_provider[provider_type] = []
-        models_by_provider[provider_type].append(model_name)
-
-    # Format provider information with actual available models
-    if ProviderType.GOOGLE in models_by_provider:
-        gemini_models = ", ".join(sorted(models_by_provider[ProviderType.GOOGLE]))
-        configured_providers.append(f"Gemini ({gemini_models})")
-    if ProviderType.OPENAI in models_by_provider:
-        openai_models = ", ".join(sorted(models_by_provider[ProviderType.OPENAI]))
-        configured_providers.append(f"OpenAI ({openai_models})")
-    if ProviderType.XAI in models_by_provider:
-        xai_models = ", ".join(sorted(models_by_provider[ProviderType.XAI]))
-        configured_providers.append(f"X.AI ({xai_models})")
-    if ProviderType.CUSTOM in models_by_provider:
-        custom_models = ", ".join(sorted(models_by_provider[ProviderType.CUSTOM]))
-        custom_url = os.getenv("CUSTOM_API_URL", "")
-        configured_providers.append(f"Custom API ({custom_url}) - Models: {custom_models}")
-    if ProviderType.OPENROUTER in models_by_provider:
-        # For OpenRouter, show a summary since there could be many models
-        openrouter_count = len(models_by_provider[ProviderType.OPENROUTER])
-        configured_providers.append(f"OpenRouter ({openrouter_count} models via conf/custom_models.json)")
-
-    # Format the information in a human-readable way
-    text = f"""Zen MCP Server v{__version__}
-Updated: {__updated__}
-Author: {__author__}
-
-Configuration:
-- Default Model: {DEFAULT_MODEL}
-- Default Thinking Mode (ThinkDeep): {DEFAULT_THINKING_MODE_THINKDEEP}
-- Max Context: Dynamic (model-specific)
-- Python: {version_info["python_version"]}
-- Started: {version_info["server_started"]}
-
-Configured Providers:
-{chr(10).join(f"  - {provider}" for provider in configured_providers)}
-
-Available Tools:
-{chr(10).join(f"  - {tool}" for tool in version_info["available_tools"])}
-
-All Available Models:
-{chr(10).join(f"  - {model}" for model in sorted(available_models.keys()))}
-
-For updates, visit: https://github.com/BeehiveInnovations/zen-mcp-server"""
-
-    # Create standardized tool output
-    tool_output = ToolOutput(status="success", content=text, content_type="text", metadata={"tool_name": "version"})
-
-    return [TextContent(type="text", text=tool_output.model_dump_json())]
 
 
 @server.list_prompts()
