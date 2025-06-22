@@ -502,6 +502,16 @@ of the evidence, even when it strongly points in one direction.""",
                 # Add accumulated responses for tracking
                 response_data["accumulated_responses"] = self.accumulated_responses
 
+                # Add metadata (since we're bypassing the base class metadata addition)
+                model_name = self.get_request_model_name(request)
+                provider = self.get_model_provider(model_name)
+                response_data["metadata"] = {
+                    "tool_name": self.get_name(),
+                    "model_name": model_name,
+                    "model_used": model_name,
+                    "provider_used": provider.get_provider_type().value,
+                }
+
                 return [TextContent(type="text", text=json.dumps(response_data, indent=2))]
 
         # Otherwise, use standard workflow execution

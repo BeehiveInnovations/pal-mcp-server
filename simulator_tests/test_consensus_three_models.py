@@ -23,11 +23,15 @@ class TestConsensusThreeModels(BaseSimulatorTest):
         try:
             self.logger.info("Testing consensus tool with three models: flash:against, flash:for, local-llama:neutral")
 
-            # Send request with three ModelConfig objects
+            # Send request with three ModelConfig objects using new workflow parameters
             response, continuation_id = self.call_mcp_tool(
                 "consensus",
                 {
-                    "prompt": "Is a sync manager class a good idea for my CoolTodos app?",
+                    "step": "Is a sync manager class a good idea for my CoolTodos app?",
+                    "step_number": 1,
+                    "total_steps": 3,  # 3 models = 3 steps
+                    "next_step_required": True,
+                    "findings": "Initial analysis needed on sync manager class architecture decision for CoolTodos app",
                     "models": [
                         {
                             "model": "flash",
@@ -45,8 +49,7 @@ class TestConsensusThreeModels(BaseSimulatorTest):
                             "stance_prompt": "You are a pragmatic software engineer. Provide a balanced analysis considering both the benefits and drawbacks. Focus on the specific context of a CoolTodos app and what factors would determine if this is the right choice.",
                         },
                     ],
-                    "model": "flash",  # Default model for Claude's synthesis
-                    "focus_areas": ["architecture", "maintainability", "complexity", "scalability"],
+                    "model": "flash",  # Default model for Claude's execution
                 },
             )
 
@@ -69,8 +72,10 @@ class TestConsensusThreeModels(BaseSimulatorTest):
                 self.logger.error("Missing 'status' field in three-model consensus response")
                 return False
 
-            if consensus_data["status"] != "consensus_success":
-                self.logger.error(f"Three-model consensus failed with status: {consensus_data['status']}")
+            # Check for step 1 status (Claude analysis + first model consultation)
+            expected_status = "analysis_and_first_model_consulted"
+            if consensus_data["status"] != expected_status:
+                self.logger.error(f"Three-model consensus step 1 failed with status: {consensus_data['status']}, expected: {expected_status}")
 
                 # Log additional error details for debugging
                 if "error" in consensus_data:
@@ -84,67 +89,52 @@ class TestConsensusThreeModels(BaseSimulatorTest):
 
                 return False
 
-            # Check that models were used correctly
-            if "models_used" not in consensus_data:
-                self.logger.error("Missing 'models_used' field in three-model consensus response")
+            # Check that we have model response from step 1 
+            model_response = consensus_data.get("model_response")
+            if not model_response:
+                self.logger.error("Three-model consensus step 1 response missing model_response")
                 return False
 
-            models_used = consensus_data["models_used"]
-            self.logger.info(f"Models used in three-model test: {models_used}")
-
-            # Validate we got the expected models (allowing for some to fail)
-            expected_models = ["flash:against", "flash:for", "local-llama"]
-            successful_models = [m for m in expected_models if m in models_used]
-
-            if len(successful_models) == 0:
-                self.logger.error("No models succeeded in three-model consensus test")
+            # Check that model response has expected structure
+            if not model_response.get("model") or not model_response.get("verdict"):
+                self.logger.error("Model response missing required fields (model or verdict)")
                 return False
 
-            self.logger.info(f"Successful models in three-model test: {successful_models}")
-
-            # Validate responses structure
-            if "responses" not in consensus_data:
-                self.logger.error("Missing 'responses' field in three-model consensus response")
+            # Check step information
+            if consensus_data.get("step_number") != 1:
+                self.logger.error(f"Expected step_number 1, got: {consensus_data.get('step_number')}")
                 return False
 
-            responses = consensus_data["responses"]
-            if len(responses) == 0:
-                self.logger.error("No responses received in three-model consensus test")
+            if not consensus_data.get("next_step_required"):
+                self.logger.error("Expected next_step_required=True for step 1")
                 return False
 
-            self.logger.info(f"Received {len(responses)} responses in three-model test")
+            self.logger.info(f"Consensus step 1 consulted model: {model_response.get('model')}")
+            self.logger.info(f"Model stance: {model_response.get('stance', 'neutral')}")
+            self.logger.info(f"Response status: {model_response.get('status', 'unknown')}")
 
-            # Count successful responses by stance
-            stance_counts = {"for": 0, "against": 0, "neutral": 0}
-            for resp in responses:
-                if resp.get("status") == "success":
-                    stance = resp.get("stance", "neutral")
-                    stance_counts[stance] = stance_counts.get(stance, 0) + 1
-
-            self.logger.info(f"Stance distribution: {stance_counts}")
-
-            # Verify we have at least one successful response
-            total_successful = sum(stance_counts.values())
-            if total_successful == 0:
-                self.logger.error("No successful responses in three-model consensus test")
+            # Check metadata contains model name
+            metadata = consensus_data.get("metadata", {})
+            if not metadata.get("model_name"):
+                self.logger.error("Missing model_name in metadata")
                 return False
 
-            # Check for sequential processing indication (>2 models should use sequential)
-            if len(consensus_data["models_used"]) > 2:
-                self.logger.info("✓ Sequential processing was correctly used for >2 models")
-            else:
-                self.logger.info("✓ Concurrent processing was used (≤2 models)")
+            self.logger.info(f"Model name in metadata: {metadata.get('model_name')}")
 
-            # Verify synthesis guidance is present
-            if "next_steps" not in consensus_data:
-                self.logger.error("Missing 'next_steps' field in three-model consensus response")
+            # Verify we have analysis from Claude
+            claude_analysis = consensus_data.get("claude_analysis")
+            if not claude_analysis:
+                self.logger.error("Missing Claude's analysis in step 1")
                 return False
+
+            analysis_text = claude_analysis.get("initial_analysis", "")
+            self.logger.info(f"Claude analysis length: {len(analysis_text)} characters")
 
             self.logger.info("✓ Three-model consensus tool test completed successfully")
-            self.logger.info(f"✓ Total successful responses: {total_successful}")
-            self.logger.info(
-                f"✓ Stance diversity achieved: {len([s for s in stance_counts.values() if s > 0])} different stances"
-            )
+            self.logger.info(f"✓ Step 1 completed with model: {model_response.get('model')}")
+            self.logger.info(f"✓ Analysis provided: {len(analysis_text)} characters")
+            self.logger.info(f"✓ Model metadata properly included: {metadata.get('model_name')}")
+            self.logger.info("✓ Ready for step 2 continuation")
 
             return True
 
