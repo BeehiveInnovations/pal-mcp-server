@@ -1,4 +1,4 @@
-# Zen MCP: One Context. Many Minds.
+# Zen MCP: Many Workflows. One Context.
 
 [zen_web.webm](https://github.com/user-attachments/assets/851e3911-7f06-47c0-a4ab-a2601236697c)
 
@@ -8,11 +8,11 @@
 
 <br/>
 
-The ultimate development partners for Claude - a Model Context Protocol server that gives Claude access to multiple AI models for enhanced code analysis, 
-problem-solving, and collaborative development.
+The ultimate development partners for Claude - a Model Context Protocol server that gives Claude access to multiple AI 
+models for enhanced code analysis, problem-solving, and collaborative development.
 
-**Features true AI orchestration with conversations that continue across tasks** - Give Claude a complex
-task and let it orchestrate between models automatically. Claude stays in control, performs the actual work, 
+**Features true AI orchestration with conversations that continue across workflows** - Give Claude a complex
+_workflow_ and let it orchestrate between models automatically. Claude stays in control, performs the actual work, 
 but gets perspectives from the best AI for each subtask. With tools like [`planner`](#3-planner---interactive-step-by-step-planning) for 
 breaking down complex projects, [`analyze`](#8-analyze---smart-file-analysis) for understanding codebases, 
 [`codereview`](#5-codereview---professional-code-review) for audits, [`refactor`](#9-refactor---intelligent-code-refactoring) for 
@@ -21,15 +21,20 @@ validating changes, Claude can switch between different tools _and_ models mid-c
 with context carrying forward seamlessly.
 
 **Example Workflow - Claude Code:**
-1. Performs its own reasoning
-2. Uses Gemini Pro to deeply [`analyze`](#8-analyze---smart-file-analysis) the code in question for a second opinion
-3. Switches to O3 to continue [`chatting`](#1-chat---general-development-chat--collaborative-thinking) about its findings 
-4. Uses Flash to evaluate formatting suggestions from O3
-5. Performs the actual work after taking in feedback from all three
-6. Returns to Pro for a [`precommit`](#6-precommit---pre-commit-validation) review
+1. `Perform a codereview using gemini pro and o3 and use planner to generate a detailed plan, implement the fixes and do a final precommit check by continuing from the previous codereview`
+2. This triggers a [`codereview`](#5-codereview---professional-code-review) workflow where Claude walks the code, looking for all kinds of issues
+3. After multiple passes, collects relevant code and makes note of issues along the way
+4. Maintains a `confidence` level between `exploring`, `low`, `medium`, `high` and `certain` to track how confidently it's been able to find and identify issues
+5. Generates a detailed list of critical -> low issues
+6. Shares the relevant files, findings, etc with **Gemini Pro** to perform a deep dive for a second [`codereview`](#5-codereview---professional-code-review)
+7. Comes back with a response and next does the same with o3, adding to the prompt if a new discovery comes to light
+8. When done, Claude takes in all the feedback and combines a single list of all critical -> low issues, including good patterns in your code. The final list includes new findings or revisions in case Claude misunderstood or missed something crucial and one of the other models pointed this out
+9. It then uses the [`planner`](#3-planner---interactive-step-by-step-planning) workflow to break the work down into simpler steps if a major refactor is required
+10. Claude then performs the actual work of fixing highlighted issues
+11. When done, Claude returns to Gemini Pro for a [`precommit`](#6-precommit---pre-commit-validation) review
 
-All within a single conversation thread! Gemini Pro in step 6 _knows_ what was recommended by O3 in step 3! Taking that context
-and review into consideration to aid with its pre-commit review.
+All within a single conversation thread! Gemini Pro in step 11 _knows_ what was recommended by O3 in step 7! Taking that context
+and review into consideration to aid with its final pre-commit review.
 
 **Think of it as Claude Code _for_ Claude Code.** This MCP isn't magic. It's just **super-glue**.
 
