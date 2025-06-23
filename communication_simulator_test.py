@@ -38,6 +38,15 @@ Available tests:
     debug_validation            - Debug tool validation with actual bugs
     conversation_chain_validation - Conversation chain continuity validation
 
+Quick Test Mode (for time-limited testing):
+    Use --quick to run the essential 6 tests that provide maximum coverage:
+    - cross_tool_continuation
+    - conversation_chain_validation  
+    - consensus_workflow_accurate
+    - codereview_validation
+    - planner_validation
+    - token_allocation_validation
+
 Examples:
     # Run all tests
     python communication_simulator_test.py
@@ -47,6 +56,9 @@ Examples:
 
     # Run a single test individually (with full standalone setup)
     python communication_simulator_test.py --individual content_validation
+
+    # Run quick test mode (essential 6 tests for time-limited testing)
+    python communication_simulator_test.py --quick
 
     # Force setup standalone server environment before running tests
     python communication_simulator_test.py --setup
@@ -68,12 +80,13 @@ class CommunicationSimulator:
     """Simulates real-world Claude CLI communication with MCP Gemini server"""
 
     def __init__(
-        self, verbose: bool = False, keep_logs: bool = False, selected_tests: list[str] = None, setup: bool = False
+        self, verbose: bool = False, keep_logs: bool = False, selected_tests: list[str] = None, setup: bool = False, quick_mode: bool = False
     ):
         self.verbose = verbose
         self.keep_logs = keep_logs
         self.selected_tests = selected_tests or []
         self.setup = setup
+        self.quick_mode = quick_mode
         self.temp_dir = None
         self.server_process = None
         self.python_path = self._get_python_path()
@@ -82,6 +95,21 @@ class CommunicationSimulator:
         from simulator_tests import TEST_REGISTRY
 
         self.test_registry = TEST_REGISTRY
+
+        # Define quick mode tests (essential tests for time-limited testing)
+        self.quick_mode_tests = [
+            "cross_tool_continuation",
+            "conversation_chain_validation", 
+            "consensus_workflow_accurate",
+            "codereview_validation",
+            "planner_validation",
+            "token_allocation_validation"
+        ]
+
+        # If quick mode is enabled, override selected_tests
+        if self.quick_mode:
+            self.selected_tests = self.quick_mode_tests
+            self.logger.info(f"Quick mode enabled - running {len(self.quick_mode_tests)} essential tests")
 
         # Available test methods mapping
         self.available_tests = {
@@ -415,6 +443,7 @@ def parse_arguments():
     parser.add_argument("--tests", "-t", nargs="+", help="Specific tests to run (space-separated)")
     parser.add_argument("--list-tests", action="store_true", help="List available tests and exit")
     parser.add_argument("--individual", "-i", help="Run a single test individually")
+    parser.add_argument("--quick", "-q", action="store_true", help="Run quick test mode (6 essential tests for time-limited testing)")
     parser.add_argument(
         "--setup", action="store_true", help="Force setup standalone server environment using run-server.sh"
     )
@@ -492,7 +521,7 @@ def main():
 
     # Initialize simulator consistently for all use cases
     simulator = CommunicationSimulator(
-        verbose=args.verbose, keep_logs=args.keep_logs, selected_tests=args.tests, setup=args.setup
+        verbose=args.verbose, keep_logs=args.keep_logs, selected_tests=args.tests, setup=args.setup, quick_mode=args.quick
     )
 
     # Determine execution mode and run

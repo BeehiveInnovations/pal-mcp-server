@@ -128,7 +128,26 @@ python communication_simulator_test.py
 python communication_simulator_test.py --verbose
 ```
 
-#### Run Individual Simulator Tests (Recommended)
+#### Quick Test Mode (Recommended for Time-Limited Testing)
+```bash
+# Run quick test mode - 6 essential tests that provide maximum functionality coverage
+python communication_simulator_test.py --quick
+
+# Run quick test mode with verbose output
+python communication_simulator_test.py --quick --verbose
+```
+
+**Quick mode runs these 6 essential tests:**
+- `cross_tool_continuation` - Cross-tool conversation memory testing (chat, thinkdeep, codereview, analyze, debug)
+- `conversation_chain_validation` - Core conversation threading and memory validation
+- `consensus_workflow_accurate` - Consensus tool with flash model and stance testing
+- `codereview_validation` - CodeReview tool with flash model and multi-step workflows
+- `planner_validation` - Planner tool with flash model and complex planning workflows
+- `token_allocation_validation` - Token allocation and conversation history buildup testing
+
+**Why these 6 tests:** They cover all major tools (chat, planner, consensus, codereview + analyze, debug, thinkdeep), extensively test conversation memory functionality, use flash/flashlite models, and provide comprehensive app functionality coverage in minimal time.
+
+#### Run Individual Simulator Tests (For Detailed Testing)
 ```bash
 # List all available tests
 python communication_simulator_test.py --list-tests
@@ -223,15 +242,17 @@ python -m pytest tests/ -v
 #### After Making Changes
 1. Run quality checks again: `./code_quality_checks.sh`
 2. Run integration tests locally: `./run_integration_tests.sh`
-3. Run relevant simulator tests: `python communication_simulator_test.py --individual <test_name>`
-4. Check logs for any issues: `tail -n 100 logs/mcp_server.log`
-5. Restart Claude session to use updated code
+3. Run quick test mode for fast validation: `python communication_simulator_test.py --quick`
+4. Run relevant specific simulator tests if needed: `python communication_simulator_test.py --individual <test_name>`
+5. Check logs for any issues: `tail -n 100 logs/mcp_server.log`
+6. Restart Claude session to use updated code
 
 #### Before Committing/PR
 1. Final quality check: `./code_quality_checks.sh`
 2. Run integration tests: `./run_integration_tests.sh`
-3. Run full simulator test suite: `./run_integration_tests.sh --with-simulator`
-4. Verify all tests pass 100%
+3. Run quick test mode: `python communication_simulator_test.py --quick`
+4. Run full simulator test suite (optional): `./run_integration_tests.sh --with-simulator`
+5. Verify all tests pass 100%
 
 ### Common Troubleshooting
 
@@ -250,6 +271,9 @@ which python
 
 #### Test Failures
 ```bash
+# First try quick test mode to see if it's a general issue
+python communication_simulator_test.py --quick --verbose
+
 # Run individual failing test with verbose output
 python communication_simulator_test.py --individual <test_name> --verbose
 
