@@ -91,11 +91,14 @@ class TestClass:
             response_a2, continuation_id_a2 = self.call_mcp_tool(
                 "analyze",
                 {
-                    "prompt": "Now analyze the code quality and suggest improvements.",
-                    "files": [test_file_path],
+                    "step": "Now analyze the code quality and suggest improvements.",
+                    "step_number": 1,
+                    "total_steps": 2,
+                    "next_step_required": False,
+                    "findings": "Continuing analysis from previous chat conversation to analyze code quality.",
+                    "relevant_files": [test_file_path],
                     "continuation_id": continuation_id_a1,
                     "model": "flash",
-                    "temperature": 0.7,
                 },
             )
 
@@ -154,10 +157,14 @@ class TestClass:
             response_b2, continuation_id_b2 = self.call_mcp_tool(
                 "analyze",
                 {
-                    "prompt": "Analyze the previous greeting and suggest improvements.",
+                    "step": "Analyze the previous greeting and suggest improvements.",
+                    "step_number": 1,
+                    "total_steps": 1,
+                    "next_step_required": False,
+                    "findings": "Analyzing the greeting from previous conversation and suggesting improvements.",
+                    "relevant_files": [test_file_path],
                     "continuation_id": continuation_id_b1,
                     "model": "flash",
-                    "temperature": 0.7,
                 },
             )
 

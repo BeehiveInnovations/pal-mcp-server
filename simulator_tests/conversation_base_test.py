@@ -182,6 +182,10 @@ class ConversationBaseTest(BaseSimulatorTest):
 
             # Look for continuation_id in various places
             if isinstance(response_data, dict):
+                # Check top-level continuation_id (workflow tools)
+                if "continuation_id" in response_data:
+                    return response_data["continuation_id"]
+
                 # Check metadata
                 metadata = response_data.get("metadata", {})
                 if "thread_id" in metadata:

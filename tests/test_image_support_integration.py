@@ -483,14 +483,14 @@ class TestImageSupportIntegration:
             tool_name="chat",
         )
 
-        # Create child thread linked to parent
-        child_thread_id = create_thread("debug", {"child": "context"}, parent_thread_id=parent_thread_id)
+        # Create child thread linked to parent using a simple tool
+        child_thread_id = create_thread("chat", {"prompt": "child context"}, parent_thread_id=parent_thread_id)
         add_turn(
             thread_id=child_thread_id,
             role="user",
             content="Child thread with more images",
             images=["child1.png", "shared.png"],  # shared.png appears again (should prioritize newer)
-            tool_name="debug",
+            tool_name="chat",
         )
 
         # Mock child thread context for get_thread call
