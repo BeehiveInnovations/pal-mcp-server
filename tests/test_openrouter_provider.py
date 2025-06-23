@@ -57,7 +57,7 @@ class TestOpenRouterProvider:
         caps = provider.get_capabilities("o3")
         assert caps.provider == ProviderType.OPENROUTER
         assert caps.model_name == "openai/o3"  # Resolved name
-        assert caps.friendly_name == "OpenRouter"
+        assert caps.friendly_name == "OpenRouter (openai/o3)"
 
         # Test with a model not in registry - should get generic capabilities
         caps = provider.get_capabilities("unknown-model")

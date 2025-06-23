@@ -6,8 +6,8 @@ import tempfile
 
 import pytest
 
-from providers.base import ProviderType
-from providers.openrouter_registry import OpenRouterModelConfig, OpenRouterModelRegistry
+from providers.base import ModelCapabilities, ProviderType
+from providers.openrouter_registry import OpenRouterModelRegistry
 
 
 class TestOpenRouterModelRegistry:
@@ -110,18 +110,18 @@ class TestOpenRouterModelRegistry:
         assert registry.resolve("non-existent") is None
 
     def test_model_capabilities_conversion(self):
-        """Test conversion to ModelCapabilities."""
+        """Test that registry returns ModelCapabilities directly."""
         registry = OpenRouterModelRegistry()
 
         config = registry.resolve("opus")
         assert config is not None
 
-        caps = config.to_capabilities()
-        assert caps.provider == ProviderType.OPENROUTER
-        assert caps.model_name == "anthropic/claude-opus-4"
-        assert caps.friendly_name == "OpenRouter"
-        assert caps.context_window == 200000
-        assert not caps.supports_extended_thinking
+        # Registry now returns ModelCapabilities objects directly
+        assert config.provider == ProviderType.OPENROUTER
+        assert config.model_name == "anthropic/claude-opus-4"
+        assert config.friendly_name == "OpenRouter (anthropic/claude-opus-4)"
+        assert config.context_window == 200000
+        assert not config.supports_extended_thinking
 
     def test_duplicate_alias_detection(self):
         """Test that duplicate aliases are detected."""
@@ -199,8 +199,12 @@ class TestOpenRouterModelRegistry:
 
     def test_model_with_all_capabilities(self):
         """Test model with all capability flags."""
-        config = OpenRouterModelConfig(
+        from providers.base import create_temperature_constraint
+
+        caps = ModelCapabilities(
+            provider=ProviderType.OPENROUTER,
             model_name="test/full-featured",
+            friendly_name="OpenRouter (test/full-featured)",
             aliases=["full"],
             context_window=128000,
             supports_extended_thinking=True,
@@ -209,9 +213,8 @@ class TestOpenRouterModelRegistry:
             supports_function_calling=True,
             supports_json_mode=True,
             description="Fully featured test model",
+            temperature_constraint=create_temperature_constraint("range"),
         )
-
-        caps = config.to_capabilities()
         assert caps.context_window == 128000
         assert caps.supports_extended_thinking
         assert caps.supports_system_prompts

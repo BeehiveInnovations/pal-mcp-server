@@ -288,12 +288,8 @@ class OpenRouterProvider(OpenAICompatibleProvider):
                 if self.validate_model_name(model_name):
                     config = self._registry.resolve(model_name)
                     if config and not config.is_custom:  # Only OpenRouter models, not custom ones
-                        # Convert OpenRouterModelConfig to ModelCapabilities
-                        capabilities = config.to_capabilities()
-                        # Override provider type to OPENROUTER
-                        capabilities.provider = ProviderType.OPENROUTER
-                        capabilities.friendly_name = f"{self.FRIENDLY_NAME} ({config.model_name})"
-                        configs[model_name] = capabilities
+                        # Use ModelCapabilities directly from registry
+                        configs[model_name] = config
 
         return configs
 

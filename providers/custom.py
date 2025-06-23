@@ -291,7 +291,6 @@ class CustomProvider(OpenAICompatibleProvider):
         Returns:
             Dictionary mapping model names to their ModelCapabilities objects
         """
-        from .base import ProviderType
 
         configs = {}
 
@@ -302,12 +301,8 @@ class CustomProvider(OpenAICompatibleProvider):
                 if self.validate_model_name(model_name):
                     config = self._registry.resolve(model_name)
                     if config and config.is_custom:
-                        # Convert OpenRouterModelConfig to ModelCapabilities
-                        capabilities = config.to_capabilities()
-                        # Override provider type to CUSTOM for local models
-                        capabilities.provider = ProviderType.CUSTOM
-                        capabilities.friendly_name = f"{self.FRIENDLY_NAME} ({config.model_name})"
-                        configs[model_name] = capabilities
+                        # Use ModelCapabilities directly from registry
+                        configs[model_name] = config
 
         return configs
 
