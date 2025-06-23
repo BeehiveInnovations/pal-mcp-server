@@ -17,6 +17,7 @@ class ProviderType(Enum):
     XAI = "xai"
     OPENROUTER = "openrouter"
     CUSTOM = "custom"
+    DIAL = "dial"
 
 
 class TemperatureConstraint(ABC):
@@ -326,3 +327,12 @@ class ModelProvider(ABC):
             Resolved model name
         """
         return model_name
+
+    def close(self):
+        """Clean up any resources held by the provider.
+
+        Default implementation does nothing.
+        Subclasses should override if they hold resources that need cleanup.
+        """
+        # Base implementation: no resources to clean up
+        return
