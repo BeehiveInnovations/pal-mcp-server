@@ -2,7 +2,6 @@
 import hashlib
 import pickle
 import sqlite3
-from flask import request, session
 
 
 class AuthenticationManager:

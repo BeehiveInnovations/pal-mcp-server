@@ -175,19 +175,19 @@ from typing import Dict, Optional
 
 class GestionnairePreferences:
     """Gestionnaire des préférences utilisateur avec support UTF-8."""
-    
+
     def __init__(self):
         self.données = {}
         self.historique = []
-    
+
     def définir_préférence(self, clé: str, valeur) -> bool:
         """
         Définit une préférence utilisateur.
-        
+
         Args:
             clé: Identifiant de la préférence
             valeur: Valeur à enregistrer
-            
+
         Returns:
             True si la préférence a été définie avec succès
         """
@@ -202,18 +202,18 @@ class GestionnairePreferences:
         except Exception as e:
             print(f"Error setting preference: {e}")
             return False
-    
+
     def obtenir_préférence(self, clé: str) -> Optional:
         """Récupère une préférence par sa clé."""
         return self.données.get(clé)
-    
+
     def exporter_données(self) -> str:
         """Exporte les données en JSON UTF-8."""
         return json.dumps(self.données, ensure_ascii=False, indent=2)
 
 # Configuration par défaut avec caractères UTF-8
 CONFIG_DÉFAUT = {
-    "langue": "français", 
+    "langue": "français",
     "région": "France",
     "thème": "sombre",
     "notifications": "activées"
@@ -222,11 +222,11 @@ CONFIG_DÉFAUT = {
 def créer_gestionnaire() -> GestionnairePreferences:
     """Crée une instance du gestionnaire."""
     gestionnaire = GestionnairePreferences()
-    
+
     # Application de la configuration par défaut
     for clé, valeur in CONFIG_DÉFAUT.items():
         gestionnaire.définir_préférence(clé, valeur)
-    
+
     return gestionnaire
 
 if __name__ == "__main__":
@@ -243,7 +243,7 @@ if __name__ == "__main__":
 
     try:
         # Test reading
-        with open(temp_file, "r", encoding="utf-8") as f:
+        with open(temp_file, encoding="utf-8") as f:
             read_content = f.read()
 
         # Checks
@@ -293,7 +293,7 @@ The architectural analysis of the project has been **successfully** completed. H
 
 ### 🎯 Achieved Goals
 - ✅ Complete code review
-- ✅ Identification of performance issues  
+- ✅ Identification of performance issues
 - ✅ Improvement recommendations generated
 
 ### 📊 Analyzed Metrics
@@ -312,14 +312,14 @@ No critical issues detected.
 1. **Query performance**: Optimization needed
 2. **Memory management**: Potential leaks detected
 
-#### 🟡 Medium  
+#### 🟡 Medium
 1. **Documentation**: Some functions lack comments
 2. **Unit tests**: Coverage to be improved
 
 ### 🚀 Priority Recommendations
 
 1. **DB Optimization**: Implement Redis cache
-2. **Refactoring**: Separate responsibilities 
+2. **Refactoring**: Separate responsibilities
 3. **Documentation**: Add missing docstrings
 4. **Tests**: Increase coverage to 90%+
 

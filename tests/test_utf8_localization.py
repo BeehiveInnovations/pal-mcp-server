@@ -16,8 +16,6 @@ import tempfile
 import unittest
 from unittest.mock import AsyncMock, Mock, patch
 
-import pytest
-
 from tools.chat import ChatTool
 from tools.codereview import CodeReviewTool
 from tools.shared.base_tool import BaseTool
@@ -209,14 +207,13 @@ class TestUTF8Localization(unittest.TestCase):
 # Created by: Lead Developer
 # Creation date: December 15, 2024
 
-def process_data(preferences, parameters):
-    '''
+def process_data(preferences, parameters):    '''
     Processes data according to user preferences.
-    
+
     Args:
         preferences: User preferences dictionary
         parameters: Configuration parameters
-        
+
     Returns:
         Processing result
     '''
@@ -239,7 +236,7 @@ def generate_report():
 
         try:
             # Read file
-            with open(temp_file, "r", encoding="utf-8") as f:
+            with open(temp_file, encoding="utf-8") as f:
                 read_content = f.read()
 
             # Checks
@@ -361,15 +358,13 @@ class TestLocalizationIntegration(unittest.TestCase):
                 "relevant_files": ["/test/example.py"],
                 "model": "test-model",
             }
-        )
-
-        # Checks
+        )  # Checks
         self.assertIsNotNone(result)
         self.assertEqual(len(result), 1)
 
         # Parse JSON response - should be valid UTF-8
         response_text = result[0].text
-        response_data = json.loads(response_text)
+        json.loads(response_text)  # Validate JSON format
 
         # Check that language instruction was used
         mock_provider.generate_content.assert_called()
@@ -391,9 +386,7 @@ class TestLocalizationIntegration(unittest.TestCase):
         # Spanish
         os.environ["LOCALE"] = "es-ES"
         instruction_es = tool.get_language_instruction()
-        self.assertIn("es-ES", instruction_es)
-
-        # Chinese
+        self.assertIn("es-ES", instruction_es)  # Chinese
         os.environ["LOCALE"] = "zh-CN"
         instruction_zh = tool.get_language_instruction()
         self.assertIn("zh-CN", instruction_zh)

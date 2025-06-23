@@ -10,9 +10,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from providers.base import ModelProvider, ProviderType
+from providers.base import ProviderType
 from providers.gemini import GeminiModelProvider
-from providers.openai_compatible import OpenAICompatibleProvider
 from providers.openai_provider import OpenAIModelProvider
 
 
@@ -98,13 +97,11 @@ class TestProviderUTF8Encoding(unittest.TestCase):
 
         mock_client = Mock()
         mock_client.chat.completions.create.return_value = mock_response
-        mock_openai_class.return_value = mock_client
-
-        # Test OpenAI provider
+        mock_openai_class.return_value = mock_client  # Test OpenAI provider
         provider = OpenAIModelProvider(api_key="test-key")
 
         # Test with UTF-8 logging
-        with patch("logging.info") as mock_logging:
+        with patch("logging.info"):
             response = provider.generate_content(
                 prompt="Generate Python code to process data",
                 model_name="gpt-4",
@@ -329,8 +326,7 @@ class TestLocaleModelIntegration(unittest.TestCase):
     def test_system_prompt_enhancement_french(self):
         """Test system prompt enhancement with French locale."""
         os.environ["LOCALE"] = "fr-FR"
-        provider = OpenAIModelProvider(api_key="test")
-        base_prompt = "You are a helpful coding assistant."
+        OpenAIModelProvider(api_key="test")
         # Simulate language instruction
         tool = DummyToolForLocaleTest()
         instruction = tool.get_language_instruction()
@@ -339,8 +335,7 @@ class TestLocaleModelIntegration(unittest.TestCase):
 
     def test_system_prompt_enhancement_multiple_locales(self):
         """Test enhancement with different locales."""
-        provider = OpenAIModelProvider(api_key="test")
-        base_prompt = "You are a helpful assistant."
+        OpenAIModelProvider(api_key="test")
         locales = ["fr-FR", "es-ES", "de-DE", "it-IT", "pt-BR", "ja-JP", "zh-CN"]
         for locale in locales:
             os.environ["LOCALE"] = locale

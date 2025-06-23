@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-from flask import Flask, request, jsonify
 import os
 import subprocess
+
 import requests
+from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
