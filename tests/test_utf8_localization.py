@@ -207,7 +207,8 @@ class TestUTF8Localization(unittest.TestCase):
 # Created by: Lead Developer
 # Creation date: December 15, 2024
 
-def process_data(preferences, parameters):    '''
+def process_data(preferences, parameters):
+    '''
     Processes data according to user preferences.
 
     Args:
@@ -358,7 +359,9 @@ class TestLocalizationIntegration(unittest.TestCase):
                 "relevant_files": ["/test/example.py"],
                 "model": "test-model",
             }
-        )  # Checks
+        )
+
+        # Checks
         self.assertIsNotNone(result)
         self.assertEqual(len(result), 1)
 
@@ -385,8 +388,12 @@ class TestLocalizationIntegration(unittest.TestCase):
 
         # Spanish
         os.environ["LOCALE"] = "es-ES"
+        instruction_es = tool.get_language_instruction()  # Spanish
+        os.environ["LOCALE"] = "es-ES"
         instruction_es = tool.get_language_instruction()
-        self.assertIn("es-ES", instruction_es)  # Chinese
+        self.assertIn("es-ES", instruction_es)
+
+        # Chinese
         os.environ["LOCALE"] = "zh-CN"
         instruction_zh = tool.get_language_instruction()
         self.assertIn("zh-CN", instruction_zh)

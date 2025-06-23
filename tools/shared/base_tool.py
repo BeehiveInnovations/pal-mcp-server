@@ -1079,13 +1079,17 @@ When recommending searches, be specific about what information you need and why 
             str: Language instruction to prepend to prompt, or empty string if
                  no locale set
         """
-        from config import LOCALE
+        # Read LOCALE directly from environment to support dynamic changes
+        # This allows tests to modify os.environ["LOCALE"] and see the changes
+        import os
 
-        if not LOCALE or not LOCALE.strip():
+        locale = os.getenv("LOCALE", "").strip()
+
+        if not locale:
             return ""
 
         # Simple language instruction
-        return f"Always respond in {LOCALE.strip()}.\n\n"
+        return f"Always respond in {locale}.\n\n"
 
     # === ABSTRACT METHODS FOR SIMPLE TOOLS ===
 
