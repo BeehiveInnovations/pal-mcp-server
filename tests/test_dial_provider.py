@@ -84,7 +84,7 @@ class TestDIALProvider:
         # Test O3 capabilities
         capabilities = provider.get_capabilities("o3")
         assert capabilities.model_name == "o3-2025-04-16"
-        assert capabilities.friendly_name == "DIAL"
+        assert capabilities.friendly_name == "DIAL (O3)"
         assert capabilities.context_window == 200_000
         assert capabilities.provider == ProviderType.DIAL
         assert capabilities.supports_images is True

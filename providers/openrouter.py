@@ -270,3 +270,39 @@ class OpenRouterProvider(OpenAICompatibleProvider):
                     all_models.add(config.model_name.lower())
 
         return list(all_models)
+
+    def get_model_configurations(self) -> dict[str, ModelCapabilities]:
+        """Get model configurations from the registry.
+
+        For OpenRouter, we convert registry configurations to ModelCapabilities objects.
+
+        Returns:
+            Dictionary mapping model names to their ModelCapabilities objects
+        """
+        configs = {}
+
+        if self._registry:
+            # Get all models from registry
+            for model_name in self._registry.list_models():
+                # Only include models that this provider validates
+                if self.validate_model_name(model_name):
+                    config = self._registry.resolve(model_name)
+                    if config and not config.is_custom:  # Only OpenRouter models, not custom ones
+                        # Convert OpenRouterModelConfig to ModelCapabilities
+                        capabilities = config.to_capabilities()
+                        # Override provider type to OPENROUTER
+                        capabilities.provider = ProviderType.OPENROUTER
+                        capabilities.friendly_name = f"{self.FRIENDLY_NAME} ({config.model_name})"
+                        configs[model_name] = capabilities
+
+        return configs
+
+    def get_all_model_aliases(self) -> dict[str, list[str]]:
+        """Get all model aliases from the registry.
+
+        Returns:
+            Dictionary mapping model names to their list of aliases
+        """
+        # Since aliases are now included in the configurations,
+        # we can use the base class implementation
+        return super().get_all_model_aliases()

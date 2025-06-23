@@ -85,7 +85,7 @@ class TestOpenAIProvider:
 
         capabilities = provider.get_capabilities("o3")
         assert capabilities.model_name == "o3"  # Should NOT be resolved in capabilities
-        assert capabilities.friendly_name == "OpenAI"
+        assert capabilities.friendly_name == "OpenAI (O3)"
         assert capabilities.context_window == 200_000
         assert capabilities.provider == ProviderType.OPENAI
         assert not capabilities.supports_extended_thinking
@@ -101,8 +101,8 @@ class TestOpenAIProvider:
         provider = OpenAIModelProvider("test-key")
 
         capabilities = provider.get_capabilities("mini")
-        assert capabilities.model_name == "mini"  # Capabilities should show original request
-        assert capabilities.friendly_name == "OpenAI"
+        assert capabilities.model_name == "o4-mini"  # Capabilities should show resolved model name
+        assert capabilities.friendly_name == "OpenAI (O4-mini)"
         assert capabilities.context_window == 200_000
         assert capabilities.provider == ProviderType.OPENAI
 

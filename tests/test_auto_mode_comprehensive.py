@@ -319,7 +319,18 @@ class TestAutoModeComprehensive:
                     m
                     for m in available_models
                     if not m.startswith("gemini")
-                    and m not in ["flash", "pro", "flash-2.0", "flash2", "flashlite", "flash-lite"]
+                    and m
+                    not in [
+                        "flash",
+                        "pro",
+                        "flash-2.0",
+                        "flash2",
+                        "flashlite",
+                        "flash-lite",
+                        "flash2.5",
+                        "gemini pro",
+                        "gemini-pro",
+                    ]
                 ]
                 assert (
                     len(non_gemini_models) == 0

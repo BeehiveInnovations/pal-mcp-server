@@ -59,7 +59,7 @@ class TestAutoMode:
                         continue
 
                     # Check that model has description
-                    description = config.get("description", "")
+                    description = config.description if hasattr(config, "description") else ""
                     if description:
                         models_with_descriptions[model_name] = description
 

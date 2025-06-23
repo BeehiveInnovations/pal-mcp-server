@@ -7,7 +7,7 @@ from .base import (
     ModelCapabilities,
     ModelResponse,
     ProviderType,
-    RangeTemperatureConstraint,
+    create_temperature_constraint,
 )
 from .openai_compatible import OpenAICompatibleProvider
 
@@ -19,23 +19,42 @@ class XAIModelProvider(OpenAICompatibleProvider):
 
     FRIENDLY_NAME = "X.AI"
 
-    # Model configurations
+    # Model configurations using ModelCapabilities objects
     SUPPORTED_MODELS = {
-        "grok-3": {
-            "context_window": 131_072,  # 131K tokens
-            "supports_extended_thinking": False,
-            "description": "GROK-3 (131K context) - Advanced reasoning model from X.AI, excellent for complex analysis",
-        },
-        "grok-3-fast": {
-            "context_window": 131_072,  # 131K tokens
-            "supports_extended_thinking": False,
-            "description": "GROK-3 Fast (131K context) - Higher performance variant, faster processing but more expensive",
-        },
-        # Shorthands for convenience
-        "grok": "grok-3",  # Default to grok-3
-        "grok3": "grok-3",
-        "grok3fast": "grok-3-fast",
-        "grokfast": "grok-3-fast",
+        "grok-3": ModelCapabilities(
+            provider=ProviderType.XAI,
+            model_name="grok-3",
+            friendly_name="X.AI (Grok 3)",
+            context_window=131_072,  # 131K tokens
+            supports_extended_thinking=False,
+            supports_system_prompts=True,
+            supports_streaming=True,
+            supports_function_calling=True,
+            supports_json_mode=False,  # Assuming GROK doesn't have JSON mode yet
+            supports_images=False,  # Assuming GROK is text-only for now
+            max_image_size_mb=0.0,
+            supports_temperature=True,
+            temperature_constraint=create_temperature_constraint("range"),
+            description="GROK-3 (131K context) - Advanced reasoning model from X.AI, excellent for complex analysis",
+            aliases=["grok", "grok3"],
+        ),
+        "grok-3-fast": ModelCapabilities(
+            provider=ProviderType.XAI,
+            model_name="grok-3-fast",
+            friendly_name="X.AI (Grok 3 Fast)",
+            context_window=131_072,  # 131K tokens
+            supports_extended_thinking=False,
+            supports_system_prompts=True,
+            supports_streaming=True,
+            supports_function_calling=True,
+            supports_json_mode=False,  # Assuming GROK doesn't have JSON mode yet
+            supports_images=False,  # Assuming GROK is text-only for now
+            max_image_size_mb=0.0,
+            supports_temperature=True,
+            temperature_constraint=create_temperature_constraint("range"),
+            description="GROK-3 Fast (131K context) - Higher performance variant, faster processing but more expensive",
+            aliases=["grok3fast", "grokfast", "grok3-fast"],
+        ),
     }
 
     def __init__(self, api_key: str, **kwargs):
@@ -49,7 +68,7 @@ class XAIModelProvider(OpenAICompatibleProvider):
         # Resolve shorthand
         resolved_name = self._resolve_model_name(model_name)
 
-        if resolved_name not in self.SUPPORTED_MODELS or isinstance(self.SUPPORTED_MODELS[resolved_name], str):
+        if resolved_name not in self.SUPPORTED_MODELS:
             raise ValueError(f"Unsupported X.AI model: {model_name}")
 
         # Check if model is allowed by restrictions
@@ -59,23 +78,8 @@ class XAIModelProvider(OpenAICompatibleProvider):
         if not restriction_service.is_allowed(ProviderType.XAI, resolved_name, model_name):
             raise ValueError(f"X.AI model '{model_name}' is not allowed by restriction policy.")
 
-        config = self.SUPPORTED_MODELS[resolved_name]
-
-        # Define temperature constraints for GROK models
-        # GROK supports the standard OpenAI temperature range
-        temp_constraint = RangeTemperatureConstraint(0.0, 2.0, 0.7)
-
-        return ModelCapabilities(
-            provider=ProviderType.XAI,
-            model_name=resolved_name,
-            friendly_name=self.FRIENDLY_NAME,
-            context_window=config["context_window"],
-            supports_extended_thinking=config["supports_extended_thinking"],
-            supports_system_prompts=True,
-            supports_streaming=True,
-            supports_function_calling=True,
-            temperature_constraint=temp_constraint,
-        )
+        # Return the ModelCapabilities object directly from SUPPORTED_MODELS
+        return self.SUPPORTED_MODELS[resolved_name]
 
     def get_provider_type(self) -> ProviderType:
         """Get the provider type."""
@@ -86,7 +90,7 @@ class XAIModelProvider(OpenAICompatibleProvider):
         resolved_name = self._resolve_model_name(model_name)
 
         # First check if model is supported
-        if resolved_name not in self.SUPPORTED_MODELS or not isinstance(self.SUPPORTED_MODELS[resolved_name], dict):
+        if resolved_name not in self.SUPPORTED_MODELS:
             return False
 
         # Then check if model is allowed by restrictions
@@ -127,61 +131,3 @@ class XAIModelProvider(OpenAICompatibleProvider):
         # Currently GROK models do not support extended thinking
         # This may change with future GROK model releases
         return False
-
-    def list_models(self, respect_restrictions: bool = True) -> list[str]:
-        """Return a list of model names supported by this provider.
-
-        Args:
-            respect_restrictions: Whether to apply provider-specific restriction logic.
-
-        Returns:
-            List of model names available from this provider
-        """
-        from utils.model_restrictions import get_restriction_service
-
-        restriction_service = get_restriction_service() if respect_restrictions else None
-        models = []
-
-        for model_name, config in self.SUPPORTED_MODELS.items():
-            # Handle both base models (dict configs) and aliases (string values)
-            if isinstance(config, str):
-                # This is an alias - check if the target model would be allowed
-                target_model = config
-                if restriction_service and not restriction_service.is_allowed(self.get_provider_type(), target_model):
-                    continue
-                # Allow the alias
-                models.append(model_name)
-            else:
-                # This is a base model with config dict
-                # Check restrictions if enabled
-                if restriction_service and not restriction_service.is_allowed(self.get_provider_type(), model_name):
-                    continue
-                models.append(model_name)
-
-        return models
-
-    def list_all_known_models(self) -> list[str]:
-        """Return all model names known by this provider, including alias targets.
-
-        Returns:
-            List of all model names and alias targets known by this provider
-        """
-        all_models = set()
-
-        for model_name, config in self.SUPPORTED_MODELS.items():
-            # Add the model name itself
-            all_models.add(model_name.lower())
-
-            # If it's an alias (string value), add the target model too
-            if isinstance(config, str):
-                all_models.add(config.lower())
-
-        return list(all_models)
-
-    def _resolve_model_name(self, model_name: str) -> str:
-        """Resolve model shorthand to full name."""
-        # Check if it's a shorthand
-        shorthand_value = self.SUPPORTED_MODELS.get(model_name)
-        if isinstance(shorthand_value, str):
-            return shorthand_value
-        return model_name
