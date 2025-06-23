@@ -59,12 +59,12 @@ class TestAutoMode:
                         continue
 
                     # Check that model has description
-                    description = config.get("description", "")
+                    description = config.description if hasattr(config, "description") else ""
                     if description:
                         models_with_descriptions[model_name] = description
 
         # Check all expected models are present with meaningful descriptions
-        expected_models = ["flash", "pro", "o3", "o3-mini", "o3-pro", "o4-mini", "o4-mini-high"]
+        expected_models = ["flash", "pro", "o3", "o3-mini", "o3-pro", "o4-mini"]
         for model in expected_models:
             # Model should exist somewhere in the providers
             # Note: Some models might not be available if API keys aren't configured

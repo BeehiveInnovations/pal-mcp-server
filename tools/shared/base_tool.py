@@ -256,8 +256,8 @@ class BaseTool(ABC):
                 # Find all custom models (is_custom=true)
                 for alias in registry.list_aliases():
                     config = registry.resolve(alias)
-                    # Use hasattr for defensive programming - is_custom is optional with default False
-                    if config and hasattr(config, "is_custom") and config.is_custom:
+                    # Check if this is a custom model that requires custom endpoints
+                    if config and config.is_custom:
                         if alias not in all_models:
                             all_models.append(alias)
             except Exception as e:
@@ -311,12 +311,16 @@ class BaseTool(ABC):
                 ProviderType.GOOGLE: "Gemini models",
                 ProviderType.OPENAI: "OpenAI models",
                 ProviderType.XAI: "X.AI GROK models",
+                ProviderType.DIAL: "DIAL models",
                 ProviderType.CUSTOM: "Custom models",
                 ProviderType.OPENROUTER: "OpenRouter models",
             }
 
             # Check available providers and add their model descriptions
-            for provider_type in [ProviderType.GOOGLE, ProviderType.OPENAI, ProviderType.XAI]:
+
+            # Start with native providers
+            for provider_type in [ProviderType.GOOGLE, ProviderType.OPENAI, ProviderType.XAI, ProviderType.DIAL]:
+                # Only if this is registered / available
                 provider = ModelProviderRegistry.get_provider(provider_type)
                 if provider:
                     provider_section_added = False
@@ -324,13 +328,13 @@ class BaseTool(ABC):
                         try:
                             # Get model config to extract description
                             model_config = provider.SUPPORTED_MODELS.get(model_name)
-                            if isinstance(model_config, dict) and "description" in model_config:
+                            if model_config and model_config.description:
                                 if not provider_section_added:
                                     model_desc_parts.append(
                                         f"\n{provider_names[provider_type]} - Available when {provider_type.value.upper()}_API_KEY is configured:"
                                     )
                                     provider_section_added = True
-                                model_desc_parts.append(f"- '{model_name}': {model_config['description']}")
+                                model_desc_parts.append(f"- '{model_name}': {model_config.description}")
                         except Exception:
                             # Skip models without descriptions
                             continue
@@ -346,8 +350,8 @@ class BaseTool(ABC):
                     # Find all custom models (is_custom=true)
                     for alias in registry.list_aliases():
                         config = registry.resolve(alias)
-                        # Use hasattr for defensive programming - is_custom is optional with default False
-                        if config and hasattr(config, "is_custom") and config.is_custom:
+                        # Check if this is a custom model that requires custom endpoints
+                        if config and config.is_custom:
                             # Format context window
                             context_tokens = config.context_window
                             if context_tokens >= 1_000_000:

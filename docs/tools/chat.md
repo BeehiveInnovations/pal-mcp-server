@@ -33,7 +33,7 @@ and then debate with the other models to give me a final verdict
 ## Tool Parameters
 
 - `prompt`: Your question or discussion topic (required)
-- `model`: auto|pro|flash|o3|o3-mini|o4-mini|o4-mini-high|gpt4.1 (default: server default)
+- `model`: auto|pro|flash|o3|o3-mini|o4-mini|gpt4.1 (default: server default)
 - `files`: Optional files for context (absolute paths)
 - `images`: Optional images for visual context (absolute paths)
 - `temperature`: Response creativity (0-1, default 0.5)

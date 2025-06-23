@@ -103,7 +103,7 @@ This results in Claude first performing its own expert analysis, encouraging it 
 **Initial Configuration (used in step 1):**
 - `prompt`: Description of refactoring goals, context, and specific areas of focus (required)
 - `refactor_type`: codesmells|decompose|modernize|organization (default: codesmells)
-- `model`: auto|pro|flash|o3|o3-mini|o4-mini|o4-mini-high|gpt4.1 (default: server default)
+- `model`: auto|pro|flash|o3|o3-mini|o4-mini|gpt4.1 (default: server default)
 - `focus_areas`: Specific areas to focus on (e.g., 'performance', 'readability', 'maintainability', 'security')
 - `style_guide_examples`: Optional existing code files to use as style/pattern reference (absolute paths)
 - `thinking_mode`: minimal|low|medium|high|max (default: medium, Gemini only)

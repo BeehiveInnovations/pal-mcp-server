@@ -93,7 +93,7 @@ class TestModelRestrictionService:
         with patch.dict(os.environ, {"OPENAI_ALLOWED_MODELS": "o3-mini,o4-mini"}):
             service = ModelRestrictionService()
 
-            models = ["o3", "o3-mini", "o4-mini", "o4-mini-high"]
+            models = ["o3", "o3-mini", "o4-mini", "o3-pro"]
             filtered = service.filter_models(ProviderType.OPENAI, models)
 
             assert filtered == ["o3-mini", "o4-mini"]
@@ -573,7 +573,7 @@ class TestShorthandRestrictions:
 
         # Other models should not work
         assert not openai_provider.validate_model_name("o3")
-        assert not openai_provider.validate_model_name("o4-mini-high")
+        assert not openai_provider.validate_model_name("o3-pro")
 
     @patch.dict(
         os.environ,

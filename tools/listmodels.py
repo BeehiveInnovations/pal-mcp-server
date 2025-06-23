@@ -99,15 +99,11 @@ class ListModelsTool(BaseTool):
                 output_lines.append("**Status**: Configured and available")
                 output_lines.append("\n**Models**:")
 
-                # Get models from the provider's SUPPORTED_MODELS
-                for model_name, config in provider.SUPPORTED_MODELS.items():
-                    # Skip alias entries (string values)
-                    if isinstance(config, str):
-                        continue
-
-                    # Get description and context from the model config
-                    description = config.get("description", "No description available")
-                    context_window = config.get("context_window", 0)
+                # Get models from the provider's model configurations
+                for model_name, capabilities in provider.get_model_configurations().items():
+                    # Get description and context from the ModelCapabilities object
+                    description = capabilities.description or "No description available"
+                    context_window = capabilities.context_window
 
                     # Format context window
                     if context_window >= 1_000_000:
@@ -133,13 +129,14 @@ class ListModelsTool(BaseTool):
 
                 # Show aliases for this provider
                 aliases = []
-                for alias_name, target in provider.SUPPORTED_MODELS.items():
-                    if isinstance(target, str):  # This is an alias
-                        aliases.append(f"- `{alias_name}` → `{target}`")
+                for model_name, capabilities in provider.get_model_configurations().items():
+                    if capabilities.aliases:
+                        for alias in capabilities.aliases:
+                            aliases.append(f"- `{alias}` → `{model_name}`")
 
                 if aliases:
                     output_lines.append("\n**Aliases**:")
-                    output_lines.extend(aliases)
+                    output_lines.extend(sorted(aliases))  # Sort for consistent output
             else:
                 output_lines.append(f"**Status**: Not configured (set {info['env_key']})")
 
@@ -237,7 +234,7 @@ class ListModelsTool(BaseTool):
 
                 for alias in registry.list_aliases():
                     config = registry.resolve(alias)
-                    if config and hasattr(config, "is_custom") and config.is_custom:
+                    if config and config.is_custom:
                         custom_models.append((alias, config))
 
                 if custom_models:

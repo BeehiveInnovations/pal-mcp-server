@@ -57,7 +57,7 @@ class TestOpenRouterProvider:
         caps = provider.get_capabilities("o3")
         assert caps.provider == ProviderType.OPENROUTER
         assert caps.model_name == "openai/o3"  # Resolved name
-        assert caps.friendly_name == "OpenRouter"
+        assert caps.friendly_name == "OpenRouter (openai/o3)"
 
         # Test with a model not in registry - should get generic capabilities
         caps = provider.get_capabilities("unknown-model")
@@ -77,7 +77,7 @@ class TestOpenRouterProvider:
         assert provider._resolve_model_name("o3-mini") == "openai/o3-mini"
         assert provider._resolve_model_name("o3mini") == "openai/o3-mini"
         assert provider._resolve_model_name("o4-mini") == "openai/o4-mini"
-        assert provider._resolve_model_name("o4-mini-high") == "openai/o4-mini-high"
+        assert provider._resolve_model_name("o4-mini") == "openai/o4-mini"
         assert provider._resolve_model_name("claude") == "anthropic/claude-sonnet-4"
         assert provider._resolve_model_name("mistral") == "mistralai/mistral-large-2411"
         assert provider._resolve_model_name("deepseek") == "deepseek/deepseek-r1-0528"

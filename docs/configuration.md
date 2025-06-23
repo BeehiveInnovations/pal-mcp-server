@@ -63,7 +63,7 @@ CUSTOM_MODEL_NAME=llama3.2                          # Default model
 
 **Default Model Selection:**
 ```env
-# Options: 'auto', 'pro', 'flash', 'o3', 'o3-mini', 'o4-mini', 'o4-mini-high', etc.
+# Options: 'auto', 'pro', 'flash', 'o3', 'o3-mini', 'o4-mini', etc.
 DEFAULT_MODEL=auto  # Claude picks best model for each task (recommended)
 ```
 
@@ -74,7 +74,6 @@ DEFAULT_MODEL=auto  # Claude picks best model for each task (recommended)
 - **`o3`**: Strong logical reasoning (200K context)
 - **`o3-mini`**: Balanced speed/quality (200K context)
 - **`o4-mini`**: Latest reasoning model, optimized for shorter contexts
-- **`o4-mini-high`**: Enhanced O4 with higher reasoning effort
 - **`grok`**: GROK-3 advanced reasoning (131K context)
 - **Custom models**: via OpenRouter or local APIs
 
@@ -120,7 +119,6 @@ OPENROUTER_ALLOWED_MODELS=opus,sonnet,mistral
 - `o3` (200K context, high reasoning)
 - `o3-mini` (200K context, balanced)
 - `o4-mini` (200K context, latest balanced)
-- `o4-mini-high` (200K context, enhanced reasoning)
 - `mini` (shorthand for o4-mini)
 
 **Gemini Models:**

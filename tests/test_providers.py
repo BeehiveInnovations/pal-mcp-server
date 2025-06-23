@@ -215,9 +215,7 @@ class TestOpenAIProvider:
         assert provider.validate_model_name("o3-mini")  # Backwards compatibility
         assert provider.validate_model_name("o4-mini")
         assert provider.validate_model_name("o4mini")
-        assert provider.validate_model_name("o4-mini-high")
-        assert provider.validate_model_name("o4minihigh")
-        assert provider.validate_model_name("o4minihi")
+        assert provider.validate_model_name("o4-mini")
         assert not provider.validate_model_name("gpt-4o")
         assert not provider.validate_model_name("invalid-model")
 
@@ -229,4 +227,4 @@ class TestOpenAIProvider:
         assert not provider.supports_thinking_mode("o3mini")
         assert not provider.supports_thinking_mode("o3-mini")
         assert not provider.supports_thinking_mode("o4-mini")
-        assert not provider.supports_thinking_mode("o4-mini-high")
+        assert not provider.supports_thinking_mode("o4-mini")

@@ -77,7 +77,7 @@ class TestXAIProvider:
 
         capabilities = provider.get_capabilities("grok-3")
         assert capabilities.model_name == "grok-3"
-        assert capabilities.friendly_name == "X.AI"
+        assert capabilities.friendly_name == "X.AI (Grok 3)"
         assert capabilities.context_window == 131_072
         assert capabilities.provider == ProviderType.XAI
         assert not capabilities.supports_extended_thinking
@@ -96,7 +96,7 @@ class TestXAIProvider:
 
         capabilities = provider.get_capabilities("grok-3-fast")
         assert capabilities.model_name == "grok-3-fast"
-        assert capabilities.friendly_name == "X.AI"
+        assert capabilities.friendly_name == "X.AI (Grok 3 Fast)"
         assert capabilities.context_window == 131_072
         assert capabilities.provider == ProviderType.XAI
         assert not capabilities.supports_extended_thinking
@@ -212,31 +212,34 @@ class TestXAIProvider:
         assert provider.FRIENDLY_NAME == "X.AI"
 
         capabilities = provider.get_capabilities("grok-3")
-        assert capabilities.friendly_name == "X.AI"
+        assert capabilities.friendly_name == "X.AI (Grok 3)"
 
     def test_supported_models_structure(self):
         """Test that SUPPORTED_MODELS has the correct structure."""
         provider = XAIModelProvider("test-key")
 
-        # Check that all expected models are present
+        # Check that all expected base models are present
         assert "grok-3" in provider.SUPPORTED_MODELS
         assert "grok-3-fast" in provider.SUPPORTED_MODELS
-        assert "grok" in provider.SUPPORTED_MODELS
-        assert "grok3" in provider.SUPPORTED_MODELS
-        assert "grokfast" in provider.SUPPORTED_MODELS
-        assert "grok3fast" in provider.SUPPORTED_MODELS
 
         # Check model configs have required fields
-        grok3_config = provider.SUPPORTED_MODELS["grok-3"]
-        assert isinstance(grok3_config, dict)
-        assert "context_window" in grok3_config
-        assert "supports_extended_thinking" in grok3_config
-        assert grok3_config["context_window"] == 131_072
-        assert grok3_config["supports_extended_thinking"] is False
+        from providers.base import ModelCapabilities
 
-        # Check shortcuts point to full names
-        assert provider.SUPPORTED_MODELS["grok"] == "grok-3"
-        assert provider.SUPPORTED_MODELS["grokfast"] == "grok-3-fast"
+        grok3_config = provider.SUPPORTED_MODELS["grok-3"]
+        assert isinstance(grok3_config, ModelCapabilities)
+        assert hasattr(grok3_config, "context_window")
+        assert hasattr(grok3_config, "supports_extended_thinking")
+        assert hasattr(grok3_config, "aliases")
+        assert grok3_config.context_window == 131_072
+        assert grok3_config.supports_extended_thinking is False
+
+        # Check aliases are correctly structured
+        assert "grok" in grok3_config.aliases
+        assert "grok3" in grok3_config.aliases
+
+        grok3fast_config = provider.SUPPORTED_MODELS["grok-3-fast"]
+        assert "grok3fast" in grok3fast_config.aliases
+        assert "grokfast" in grok3fast_config.aliases
 
     @patch("providers.openai_compatible.OpenAI")
     def test_generate_content_resolves_alias_before_api_call(self, mock_openai_class):

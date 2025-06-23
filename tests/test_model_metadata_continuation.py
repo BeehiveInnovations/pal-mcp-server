@@ -89,7 +89,7 @@ class TestModelMetadataContinuation:
     @pytest.mark.asyncio
     async def test_multiple_turns_uses_last_assistant_model(self):
         """Test that with multiple turns, the last assistant turn's model is used."""
-        thread_id = create_thread("analyze", {"prompt": "analyze this"})
+        thread_id = create_thread("chat", {"prompt": "analyze this"})
 
         # Add multiple turns with different models
         add_turn(thread_id, "assistant", "First response", model_name="gemini-2.5-flash", model_provider="google")
@@ -185,11 +185,11 @@ class TestModelMetadataContinuation:
     async def test_thread_chain_model_preservation(self):
         """Test model preservation across thread chains (parent-child relationships)."""
         # Create parent thread
-        parent_id = create_thread("analyze", {"prompt": "analyze"})
+        parent_id = create_thread("chat", {"prompt": "analyze"})
         add_turn(parent_id, "assistant", "Analysis", model_name="gemini-2.5-pro", model_provider="google")
 
-        # Create child thread
-        child_id = create_thread("codereview", {"prompt": "review"}, parent_thread_id=parent_id)
+        # Create child thread using a simple tool instead of workflow tool
+        child_id = create_thread("chat", {"prompt": "review"}, parent_thread_id=parent_id)
 
         # Child thread should be able to access parent's model through chain traversal
         # NOTE: Current implementation only checks current thread (not parent threads)

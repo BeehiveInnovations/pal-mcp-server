@@ -24,8 +24,6 @@ class ModelProviderRegistry:
             cls._instance._providers = {}
             cls._instance._initialized_providers = {}
             logging.debug(f"REGISTRY: Created instance {cls._instance}")
-        else:
-            logging.debug(f"REGISTRY: Returning existing instance {cls._instance}")
         return cls._instance
 
     @classmethod
@@ -129,7 +127,6 @@ class ModelProviderRegistry:
         logging.debug(f"Available providers in registry: {list(instance._providers.keys())}")
 
         for provider_type in PROVIDER_PRIORITY_ORDER:
-            logging.debug(f"Checking provider_type: {provider_type}")
             if provider_type in instance._providers:
                 logging.debug(f"Found {provider_type} in registry")
                 # Get or create provider instance

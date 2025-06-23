@@ -211,7 +211,7 @@ class TestAliasTargetRestrictions:
         # Verify the polymorphic method was called
         mock_provider.list_all_known_models.assert_called_once()
 
-    @patch.dict(os.environ, {"OPENAI_ALLOWED_MODELS": "o4-mini-high"})  # Restrict to specific model
+    @patch.dict(os.environ, {"OPENAI_ALLOWED_MODELS": "o4-mini"})  # Restrict to specific model
     def test_complex_alias_chains_handled_correctly(self):
         """Test that complex alias chains are handled correctly in restrictions."""
         # Clear cached restriction service
@@ -221,12 +221,11 @@ class TestAliasTargetRestrictions:
 
         provider = OpenAIModelProvider(api_key="test-key")
 
-        # Only o4-mini-high should be allowed
-        assert provider.validate_model_name("o4-mini-high")
+        # Only o4-mini should be allowed
+        assert provider.validate_model_name("o4-mini")
 
         # Other models should be blocked
-        assert not provider.validate_model_name("o4-mini")
-        assert not provider.validate_model_name("mini")  # This resolves to o4-mini
+        assert not provider.validate_model_name("o3")
         assert not provider.validate_model_name("o3-mini")
 
     def test_critical_regression_validation_sees_alias_targets(self):
@@ -307,7 +306,7 @@ class TestAliasTargetRestrictions:
         it appear that target-based restrictions don't work.
         """
         # Test with a made-up restriction scenario
-        with patch.dict(os.environ, {"OPENAI_ALLOWED_MODELS": "o4-mini-high,o3-mini"}):
+        with patch.dict(os.environ, {"OPENAI_ALLOWED_MODELS": "o4-mini,o3-mini"}):
             # Clear cached restriction service
             import utils.model_restrictions
 
@@ -318,7 +317,7 @@ class TestAliasTargetRestrictions:
 
             # These specific target models should be recognized as valid
             all_known = provider.list_all_known_models()
-            assert "o4-mini-high" in all_known, "Target model o4-mini-high should be known"
+            assert "o4-mini" in all_known, "Target model o4-mini should be known"
             assert "o3-mini" in all_known, "Target model o3-mini should be known"
 
             # Validation should not warn about these being unrecognized
@@ -329,11 +328,11 @@ class TestAliasTargetRestrictions:
                 # Should not warn about our allowed models being unrecognized
                 all_warnings = [str(call) for call in mock_logger.warning.call_args_list]
                 for warning in all_warnings:
-                    assert "o4-mini-high" not in warning or "not a recognized" not in warning
+                    assert "o4-mini" not in warning or "not a recognized" not in warning
                     assert "o3-mini" not in warning or "not a recognized" not in warning
 
             # The restriction should actually work
-            assert provider.validate_model_name("o4-mini-high")
+            assert provider.validate_model_name("o4-mini")
             assert provider.validate_model_name("o3-mini")
-            assert not provider.validate_model_name("o4-mini")  # not in allowed list
+            assert not provider.validate_model_name("o3-pro")  # not in allowed list
             assert not provider.validate_model_name("o3")  # not in allowed list

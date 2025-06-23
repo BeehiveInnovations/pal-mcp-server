@@ -118,7 +118,7 @@ class TestBuggyBehaviorPrevention:
         provider = OpenAIModelProvider(api_key="test-key")
 
         # Simulate a scenario where admin wants to restrict specific targets
-        with patch.dict(os.environ, {"OPENAI_ALLOWED_MODELS": "o3-mini,o4-mini-high"}):
+        with patch.dict(os.environ, {"OPENAI_ALLOWED_MODELS": "o3-mini,o4-mini"}):
             # Clear cached restriction service
             import utils.model_restrictions
 
@@ -126,19 +126,21 @@ class TestBuggyBehaviorPrevention:
 
             # These should work because they're explicitly allowed
             assert provider.validate_model_name("o3-mini")
-            assert provider.validate_model_name("o4-mini-high")
+            assert provider.validate_model_name("o4-mini")
 
             # These should be blocked
-            assert not provider.validate_model_name("o4-mini")  # Not in allowed list
+            assert not provider.validate_model_name("o3-pro")  # Not in allowed list
             assert not provider.validate_model_name("o3")  # Not in allowed list
-            assert not provider.validate_model_name("mini")  # Resolves to o4-mini, not allowed
+
+            # This should be ALLOWED because it resolves to o4-mini which is in the allowed list
+            assert provider.validate_model_name("mini")  # Resolves to o4-mini, which IS allowed
 
             # Verify our list_all_known_models includes the restricted models
             all_known = provider.list_all_known_models()
             assert "o3-mini" in all_known  # Should be known (and allowed)
-            assert "o4-mini-high" in all_known  # Should be known (and allowed)
-            assert "o4-mini" in all_known  # Should be known (but blocked)
-            assert "mini" in all_known  # Should be known (but blocked)
+            assert "o4-mini" in all_known  # Should be known (and allowed)
+            assert "o3-pro" in all_known  # Should be known (but blocked)
+            assert "mini" in all_known  # Should be known (and allowed since it resolves to o4-mini)
 
     def test_demonstration_of_old_vs_new_interface(self):
         """

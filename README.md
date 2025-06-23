@@ -409,7 +409,7 @@ for most debugging workflows, as Claude is usually able to confidently find the 
 When in doubt, you can always follow up with a new prompt and ask Claude to share its findings with another model:
 
 ```text
-Use continuation with thinkdeep, share details with o4-mini-high to find out what the best fix is for this
+Use continuation with thinkdeep, share details with o4-mini to find out what the best fix is for this
 ```
 
 **[📖 Read More](docs/tools/debug.md)** - Step-by-step investigation methodology with workflow enforcement

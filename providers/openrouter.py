@@ -50,14 +50,6 @@ class OpenRouterProvider(OpenAICompatibleProvider):
             aliases = self._registry.list_aliases()
             logging.info(f"OpenRouter loaded {len(models)} models with {len(aliases)} aliases")
 
-    def _parse_allowed_models(self) -> None:
-        """Override to disable environment-based allow-list.
-
-        OpenRouter model access is controlled via the OpenRouter dashboard,
-        not through environment variables.
-        """
-        return None
-
     def _resolve_model_name(self, model_name: str) -> str:
         """Resolve model aliases to OpenRouter model names.
 
@@ -109,6 +101,7 @@ class OpenRouterProvider(OpenAICompatibleProvider):
                 model_name=resolved_name,
                 friendly_name=self.FRIENDLY_NAME,
                 context_window=32_768,  # Conservative default context window
+                max_output_tokens=32_768,
                 supports_extended_thinking=False,
                 supports_system_prompts=True,
                 supports_streaming=True,
@@ -130,16 +123,34 @@ class OpenRouterProvider(OpenAICompatibleProvider):
 
         As the catch-all provider, OpenRouter accepts any model name that wasn't
         handled by higher-priority providers. OpenRouter will validate based on
-        the API key's permissions.
+        the API key's permissions and local restrictions.
 
         Args:
             model_name: Model name to validate
 
         Returns:
-            Always True - OpenRouter is the catch-all provider
+            True if model is allowed, False if restricted
         """
-        # Accept any model name - OpenRouter is the fallback provider
-        # Higher priority providers (native APIs, custom endpoints) get first chance
+        # Check model restrictions if configured
+        from utils.model_restrictions import get_restriction_service
+
+        restriction_service = get_restriction_service()
+        if restriction_service:
+            # Check if model name itself is allowed
+            if restriction_service.is_allowed(self.get_provider_type(), model_name):
+                return True
+
+            # Also check aliases - model_name might be an alias
+            model_config = self._registry.resolve(model_name)
+            if model_config and model_config.aliases:
+                for alias in model_config.aliases:
+                    if restriction_service.is_allowed(self.get_provider_type(), alias):
+                        return True
+
+            # If restrictions are configured and model/alias not in allowed list, reject
+            return False
+
+        # No restrictions configured - accept any model name as the fallback provider
         return True
 
     def generate_content(
@@ -260,3 +271,35 @@ class OpenRouterProvider(OpenAICompatibleProvider):
                     all_models.add(config.model_name.lower())
 
         return list(all_models)
+
+    def get_model_configurations(self) -> dict[str, ModelCapabilities]:
+        """Get model configurations from the registry.
+
+        For OpenRouter, we convert registry configurations to ModelCapabilities objects.
+
+        Returns:
+            Dictionary mapping model names to their ModelCapabilities objects
+        """
+        configs = {}
+
+        if self._registry:
+            # Get all models from registry
+            for model_name in self._registry.list_models():
+                # Only include models that this provider validates
+                if self.validate_model_name(model_name):
+                    config = self._registry.resolve(model_name)
+                    if config and not config.is_custom:  # Only OpenRouter models, not custom ones
+                        # Use ModelCapabilities directly from registry
+                        configs[model_name] = config
+
+        return configs
+
+    def get_all_model_aliases(self) -> dict[str, list[str]]:
+        """Get all model aliases from the registry.
+
+        Returns:
+            Dictionary mapping model names to their list of aliases
+        """
+        # Since aliases are now included in the configurations,
+        # we can use the base class implementation
+        return super().get_all_model_aliases()

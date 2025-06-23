@@ -70,7 +70,7 @@ Test generation excels with extended reasoning models like Gemini Pro or O3, whi
 
 **Initial Configuration (used in step 1):**
 - `prompt`: Description of what to test, testing objectives, and specific scope/focus areas (required)
-- `model`: auto|pro|flash|o3|o3-mini|o4-mini|o4-mini-high|gpt4.1 (default: server default)
+- `model`: auto|pro|flash|o3|o3-mini|o4-mini|gpt4.1 (default: server default)
 - `test_examples`: Optional existing test files or directories to use as style/pattern reference (absolute paths)
 - `thinking_mode`: minimal|low|medium|high|max (default: medium, Gemini only)
 - `use_assistant_model`: Whether to use expert test generation phase (default: true, set to false to use Claude only)

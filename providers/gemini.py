@@ -9,7 +9,7 @@ from typing import Optional
 from google import genai
 from google.genai import types
 
-from .base import ModelCapabilities, ModelProvider, ModelResponse, ProviderType, RangeTemperatureConstraint
+from .base import ModelCapabilities, ModelProvider, ModelResponse, ProviderType, create_temperature_constraint
 
 logger = logging.getLogger(__name__)
 
@@ -17,47 +17,83 @@ logger = logging.getLogger(__name__)
 class GeminiModelProvider(ModelProvider):
     """Google Gemini model provider implementation."""
 
-    # Model configurations
+    # Model configurations using ModelCapabilities objects
     SUPPORTED_MODELS = {
-        "gemini-2.0-flash": {
-            "context_window": 1_048_576,  # 1M tokens
-            "supports_extended_thinking": True,  # Experimental thinking mode
-            "max_thinking_tokens": 24576,  # Same as 2.5 flash for consistency
-            "supports_images": True,  # Vision capability
-            "max_image_size_mb": 20.0,  # Conservative 20MB limit for reliability
-            "description": "Gemini 2.0 Flash (1M context) - Latest fast model with experimental thinking, supports audio/video input",
-        },
-        "gemini-2.0-flash-lite": {
-            "context_window": 1_048_576,  # 1M tokens
-            "supports_extended_thinking": False,  # Not supported per user request
-            "max_thinking_tokens": 0,  # No thinking support
-            "supports_images": False,  # Does not support images
-            "max_image_size_mb": 0.0,  # No image support
-            "description": "Gemini 2.0 Flash Lite (1M context) - Lightweight fast model, text-only",
-        },
-        "gemini-2.5-flash": {
-            "context_window": 1_048_576,  # 1M tokens
-            "supports_extended_thinking": True,
-            "max_thinking_tokens": 24576,  # Flash 2.5 thinking budget limit
-            "supports_images": True,  # Vision capability
-            "max_image_size_mb": 20.0,  # Conservative 20MB limit for reliability
-            "description": "Ultra-fast (1M context) - Quick analysis, simple queries, rapid iterations",
-        },
-        "gemini-2.5-pro": {
-            "context_window": 1_048_576,  # 1M tokens
-            "supports_extended_thinking": True,
-            "max_thinking_tokens": 32768,  # Pro 2.5 thinking budget limit
-            "supports_images": True,  # Vision capability
-            "max_image_size_mb": 32.0,  # Higher limit for Pro model
-            "description": "Deep reasoning + thinking mode (1M context) - Complex problems, architecture, deep analysis",
-        },
-        # Shorthands
-        "flash": "gemini-2.5-flash",
-        "flash-2.0": "gemini-2.0-flash",
-        "flash2": "gemini-2.0-flash",
-        "flashlite": "gemini-2.0-flash-lite",
-        "flash-lite": "gemini-2.0-flash-lite",
-        "pro": "gemini-2.5-pro",
+        "gemini-2.0-flash": ModelCapabilities(
+            provider=ProviderType.GOOGLE,
+            model_name="gemini-2.0-flash",
+            friendly_name="Gemini (Flash 2.0)",
+            context_window=1_048_576,  # 1M tokens
+            max_output_tokens=65_536,
+            supports_extended_thinking=True,  # Experimental thinking mode
+            supports_system_prompts=True,
+            supports_streaming=True,
+            supports_function_calling=True,
+            supports_json_mode=True,
+            supports_images=True,  # Vision capability
+            max_image_size_mb=20.0,  # Conservative 20MB limit for reliability
+            supports_temperature=True,
+            temperature_constraint=create_temperature_constraint("range"),
+            max_thinking_tokens=24576,  # Same as 2.5 flash for consistency
+            description="Gemini 2.0 Flash (1M context) - Latest fast model with experimental thinking, supports audio/video input",
+            aliases=["flash-2.0", "flash2"],
+        ),
+        "gemini-2.0-flash-lite": ModelCapabilities(
+            provider=ProviderType.GOOGLE,
+            model_name="gemini-2.0-flash-lite",
+            friendly_name="Gemin (Flash Lite 2.0)",
+            context_window=1_048_576,  # 1M tokens
+            max_output_tokens=65_536,
+            supports_extended_thinking=False,  # Not supported per user request
+            supports_system_prompts=True,
+            supports_streaming=True,
+            supports_function_calling=True,
+            supports_json_mode=True,
+            supports_images=False,  # Does not support images
+            max_image_size_mb=0.0,  # No image support
+            supports_temperature=True,
+            temperature_constraint=create_temperature_constraint("range"),
+            description="Gemini 2.0 Flash Lite (1M context) - Lightweight fast model, text-only",
+            aliases=["flashlite", "flash-lite"],
+        ),
+        "gemini-2.5-flash": ModelCapabilities(
+            provider=ProviderType.GOOGLE,
+            model_name="gemini-2.5-flash",
+            friendly_name="Gemini (Flash 2.5)",
+            context_window=1_048_576,  # 1M tokens
+            max_output_tokens=65_536,
+            supports_extended_thinking=True,
+            supports_system_prompts=True,
+            supports_streaming=True,
+            supports_function_calling=True,
+            supports_json_mode=True,
+            supports_images=True,  # Vision capability
+            max_image_size_mb=20.0,  # Conservative 20MB limit for reliability
+            supports_temperature=True,
+            temperature_constraint=create_temperature_constraint("range"),
+            max_thinking_tokens=24576,  # Flash 2.5 thinking budget limit
+            description="Ultra-fast (1M context) - Quick analysis, simple queries, rapid iterations",
+            aliases=["flash", "flash2.5"],
+        ),
+        "gemini-2.5-pro": ModelCapabilities(
+            provider=ProviderType.GOOGLE,
+            model_name="gemini-2.5-pro",
+            friendly_name="Gemini (Pro 2.5)",
+            context_window=1_048_576,  # 1M tokens
+            max_output_tokens=65_536,
+            supports_extended_thinking=True,
+            supports_system_prompts=True,
+            supports_streaming=True,
+            supports_function_calling=True,
+            supports_json_mode=True,
+            supports_images=True,  # Vision capability
+            max_image_size_mb=32.0,  # Higher limit for Pro model
+            supports_temperature=True,
+            temperature_constraint=create_temperature_constraint("range"),
+            max_thinking_tokens=32768,  # Max thinking tokens for Pro model
+            description="Deep reasoning + thinking mode (1M context) - Complex problems, architecture, deep analysis",
+            aliases=["pro", "gemini pro", "gemini-pro"],
+        ),
     }
 
     # Thinking mode configurations - percentages of model's max_thinking_tokens
@@ -68,6 +104,14 @@ class GeminiModelProvider(ModelProvider):
         "medium": 0.33,  # 33% of max - balanced reasoning (default)
         "high": 0.67,  # 67% of max - complex analysis
         "max": 1.0,  # 100% of max - full thinking budget
+    }
+
+    # Model-specific thinking token limits
+    MAX_THINKING_TOKENS = {
+        "gemini-2.0-flash": 24576,  # Same as 2.5 flash for consistency
+        "gemini-2.0-flash-lite": 0,  # No thinking support
+        "gemini-2.5-flash": 24576,  # Flash 2.5 thinking budget limit
+        "gemini-2.5-pro": 32768,  # Pro 2.5 thinking budget limit
     }
 
     def __init__(self, api_key: str, **kwargs):
@@ -100,25 +144,8 @@ class GeminiModelProvider(ModelProvider):
         if not restriction_service.is_allowed(ProviderType.GOOGLE, resolved_name, model_name):
             raise ValueError(f"Gemini model '{resolved_name}' is not allowed by restriction policy.")
 
-        config = self.SUPPORTED_MODELS[resolved_name]
-
-        # Gemini models support 0.0-2.0 temperature range
-        temp_constraint = RangeTemperatureConstraint(0.0, 2.0, 0.7)
-
-        return ModelCapabilities(
-            provider=ProviderType.GOOGLE,
-            model_name=resolved_name,
-            friendly_name="Gemini",
-            context_window=config["context_window"],
-            supports_extended_thinking=config["supports_extended_thinking"],
-            supports_system_prompts=True,
-            supports_streaming=True,
-            supports_function_calling=True,
-            supports_images=config.get("supports_images", False),
-            max_image_size_mb=config.get("max_image_size_mb", 0.0),
-            supports_temperature=True,  # Gemini models accept temperature parameter
-            temperature_constraint=temp_constraint,
-        )
+        # Return the ModelCapabilities object directly from SUPPORTED_MODELS
+        return self.SUPPORTED_MODELS[resolved_name]
 
     def generate_content(
         self,
@@ -179,8 +206,8 @@ class GeminiModelProvider(ModelProvider):
         if capabilities.supports_extended_thinking and thinking_mode in self.THINKING_BUDGETS:
             # Get model's max thinking tokens and calculate actual budget
             model_config = self.SUPPORTED_MODELS.get(resolved_name)
-            if model_config and "max_thinking_tokens" in model_config:
-                max_thinking_tokens = model_config["max_thinking_tokens"]
+            if model_config and model_config.max_thinking_tokens > 0:
+                max_thinking_tokens = model_config.max_thinking_tokens
                 actual_thinking_budget = int(max_thinking_tokens * self.THINKING_BUDGETS[thinking_mode])
                 generation_config.thinking_config = types.ThinkingConfig(thinking_budget=actual_thinking_budget)
 
@@ -258,7 +285,7 @@ class GeminiModelProvider(ModelProvider):
         resolved_name = self._resolve_model_name(model_name)
 
         # First check if model is supported
-        if resolved_name not in self.SUPPORTED_MODELS or not isinstance(self.SUPPORTED_MODELS[resolved_name], dict):
+        if resolved_name not in self.SUPPORTED_MODELS:
             return False
 
         # Then check if model is allowed by restrictions
@@ -281,77 +308,19 @@ class GeminiModelProvider(ModelProvider):
     def get_thinking_budget(self, model_name: str, thinking_mode: str) -> int:
         """Get actual thinking token budget for a model and thinking mode."""
         resolved_name = self._resolve_model_name(model_name)
-        model_config = self.SUPPORTED_MODELS.get(resolved_name, {})
+        model_config = self.SUPPORTED_MODELS.get(resolved_name)
 
-        if not model_config.get("supports_extended_thinking", False):
+        if not model_config or not model_config.supports_extended_thinking:
             return 0
 
         if thinking_mode not in self.THINKING_BUDGETS:
             return 0
 
-        max_thinking_tokens = model_config.get("max_thinking_tokens", 0)
+        max_thinking_tokens = model_config.max_thinking_tokens
         if max_thinking_tokens == 0:
             return 0
 
         return int(max_thinking_tokens * self.THINKING_BUDGETS[thinking_mode])
-
-    def list_models(self, respect_restrictions: bool = True) -> list[str]:
-        """Return a list of model names supported by this provider.
-
-        Args:
-            respect_restrictions: Whether to apply provider-specific restriction logic.
-
-        Returns:
-            List of model names available from this provider
-        """
-        from utils.model_restrictions import get_restriction_service
-
-        restriction_service = get_restriction_service() if respect_restrictions else None
-        models = []
-
-        for model_name, config in self.SUPPORTED_MODELS.items():
-            # Handle both base models (dict configs) and aliases (string values)
-            if isinstance(config, str):
-                # This is an alias - check if the target model would be allowed
-                target_model = config
-                if restriction_service and not restriction_service.is_allowed(self.get_provider_type(), target_model):
-                    continue
-                # Allow the alias
-                models.append(model_name)
-            else:
-                # This is a base model with config dict
-                # Check restrictions if enabled
-                if restriction_service and not restriction_service.is_allowed(self.get_provider_type(), model_name):
-                    continue
-                models.append(model_name)
-
-        return models
-
-    def list_all_known_models(self) -> list[str]:
-        """Return all model names known by this provider, including alias targets.
-
-        Returns:
-            List of all model names and alias targets known by this provider
-        """
-        all_models = set()
-
-        for model_name, config in self.SUPPORTED_MODELS.items():
-            # Add the model name itself
-            all_models.add(model_name.lower())
-
-            # If it's an alias (string value), add the target model too
-            if isinstance(config, str):
-                all_models.add(config.lower())
-
-        return list(all_models)
-
-    def _resolve_model_name(self, model_name: str) -> str:
-        """Resolve model shorthand to full name."""
-        # Check if it's a shorthand
-        shorthand_value = self.SUPPORTED_MODELS.get(model_name.lower())
-        if isinstance(shorthand_value, str):
-            return shorthand_value
-        return model_name
 
     def _extract_usage(self, response) -> dict[str, int]:
         """Extract token usage from Gemini response."""

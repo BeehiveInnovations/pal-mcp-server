@@ -128,6 +128,10 @@ class ModelRestrictionService:
 
         allowed_set = self.restrictions[provider_type]
 
+        if len(allowed_set) == 0:
+            # Empty set - allowed
+            return True
+
         # Check both the resolved name and original name (if different)
         names_to_check = {model_name.lower()}
         if original_name and original_name.lower() != model_name.lower():

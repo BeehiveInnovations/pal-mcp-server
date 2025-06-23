@@ -38,6 +38,15 @@ Available tests:
     debug_validation            - Debug tool validation with actual bugs
     conversation_chain_validation - Conversation chain continuity validation
 
+Quick Test Mode (for time-limited testing):
+    Use --quick to run the essential 6 tests that provide maximum coverage:
+    - cross_tool_continuation (cross-tool conversation memory)
+    - basic_conversation (basic chat functionality)
+    - content_validation (content validation and deduplication)
+    - model_thinking_config (flash/flashlite model testing)
+    - o3_model_selection (o3 model selection testing)
+    - per_tool_deduplication (file deduplication for individual tools)
+
 Examples:
     # Run all tests
     python communication_simulator_test.py
@@ -47,6 +56,9 @@ Examples:
 
     # Run a single test individually (with full standalone setup)
     python communication_simulator_test.py --individual content_validation
+
+    # Run quick test mode (essential 6 tests for time-limited testing)
+    python communication_simulator_test.py --quick
 
     # Force setup standalone server environment before running tests
     python communication_simulator_test.py --setup
@@ -68,20 +80,47 @@ class CommunicationSimulator:
     """Simulates real-world Claude CLI communication with MCP Gemini server"""
 
     def __init__(
-        self, verbose: bool = False, keep_logs: bool = False, selected_tests: list[str] = None, setup: bool = False
+        self,
+        verbose: bool = False,
+        keep_logs: bool = False,
+        selected_tests: list[str] = None,
+        setup: bool = False,
+        quick_mode: bool = False,
     ):
         self.verbose = verbose
         self.keep_logs = keep_logs
         self.selected_tests = selected_tests or []
         self.setup = setup
+        self.quick_mode = quick_mode
         self.temp_dir = None
         self.server_process = None
         self.python_path = self._get_python_path()
+
+        # Configure logging first
+        log_level = logging.DEBUG if verbose else logging.INFO
+        logging.basicConfig(level=log_level, format="%(asctime)s - %(levelname)s - %(message)s")
+        self.logger = logging.getLogger(__name__)
 
         # Import test registry
         from simulator_tests import TEST_REGISTRY
 
         self.test_registry = TEST_REGISTRY
+
+        # Define quick mode tests (essential tests for time-limited testing)
+        # Focus on tests that work with current tool configurations
+        self.quick_mode_tests = [
+            "cross_tool_continuation",  # Cross-tool conversation memory
+            "basic_conversation",  # Basic chat functionality
+            "content_validation",  # Content validation and deduplication
+            "model_thinking_config",  # Flash/flashlite model testing
+            "o3_model_selection",  # O3 model selection testing
+            "per_tool_deduplication",  # File deduplication for individual tools
+        ]
+
+        # If quick mode is enabled, override selected_tests
+        if self.quick_mode:
+            self.selected_tests = self.quick_mode_tests
+            self.logger.info(f"Quick mode enabled - running {len(self.quick_mode_tests)} essential tests")
 
         # Available test methods mapping
         self.available_tests = {
@@ -90,11 +129,6 @@ class CommunicationSimulator:
 
         # Test result tracking
         self.test_results = dict.fromkeys(self.test_registry.keys(), False)
-
-        # Configure logging
-        log_level = logging.DEBUG if verbose else logging.INFO
-        logging.basicConfig(level=log_level, format="%(asctime)s - %(levelname)s - %(message)s")
-        self.logger = logging.getLogger(__name__)
 
     def _get_python_path(self) -> str:
         """Get the Python path for the virtual environment"""
@@ -416,6 +450,9 @@ def parse_arguments():
     parser.add_argument("--list-tests", action="store_true", help="List available tests and exit")
     parser.add_argument("--individual", "-i", help="Run a single test individually")
     parser.add_argument(
+        "--quick", "-q", action="store_true", help="Run quick test mode (6 essential tests for time-limited testing)"
+    )
+    parser.add_argument(
         "--setup", action="store_true", help="Force setup standalone server environment using run-server.sh"
     )
 
@@ -492,7 +529,11 @@ def main():
 
     # Initialize simulator consistently for all use cases
     simulator = CommunicationSimulator(
-        verbose=args.verbose, keep_logs=args.keep_logs, selected_tests=args.tests, setup=args.setup
+        verbose=args.verbose,
+        keep_logs=args.keep_logs,
+        selected_tests=args.tests,
+        setup=args.setup,
+        quick_mode=args.quick,
     )
 
     # Determine execution mode and run

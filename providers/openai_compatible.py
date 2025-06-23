@@ -686,7 +686,6 @@ class OpenAICompatibleProvider(ModelProvider):
             "o3-mini",
             "o3-pro",
             "o4-mini",
-            "o4-mini-high",
             # Note: Claude models would be handled by a separate provider
         }
         supports = model_name.lower() in vision_models

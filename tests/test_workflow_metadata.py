@@ -48,7 +48,13 @@ class TestWorkflowMetadata:
         """
         # Save original environment
         original_env = {}
-        for key in ["GEMINI_API_KEY", "OPENAI_API_KEY", "XAI_API_KEY", "OPENROUTER_API_KEY"]:
+        for key in [
+            "GEMINI_API_KEY",
+            "OPENAI_API_KEY",
+            "XAI_API_KEY",
+            "OPENROUTER_API_KEY",
+            "OPENROUTER_ALLOWED_MODELS",
+        ]:
             original_env[key] = os.environ.get(key)
 
         try:
@@ -56,6 +62,7 @@ class TestWorkflowMetadata:
             os.environ.pop("GEMINI_API_KEY", None)
             os.environ.pop("OPENAI_API_KEY", None)
             os.environ.pop("XAI_API_KEY", None)
+            os.environ.pop("OPENROUTER_ALLOWED_MODELS", None)  # Clear any restrictions
             os.environ["OPENROUTER_API_KEY"] = "test-openrouter-key"
 
             # Register OpenRouter provider
@@ -124,7 +131,13 @@ class TestWorkflowMetadata:
         """
         # Save original environment
         original_env = {}
-        for key in ["GEMINI_API_KEY", "OPENAI_API_KEY", "XAI_API_KEY", "OPENROUTER_API_KEY"]:
+        for key in [
+            "GEMINI_API_KEY",
+            "OPENAI_API_KEY",
+            "XAI_API_KEY",
+            "OPENROUTER_API_KEY",
+            "OPENROUTER_ALLOWED_MODELS",
+        ]:
             original_env[key] = os.environ.get(key)
 
         try:
@@ -132,6 +145,7 @@ class TestWorkflowMetadata:
             os.environ.pop("GEMINI_API_KEY", None)
             os.environ.pop("OPENAI_API_KEY", None)
             os.environ.pop("XAI_API_KEY", None)
+            os.environ.pop("OPENROUTER_ALLOWED_MODELS", None)  # Clear any restrictions
             os.environ["OPENROUTER_API_KEY"] = "test-openrouter-key"
 
             # Register OpenRouter provider
@@ -182,43 +196,60 @@ class TestWorkflowMetadata:
         """
         Test that workflow tools handle metadata gracefully when model context is missing.
         """
-        # Create debug tool
-        debug_tool = DebugIssueTool()
+        # Save original environment
+        original_env = {}
+        for key in ["OPENROUTER_ALLOWED_MODELS"]:
+            original_env[key] = os.environ.get(key)
 
-        # Create arguments without model context (fallback scenario)
-        arguments = {
-            "step": "Test step without model context",
-            "step_number": 1,
-            "total_steps": 1,
-            "next_step_required": False,
-            "findings": "Test findings",
-            "model": "flash",
-            "confidence": "low",
-            # No _model_context or _resolved_model_name
-        }
+        try:
+            # Clear any restrictions
+            os.environ.pop("OPENROUTER_ALLOWED_MODELS", None)
 
-        # Execute the workflow tool
-        import asyncio
+            # Create debug tool
+            debug_tool = DebugIssueTool()
 
-        result = asyncio.run(debug_tool.execute_workflow(arguments))
+            # Create arguments without model context (fallback scenario)
+            arguments = {
+                "step": "Test step without model context",
+                "step_number": 1,
+                "total_steps": 1,
+                "next_step_required": False,
+                "findings": "Test findings",
+                "model": "flash",
+                "confidence": "low",
+                # No _model_context or _resolved_model_name
+            }
 
-        # Parse the JSON response
-        assert len(result) == 1
-        response_text = result[0].text
-        response_data = json.loads(response_text)
+            # Execute the workflow tool
+            import asyncio
 
-        # Verify metadata is still present with fallback values
-        assert "metadata" in response_data, "Workflow response should include metadata even in fallback"
-        metadata = response_data["metadata"]
+            result = asyncio.run(debug_tool.execute_workflow(arguments))
 
-        # Verify fallback metadata
-        assert "tool_name" in metadata, "Fallback metadata should include tool_name"
-        assert "model_used" in metadata, "Fallback metadata should include model_used"
-        assert "provider_used" in metadata, "Fallback metadata should include provider_used"
+            # Parse the JSON response
+            assert len(result) == 1
+            response_text = result[0].text
+            response_data = json.loads(response_text)
 
-        assert metadata["tool_name"] == "debug", "tool_name should be 'debug'"
-        assert metadata["model_used"] == "flash", "model_used should be from request"
-        assert metadata["provider_used"] == "unknown", "provider_used should be 'unknown' in fallback"
+            # Verify metadata is still present with fallback values
+            assert "metadata" in response_data, "Workflow response should include metadata even in fallback"
+            metadata = response_data["metadata"]
+
+            # Verify fallback metadata
+            assert "tool_name" in metadata, "Fallback metadata should include tool_name"
+            assert "model_used" in metadata, "Fallback metadata should include model_used"
+            assert "provider_used" in metadata, "Fallback metadata should include provider_used"
+
+            assert metadata["tool_name"] == "debug", "tool_name should be 'debug'"
+            assert metadata["model_used"] == "flash", "model_used should be from request"
+            assert metadata["provider_used"] == "unknown", "provider_used should be 'unknown' in fallback"
+
+        finally:
+            # Restore original environment
+            for key, value in original_env.items():
+                if value is None:
+                    os.environ.pop(key, None)
+                else:
+                    os.environ[key] = value
 
     @pytest.mark.no_mock_provider
     def test_workflow_metadata_preserves_existing_response_fields(self):
@@ -227,7 +258,13 @@ class TestWorkflowMetadata:
         """
         # Save original environment
         original_env = {}
-        for key in ["GEMINI_API_KEY", "OPENAI_API_KEY", "XAI_API_KEY", "OPENROUTER_API_KEY"]:
+        for key in [
+            "GEMINI_API_KEY",
+            "OPENAI_API_KEY",
+            "XAI_API_KEY",
+            "OPENROUTER_API_KEY",
+            "OPENROUTER_ALLOWED_MODELS",
+        ]:
             original_env[key] = os.environ.get(key)
 
         try:
@@ -235,6 +272,7 @@ class TestWorkflowMetadata:
             os.environ.pop("GEMINI_API_KEY", None)
             os.environ.pop("OPENAI_API_KEY", None)
             os.environ.pop("XAI_API_KEY", None)
+            os.environ.pop("OPENROUTER_ALLOWED_MODELS", None)  # Clear any restrictions
             os.environ["OPENROUTER_API_KEY"] = "test-openrouter-key"
 
             # Register OpenRouter provider

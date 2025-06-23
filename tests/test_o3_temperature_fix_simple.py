@@ -185,7 +185,7 @@ class TestO3TemperatureParameterFixSimple:
         provider = OpenAIModelProvider(api_key="test-key")
 
         # Test O3/O4 models that should NOT support temperature parameter
-        o3_o4_models = ["o3", "o3-mini", "o3-pro", "o4-mini", "o4-mini-high"]
+        o3_o4_models = ["o3", "o3-mini", "o3-pro", "o4-mini"]
 
         for model in o3_o4_models:
             capabilities = provider.get_capabilities(model)
