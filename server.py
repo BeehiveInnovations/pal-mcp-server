@@ -673,6 +673,11 @@ def parse_model_option(model_string: str) -> tuple[str, Optional[str]]:
     """
     Parse model:option format into model name and option.
 
+    Handles different formats:
+    - OpenRouter models: preserve :free, :beta, :preview suffixes as part of model name
+    - Ollama/Custom models: split on : to extract tags like :latest
+    - Consensus stance: extract options like :for, :against
+
     Args:
         model_string: String that may contain "model:option" format
 
@@ -680,6 +685,17 @@ def parse_model_option(model_string: str) -> tuple[str, Optional[str]]:
         tuple: (model_name, option) where option may be None
     """
     if ":" in model_string and not model_string.startswith("http"):  # Avoid parsing URLs
+        # Check if this looks like an OpenRouter model (contains /)
+        if "/" in model_string and model_string.count(":") == 1:
+            # Could be openai/gpt-4:something - check what comes after colon
+            parts = model_string.split(":", 1)
+            suffix = parts[1].strip().lower()
+
+            # Known OpenRouter suffixes to preserve
+            if suffix in ["free", "beta", "preview"]:
+                return model_string.strip(), None
+
+        # For other patterns (Ollama tags, consensus stances), split normally
         parts = model_string.split(":", 1)
         model_name = parts[0].strip()
         model_option = parts[1].strip() if len(parts) > 1 else None

@@ -58,7 +58,13 @@ class TestProviderRoutingBugs:
         """
         # Save original environment
         original_env = {}
-        for key in ["GEMINI_API_KEY", "OPENAI_API_KEY", "XAI_API_KEY", "OPENROUTER_API_KEY"]:
+        for key in [
+            "GEMINI_API_KEY",
+            "OPENAI_API_KEY",
+            "XAI_API_KEY",
+            "OPENROUTER_API_KEY",
+            "OPENROUTER_ALLOWED_MODELS",
+        ]:
             original_env[key] = os.environ.get(key)
 
         try:
@@ -66,6 +72,7 @@ class TestProviderRoutingBugs:
             os.environ.pop("GEMINI_API_KEY", None)  # No Google API key
             os.environ.pop("OPENAI_API_KEY", None)
             os.environ.pop("XAI_API_KEY", None)
+            os.environ.pop("OPENROUTER_ALLOWED_MODELS", None)  # Clear any restrictions
             os.environ["OPENROUTER_API_KEY"] = "test-openrouter-key"
 
             # Register only OpenRouter provider (like in server.py:configure_providers)
@@ -113,12 +120,24 @@ class TestProviderRoutingBugs:
         """
         # Save original environment
         original_env = {}
-        for key in ["GEMINI_API_KEY", "OPENAI_API_KEY", "XAI_API_KEY", "OPENROUTER_API_KEY"]:
+        for key in [
+            "GEMINI_API_KEY",
+            "OPENAI_API_KEY",
+            "XAI_API_KEY",
+            "OPENROUTER_API_KEY",
+            "OPENROUTER_ALLOWED_MODELS",
+        ]:
             original_env[key] = os.environ.get(key)
 
         try:
             # Set up scenario: NO API keys at all
-            for key in ["GEMINI_API_KEY", "OPENAI_API_KEY", "XAI_API_KEY", "OPENROUTER_API_KEY"]:
+            for key in [
+                "GEMINI_API_KEY",
+                "OPENAI_API_KEY",
+                "XAI_API_KEY",
+                "OPENROUTER_API_KEY",
+                "OPENROUTER_ALLOWED_MODELS",
+            ]:
                 os.environ.pop(key, None)
 
             # Create tool to test fallback logic
@@ -151,7 +170,13 @@ class TestProviderRoutingBugs:
         """
         # Save original environment
         original_env = {}
-        for key in ["GEMINI_API_KEY", "OPENAI_API_KEY", "XAI_API_KEY", "OPENROUTER_API_KEY"]:
+        for key in [
+            "GEMINI_API_KEY",
+            "OPENAI_API_KEY",
+            "XAI_API_KEY",
+            "OPENROUTER_API_KEY",
+            "OPENROUTER_ALLOWED_MODELS",
+        ]:
             original_env[key] = os.environ.get(key)
 
         try:
@@ -160,6 +185,7 @@ class TestProviderRoutingBugs:
             os.environ["OPENAI_API_KEY"] = "test-openai-key"
             os.environ["OPENROUTER_API_KEY"] = "test-openrouter-key"
             os.environ.pop("XAI_API_KEY", None)
+            os.environ.pop("OPENROUTER_ALLOWED_MODELS", None)  # Clear any restrictions
 
             # Register providers in priority order (like server.py)
             from providers.gemini import GeminiModelProvider
