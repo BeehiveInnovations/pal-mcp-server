@@ -175,6 +175,9 @@ FEATURE_*.md
 # Local user instructions
 CLAUDE.local.md
 
+# Claude Code personal settings
+.claude/settings.local.json
+
 # Standalone mode files
 .zen_venv/
 .docker_cleaned

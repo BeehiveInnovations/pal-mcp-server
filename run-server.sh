@@ -78,6 +78,20 @@ clear_python_cache() {
 # Platform Detection Functions
 # ----------------------------------------------------------------------------
 
+# Get cross-platform Python executable path from venv
+get_venv_python_path() {
+    local venv_path="$1"
+    
+    # Check for both Unix and Windows Python executable paths
+    if [[ -f "$venv_path/bin/python" ]]; then
+        echo "$venv_path/bin/python"
+    elif [[ -f "$venv_path/Scripts/python.exe" ]]; then
+        echo "$venv_path/Scripts/python.exe"
+    else
+        return 1  # No Python executable found
+    fi
+}
+
 # Detect the operating system
 detect_os() {
     case "$OSTYPE" in
@@ -106,7 +120,17 @@ get_claude_config_path() {
             echo "$HOME/.config/Claude/claude_desktop_config.json"
             ;;
         wsl)
-            echo "/mnt/c/Users/$USER/AppData/Roaming/Claude/claude_desktop_config.json"
+            local win_appdata
+            if command -v wslvar &> /dev/null; then
+                win_appdata=$(wslvar APPDATA 2>/dev/null)
+            fi
+            
+            if [[ -n "$win_appdata" ]]; then
+                echo "$(wslpath "$win_appdata")/Claude/claude_desktop_config.json"
+            else
+                print_warning "Could not determine Windows user path automatically. Please ensure APPDATA is set correctly or provide the full path manually."
+                echo "/mnt/c/Users/$USER/AppData/Roaming/Claude/claude_desktop_config.json"
+            fi
             ;;
         windows)
             echo "$APPDATA/Claude/claude_desktop_config.json"
@@ -469,7 +493,7 @@ try_install_system_packages() {
     # Check if we can use sudo
     if can_use_sudo; then
         print_info "Installing system packages (this may ask for your password)..."
-        if eval "$install_cmd" >/dev/null 2>&1; then
+        if bash -c "$install_cmd" >/dev/null 2>&1; then  # Replaced eval to prevent command injection
             print_success "System packages installed successfully"
             return 0
         else
@@ -532,6 +556,78 @@ bootstrap_pip() {
     
     rm -f "$temp_pip" 2>/dev/null
     return 1
+}
+
+# Setup environment using uv-first approach
+setup_environment() {
+    local venv_python=""
+    
+    # Try uv-first approach
+    if command -v uv &> /dev/null; then
+        print_info "Setting up environment with uv..."
+        
+        # Only remove existing venv if it wasn't created by uv (to ensure clean uv setup)
+        if [[ -d "$VENV_PATH" ]] && [[ ! -f "$VENV_PATH/uv_created" ]]; then
+            print_info "Removing existing environment for clean uv setup..."
+            rm -rf "$VENV_PATH"
+        fi
+        
+        # Try Python 3.12 first (preferred)
+        local uv_output
+        if uv_output=$(uv venv --python 3.12 "$VENV_PATH" 2>&1); then
+            # Use helper function for cross-platform path detection
+            if venv_python=$(get_venv_python_path "$VENV_PATH"); then
+                touch "$VENV_PATH/uv_created"  # Mark as uv-created
+                print_success "Created environment with uv using Python 3.12"
+            else
+                print_warning "uv succeeded but Python executable not found in venv"
+            fi
+        # Fall back to any available Python through uv
+        elif uv_output=$(uv venv "$VENV_PATH" 2>&1); then
+            # Use helper function for cross-platform path detection
+            if venv_python=$(get_venv_python_path "$VENV_PATH"); then
+                touch "$VENV_PATH/uv_created"  # Mark as uv-created
+                local python_version=$($venv_python --version 2>&1)
+                print_success "Created environment with uv using $python_version"
+            else
+                print_warning "uv succeeded but Python executable not found in venv"
+            fi
+        else
+            print_warning "uv environment creation failed, falling back to system Python detection"
+            print_warning "uv output: $uv_output"
+        fi
+    else
+        print_info "uv not found, using system Python detection"
+    fi
+    
+    # If uv failed or not available, fallback to system Python detection
+    if [[ -z "$venv_python" ]]; then
+        print_info "Setting up environment with system Python..."
+        local python_cmd
+        python_cmd=$(find_python) || return 1
+        
+        # Use existing venv creation logic
+        venv_python=$(setup_venv "$python_cmd")
+        if [[ $? -ne 0 ]]; then
+            return 1
+        fi
+    else
+        # venv_python was already set by uv creation above, just convert to absolute path
+        if [[ -n "$venv_python" ]]; then
+            # Convert to absolute path for MCP registration
+            local abs_venv_python
+            if cd "$(dirname "$venv_python")" 2>/dev/null; then
+                abs_venv_python=$(pwd)/$(basename "$venv_python")
+                venv_python="$abs_venv_python"
+            else
+                print_error "Failed to resolve absolute path for venv_python"
+                return 1
+            fi
+        fi
+    fi
+    
+    echo "$venv_python"
+    return 0
 }
 
 # Setup virtual environment
@@ -659,8 +755,8 @@ setup_venv() {
         exit 1
     fi
     
-    # Check if pip exists in the virtual environment
-    if [[ ! -f "$venv_pip" ]] && ! $venv_python -m pip --version &>/dev/null 2>&1; then
+    # Check if pip exists in the virtual environment (skip check if using uv-created environment)
+    if [[ ! -f "$VENV_PATH/uv_created" ]] && [[ ! -f "$venv_pip" ]] && ! $venv_python -m pip --version &>/dev/null 2>&1; then
         # On Linux, try to install system packages if pip is missing
         local os_type=$(detect_os)
         if [[ "$os_type" == "linux" || "$os_type" == "wsl" ]]; then
@@ -742,8 +838,8 @@ install_dependencies() {
     local python_cmd="$1"
     local deps_needed=false
     
-    # First verify pip is available
-    if ! $python_cmd -m pip --version &>/dev/null 2>&1; then
+    # First verify pip is available (skip check if using uv)
+    if [[ ! -f "$VENV_PATH/uv_created" ]] && ! $python_cmd -m pip --version &>/dev/null 2>&1; then
         print_error "pip is not available in the Python environment"
         echo ""
         echo "This indicates an incomplete Python installation."
@@ -775,9 +871,16 @@ install_dependencies() {
     echo "  • Environment configuration"
     echo ""
     
-    # Determine if we're in a venv
+    # Determine installation method - prefer uv if available and we're in a uv-created environment
     local install_cmd
-    if [[ -n "${VIRTUAL_ENV:-}" ]] || [[ "$python_cmd" == *"$VENV_PATH"* ]]; then
+    local use_uv=false
+    
+    if command -v uv &> /dev/null && [[ -f "$VENV_PATH/uv_created" ]]; then
+        # Use uv for faster installation if environment was created by uv
+        install_cmd="uv pip install -q -r requirements.txt --python $python_cmd"
+        use_uv=true
+        print_info "Using uv for faster package installation..."
+    elif [[ -n "${VIRTUAL_ENV:-}" ]] || [[ "$python_cmd" == *"$VENV_PATH"* ]]; then
         install_cmd="$python_cmd -m pip install -q -r requirements.txt"
     else
         install_cmd="$python_cmd -m pip install -q --user -r requirements.txt"
@@ -826,6 +929,10 @@ install_dependencies() {
             echo "  $python_cmd -m pip install --user -r requirements.txt"
         else
             echo "Try running manually:"
+            if [[ "$use_uv" == true ]]; then
+                echo "  uv pip install -r requirements.txt --python $python_cmd"
+                echo "Or fallback to pip:"
+            fi
             echo "  $python_cmd -m pip install -r requirements.txt"
             echo ""
             echo "Or install individual packages:"
@@ -1319,11 +1426,10 @@ main() {
             ;;
         -c|--config)
             # Setup minimal environment to get paths for config display
+            echo "Setting up environment for configuration display..."
+            echo ""
             local python_cmd
-            python_cmd=$(find_python) || exit 1
-            local new_python_cmd
-            new_python_cmd=$(setup_venv "$python_cmd")
-            python_cmd="$new_python_cmd"
+            python_cmd=$(setup_environment) || exit 1
             local script_dir=$(get_script_dir)
             local server_path="$script_dir/server.py"
             display_config_instructions "$python_cmd" "$server_path"
@@ -1372,51 +1478,43 @@ main() {
     # Step 1.5: Clear Python cache to prevent import issues
     clear_python_cache
     
-    # Step 2: Find Python
-    local python_cmd
-    if ! python_cmd=$(find_python); then
-        # find_python already printed error messages, just exit
-        exit 1
-    fi
-    
-    # Step 3: Setup environment file
+    # Step 2: Setup environment file
     setup_env_file || exit 1
     
-    # Step 4: Source .env file
+    # Step 3: Source .env file
     if [[ -f .env ]]; then
         set -a
         source .env
         set +a
     fi
     
-    # Step 5: Validate API keys
+    # Step 4: Validate API keys
     validate_api_keys || exit 1
     
-    # Step 6: Setup virtual environment
-    local new_python_cmd
-    new_python_cmd=$(setup_venv "$python_cmd")
-    python_cmd="$new_python_cmd"
+    # Step 5: Setup Python environment (uv-first approach)
+    local python_cmd
+    python_cmd=$(setup_environment) || exit 1
     
-    # Step 7: Install dependencies
+    # Step 6: Install dependencies
     install_dependencies "$python_cmd" || exit 1
     
-    # Step 8: Get absolute server path
+    # Step 7: Get absolute server path
     local script_dir=$(get_script_dir)
     local server_path="$script_dir/server.py"
     
-    # Step 9: Display setup instructions
+    # Step 8: Display setup instructions
     display_setup_instructions "$python_cmd" "$server_path"
     
-    # Step 10: Check Claude integrations
+    # Step 9: Check Claude integrations
     check_claude_cli_integration "$python_cmd" "$server_path"
     check_claude_desktop_integration "$python_cmd" "$server_path"
     
-    # Step 11: Display log information
+    # Step 10: Display log information
     echo ""
     echo "Logs will be written to: $script_dir/$LOG_DIR/$LOG_FILE"
     echo ""
     
-    # Step 12: Handle command line arguments
+    # Step 11: Handle command line arguments
     if [[ "$arg" == "-f" ]] || [[ "$arg" == "--follow" ]]; then
         follow_logs
     else
