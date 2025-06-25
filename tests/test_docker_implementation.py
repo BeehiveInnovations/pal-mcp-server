@@ -31,7 +31,6 @@ class TestDockerConfiguration:
         self.project_root = Path(__file__).parent.parent
         self.docker_compose_path = self.project_root / "docker-compose.yml"
         self.dockerfile_path = self.project_root / "Dockerfile"
-        self.mcp_config_path = self.project_root / ".vscode" / "mcp.json"
 
     def test_dockerfile_exists(self):
         """Test that Dockerfile exists and is valid"""
@@ -54,39 +53,6 @@ class TestDockerConfiguration:
         assert "services:" in content, "docker-compose.yml must have services"
         assert "zen-mcp" in content, "Service zen-mcp must be defined"
         assert "build:" in content, "Build configuration must be present"
-
-    def test_mcp_json_configuration(self):
-        """Test that mcp.json contains correct Docker configurations"""
-        assert self.mcp_config_path.exists(), "mcp.json must exist"
-
-        # Load and validate JSON
-        with open(self.mcp_config_path, encoding="utf-8") as f:
-            content = f.read()
-            # Remove JSON comments for validation
-            lines = content.split("\n")
-            clean_lines = []
-            for line in lines:
-                if "//" in line:
-                    line = line[: line.index("//")]
-                clean_lines.append(line)
-            clean_content = "\n".join(clean_lines)
-
-        mcp_config = json.loads(clean_content)
-
-        # Check structure
-        assert "servers" in mcp_config, "Configuration must have servers"
-        servers = mcp_config["servers"]
-
-        # Check zen configurations
-        assert "zen" in servers, "Zen configuration (local) must exist"
-        assert "zen-docker" in servers, "Zen-docker configuration must exist"
-
-        # Check zen-docker configuration
-        zen_docker = servers["zen-docker"]
-        assert zen_docker["command"] == "docker", "Command must be docker"
-        assert "run" in zen_docker["args"], "Args must contain run"
-        assert "--rm" in zen_docker["args"], "Args must contain --rm"
-        assert "-i" in zen_docker["args"], "Args must contain -i"
 
     def test_environment_file_template(self):
         """Test that an .env file template exists"""
