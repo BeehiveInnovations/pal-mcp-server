@@ -3,12 +3,12 @@
 [zen_web.webm](https://github.com/user-attachments/assets/851e3911-7f06-47c0-a4ab-a2601236697c)
 
 <div align="center">  
-  <b>🤖 Claude + [Gemini / OpenAI / Grok / OpenRouter / DIAL / Ollama / Any Model] = Your Ultimate AI Development Team</b>
+  <b>🤖 <a href="https://www.anthropic.com/claude-code">Claude</a> OR <a href="https://github.com/google-gemini/gemini-cli">Gemini CLI</a> + [Gemini / OpenAI / Grok / OpenRouter / DIAL / Ollama / Any Model] = Your Ultimate AI Development Team</b>
 </div>
 
 <br/>
 
-The ultimate development partners for Claude - a Model Context Protocol server that gives Claude access to multiple AI 
+The ultimate development partners for your favorite Coding Agent ([Claude](https://www.anthropic.com/claude-code) OR [Gemini CLI](https://github.com/google-gemini/gemini-cli)) - a Model Context Protocol server that gives you access to multiple AI 
 models for enhanced code analysis, problem-solving, and collaborative development.
 
 **Features true AI orchestration with conversations that continue across workflows** - Give Claude a complex
@@ -73,7 +73,7 @@ Because these AI models [clearly aren't when they get chatty →](docs/ai_banter
   - [Complete Advanced Guide](docs/advanced-usage.md) - Model configuration, thinking modes, workflows, tool parameters
 
 - **Setup & Support**
-  - [WSL Setup Guide](#21-wsl-windows-subsystem-for-linux-setup-guide) - Windows Subsystem for Linux configuration
+  - [WSL Setup Guide](docs/wsl-setup.md) - Windows Subsystem for Linux configuration
   - [Troubleshooting Guide](docs/troubleshooting.md) - Common issues and debugging steps
   - [License](#license) - Apache 2.0
 
@@ -181,85 +181,13 @@ cd zen-mcp-server
 - **Sets up everything automatically** - Python environment, dependencies, configuration
 - **Configures Claude integrations** - Adds to Claude Code CLI and guides Desktop setup
 - **Ready to use immediately** - No manual configuration needed
+- **Also works with Gemini CLI** - See [Gemini CLI Setup](docs/gemini-setup.md) for configuration
 
 **After updates:** Always run `./run-server.sh` again after `git pull` to ensure everything stays current.
 
+**Windows users:** Using WSL? See the [WSL Setup Guide](docs/wsl-setup.md) for detailed instructions.
 
-### 2.1. WSL (Windows Subsystem for Linux) Setup Guide
-
-If you're running on Windows with WSL, follow these additional steps to ensure proper configuration:
-
-#### Prerequisites for WSL
-```bash
-# Update WSL and ensure you have a recent Ubuntu distribution
-sudo apt update && sudo apt upgrade -y
-
-# Install required system dependencies
-sudo apt install -y python3-venv python3-pip curl git
-
-# Install Node.js and npm (required for Claude Code CLI)
-curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
-sudo apt install -y nodejs
-
-# Install Claude Code CLI globally
-npm install -g @anthropic-ai/claude-code
-```
-
-#### WSL-Specific Installation Steps
-
-1. **Clone the repository in your WSL environment** (not in Windows filesystem):
-   ```bash
-   # Navigate to your home directory or preferred location in WSL
-   cd ~
-   
-   # Clone the repository
-   git clone https://github.com/BeehiveInnovations/zen-mcp-server.git
-   cd zen-mcp-server
-   ```
-
-2. **Run the setup script**:
-   ```bash
-   # Make the script executable and run it
-   chmod +x run-server.sh
-   ./run-server.sh
-   ```
-
-3. **Verify Claude Code can find the MCP server**:
-   ```bash
-   # List configured MCP servers
-   claude mcp list
-   
-   # You should see 'zen' listed in the output
-   # If not, the setup script will provide the correct configuration
-   ```
-
-#### Troubleshooting WSL Issues
-
-**Python Environment Issues:**
-```bash
-# If you encounter Python virtual environment issues
-sudo apt install -y python3.12-venv python3.12-dev
-
-# Ensure pip is up to date
-python3 -m pip install --upgrade pip
-```
-
-**Path Issues:**
-- Always use the full WSL path for MCP configuration (e.g., `/home/YourName/zen-mcp-server/`)
-- The setup script automatically detects WSL and configures the correct paths
-
-**Claude Code Connection Issues:**
-```bash
-# If Claude Code can't connect to the MCP server, check the configuration
-cat ~/.claude.json | grep -A 10 "zen"
-
-# The configuration should show the correct WSL path to the Python executable
-# Example: "/home/YourName/zen-mcp-server/.zen_venv/bin/python"
-```
-
-**Performance Tip:** For best performance, keep your zen-mcp-server directory in the WSL filesystem (e.g., `~/zen-mcp-server`) rather than in the Windows filesystem (`/mnt/c/...`).
-
-### 4. Add Your API Keys
+### 3. Add Your API Keys
 
 ```bash
 # Edit .env to add your API keys (if not already set in environment)
@@ -297,7 +225,7 @@ If you were already running a `claude` code session, please exit and start a new
 2. **Copy the configuration** shown by `./run-server.sh -c` into your `claude_desktop_config.json`
 3. **Restart Claude Desktop** for changes to take effect
 
-### 5. Start Using It!
+### 4. Start Using It!
 
 Just ask Claude naturally:
 - "Think deeper about this architecture design with zen" → Claude picks best model + `thinkdeep`
