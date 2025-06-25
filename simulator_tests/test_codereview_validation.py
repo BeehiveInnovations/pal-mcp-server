@@ -514,7 +514,7 @@ class ConfigurationManager:
             expert_analysis = response_final_data.get("expert_analysis", {})
 
             # Check for expected analysis content (checking common patterns)
-            analysis_text = json.dumps(expert_analysis).lower()
+            analysis_text = json.dumps(expert_analysis, ensure_ascii=False).lower()
 
             # Look for code review identification
             review_indicators = ["security", "vulnerability", "performance", "critical", "api", "key"]

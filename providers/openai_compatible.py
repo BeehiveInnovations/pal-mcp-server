@@ -311,11 +311,12 @@ class OpenAICompatibleProvider(ModelProvider):
         last_exception = None
 
         for attempt in range(max_retries):
-            try:
-                # Log the exact payload being sent for debugging
+            try:  # Log the exact payload being sent for debugging
                 import json
 
-                logging.info(f"o3-pro API request payload: {json.dumps(completion_params, indent=2)}")
+                logging.info(
+                    f"o3-pro API request payload: {json.dumps(completion_params, indent=2, ensure_ascii=False)}"
+                )
 
                 # Use OpenAI client's responses endpoint
                 response = self.client.responses.create(**completion_params)

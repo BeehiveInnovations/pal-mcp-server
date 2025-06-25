@@ -430,7 +430,7 @@ REQUIREMENTS:
             expert_analysis = response_final_data.get("expert_analysis", {})
 
             # Check for expected analysis content (checking common patterns)
-            analysis_text = json.dumps(expert_analysis).lower()
+            analysis_text = json.dumps(expert_analysis, ensure_ascii=False).lower()
 
             # Look for security issue identification
             security_indicators = ["sql", "injection", "security", "hardcoded", "secret", "authentication"]

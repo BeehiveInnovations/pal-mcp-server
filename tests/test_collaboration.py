@@ -34,7 +34,8 @@ class TestDynamicContextRequests:
                 "status": "files_required_to_continue",
                 "mandatory_instructions": "I need to see the package.json file to understand dependencies",
                 "files_needed": ["package.json", "package-lock.json"],
-            }
+            },
+            ensure_ascii=False,
         )
 
         mock_provider = create_mock_provider()
@@ -174,7 +175,8 @@ class TestDynamicContextRequests:
                         ],
                     },
                 },
-            }
+            },
+            ensure_ascii=False,
         )
 
         mock_provider = create_mock_provider()
@@ -339,7 +341,8 @@ class TestCollaborationWorkflow:
                 "status": "files_required_to_continue",
                 "mandatory_instructions": "I need to see the package.json file to analyze npm dependencies",
                 "files_needed": ["package.json", "package-lock.json"],
-            }
+            },
+            ensure_ascii=False,
         )
 
         mock_provider = create_mock_provider()
@@ -405,7 +408,8 @@ class TestCollaborationWorkflow:
                 "status": "files_required_to_continue",
                 "mandatory_instructions": "I need to see the configuration file to understand the connection settings",
                 "files_needed": ["config.py"],
-            }
+            },
+            ensure_ascii=False,
         )
 
         mock_provider = create_mock_provider()

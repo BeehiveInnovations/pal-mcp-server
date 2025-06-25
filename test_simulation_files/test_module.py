@@ -2,11 +2,13 @@
 Sample Python module for testing MCP conversation continuity
 """
 
+
 def fibonacci(n):
     """Calculate fibonacci number recursively"""
     if n <= 1:
         return n
-    return fibonacci(n-1) + fibonacci(n-2)
+    return fibonacci(n - 1) + fibonacci(n - 2)
+
 
 def factorial(n):
     """Calculate factorial iteratively"""
@@ -14,6 +16,7 @@ def factorial(n):
     for i in range(1, n + 1):
         result *= i
     return result
+
 
 class Calculator:
     """Simple calculator class"""

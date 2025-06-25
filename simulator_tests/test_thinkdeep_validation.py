@@ -415,7 +415,7 @@ class ThinkDeepWorkflowValidationTest(ConversationBaseTest):
                         expert_analysis = {"analysis": expert_analysis}
 
             # Check for expected analysis content (checking common patterns)
-            analysis_text = json.dumps(expert_analysis).lower()
+            analysis_text = json.dumps(expert_analysis, ensure_ascii=False).lower()
 
             # Look for thinking analysis validation
             thinking_indicators = ["migration", "strategy", "microservices", "risk", "approach", "implementation"]

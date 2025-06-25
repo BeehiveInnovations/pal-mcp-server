@@ -2,15 +2,16 @@
 import hashlib
 import pickle
 import sqlite3
-from flask import request, session
+
 
 class AuthenticationManager:
     def __init__(self, db_path="users.db"):
         # A01: Broken Access Control - No proper session management
         self.db_path = db_path
         self.sessions = {}  # In-memory session storage
+
     def login(self, username, password):
-        '''User login with various security vulnerabilities'''
+        """User login with various security vulnerabilities"""
         # A03: Injection - SQL injection vulnerability
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -36,7 +37,7 @@ class AuthenticationManager:
             return {"status": "failed", "message": "Invalid password"}
 
     def reset_password(self, email):
-        '''Password reset with security issues'''
+        """Password reset with security issues"""
         # A04: Insecure Design - No rate limiting or validation
         reset_token = hashlib.md5(email.encode()).hexdigest()
 
@@ -45,12 +46,12 @@ class AuthenticationManager:
         return {"reset_token": reset_token, "url": f"/reset?token={reset_token}"}
 
     def deserialize_user_data(self, data):
-        '''Unsafe deserialization'''
+        """Unsafe deserialization"""
         # A08: Software and Data Integrity Failures - Insecure deserialization
         return pickle.loads(data)
 
     def get_user_profile(self, user_id):
-        '''Get user profile with authorization issues'''
+        """Get user profile with authorization issues"""
         # A01: Broken Access Control - No authorization check
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()

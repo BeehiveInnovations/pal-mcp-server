@@ -346,7 +346,7 @@ class TestCalculatorBasic:
             expert_analysis = response_final_data.get("expert_analysis", {})
 
             # Check for expected analysis content
-            analysis_text = json.dumps(expert_analysis).lower()
+            analysis_text = json.dumps(expert_analysis, ensure_ascii=False).lower()
 
             # Look for test generation indicators
             test_indicators = ["test", "edge", "boundary", "error", "coverage", "pytest"]

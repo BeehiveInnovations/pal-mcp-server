@@ -136,6 +136,15 @@ def _calculate_mcp_prompt_limit() -> int:
 
 MCP_PROMPT_SIZE_LIMIT = _calculate_mcp_prompt_limit()
 
+# Language/Locale Configuration
+# LOCALE: Language/locale specification for AI responses
+# When set, all AI tools will respond in the specified language while
+# maintaining their analytical capabilities
+# Examples: "fr-FR", "en-US", "zh-CN", "zh-TW", "ja-JP", "ko-KR", "es-ES",
+# "de-DE", "it-IT", "pt-PT"
+# Leave empty for default language (English)
+LOCALE = os.getenv("LOCALE", "")
+
 # Threading configuration
 # Simple in-memory conversation threading for stateless MCP environment
 # Conversations persist only during the Claude session

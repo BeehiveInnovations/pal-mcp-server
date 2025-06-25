@@ -385,7 +385,7 @@ RuntimeError: dictionary changed size during iteration
             expert_analysis = response_final_data.get("expert_analysis", {})
 
             # Check for expected analysis content (checking common patterns)
-            analysis_text = json.dumps(expert_analysis).lower()
+            analysis_text = json.dumps(expert_analysis, ensure_ascii=False).lower()
 
             # Look for bug identification
             bug_indicators = ["dictionary", "iteration", "modify", "runtime", "error", "del"]

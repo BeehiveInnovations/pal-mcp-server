@@ -125,7 +125,7 @@ class DataProcessorManager:
         # Code smell: Duplicate date formatting logic
         if output_format == 'json':
             processed_data['processed_at'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            result = json.dumps(processed_data)
+            result = json.dumps(processed_data, ensure_ascii=False)
         elif output_format == 'csv':
             processed_data['processed_at'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             result = f"{processed_data['full_name']},{processed_data['email_domain']},{processed_data['age_category']}"
@@ -580,7 +580,7 @@ class UserData:
                     self.logger.error("Missing expert_analysis in final response")
                     return False
                 expert_analysis = response_final_data.get("expert_analysis", {})
-                analysis_content = json.dumps(expert_analysis).lower()
+                analysis_content = json.dumps(expert_analysis, ensure_ascii=False).lower()
             elif actual_status == "files_required_to_continue":
                 # For files_required_to_continue, analysis is in content field
                 if "content" not in response_final_data:
@@ -708,7 +708,7 @@ def format_output(data, format_type):
     \"\"\"Format output - duplicate logic\"\"\"
     if format_type == 'json':
         import json
-        return json.dumps(data)
+        return json.dumps(data, ensure_ascii=False)
     elif format_type == 'csv':
         return ','.join(str(v) for v in data.values())
     else:
