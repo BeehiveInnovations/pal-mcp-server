@@ -1,0 +1,60 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+.zen_venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/*.log*
+*.log
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Documentation
+docs/
+README.md
+*.md
+
+# Tests
+tests/
+simulator_tests/
+pytest.ini
+
+# Development
+.env
+.env.local
+examples/
+scripts/bump_version.py
+code_quality_checks.sh
+run_integration_tests.sh
+
+# Context files (our planning documents)
+contexte/
+
+# PR files
+pr/

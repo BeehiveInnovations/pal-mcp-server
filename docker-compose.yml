@@ -1,0 +1,100 @@
+services:
+  zen-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    image: zen-mcp-server:latest
+    container_name: zen-mcp-server
+    
+    # Container labels for traceability
+    labels:
+      - "com.zen-mcp.service=zen-mcp-server"
+      - "com.zen-mcp.version=1.0.0"
+      - "com.zen-mcp.environment=production"
+      - "com.zen-mcp.description=AI-powered Model Context Protocol server"
+    
+    # Environment variables
+    environment:
+      # Default model configuration
+      - DEFAULT_MODEL=${DEFAULT_MODEL:-auto}
+      
+      # API Keys (use Docker secrets in production)
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - XAI_API_KEY=${XAI_API_KEY}
+      - DIAL_API_KEY=${DIAL_API_KEY}
+      - DIAL_API_HOST=${DIAL_API_HOST}
+      - DIAL_API_VERSION=${DIAL_API_VERSION}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - CUSTOM_API_URL=${CUSTOM_API_URL}
+      - CUSTOM_API_KEY=${CUSTOM_API_KEY}
+      - CUSTOM_MODEL_NAME=${CUSTOM_MODEL_NAME}
+      
+      # Logging configuration
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - LOG_MAX_SIZE=${LOG_MAX_SIZE:-10MB}
+      - LOG_BACKUP_COUNT=${LOG_BACKUP_COUNT:-5}
+      
+      # Advanced configuration
+      - DEFAULT_THINKING_MODE_THINKDEEP=${DEFAULT_THINKING_MODE_THINKDEEP:-high}
+      - DISABLED_TOOLS=${DISABLED_TOOLS}
+      - MAX_MCP_OUTPUT_TOKENS=${MAX_MCP_OUTPUT_TOKENS}
+      
+      # Server configuration
+      - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/app
+      - TZ=${TZ:-UTC}
+    
+    # Volumes for persistent data
+    volumes:
+      - ./logs:/app/logs
+      - zen-mcp-config:/app/conf
+    
+    # Network configuration
+    networks:
+      - zen-network
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "python", "/usr/local/bin/healthcheck.py"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    # Restart policy
+    restart: unless-stopped
+    
+    # Security
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=100m
+      - /app/tmp:noexec,nosuid,size=50m
+
+# Named volumes
+volumes:
+  zen-mcp-config:
+    driver: local
+
+# Networks
+networks:
+  zen-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
