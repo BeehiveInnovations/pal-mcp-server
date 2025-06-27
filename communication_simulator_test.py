@@ -94,12 +94,13 @@ class CommunicationSimulator:
         self.quick_mode = quick_mode
         self.temp_dir = None
         self.server_process = None
-        self.python_path = self._get_python_path()
 
         # Configure logging first
         log_level = logging.DEBUG if verbose else logging.INFO
         logging.basicConfig(level=log_level, format="%(asctime)s - %(levelname)s - %(message)s")
         self.logger = logging.getLogger(__name__)
+
+        self.python_path = self._get_python_path()
 
         # Import test registry
         from simulator_tests import TEST_REGISTRY
@@ -133,8 +134,14 @@ class CommunicationSimulator:
     def _get_python_path(self) -> str:
         """Get the Python path for the virtual environment"""
         current_dir = os.getcwd()
-        venv_python = os.path.join(current_dir, "venv", "bin", "python")
 
+        # Try .venv first (modern convention)
+        venv_python = os.path.join(current_dir, ".venv", "bin", "python")
+        if os.path.exists(venv_python):
+            return venv_python
+
+        # Try venv as fallback
+        venv_python = os.path.join(current_dir, "venv", "bin", "python")
         if os.path.exists(venv_python):
             return venv_python
 

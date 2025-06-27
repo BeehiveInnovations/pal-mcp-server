@@ -21,20 +21,32 @@ class BaseSimulatorTest:
         self.verbose = verbose
         self.test_files = {}
         self.test_dir = None
-        self.python_path = self._get_python_path()
 
-        # Configure logging
+        # Configure logging first
         log_level = logging.DEBUG if verbose else logging.INFO
         logging.basicConfig(level=log_level, format="%(asctime)s - %(levelname)s - %(message)s")
         self.logger = logging.getLogger(self.__class__.__name__)
 
+        self.python_path = self._get_python_path()
+
     def _get_python_path(self) -> str:
         """Get the Python path for the virtual environment"""
         current_dir = os.getcwd()
-        venv_python = os.path.join(current_dir, ".zen_venv", "bin", "python")
 
+        # Try .venv first (modern convention)
+        venv_python = os.path.join(current_dir, ".venv", "bin", "python")
         if os.path.exists(venv_python):
             return venv_python
+
+        # Try venv as fallback
+        venv_python = os.path.join(current_dir, "venv", "bin", "python")
+        if os.path.exists(venv_python):
+            return venv_python
+
+        # Try .zen_venv as fallback
+        zen_venv_python = os.path.join(current_dir, ".zen_venv", "bin", "python")
+        if os.path.exists(zen_venv_python):
+            return zen_venv_python
 
         # Fallback to system python if venv doesn't exist
         self.logger.warning("Virtual environment not found, using system python")

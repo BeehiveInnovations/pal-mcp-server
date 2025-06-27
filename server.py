@@ -32,7 +32,7 @@ from typing import Any, Optional
 # This is optional - environment variables can still be passed directly
 try:
     from dotenv import load_dotenv
-    
+
     # Load environment variables from .env file in the script's directory
     # This ensures .env is loaded regardless of the current working directory
     script_dir = Path(__file__).parent
