@@ -178,6 +178,11 @@ class OpenRouterProvider(OpenAICompatibleProvider):
         # Resolve model alias to actual OpenRouter model name
         resolved_model = self._resolve_model_name(model_name)
 
+        # Always disable streaming for OpenRouter
+        # MCP doesn't use streaming, and this avoids issues with O3 model access
+        if "stream" not in kwargs:
+            kwargs["stream"] = False
+
         # Call parent method with resolved model name
         return super().generate_content(
             prompt=prompt,
