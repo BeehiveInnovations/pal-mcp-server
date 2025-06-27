@@ -84,9 +84,10 @@ class ThinkDeepWorkflowRequest(WorkflowRequest):
         default="low",
         description="Indicate your current confidence in the analysis. Use: 'exploring' (starting analysis), "
         "'low' (early thinking), 'medium' (some insights gained), 'high' (strong understanding), "
-        "'certain' (only when the analysis is complete and conclusions are definitive). "
-        "Do NOT use 'certain' unless the thinking is comprehensively complete, use 'high' instead when in doubt. "
-        "Using 'certain' prevents additional expert analysis to save time and money.",
+        "'very_high' (very strong understanding), 'almost_certain' (nearly complete analysis), "
+        "'certain' (100% confidence - analysis is complete and conclusions are definitive with no need for external model validation). "
+        "Do NOT use 'certain' unless the thinking is comprehensively complete, use 'very_high' or 'almost_certain' instead when in doubt. "
+        "Using 'certain' means you have complete confidence locally and prevents external model validation.",
     )
 
     # Advanced workflow features
@@ -435,9 +436,25 @@ but also acknowledge strong insights and valid conclusions.
         elif confidence == "high":
             actions.extend(
                 [
+                    "Refine and validate key findings",
+                    "Explore edge cases and limitations",
+                    "Document assumptions and trade-offs",
+                ]
+            )
+        elif confidence == "very_high":
+            actions.extend(
+                [
                     "Synthesize findings into cohesive recommendations",
-                    "Validate conclusions against evidence",
-                    "Prepare for expert analysis",
+                    "Validate conclusions against all evidence",
+                    "Prepare comprehensive implementation guidance",
+                ]
+            )
+        elif confidence == "almost_certain":
+            actions.extend(
+                [
+                    "Finalize recommendations with high confidence",
+                    "Document any remaining minor uncertainties",
+                    "Prepare for expert analysis or implementation",
                 ]
             )
         else:  # certain
@@ -516,10 +533,20 @@ but also acknowledge strong insights and valid conclusions.
                     f"Your thinking analysis confidence is CERTAIN. Consider if you truly need step {next_step_number} "
                     f"or if you should complete the analysis now with expert validation."
                 )
+            elif request.confidence == "almost_certain":
+                guidance = (
+                    f"Your thinking analysis confidence is ALMOST_CERTAIN. For step {next_step_number}, consider: "
+                    f"finalizing recommendations, documenting any minor uncertainties, or preparing for implementation."
+                )
+            elif request.confidence == "very_high":
+                guidance = (
+                    f"Your thinking analysis confidence is VERY_HIGH. For step {next_step_number}, consider: "
+                    f"synthesis of all findings, comprehensive validation, or creating implementation roadmap."
+                )
             elif request.confidence == "high":
                 guidance = (
                     f"Your thinking analysis confidence is HIGH. For step {next_step_number}, consider: "
-                    f"validation of conclusions, stress-testing assumptions, or exploring edge cases."
+                    f"exploring edge cases, documenting trade-offs, or stress-testing key assumptions."
                 )
             elif request.confidence == "medium":
                 guidance = (

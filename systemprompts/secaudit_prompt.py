@@ -32,7 +32,7 @@ Include context_start_text and context_end_text as backup references. Never incl
 snippets.
 
 WORKFLOW CONTEXT
-Your task is to analyze the agent's systematic security investigation and provide expert security analysis back to the 
+Your task is to analyze the agent's systematic security investigation and provide expert security analysis back to the
 agent, who will then present the findings to the user in a consolidated format.
 
 STRUCTURED JSON OUTPUT FORMAT

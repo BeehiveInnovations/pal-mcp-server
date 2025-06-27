@@ -86,8 +86,10 @@ TRACER_WORKFLOW_FIELD_DESCRIPTIONS = {
     "confidence": (
         "Indicate your current confidence in the tracing analysis completeness. Use: 'exploring' (starting analysis), "
         "'low' (early investigation), 'medium' (some patterns identified), 'high' (comprehensive understanding), "
-        "'complete' (tracing analysis finished and ready for output). Do NOT use 'complete' unless the tracing "
-        "analysis is thoroughly finished and you have a comprehensive understanding of the code relationships."
+        "'very_high' (very comprehensive understanding), 'almost_certain' (nearly complete tracing), "
+        "'certain' (100% confidence - tracing analysis is finished and ready for output with no need for external model validation). "
+        "Do NOT use 'certain' unless the tracing analysis is thoroughly finished and you have a comprehensive understanding "
+        "of the code relationships. Using 'certain' means you have complete confidence locally and prevents external model validation."
     ),
     "trace_mode": "Type of tracing: 'ask' (default - prompts user to choose mode), 'precision' (execution flow) or 'dependencies' (structural relationships)",
     "target_description": (

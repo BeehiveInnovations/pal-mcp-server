@@ -92,10 +92,11 @@ CODEREVIEW_WORKFLOW_FIELD_DESCRIPTIONS = {
     ),
     "confidence": (
         "Indicate your current confidence in the code review assessment. Use: 'exploring' (starting analysis), 'low' "
-        "(early investigation), 'medium' (some evidence gathered), 'high' (strong evidence), 'certain' (only when "
-        "the code review is thoroughly complete and all significant issues are identified). Do NOT use 'certain' "
-        "unless the code review is comprehensively complete, use 'high' instead not 100% sure. Using 'certain' "
-        "prevents additional expert analysis."
+        "(early investigation), 'medium' (some evidence gathered), 'high' (strong evidence), "
+        "'very_high' (very strong evidence), 'almost_certain' (nearly complete review), 'certain' (100% confidence - "
+        "code review is thoroughly complete and all significant issues are identified with no need for external model validation). "
+        "Do NOT use 'certain' unless the code review is comprehensively complete, use 'very_high' or 'almost_certain' instead if not 100% sure. "
+        "Using 'certain' means you have complete confidence locally and prevents external model validation."
     ),
     "backtrack_from_step": (
         "If an earlier finding or assessment needs to be revised or discarded, specify the step number from which to "
@@ -263,7 +264,7 @@ class CodeReviewTool(WorkflowTool):
             },
             "confidence": {
                 "type": "string",
-                "enum": ["exploring", "low", "medium", "high", "certain"],
+                "enum": ["exploring", "low", "medium", "high", "very_high", "almost_certain", "certain"],
                 "description": CODEREVIEW_WORKFLOW_FIELD_DESCRIPTIONS["confidence"],
             },
             "backtrack_from_step": {

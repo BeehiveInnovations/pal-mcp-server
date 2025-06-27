@@ -67,7 +67,11 @@ WORKFLOW_FIELD_DESCRIPTIONS = {
     "relevant_files": "Files identified as relevant to the issue/goal",
     "relevant_context": "Methods/functions identified as involved in the issue",
     "issues_found": "Issues identified with severity levels during work",
-    "confidence": "Confidence level in findings: exploring, low, medium, high, certain",
+    "confidence": (
+        "Confidence level in findings: exploring (just starting), low (early investigation), "
+        "medium (some evidence), high (strong evidence), very_high (comprehensive understanding), "
+        "almost_certain (near complete confidence), certain (100% confidence locally - no external validation needed)"
+    ),
     "hypothesis": "Current theory about the issue/goal based on work",
     "backtrack_from_step": "Step number to backtrack from if work needs revision",
     "use_assistant_model": (

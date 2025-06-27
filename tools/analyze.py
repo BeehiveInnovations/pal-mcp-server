@@ -91,7 +91,8 @@ ANALYZE_WORKFLOW_FIELD_DESCRIPTIONS = {
     "confidence": (
         "Your confidence level in the current analysis findings: exploring (early investigation), "
         "low (some insights but more needed), medium (solid understanding), high (comprehensive insights), "
-        "certain (complete analysis ready for expert validation)"
+        "very_high (very comprehensive insights), almost_certain (nearly complete analysis), "
+        "certain (100% confidence - complete analysis ready for expert validation)"
     ),
     "analysis_type": "Type of analysis to perform (architecture, performance, security, quality, general)",
     "output_format": "How to format the output (summary, detailed, actionable)",
@@ -252,7 +253,7 @@ class AnalyzeTool(WorkflowTool):
             },
             "confidence": {
                 "type": "string",
-                "enum": ["exploring", "low", "medium", "high", "certain"],
+                "enum": ["exploring", "low", "medium", "high", "very_high", "almost_certain", "certain"],
                 "description": ANALYZE_WORKFLOW_FIELD_DESCRIPTIONS["confidence"],
             },
             "backtrack_from_step": {

@@ -91,10 +91,11 @@ DEBUG_INVESTIGATION_FIELD_DESCRIPTIONS = {
     ),
     "confidence": (
         "Indicate your current confidence in the hypothesis. Use: 'exploring' (starting out), 'low' (early idea), "
-        "'medium' (some supporting evidence), 'high' (strong evidence), 'certain' (only when "
-        "the root cause and minimal "
-        "fix are both confirmed). Do NOT use 'certain' unless the issue can be fully resolved with a fix, use 'high' "
-        "instead when not 100% sure. Using 'certain' prevents you from taking assistance from another thought-partner."
+        "'medium' (some supporting evidence), 'high' (strong evidence), 'very_high' (very strong evidence), "
+        "'almost_certain' (nearly confirmed), 'certain' (100% confidence - root cause and minimal fix are both "
+        "confirmed locally with no need for external model validation). Do NOT use 'certain' unless the issue can be "
+        "fully resolved with a fix, use 'very_high' or 'almost_certain' instead when not 100% sure. Using 'certain' "
+        "means you have complete confidence locally and prevents external model validation."
     ),
     "backtrack_from_step": (
         "If an earlier finding or hypothesis needs to be revised or discarded, specify the step number from which to "
@@ -238,7 +239,7 @@ class DebugIssueTool(WorkflowTool):
             },
             "confidence": {
                 "type": "string",
-                "enum": ["exploring", "low", "medium", "high", "certain"],
+                "enum": ["exploring", "low", "medium", "high", "very_high", "almost_certain", "certain"],
                 "description": DEBUG_INVESTIGATION_FIELD_DESCRIPTIONS["confidence"],
             },
             "hypothesis": {
@@ -283,7 +284,7 @@ class DebugIssueTool(WorkflowTool):
                 "Check for edge cases, boundary conditions, and assumptions in the code",
                 "Look for related configuration, dependencies, or external factors",
             ]
-        elif confidence in ["medium", "high"]:
+        elif confidence in ["medium", "high", "very_high", "almost_certain"]:
             # Close to root cause - need confirmation
             return [
                 "Examine the exact code sections where you believe the issue occurs",
@@ -325,9 +326,7 @@ class DebugIssueTool(WorkflowTool):
 
         # Add investigation summary
         investigation_summary = self._build_investigation_summary(consolidated_findings)
-        context_parts.append(
-            f"\n=== AGENT'S INVESTIGATION FINDINGS ===\n{investigation_summary}\n=== END FINDINGS ==="
-        )
+        context_parts.append(f"\n=== AGENT'S INVESTIGATION FINDINGS ===\n{investigation_summary}\n=== END FINDINGS ===")
 
         # Add error context if available
         error_context = self._extract_error_context(consolidated_findings)
