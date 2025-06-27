@@ -170,11 +170,20 @@ cd zen-mcp-server
 # One-command setup installs Zen in Claude
 ./run-server.sh
 
+# Or for Windows users using PowerShell:
+./run-server.ps1
+
 # To view MCP configuration for Claude
 ./run-server.sh -c
 
+# PowerShell:
+./run-server.ps1 -Config
+
 # See help for more
 ./run-server.sh --help
+
+# PowerShell:
+./run-server.ps1 -Help
 ```
 
 **What this does:**
