@@ -27,20 +27,6 @@ check_env_vars() {
         printf '  %s\n' "${required_vars[@]}"
         exit 1
     fi
-    local missing_vars=()
-    
-    for var in "${required_vars[@]}"; do
-        if [[ -z "${!var:-}" ]]; then
-            missing_vars+=("$var")
-        fi
-    done
-    
-    if [[ ${#missing_vars[@]} -gt 0 ]]; then
-        echo -e "${RED}Error: Missing required environment variables:${NC}"
-        printf '  %s\n' "${missing_vars[@]}"
-        echo -e "${YELLOW}Please set these variables in your .env file${NC}"
-        exit 1
-    fi
 }
 
 # Load environment variables

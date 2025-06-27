@@ -24,9 +24,13 @@ nano .env
 # Build the Docker image
 docker build -t zen-mcp-server:latest .
 
-# Or use the build script
+# Or use the build script (Bash)
 chmod +x docker/scripts/build.sh
 ./docker/scripts/build.sh
+
+# Build with PowerShell
+docker/scripts/build.ps1
+
 ```
 
 ### 4. Usage Options
@@ -53,6 +57,9 @@ docker run --rm -i \
 # Deploy with Docker Compose
 chmod +x docker/scripts/deploy.sh
 ./docker/scripts/deploy.sh
+
+# Or use PowerShell script
+docker/scripts/deploy.ps1
 
 # Interactive stdio mode
 docker-compose exec zen-mcp python server.py

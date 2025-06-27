@@ -43,6 +43,7 @@ README.md
 # Tests
 tests/
 simulator_tests/
+test_simulation_files/
 pytest.ini
 
 # Development
@@ -52,9 +53,3 @@ examples/
 scripts/bump_version.py
 code_quality_checks.sh
 run_integration_tests.sh
-
-# Context files (our planning documents)
-contexte/
-
-# PR files
-pr/
