@@ -53,3 +53,13 @@ examples/
 scripts/bump_version.py
 code_quality_checks.sh
 run_integration_tests.sh
+
+# Security - Sensitive files
+*.key
+*.pem
+*.p12
+*.pfx
+*.crt
+*.csr
+secrets/
+private/

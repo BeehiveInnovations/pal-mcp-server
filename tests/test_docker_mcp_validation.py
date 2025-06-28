@@ -21,7 +21,7 @@ class TestDockerMCPValidation:
 
     @pytest.fixture(autouse=True)
     def setup(self):
-        """Setup automatic for each test"""
+        """Automatic setup for each test"""
         self.project_root = Path(__file__).parent.parent
         self.dockerfile_path = self.project_root / "Dockerfile"
 
@@ -35,10 +35,10 @@ class TestDockerMCPValidation:
 
     @patch("subprocess.run")
     def test_docker_command_validation(self, mock_run):
-        """Test validation commande Docker"""
+        """Test Docker command validation"""
         mock_run.return_value.returncode = 0
 
-        # Commande Docker MCP standard
+        # Standard Docker MCP command
         cmd = ["docker", "run", "--rm", "-i", "--env-file", ".env", "zen-mcp-server:latest", "python", "server.py"]
 
         subprocess.run(cmd, capture_output=True)
@@ -61,7 +61,7 @@ class TestDockerMCPValidation:
     def test_docker_security_configuration(self):
         """Test Docker security configuration"""
         if not self.dockerfile_path.exists():
-            pytest.skip("Dockerfile non trouvé")
+            pytest.skip("Dockerfile not found")
 
         content = self.dockerfile_path.read_text()
 
@@ -70,10 +70,10 @@ class TestDockerMCPValidation:
 
         # Note: The test can be adjusted according to implementation
         if has_user_config:
-            assert True, "Configuration utilisateur trouvée"
+            assert True, "User configuration found"
         else:
-            # Avertissement plutôt qu'échec pour flexibilité
-            pytest.warns(UserWarning, "Considérer l'ajout d'un utilisateur non-root")
+            # Warning instead of failure for flexibility
+            pytest.warns(UserWarning, "Consider adding a non-root user")
 
 
 class TestDockerIntegration:
@@ -81,7 +81,7 @@ class TestDockerIntegration:
 
     @pytest.fixture
     def temp_env_file(self):
-        """Fixture pour fichier .env temporaire"""
+        """Fixture for temporary .env file"""
         content = """GEMINI_API_KEY=test_key
 LOG_LEVEL=INFO
 DEFAULT_MODEL=auto
@@ -90,7 +90,7 @@ DEFAULT_MODEL=auto
             f.write(content)
             temp_file_path = f.name
 
-        # Fichier fermé maintenant, on peut le yield
+        # File is now closed, can yield
         yield temp_file_path
         os.unlink(temp_file_path)
 
@@ -113,7 +113,7 @@ DEFAULT_MODEL=auto
         """Test MCP message structure"""
         message = {"jsonrpc": "2.0", "method": "initialize", "params": {}, "id": 1}
 
-        # Vérifier sérialisation JSON
+        # Check JSON serialization
         json_str = json.dumps(message)
         parsed = json.loads(json_str)
 
@@ -126,30 +126,30 @@ class TestDockerPerformance:
     """Docker performance tests"""
 
     def test_image_size_expectation(self):
-        """Test taille image attendue"""
-        # Taille maximale attendue (en MB)
+        """Test expected image size"""
+        # Maximum expected size (in MB)
         max_size_mb = 500
 
-        # Simulation - en réalité on interrogerait Docker
-        simulated_size = 294  # MB observé
+        # Simulation - in reality, Docker would be queried
+        simulated_size = 294  # MB observed
 
         assert simulated_size <= max_size_mb, f"Image too large: {simulated_size}MB > {max_size_mb}MB"
 
     def test_startup_performance(self):
-        """Test performance démarrage"""
+        """Test startup performance"""
         max_startup_seconds = 10
-        simulated_startup = 3  # secondes
+        simulated_startup = 3  # seconds
 
         assert simulated_startup <= max_startup_seconds, f"Startup too slow: {simulated_startup}s"
 
 
 @pytest.mark.integration
 class TestFullIntegration:
-    """Tests d'intégration complète"""
+    """Full integration tests"""
 
     def test_complete_setup_simulation(self):
-        """Simulation setup complet"""
-        # Simuler tous les composants requis
+        """Simulate complete setup"""
+        # Simulate all required components
         components = {
             "dockerfile": True,
             "mcp_config": True,
@@ -157,13 +157,13 @@ class TestFullIntegration:
             "documentation": True,
         }
 
-        # Vérifier que tous les composants sont présents
+        # Check that all components are present
         missing = [k for k, v in components.items() if not v]
         assert not missing, f"Missing components: {missing}"
 
     def test_docker_mcp_workflow(self):
-        """Test workflow Docker-MCP complet"""
-        # Étapes du workflow
+        """Test complete Docker-MCP workflow"""
+        # Workflow steps
         workflow_steps = [
             "build_image",
             "create_env_file",
@@ -172,9 +172,9 @@ class TestFullIntegration:
             "validate_mcp_communication",
         ]
 
-        # Simuler chaque étape
+        # Simulate each step
         for step in workflow_steps:
-            # En réalité, chaque étape serait testée individuellement
+            # In reality, each step would be tested individually
             assert step is not None, f"Step {step} not defined"
 
 
