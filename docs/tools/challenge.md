@@ -13,8 +13,6 @@ challenge but do we even need all this extra caching because it'll just slow the
 challenge I don't think this approach solves my original complaint
 ```
 
-Here’s a more fluid and natural version:
-
 Normally, your favorite coding agent will enthusiastically reply with **“You’re absolutely right!”**—then proceed to 
 reverse the _correct_ strategy entirely, without stopping to consider that you might actually be wrong, missing the 
 bigger picture or ignoring architectural constraints.
