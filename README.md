@@ -166,18 +166,67 @@ The final implementation resulted in a 26% improvement in JSON parsing performan
 
 **Prerequisites**: Install [uv](https://docs.astral.sh/uv/getting-started/installation/) first (required for uvx)
 
-For **Claude Desktop**, add this to your `claude_desktop_config.json`
+<details>
+<summary>Claude Desktop Configuration</summary>
+
+Add this to your `claude_desktop_config.json`:
 ```json
 {
   "mcpServers": {
     "zen": {
-      "command": "uvx",
+      "command": "sh",
       "args": [
-        "--from",
-        "git+https://github.com/BeehiveInnovations/zen-mcp-server.git",
-        "zen-mcp-server"
+        "-c",
+        "exec $(which uvx || echo uvx) --from git+https://github.com/BeehiveInnovations/zen-mcp-server.git zen-mcp-server"
       ],
       "env": {
+        "PATH": "/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin:~/.local/bin",
+        "OPENAI_API_KEY": "your_api_key_here"
+      }
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary>Claude Code CLI Configuration</summary>
+
+Create a `.mcp.json` file in your project root for [project-scoped configuration](https://docs.anthropic.com/en/docs/claude-code/mcp#project-scope):
+```json
+{
+  "mcpServers": {
+    "zen": {
+      "command": "sh",
+      "args": [
+        "-c",
+        "exec $(which uvx || echo uvx) --from git+https://github.com/BeehiveInnovations/zen-mcp-server.git zen-mcp-server"
+      ],
+      "env": {
+        "PATH": "/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin:~/.local/bin",
+        "OPENAI_API_KEY": "your_api_key_here"
+      }
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary>Gemini CLI Configuration</summary>
+
+Edit `~/.gemini/settings.json` and add:
+```json
+{
+  "mcpServers": {
+    "zen": {
+      "command": "sh",
+      "args": [
+        "-c",
+        "exec $(which uvx || echo uvx) --from git+https://github.com/BeehiveInnovations/zen-mcp-server.git zen-mcp-server"
+      ],
+      "env": {
+        "PATH": "/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin:~/.local/bin",
         "OPENAI_API_KEY": "your_api_key_here"
       }
     }
@@ -185,24 +234,8 @@ For **Claude Desktop**, add this to your `claude_desktop_config.json`
 }
 ```
 
-For **Claude Code CLI**, create a `.mcp.json` file in your project root for [project-scoped configuration](https://docs.anthropic.com/en/docs/claude-code/mcp#project-scope):
-```json
-{
-  "mcpServers": {
-    "zen": {
-      "command": "uvx",
-      "args": [
-        "--from",
-        "git+https://github.com/BeehiveInnovations/zen-mcp-server.git",
-        "zen-mcp-server"
-      ],
-      "env": {
-        "OPENAI_API_KEY": "your_api_key_here"
-      }
-    }
-  }
-}
-```
+**Note**: While Zen MCP Server connects successfully to Gemini CLI, tool invocation is not working correctly yet. See [Gemini CLI Setup](docs/gemini-setup.md) for updates.
+</details>
 
 **What this does:**
 - **Zero setup required** - uvx handles everything automatically
