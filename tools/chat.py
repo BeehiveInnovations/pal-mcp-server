@@ -204,7 +204,7 @@ class ChatTool(SimpleTool):
         Format the chat response to match the original Chat tool exactly.
         """
         return (
-            f"{response}\n\n---\n\n**Claude's Turn:** Evaluate this perspective alongside your analysis to "
+            f"{response}\n\n---\n\nAGENT'S TURN: Evaluate this perspective alongside your analysis to "
             "form a comprehensive solution and continue with the user's request and task at hand."
         )
 

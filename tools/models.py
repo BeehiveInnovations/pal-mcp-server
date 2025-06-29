@@ -17,12 +17,12 @@ class ToolModelCategory(Enum):
 
 
 class ContinuationOffer(BaseModel):
-    """Offer for Claude to continue conversation when Gemini doesn't ask follow-up"""
+    """Offer for CLI agent to continue conversation when Gemini doesn't ask follow-up"""
 
     continuation_id: str = Field(
         ..., description="Thread continuation ID for multi-turn conversations across different tools"
     )
-    note: str = Field(..., description="Message explaining continuation opportunity to Claude")
+    note: str = Field(..., description="Message explaining continuation opportunity to CLI agent")
     remaining_turns: int = Field(..., description="Number of conversation turns remaining")
 
 
@@ -48,7 +48,7 @@ class ToolOutput(BaseModel):
     content_type: Literal["text", "markdown", "json"] = "text"
     metadata: Optional[dict[str, Any]] = Field(default_factory=dict)
     continuation_offer: Optional[ContinuationOffer] = Field(
-        None, description="Optional offer for Claude to continue conversation"
+        None, description="Optional offer for Agent to continue conversation"
     )
 
 
@@ -56,7 +56,7 @@ class FilesNeededRequest(BaseModel):
     """Request for missing files / code to continue"""
 
     status: Literal["files_required_to_continue"] = "files_required_to_continue"
-    mandatory_instructions: str = Field(..., description="Critical instructions for Claude regarding required context")
+    mandatory_instructions: str = Field(..., description="Critical instructions for Agent regarding required context")
     files_needed: Optional[list[str]] = Field(
         default_factory=list, description="Specific files that are needed for analysis"
     )
@@ -75,7 +75,7 @@ class FullCodereviewRequired(BaseModel):
 
 
 class FocusedReviewRequired(BaseModel):
-    """Request for Claude to provide smaller, focused subsets of code for review"""
+    """Request for Agent to provide smaller, focused subsets of code for review"""
 
     status: Literal["focused_review_required"] = "focused_review_required"
     reason: str = Field(..., description="Why the current scope is too large for effective review")
@@ -122,14 +122,14 @@ class RefactorOpportunity(BaseModel):
 
 
 class RefactorAction(BaseModel):
-    """Next action for Claude to implement refactoring"""
+    """Next action for Agent to implement refactoring"""
 
     action_type: Literal["EXTRACT_METHOD", "SPLIT_CLASS", "MODERNIZE_SYNTAX", "REORGANIZE_CODE", "DECOMPOSE_FILE"] = (
         Field(..., description="Type of action to perform")
     )
     target_file: str = Field(..., description="Absolute path to target file")
     source_lines: str = Field(..., description="Line range (e.g., '45-67')")
-    description: str = Field(..., description="Step-by-step action description for Claude")
+    description: str = Field(..., description="Step-by-step action description for CLI Agent")
 
 
 class RefactorAnalysisComplete(BaseModel):
@@ -138,7 +138,7 @@ class RefactorAnalysisComplete(BaseModel):
     status: Literal["refactor_analysis_complete"] = "refactor_analysis_complete"
     refactor_opportunities: list[RefactorOpportunity] = Field(..., description="List of refactoring opportunities")
     priority_sequence: list[str] = Field(..., description="Recommended order of refactoring IDs")
-    next_actions_for_claude: list[RefactorAction] = Field(..., description="Specific actions for Claude to implement")
+    next_actions: list[RefactorAction] = Field(..., description="Specific actions for the agent to implement")
 
 
 class CodeTooLargeRequest(BaseModel):

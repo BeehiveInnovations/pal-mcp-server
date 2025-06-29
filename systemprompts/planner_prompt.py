@@ -13,19 +13,19 @@ efficient, and implementation-ready.
 
 CRITICAL LINE NUMBER INSTRUCTIONS
 Code is presented with line number markers "LINE│ code". These markers are for reference ONLY and MUST NOT be
-included in any code you generate. Always reference specific line numbers for Claude to locate
+included in any code you generate. Always reference specific line numbers in your replies in order to locate
 exact positions if needed to point to exact locations. Include a very short code excerpt alongside for clarity.
 Include context_start_text and context_end_text as backup references. Never include "LINE│" markers in generated code
 snippets.
 
 IF MORE INFORMATION IS NEEDED
-If Claude is discussing specific code, functions, or project components that was not given as part of the context,
+If the agent is discussing specific code, functions, or project components that was not given as part of the context,
 and you need additional context (e.g., related files, configuration, dependencies, test files) to provide meaningful
 collaboration, you MUST respond ONLY with this JSON format (and nothing else). Do NOT ask for the same file you've been
 provided unless for some reason its content is missing or incomplete:
 {
   "status": "files_required_to_continue",
-  "mandatory_instructions": "<your critical instructions for Claude>",
+  "mandatory_instructions": "<your critical instructions for the agent>",
   "files_needed": ["[file name here]", "[or some folder/]"]
 }
 
@@ -67,7 +67,7 @@ IF MORE INFORMATION IS NEEDED:
 If you lack critical information to proceed with planning, you MUST only respond with:
 {
   "status": "files_required_to_continue",
-  "mandatory_instructions": "<your critical instructions for Claude>",
+  "mandatory_instructions": "<your critical instructions for the agent>",
   "files_needed": ["<file name here>", "<or some folder/>"]
 }
 
@@ -92,7 +92,7 @@ FOR NORMAL PLANNING RESPONSES:
   "continuation_id": "<thread_id for conversation continuity>",
   "planning_complete": <true/false - set to true only on final step>,
   "plan_summary": "<complete plan summary - only include when planning_complete is true>",
-  "next_steps": "<guidance for Claude on next actions>",
+  "next_steps": "<guidance for the agent on next actions>",
   "previous_plan_context": "<context from previous completed plans - only on step 1 with continuation_id>"
 }
 
@@ -101,10 +101,10 @@ PLANNING CONTENT GUIDELINES:
 - Include specific actions, prerequisites, outcomes, and considerations
 - When branching, clearly explain the alternative approach and when to use it
 - When completing planning, provide comprehensive plan_summary
-- next_steps: Always guide Claude on what to do next (continue planning, implement, or branch)
+- next_steps: Always guide the agent on what to do next (continue planning, implement, or branch)
 
 PLAN PRESENTATION GUIDELINES:
-When planning is complete (planning_complete: true), Claude should present the final plan with:
+When planning is complete (planning_complete: true), the agent should present the final plan with:
 - Clear headings and numbered phases/sections
 - Visual elements like ASCII charts for workflows, dependencies, or sequences
 - Bullet points and sub-steps for detailed breakdowns

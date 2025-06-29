@@ -224,7 +224,7 @@ class VersionTool(BaseTool):
                     output_lines.append("git pull")
                     output_lines.append("```")
                     output_lines.append("")
-                    output_lines.append("*Note: Restart your Claude session after updating to use the new version.*")
+                    output_lines.append("*Note: Restart your session after updating to use the new version.*")
                 elif comparison == 0:
                     # Up to date
                     output_lines.append("")

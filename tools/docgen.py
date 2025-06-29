@@ -198,7 +198,7 @@ class DocgenTool(WorkflowTool):
         """
         Docgen tool doesn't require model resolution at the MCP boundary.
 
-        The docgen tool is a self-contained workflow tool that guides Claude through
+        The docgen tool is a self-contained workflow tool that guides the CLI agent through
         systematic documentation generation without calling external AI models.
 
         Returns:
@@ -503,7 +503,7 @@ class DocgenTool(WorkflowTool):
 
     def should_skip_expert_analysis(self, request, consolidated_findings) -> bool:
         """
-        Docgen tool skips expert analysis when Claude has "certain" confidence.
+        Docgen tool skips expert analysis when the CLI agent has "certain" confidence.
         """
         return request.confidence == "certain" and not request.next_step_required
 
@@ -536,7 +536,7 @@ class DocgenTool(WorkflowTool):
 
     def get_skip_reason(self) -> str:
         """Docgen-specific skip reason."""
-        return "Claude completed comprehensive documentation analysis"
+        return "Completed comprehensive documentation analysis locally"
 
     def get_request_relevant_context(self, request) -> list:
         """Get relevant_context for docgen tool."""

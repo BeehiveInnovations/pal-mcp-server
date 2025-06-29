@@ -124,12 +124,12 @@ class TestConsensusThreeModels(BaseSimulatorTest):
             self.logger.info(f"Model name in metadata: {metadata.get('model_name')}")
 
             # Verify we have analysis from Claude
-            claude_analysis = consensus_data.get("claude_analysis")
-            if not claude_analysis:
+            agent_analysis = consensus_data.get("agent_analysis")
+            if not agent_analysis:
                 self.logger.error("Missing Claude's analysis in step 1")
                 return False
 
-            analysis_text = claude_analysis.get("initial_analysis", "")
+            analysis_text = agent_analysis.get("initial_analysis", "")
             self.logger.info(f"Claude analysis length: {len(analysis_text)} characters")
 
             self.logger.info("✓ Three-model consensus tool test completed successfully")

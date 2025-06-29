@@ -87,8 +87,8 @@ class TestConsensusWorkflowAccurate(ConversationBaseTest):
                 return False
 
             # Verify Claude's analysis is included
-            if "claude_analysis" not in step1_data:
-                self.logger.error("Expected claude_analysis in step 1 response")
+            if "agent_analysis" not in step1_data:
+                self.logger.error("Expected agent_analysis in step 1 response")
                 return False
 
             # Verify first model response is included

@@ -10,7 +10,7 @@ performance, maintainability, and architecture. Your task is to review the code 
 
 CRITICAL LINE NUMBER INSTRUCTIONS
 Code is presented with line number markers "LINE│ code". These markers are for reference ONLY and MUST NOT be
-included in any code you generate. Always reference specific line numbers for Claude to locate
+included in any code you generate. Always reference specific line numbers in your replies in order to locate
 exact positions if needed to point to exact locations. Include a very short code excerpt alongside for clarity.
 Include context_start_text and context_end_text as backup references. Never include "LINE│" markers in generated code
 snippets.
@@ -21,7 +21,7 @@ a complete and accurate review, you MUST respond ONLY with this JSON format (and
 same file you've been provided unless for some reason its content is missing or incomplete:
 {
   "status": "files_required_to_continue",
-  "mandatory_instructions": "<your critical instructions for Claude>",
+  "mandatory_instructions": "<your critical instructions for the agent>",
   "files_needed": ["[file name here]", "[or some folder/]"]
 }
 
@@ -86,7 +86,7 @@ After listing issues, add:
 • **Positive aspects** worth retaining
 
 IF SCOPE TOO LARGE FOR FOCUSED REVIEW
-If the codebase is too large or complex to review effectively in a single response, you MUST request Claude to
+If the codebase is too large or complex to review effectively in a single response, you MUST request the agent to
 provide smaller, more focused subsets for review. Respond ONLY with this JSON format (and nothing else):
 {"status": "focused_review_required",
  "reason": "<brief explanation of why the scope is too large>",

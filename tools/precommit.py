@@ -2,7 +2,7 @@
 Precommit Workflow tool - Step-by-step pre-commit validation with expert analysis
 
 This tool provides a structured workflow for comprehensive pre-commit validation.
-It guides Claude through systematic investigation steps with forced pauses between each step
+It guides the CLI agent through systematic investigation steps with forced pauses between each step
 to ensure thorough code examination, git change analysis, and issue detection before proceeding.
 The tool supports backtracking, finding updates, and expert analysis integration.
 
@@ -86,9 +86,12 @@ PRECOMMIT_WORKFLOW_FIELD_DESCRIPTIONS = {
     ),
     "confidence": (
         "Indicate your current confidence in the assessment. Use: 'exploring' (starting analysis), 'low' (early "
-        "investigation), 'medium' (some evidence gathered), 'high' (strong evidence), 'certain' (only when the "
-        "analysis is complete and all issues are identified). Do NOT use 'certain' unless the pre-commit validation "
-        "is thoroughly complete, use 'high' instead not 100% sure. Using 'certain' prevents additional expert analysis."
+        "investigation), 'medium' (some evidence gathered), 'high' (strong evidence), "
+        "'very_high' (very strong evidence), 'almost_certain' (nearly complete validation), 'certain' (100% confidence - "
+        "analysis is complete and all issues are identified with no need for external model validation). "
+        "Do NOT use 'certain' unless the pre-commit validation is thoroughly complete, use 'very_high' or 'almost_certain' instead if not 100% sure. "
+        "Using 'certain' means you have complete confidence locally and prevents external model validation. Also "
+        "do NOT set confidence to 'certain' if the user has strongly requested that external validation MUST be performed."
     ),
     "backtrack_from_step": (
         "If an earlier finding or assessment needs to be revised or discarded, specify the step number from which to "
@@ -266,7 +269,7 @@ class PrecommitTool(WorkflowTool):
             },
             "confidence": {
                 "type": "string",
-                "enum": ["exploring", "low", "medium", "high", "certain"],
+                "enum": ["exploring", "low", "medium", "high", "very_high", "almost_certain", "certain"],
                 "description": PRECOMMIT_WORKFLOW_FIELD_DESCRIPTIONS["confidence"],
             },
             "backtrack_from_step": {
@@ -365,7 +368,7 @@ class PrecommitTool(WorkflowTool):
         """
         Decide when to call external model based on investigation completeness.
 
-        Don't call expert analysis if Claude has certain confidence - trust their judgment.
+        Don't call expert analysis if the CLI agent has certain confidence - trust their judgment.
         """
         # Check if user requested to skip assistant model
         if request and not self.get_request_use_assistant_model(request):
@@ -387,7 +390,7 @@ class PrecommitTool(WorkflowTool):
         # Add investigation summary
         investigation_summary = self._build_precommit_summary(consolidated_findings)
         context_parts.append(
-            f"\\n=== CLAUDE'S PRE-COMMIT INVESTIGATION ===\\n{investigation_summary}\\n=== END INVESTIGATION ==="
+            f"\\n=== AGENT'S PRE-COMMIT INVESTIGATION ===\\n{investigation_summary}\\n=== END INVESTIGATION ==="
         )
 
         # Add git configuration context if available
@@ -485,7 +488,7 @@ class PrecommitTool(WorkflowTool):
 
     def should_skip_expert_analysis(self, request, consolidated_findings) -> bool:
         """
-        Precommit workflow skips expert analysis when Claude has "certain" confidence.
+        Precommit workflow skips expert analysis when the CLI agent has "certain" confidence.
         """
         return request.confidence == "certain" and not request.next_step_required
 
@@ -522,7 +525,7 @@ class PrecommitTool(WorkflowTool):
 
     def get_skip_reason(self) -> str:
         """Precommit-specific skip reason."""
-        return "Claude completed comprehensive pre-commit validation with full confidence"
+        return "Completed comprehensive pre-commit validation with full confidence locally"
 
     def get_skip_expert_analysis_status(self) -> str:
         """Precommit-specific expert analysis skip status."""

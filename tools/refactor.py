@@ -2,7 +2,7 @@
 Refactor tool - Step-by-step refactoring analysis with expert validation
 
 This tool provides a structured workflow for comprehensive code refactoring analysis.
-It guides Claude through systematic investigation steps with forced pauses between each step
+It guides CLI agent through systematic investigation steps with forced pauses between each step
 to ensure thorough code examination, refactoring opportunity identification, and quality
 assessment before proceeding. The tool supports complex refactoring scenarios including
 code smell detection, decomposition planning, modernization opportunities, and organization improvements.
@@ -92,11 +92,12 @@ REFACTOR_FIELD_DESCRIPTIONS = {
         "Indicate your current confidence in the refactoring analysis completeness. Use: 'exploring' (starting "
         "analysis), 'incomplete' (just started or significant work remaining), 'partial' (some refactoring "
         "opportunities identified but more analysis needed), 'complete' (comprehensive refactoring analysis "
-        "finished with all major opportunities identified and Claude can handle 100% confidently without help). "
+        "finished with all major opportunities identified and the CLI agent can handle 100% confidently without help). "
         "Use 'complete' ONLY when you have fully analyzed all code, identified all significant refactoring "
         "opportunities, and can provide comprehensive recommendations without expert assistance. When files are "
         "too large to read fully or analysis is uncertain, use 'partial'. Using 'complete' prevents expert "
-        "analysis to save time and money."
+        "analysis to save time and money. Do NOT set confidence to 'certain' if the user has strongly requested that "
+        "external validation MUST be performed."
     ),
     "backtrack_from_step": (
         "If an earlier finding or assessment needs to be revised or discarded, specify the step number from which to "
@@ -357,7 +358,7 @@ class RefactorTool(WorkflowTool):
         """
         Decide when to call external model based on investigation completeness.
 
-        Don't call expert analysis if Claude has certain confidence and complete refactoring - trust their judgment.
+        Don't call expert analysis if the CLI agent has certain confidence and complete refactoring - trust their judgment.
         """
         # Check if user requested to skip assistant model
         if request and not self.get_request_use_assistant_model(request):
@@ -383,7 +384,7 @@ class RefactorTool(WorkflowTool):
         # Add investigation summary
         investigation_summary = self._build_refactoring_summary(consolidated_findings)
         context_parts.append(
-            f"\\n=== CLAUDE'S REFACTORING INVESTIGATION ===\\n{investigation_summary}\\n=== END INVESTIGATION ==="
+            f"\\n=== AGENT'S REFACTORING INVESTIGATION ===\\n{investigation_summary}\\n=== END INVESTIGATION ==="
         )
 
         # Add refactor configuration context if available
@@ -484,7 +485,7 @@ class RefactorTool(WorkflowTool):
 
     def should_skip_expert_analysis(self, request, consolidated_findings) -> bool:
         """
-        Refactor workflow skips expert analysis when Claude has "complete" confidence.
+        Refactor workflow skips expert analysis when the CLI agent has "complete" confidence.
         """
         return request.confidence == "complete" and not request.next_step_required
 
@@ -524,7 +525,7 @@ class RefactorTool(WorkflowTool):
 
     def get_skip_reason(self) -> str:
         """Refactor-specific skip reason."""
-        return "Claude completed comprehensive refactoring analysis with full confidence"
+        return "Completed comprehensive refactoring analysis with full confidence locally"
 
     def get_skip_expert_analysis_status(self) -> str:
         """Refactor-specific expert analysis skip status."""

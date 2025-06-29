@@ -2,7 +2,7 @@
 Tracer Workflow tool - Step-by-step code tracing and dependency analysis
 
 This tool provides a structured workflow for comprehensive code tracing and analysis.
-It guides Claude through systematic investigation steps with forced pauses between each step
+It guides the CLI agent through systematic investigation steps with forced pauses between each step
 to ensure thorough code examination, dependency mapping, and execution flow analysis before proceeding.
 
 The tracer guides users through sequential code analysis with full context awareness and
@@ -86,8 +86,10 @@ TRACER_WORKFLOW_FIELD_DESCRIPTIONS = {
     "confidence": (
         "Indicate your current confidence in the tracing analysis completeness. Use: 'exploring' (starting analysis), "
         "'low' (early investigation), 'medium' (some patterns identified), 'high' (comprehensive understanding), "
-        "'complete' (tracing analysis finished and ready for output). Do NOT use 'complete' unless the tracing "
-        "analysis is thoroughly finished and you have a comprehensive understanding of the code relationships."
+        "'very_high' (very comprehensive understanding), 'almost_certain' (nearly complete tracing), "
+        "'certain' (100% confidence - tracing analysis is finished and ready for output with no need for external model validation). "
+        "Do NOT use 'certain' unless the tracing analysis is thoroughly finished and you have a comprehensive understanding "
+        "of the code relationships. Using 'certain' means you have complete confidence locally and prevents external model validation."
     ),
     "trace_mode": "Type of tracing: 'ask' (default - prompts user to choose mode), 'precision' (execution flow) or 'dependencies' (structural relationships)",
     "target_description": (
@@ -545,7 +547,7 @@ class TracerTool(WorkflowTool):
 
     def _get_rendering_instructions(self, trace_mode: str) -> str:
         """
-        Get mode-specific rendering instructions for Claude.
+        Get mode-specific rendering instructions for the CLI agent.
 
         Args:
             trace_mode: Either "precision" or "dependencies"

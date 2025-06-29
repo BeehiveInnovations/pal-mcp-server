@@ -2,12 +2,12 @@
 Consensus tool - Step-by-step multi-model consensus with expert analysis
 
 This tool provides a structured workflow for gathering consensus from multiple models.
-It guides Claude through systematic steps where Claude first provides its own analysis,
+It guides the CLI agent through systematic steps where the CLI agent first provides its own analysis,
 then consults each requested model one by one, and finally synthesizes all perspectives.
 
 Key features:
 - Step-by-step consensus workflow with progress tracking
-- Claude's initial neutral analysis followed by model-specific consultations
+- The CLI agent's initial neutral analysis followed by model-specific consultations
 - Context-aware file embedding
 - Support for stance-based analysis (for/against/neutral)
 - Final synthesis combining all perspectives
@@ -153,7 +153,7 @@ class ConsensusTool(WorkflowTool):
     """
     Consensus workflow tool for step-by-step multi-model consensus gathering.
 
-    This tool implements a structured consensus workflow where Claude first provides
+    This tool implements a structured consensus workflow where the CLI agent first provides
     its own neutral analysis, then consults each specified model individually,
     and finally synthesizes all perspectives into a unified recommendation.
     """
@@ -189,7 +189,7 @@ class ConsensusTool(WorkflowTool):
         )
 
     def get_system_prompt(self) -> str:
-        # For Claude's initial analysis, use a neutral version of the consensus prompt
+        # For the CLI agent's initial analysis, use a neutral version of the consensus prompt
         return CONSENSUS_PROMPT.replace(
             "{stance_prompt}",
             """BALANCED PERSPECTIVE
@@ -325,7 +325,7 @@ of the evidence, even when it strongly points in one direction.""",
         Note: confidence parameter is kept for compatibility with base class but not used.
         """
         if step_number == 1:
-            # Claude's initial analysis
+            # CLI Agent's initial analysis
             return [
                 "You've provided your initial analysis. The tool will now consult other models.",
                 "Wait for the next step to receive the first model's response.",
@@ -416,7 +416,7 @@ of the evidence, even when it strongly points in one direction.""",
         current_idx = request.current_model_index or 0
 
         if request.step_number == 1:
-            # After Claude's initial analysis, prepare to consult first model
+            # After CLI Agent's initial analysis, prepare to consult first model
             response_data["status"] = "consulting_models"
             response_data["next_model"] = self.models_to_consult[0] if self.models_to_consult else None
             response_data["next_steps"] = (
@@ -475,9 +475,9 @@ of the evidence, even when it strongly points in one direction.""",
                     "next_step_required": request.step_number < request.total_steps,
                 }
 
-                # Add Claude's analysis to step 1
+                # Add CLAI Agent's analysis to step 1
                 if request.step_number == 1:
-                    response_data["claude_analysis"] = {
+                    response_data["agent_analysis"] = {
                         "initial_analysis": request.step,
                         "findings": request.findings,
                     }
@@ -682,7 +682,7 @@ of the evidence, even when it strongly points in one direction.""",
         """
         Customize metadata for consensus workflow to accurately reflect multi-model nature.
 
-        The default workflow metadata shows the model running Claude's analysis steps,
+        The default workflow metadata shows the model running Agent's analysis steps,
         but consensus is a multi-model tool that consults different models. We need
         to provide accurate metadata that reflects this.
         """
@@ -728,7 +728,7 @@ of the evidence, even when it strongly points in one direction.""",
                 }
             )
 
-            # Remove the misleading single model metadata that shows Claude's execution model
+            # Remove the misleading single model metadata that shows Agent's execution model
             # instead of the models being consulted
             metadata.pop("model_used", None)
             metadata.pop("provider_used", None)

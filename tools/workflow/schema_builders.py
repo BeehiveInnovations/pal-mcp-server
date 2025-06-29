@@ -65,7 +65,7 @@ class WorkflowSchemaBuilder:
         },
         "confidence": {
             "type": "string",
-            "enum": ["exploring", "low", "medium", "high", "certain"],
+            "enum": ["exploring", "low", "medium", "high", "very_high", "almost_certain", "certain"],
             "description": WORKFLOW_FIELD_DESCRIPTIONS["confidence"],
         },
         "hypothesis": {

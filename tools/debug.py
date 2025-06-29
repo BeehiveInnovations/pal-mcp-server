@@ -91,10 +91,12 @@ DEBUG_INVESTIGATION_FIELD_DESCRIPTIONS = {
     ),
     "confidence": (
         "Indicate your current confidence in the hypothesis. Use: 'exploring' (starting out), 'low' (early idea), "
-        "'medium' (some supporting evidence), 'high' (strong evidence), 'certain' (only when "
-        "the root cause and minimal "
-        "fix are both confirmed). Do NOT use 'certain' unless the issue can be fully resolved with a fix, use 'high' "
-        "instead when not 100% sure. Using 'certain' prevents you from taking assistance from another thought-partner."
+        "'medium' (some supporting evidence), 'high' (strong evidence), 'very_high' (very strong evidence), "
+        "'almost_certain' (nearly confirmed), 'certain' (100% confidence - root cause and minimal fix are both "
+        "confirmed locally with no need for external model validation). Do NOT use 'certain' unless the issue can be "
+        "fully resolved with a fix, use 'very_high' or 'almost_certain' instead when not 100% sure. Using 'certain' "
+        "means you have complete confidence locally and prevents external model validation. Also do "
+        "NOT set confidence to 'certain' if the user has strongly requested that external validation MUST be performed."
     ),
     "backtrack_from_step": (
         "If an earlier finding or hypothesis needs to be revised or discarded, specify the step number from which to "
@@ -238,7 +240,7 @@ class DebugIssueTool(WorkflowTool):
             },
             "confidence": {
                 "type": "string",
-                "enum": ["exploring", "low", "medium", "high", "certain"],
+                "enum": ["exploring", "low", "medium", "high", "very_high", "almost_certain", "certain"],
                 "description": DEBUG_INVESTIGATION_FIELD_DESCRIPTIONS["confidence"],
             },
             "hypothesis": {
@@ -283,13 +285,21 @@ class DebugIssueTool(WorkflowTool):
                 "Check for edge cases, boundary conditions, and assumptions in the code",
                 "Look for related configuration, dependencies, or external factors",
             ]
-        elif confidence in ["medium", "high"]:
+        elif confidence in ["medium", "high", "very_high"]:
             # Close to root cause - need confirmation
             return [
                 "Examine the exact code sections where you believe the issue occurs",
                 "Trace the execution path that leads to the failure",
                 "Verify your hypothesis with concrete code evidence",
                 "Check for any similar patterns elsewhere in the codebase",
+            ]
+        elif confidence == "almost_certain":
+            # Almost certain - final verification before conclusion
+            return [
+                "Finalize your root cause analysis with specific evidence",
+                "Document the complete chain of causation from symptom to root cause",
+                "Verify the minimal fix approach is correct",
+                "Consider if expert analysis would provide additional insights",
             ]
         else:
             # General investigation needed
@@ -304,7 +314,7 @@ class DebugIssueTool(WorkflowTool):
         """
         Decide when to call external model based on investigation completeness.
 
-        Don't call expert analysis if Claude has certain confidence - trust their judgment.
+        Don't call expert analysis if the CLI agent has certain confidence - trust their judgment.
         """
         # Check if user requested to skip assistant model
         if request and not self.get_request_use_assistant_model(request):
@@ -323,11 +333,22 @@ class DebugIssueTool(WorkflowTool):
             f"=== ISSUE DESCRIPTION ===\n{self.initial_issue or 'Investigation initiated'}\n=== END DESCRIPTION ==="
         ]
 
+        # Add special note if confidence is almost_certain
+        if consolidated_findings.confidence == "almost_certain":
+            context_parts.append(
+                "\n=== IMPORTANT: ALMOST CERTAIN CONFIDENCE ===\n"
+                "The agent has reached 'almost_certain' confidence but has NOT confirmed the bug with 100% certainty. "
+                "Your role is to:\n"
+                "1. Validate the agent's hypothesis and investigation\n"
+                "2. Identify any missing evidence or overlooked aspects\n"
+                "3. Provide additional insights that could confirm or refute the hypothesis\n"
+                "4. Help finalize the root cause analysis with complete certainty\n"
+                "=== END IMPORTANT ==="
+            )
+
         # Add investigation summary
         investigation_summary = self._build_investigation_summary(consolidated_findings)
-        context_parts.append(
-            f"\n=== CLAUDE'S INVESTIGATION FINDINGS ===\n{investigation_summary}\n=== END FINDINGS ==="
-        )
+        context_parts.append(f"\n=== AGENT'S INVESTIGATION FINDINGS ===\n{investigation_summary}\n=== END FINDINGS ===")
 
         # Add error context if available
         error_context = self._extract_error_context(consolidated_findings)
@@ -422,7 +443,7 @@ class DebugIssueTool(WorkflowTool):
                 + f"\n\nOnly call {self.get_name()} again with step_number: {step_number + 1} AFTER "
                 + "completing these investigations."
             )
-        elif confidence in ["medium", "high"]:
+        elif confidence in ["medium", "high", "very_high"]:
             next_steps = (
                 f"WAIT! Your hypothesis needs verification. DO NOT call {self.get_name()} immediately. REQUIRED ACTIONS:\n"
                 + "\n".join(f"{i+1}. {action}" for i, action in enumerate(required_actions))
@@ -430,6 +451,16 @@ class DebugIssueTool(WorkflowTool):
                 f"'no bug found' is a valid conclusion. Consider suggesting discussion with your thought partner "
                 f"or engineering assistant for clarification. Document findings with specific file:line references, "
                 f"then call {self.get_name()} with step_number: {step_number + 1}."
+            )
+        elif confidence == "almost_certain":
+            next_steps = (
+                "ALMOST CERTAIN - Prepare for final analysis. REQUIRED ACTIONS:\n"
+                + "\n".join(f"{i+1}. {action}" for i, action in enumerate(required_actions))
+                + "\n\nIMPORTANT: You're almost certain about the root cause. If you have NOT found the bug with "
+                "100% certainty, consider setting next_step_required=false to invoke expert analysis. The expert "
+                "can validate your hypotheses and provide additional insights. If you ARE 100% certain and have "
+                "identified the exact bug and fix, proceed to confidence='certain'. Otherwise, let expert analysis "
+                "help finalize the investigation."
             )
         else:
             next_steps = (
@@ -468,7 +499,7 @@ class DebugIssueTool(WorkflowTool):
 
     def should_skip_expert_analysis(self, request, consolidated_findings) -> bool:
         """
-        Debug tool skips expert analysis when Claude has "certain" confidence.
+        Debug tool skips expert analysis when agent has "certain" confidence.
         """
         return request.confidence == "certain" and not request.next_step_required
 
@@ -501,7 +532,7 @@ class DebugIssueTool(WorkflowTool):
 
     def get_skip_reason(self) -> str:
         """Debug-specific skip reason."""
-        return "Claude identified exact root cause with minimal fix requirement"
+        return "Identified exact root cause with minimal fix requirement locally"
 
     def get_request_relevant_context(self, request) -> list:
         """Get relevant_context for debug tool."""

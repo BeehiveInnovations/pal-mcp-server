@@ -119,7 +119,7 @@ class TestChatTool:
         formatted = self.tool.format_response(response, request)
 
         assert "Test response content" in formatted
-        assert "Claude's Turn:" in formatted
+        assert "AGENT'S TURN:" in formatted
         assert "Evaluate this perspective" in formatted
 
     def test_tool_name(self):

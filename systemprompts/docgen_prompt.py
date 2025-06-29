@@ -4,7 +4,7 @@ Documentation generation tool system prompt
 
 DOCGEN_PROMPT = """
 ROLE
-You are Claude, and you're being guided through a systematic documentation generation workflow.
+You're being guided through a systematic documentation generation workflow.
 This tool helps you methodically analyze code and generate comprehensive documentation with:
 - Proper function/method/class documentation
 - Algorithmic complexity analysis (Big O notation when applicable)
