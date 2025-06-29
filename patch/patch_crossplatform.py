@@ -25,33 +25,47 @@ FIXED ISSUES:
     - Shell scripts didn't detect Windows virtual environment paths
     - Solution: Added detection for .zen_venv/Scripts/ paths
 
-5. COMMUNICATION SIMULATOR LOGGER BUG:
+5. SHELL SCRIPTS PYTHON AND TOOL DETECTION:
+    - Python and tool executables not detected on Windows
+    - Solution: Added detection for .zen_venv/Scripts/*.exe paths
+
+6. COMMUNICATION SIMULATOR LOGGER BUG:
     - AttributeError: logger used before initialization
     - Solution: Initialize logger before calling _get_python_path()
 
-6. PYTHON PATH DETECTION ON WINDOWS:
-    - Simulator couldn't find Windows Python executable
-    - Solution: Added Windows-specific path detection
+7. PYTHON PATH DETECTION ON WINDOWS (SIMULATOR & TESTS):
+    - Simulator and test classes couldn't find Windows Python executable
+    - Solution: Added Windows-specific path detection in simulator and
+      BaseSimulatorTest
 
-7. BASE TEST CLASSES LOGGER BUG:
+8. BASE TEST CLASSES LOGGER BUG:
     - AttributeError: logger used before initialization in test classes
-    - Solution: Initialize logger before calling _get_python_path() in BaseSimulatorTest
+    - Solution: Initialize logger before calling _get_python_path() in
+      BaseSimulatorTest
 
-8. BASE TEST PYTHON PATH DETECTION ON WINDOWS:
-    - Test classes couldn't find Windows Python executable
-    - Solution: Added Windows-specific path detection to BaseSimulatorTest
+9. BASE TOOL LOGGER AND PYTHON PATH (tools/shared/base_tool.py):
+    - Logger may be used before initialization or Python path not detected on
+      Windows
+    - Solution: Ensure logger is initialized before Python path detection and
+      add Windows-specific path detection
+
+10. WINDOWS PATH VALIDATION:
+    - Some path validation logic did not handle Windows/Unix cross-compatibility
+    - Solution: Improved path validation to support both Windows and Unix
+      absolute paths for tests
 
 MODIFIED FILES:
 - utils/file_utils.py : Home patterns + Unix path validation
 - tests/test_file_protection.py : Cross-platform assertions
 - tests/test_utils.py : Safe_files test with temporary file
 - run_integration_tests.sh : Windows venv detection
-- code_quality_checks.sh : Windows venv and tools detection
+- code_quality_checks.sh : Windows venv and tools detection + tool paths
 - communication_simulator_test.py : Logger initialization order + Windows paths
 - simulator_tests/base_test.py : Logger initialization order + Windows paths
+- tools/shared/base_tool.py : Logger initialization order + Windows paths
 
 Usage:
-     python patch_complet_crossplatform.py [--dry-run] [--backup] [--validate-only]
+     python patch_crossplatform.py [--dry-run] [--backup] [--validate-only]
 
 Options:
      --dry-run       : Show modifications without applying them
@@ -83,6 +97,7 @@ class CrossPlatformPatcher:
             "code_quality_checks_sh": self.workspace_root / "code_quality_checks.sh",
             "communication_simulator": self.workspace_root / "communication_simulator_test.py",
             "base_test": self.workspace_root / "simulator_tests" / "base_test.py",
+            "base_tool": self.workspace_root / "tools" / "shared" / "base_tool.py",
         }
 
         for _, path in files.items():
@@ -636,6 +651,196 @@ fi"""
 
         return content, False
 
+    def patch_windows_path_validation(self, content: str) -> tuple[str, bool]:
+        """Patch 13: Enhanced Windows path validation in base_tool.py."""
+        # Check if already patched - look for the new implementation
+        if (
+            "self._is_valid_absolute_path(path)" in content
+            and "def _is_valid_absolute_path(self, path: str) -> bool:" in content
+        ):
+            return content, False
+
+        # Define the old validate_file_paths method that we want to replace
+        old_method = '''    def validate_file_paths(self, request) -> Optional[str]:
+        """
+        Validate that all file paths in the request are absolute.
+
+        This is a critical security function that prevents path traversal attacks
+        and ensures all file access is properly controlled. All file paths must
+        be absolute to avoid ambiguity and security issues.
+
+        Args:
+            request: The validated request object
+
+        Returns:
+            Optional[str]: Error message if validation fails, None if all paths are valid
+        """
+        # Only validate files/paths if they exist in the request
+        file_fields = [
+            "files",
+            "file",
+            "path",
+            "directory",
+            "notebooks",
+            "test_examples",
+            "style_guide_examples",
+            "files_checked",
+            "relevant_files",
+        ]
+
+        for field_name in file_fields:
+            if hasattr(request, field_name):
+                field_value = getattr(request, field_name)
+                if field_value is None:
+                    continue
+
+                # Handle both single paths and lists of paths
+                paths_to_check = field_value if isinstance(field_value, list) else [field_value]
+
+                for path in paths_to_check:
+                    if path and not os.path.isabs(path):
+                        return f"All file paths must be FULL absolute paths. Invalid path: '{path}'"
+
+        return None'''
+
+        # Define the new complete implementation (validate_file_paths + _is_valid_absolute_path)
+        new_implementation = '''    def validate_file_paths(self, request) -> Optional[str]:
+        """
+        Validate that all file paths in the request are absolute.
+
+        This is a critical security function that prevents path traversal attacks
+        and ensures all file access is properly controlled. All file paths must
+        be absolute to avoid ambiguity and security issues.
+
+        Args:
+            request: The validated request object
+
+        Returns:
+            Optional[str]: Error message if validation fails, None if all paths are valid
+        """
+        # Only validate files/paths if they exist in the request
+        file_fields = [
+            "files",
+            "file",
+            "path",
+            "directory",
+            "notebooks",
+            "test_examples",
+            "style_guide_examples",
+            "files_checked",
+            "relevant_files",
+        ]
+
+        for field_name in file_fields:
+            if hasattr(request, field_name):
+                field_value = getattr(request, field_name)
+                if field_value is None:
+                    continue
+
+                # Handle both single paths and lists of paths
+                paths_to_check = field_value if isinstance(field_value, list) else [field_value]
+
+                for path in paths_to_check:
+                    if path and not self._is_valid_absolute_path(path):
+                        return f"All file paths must be FULL absolute paths. Invalid path: '{path}'"
+
+        return None
+
+    def _is_valid_absolute_path(self, path: str) -> bool:
+        """
+        Validate that a path is an absolute path with enhanced Windows support.
+
+        This method provides more robust path validation than os.path.isabs() alone,
+        particularly for Windows paths with Unicode characters and various separators.
+
+        Args:
+            path: The path to validate
+
+        Returns:
+            bool: True if the path is a valid absolute path, False otherwise
+        """
+        import logging
+        import os
+        import unicodedata
+
+        logger = logging.getLogger(__name__)
+
+        if not path or not isinstance(path, str):
+            logger.debug(f"Path validation failed: empty or non-string path: {repr(path)}")
+            return False
+
+        # Normalize Unicode characters to handle accented characters properly
+        try:
+            normalized_path = unicodedata.normalize("NFC", path)
+        except (TypeError, ValueError):
+            # If normalization fails, use the original path
+            normalized_path = path
+            logger.debug(f"Unicode normalization failed for path: {repr(path)}")
+
+        # Convert to Path object for more robust checking
+        try:
+            from pathlib import Path
+
+            # Try to create a Path object - this will fail for invalid paths
+            path_obj = Path(normalized_path)
+
+            # Check if it's absolute using both os.path.isabs and Path.is_absolute
+            # This provides double validation for edge cases
+            is_abs_os = os.path.isabs(normalized_path)
+            is_abs_path = path_obj.is_absolute()
+
+            # On Windows, also check for drive letters explicitly
+            if os.name == "nt":
+                # Windows absolute paths should start with drive letter or UNC path
+                has_drive = (
+                    len(normalized_path) >= 3 and normalized_path[1:3] in (":\\\\", ":/") and normalized_path[0].isalpha()
+                )
+                has_unc = normalized_path.startswith(("\\\\\\\\", "//"))
+
+                # Also accept Unix-style absolute paths (starting with /) for cross-platform compatibility
+                has_unix_root = normalized_path.startswith("/")
+
+                result = (is_abs_os or is_abs_path) and (has_drive or has_unc or has_unix_root)
+
+                if not result:
+                    logger.warning(f"Windows path validation failed for: {repr(path)}")
+                    logger.warning(f"  Normalized: {repr(normalized_path)}")
+                    logger.warning(f"  os.path.isabs: {is_abs_os}")
+                    logger.warning(f"  Path.is_absolute: {is_abs_path}")
+                    logger.warning(f"  has_drive: {has_drive}")
+                    logger.warning(f"  has_unc: {has_unc}")
+                    logger.warning(f"  has_unix_root: {has_unix_root}")
+
+                return result
+            else:
+                # Unix-like systems
+                result = is_abs_os or is_abs_path
+
+                if not result:
+                    logger.warning(f"Unix path validation failed for: {repr(path)}")
+                    logger.warning(f"  Normalized: {repr(normalized_path)}")
+                    logger.warning(f"  os.path.isabs: {is_abs_os}")
+                    logger.warning(f"  Path.is_absolute: {is_abs_path}")
+
+                return result
+
+        except (OSError, ValueError, TypeError) as e:
+            # If Path creation fails, fall back to basic os.path.isabs
+            logger.warning(f"Path object creation failed for {repr(path)}: {e}")
+            fallback_result = os.path.isabs(normalized_path)
+
+            if not fallback_result:
+                logger.warning(f"Fallback path validation also failed for: {repr(path)}")
+
+            return fallback_result'''
+
+        # Perform the replacement
+        if old_method in content:
+            content = content.replace(old_method, new_implementation)
+            return content, True
+
+        return content, False
+
     def apply_all_patches(self, files: dict[str, Path], create_backups: bool = False) -> bool:
         """Apply all necessary patches."""
         all_success = True
@@ -789,6 +994,23 @@ fi"""
         else:
             print("  ℹ️  simulator_tests/base_test.py already patched")
 
+        # Patch 13: tools/shared/base_tool.py
+        print("\n🔧 Patching tools/shared/base_tool.py...")
+
+        base_tool_content = self.read_file(files["base_tool"])
+        base_tool_content, modified13 = self.patch_windows_path_validation(base_tool_content)
+
+        if modified13:
+            if create_backups:
+                backup = self.create_backup(files["base_tool"])
+                print(f"  ✅ Backup created: {backup}")
+
+            self.write_file(files["base_tool"], base_tool_content)
+            print("  ✅ Enhanced Windows path validation added")
+            self.patches_applied.append("Enhanced Windows path validation (base_tool.py)")
+        else:
+            print("  ℹ️  tools/shared/base_tool.py already patched")
+
         return all_success
 
     def validate_patches(self, files: dict[str, Path]) -> list[str]:
@@ -852,6 +1074,21 @@ fi"""
         if "import platform" not in base_test_content or 'platform.system() == "Windows"' not in base_test_content:
             errors.append("Windows Python path detection missing in base_test.py")
 
+        # Validate tools/shared/base_tool.py
+        base_tool_content = self.read_file(files["base_tool"])
+
+        if "self._is_valid_absolute_path(path)" not in base_tool_content:
+            errors.append("Enhanced path validation call missing in base_tool.py")
+
+        if "def _is_valid_absolute_path(self, path: str) -> bool:" not in base_tool_content:
+            errors.append("_is_valid_absolute_path method missing in base_tool.py")
+
+        if "unicodedata.normalize" not in base_tool_content:
+            errors.append("Unicode normalization missing in base_tool.py")
+
+        if "has_unix_root = normalized_path.startswith" not in base_tool_content:
+            errors.append("Enhanced Windows path validation missing in base_tool.py")
+
         return errors
 
     def show_diff_summary(self, files: dict[str, Path]) -> None:
@@ -902,6 +1139,14 @@ fi"""
                     "Fix logger initialization order",
                     "Add Windows Python path detection",
                     "Support platform-specific venv structures",
+                ],
+            ),
+            (
+                "tools/shared/base_tool.py",
+                [
+                    "Enhanced Windows path validation with Unicode support",
+                    "Robust absolute path detection for drive letters and UNC",
+                    "Cross-platform compatibility for Unix-style paths",
                 ],
             ),
         ]
