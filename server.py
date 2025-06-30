@@ -602,12 +602,10 @@ async def handle_list_tools() -> list[Tool]:
             # Log to activity file as well
             try:
                 mcp_activity_logger = logging.getLogger("mcp_activity")
-                friendly_name = client_info.get('friendly_name', 'Claude')
-                raw_name = client_info.get('name', 'Unknown')
-                version = client_info.get('version', 'Unknown')
-                mcp_activity_logger.info(
-                    f"MCP_CLIENT_INFO: {friendly_name} (raw={raw_name} v{version})"
-                )
+                friendly_name = client_info.get("friendly_name", "Claude")
+                raw_name = client_info.get("name", "Unknown")
+                version = client_info.get("version", "Unknown")
+                mcp_activity_logger.info(f"MCP_CLIENT_INFO: {friendly_name} (raw={raw_name} v{version})")
             except Exception:
                 pass
     except Exception as e:

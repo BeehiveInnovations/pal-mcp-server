@@ -25,19 +25,16 @@ CLIENT_NAME_MAPPINGS = {
     "claude-desktop": "Claude",
     "claude-code": "Claude",
     "anthropic": "Claude",
-
     # Gemini variants
     "gemini-cli-mcp-client": "Gemini",
     "gemini-cli": "Gemini",
     "gemini": "Gemini",
     "google": "Gemini",
-
     # Other known clients
     "cursor": "Cursor",
     "vscode": "VS Code",
     "codeium": "Codeium",
     "copilot": "GitHub Copilot",
-
     # Generic MCP clients
     "mcp-client": "MCP Client",
     "test-client": "Test Client",
