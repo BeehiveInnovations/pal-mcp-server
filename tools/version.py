@@ -196,6 +196,20 @@ class VersionTool(BaseTool):
         output_lines.append(f"**Last Updated**: {__updated__}")
         output_lines.append(f"**Author**: {__author__}")
 
+        # Try to get client information
+        try:
+            # We need access to the server instance
+            # This is a bit hacky but works for now
+            import server as server_module
+            from utils.client_info import format_client_info, get_client_info_from_context
+
+            client_info = get_client_info_from_context(server_module.server)
+            if client_info:
+                formatted = format_client_info(client_info)
+                output_lines.append(f"**Connected Client**: {formatted}")
+        except Exception as e:
+            logger.debug(f"Could not get client info: {e}")
+
         # Get the current working directory (MCP server location)
         current_path = Path.cwd()
         output_lines.append(f"**Installation Path**: `{current_path}`")

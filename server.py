@@ -163,6 +163,7 @@ except Exception as e:
 
 logger = logging.getLogger(__name__)
 
+
 # Create the MCP server instance with a unique name identifier
 # This name is used by MCP clients to identify and connect to this specific server
 server: Server = Server("zen-server")
@@ -588,6 +589,29 @@ async def handle_list_tools() -> list[Tool]:
         List of Tool objects representing all available tools
     """
     logger.debug("MCP client requested tool list")
+
+    # Try to log client info if available (this happens early in the handshake)
+    try:
+        from utils.client_info import format_client_info, get_client_info_from_context
+
+        client_info = get_client_info_from_context(server)
+        if client_info:
+            formatted = format_client_info(client_info)
+            logger.info(f"MCP Client Connected: {formatted}")
+
+            # Log to activity file as well
+            try:
+                mcp_activity_logger = logging.getLogger("mcp_activity")
+                friendly_name = client_info.get('friendly_name', 'Claude')
+                raw_name = client_info.get('name', 'Unknown')
+                version = client_info.get('version', 'Unknown')
+                mcp_activity_logger.info(
+                    f"MCP_CLIENT_INFO: {friendly_name} (raw={raw_name} v{version})"
+                )
+            except Exception:
+                pass
+    except Exception as e:
+        logger.debug(f"Could not log client info during list_tools: {e}")
     tools = []
 
     # Add all registered AI-powered tools from the TOOLS registry
@@ -1283,6 +1307,9 @@ async def main():
     # Log startup message
     logger.info("Zen MCP Server starting up...")
     logger.info(f"Log level: {log_level}")
+
+    # Note: MCP client info will be logged during the protocol handshake
+    # (when handle_list_tools is called)
 
     # Log current model mode
     from config import IS_AUTO_MODE
