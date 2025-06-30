@@ -19,6 +19,12 @@ bigger picture or ignoring architectural constraints.
 
 `challenge` fixes this.
 
+**Without Zen:**
+![without_zen@2x](https://github.com/user-attachments/assets/64f3c9fb-7ca9-4876-b687-25e847edfd87)
+
+**With Zen:**
+![with_zen@2x](https://github.com/user-attachments/assets/9d72f444-ba53-4ab1-83e5-250062c6ee70)
+
 ## Why Use Challenge?
 
 AI assistants sometimes tend to agree too readily. The challenge tool helps you:
