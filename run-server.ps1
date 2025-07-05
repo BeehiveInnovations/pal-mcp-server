@@ -40,6 +40,9 @@
 .PARAMETER VerboseOutput
     Enables more detailed output (currently unused).
 
+.PARAMETER Dev
+    Installs development dependencies from requirements-dev.txt if available.
+
 .EXAMPLE
     .\run-server.ps1
     Prepares the environment and starts the Zen MCP server.
@@ -49,6 +52,9 @@
 
     .\run-server.ps1 -Config
     Shows configuration instructions for clients.
+
+    .\run-server.ps1 -Dev
+    Prepares the environment with development dependencies and starts the server.
 
 .NOTES
     Project Author     : BeehiveInnovations
@@ -69,7 +75,8 @@ param(
     [switch]$SkipVenv,
     [switch]$SkipDocker,
     [switch]$Force,
-    [switch]$VerboseOutput
+    [switch]$VerboseOutput,
+    [switch]$Dev
 )
 
 # ============================================================================
@@ -619,10 +626,18 @@ function Initialize-VirtualEnvironment {
 
 # Install dependencies function
 function Install-Dependencies {
-    param([string]$PythonPath = "")
+    param(
+        [string]$PythonPath = "",
+        [switch]$InstallDevDependencies = $false
+    )
     
+    Write-Step "Installing Dependencies"
+    
+    # If this is a legacy call without parameters, handle the global $Dev parameter
     if ($PythonPath -eq "" -or $args.Count -eq 0) {
-        # Legacy call without parameters
+        $InstallDevDependencies = $Dev
+        
+        # Legacy call without parameters - use pip
         $pipCmd = if (Test-Path "$VENV_PATH\Scripts\pip.exe") {
             "$VENV_PATH\Scripts\pip.exe"
         } elseif (Test-Command "pip") {
@@ -632,8 +647,7 @@ function Install-Dependencies {
             exit 1
         }
         
-        Write-Step "Installing Dependencies"
-        Write-Info "Installing Python dependencies..."
+        Write-Info "Installing Python dependencies with pip..."
         
         try {
             # Install main dependencies
@@ -642,14 +656,17 @@ function Install-Dependencies {
                 throw "Failed to install main dependencies"
             }
             
-            # Install dev dependencies if file exists
-            if (Test-Path "requirements-dev.txt") {
+            # Install dev dependencies if requested and file exists
+            if ($InstallDevDependencies -and (Test-Path "requirements-dev.txt")) {
+                Write-Info "Installing development dependencies..."
                 & $pipCmd install -r requirements-dev.txt
                 if ($LASTEXITCODE -ne 0) {
                     Write-Warning "Failed to install dev dependencies, continuing..."
                 } else {
                     Write-Success "Development dependencies installed"
                 }
+            } elseif ($InstallDevDependencies -and !(Test-Path "requirements-dev.txt")) {
+                Write-Warning "Development dependencies requested but requirements-dev.txt not found"
             }
             
             Write-Success "Dependencies installed successfully"
@@ -660,15 +677,30 @@ function Install-Dependencies {
         return
     }
     
-    # Version with parameter - use uv or pip
-    Write-Step "Installing Dependencies"
+    # New version with parameter - handle global $Dev parameter if not explicitly passed
+    if ($args.Count -eq 1 -and $args[0] -is [string]) {
+        $InstallDevDependencies = $Dev
+    }
     
-    # Try uv first
+    # Try uv first for faster package management
     if (Test-Uv) {
         Write-Info "Installing dependencies with uv..."
         try {
             uv pip install -r requirements.txt
             if ($LASTEXITCODE -eq 0) {
+                # Install dev dependencies if requested and file exists
+                if ($InstallDevDependencies -and (Test-Path "requirements-dev.txt")) {
+                    Write-Info "Installing development dependencies with uv..."
+                    uv pip install -r requirements-dev.txt
+                    if ($LASTEXITCODE -eq 0) {
+                        Write-Success "Development dependencies installed with uv"
+                    } else {
+                        Write-Warning "Failed to install dev dependencies with uv, continuing..."
+                    }
+                } elseif ($InstallDevDependencies -and !(Test-Path "requirements-dev.txt")) {
+                    Write-Warning "Development dependencies requested but requirements-dev.txt not found"
+                }
+                
                 Write-Success "Dependencies installed with uv"
                 return
             }
@@ -698,14 +730,17 @@ function Install-Dependencies {
         throw "Failed to install main dependencies"
     }
     
-    # Install dev dependencies if file exists
-    if (Test-Path "requirements-dev.txt") {
+    # Install dev dependencies if requested and file exists
+    if ($InstallDevDependencies -and (Test-Path "requirements-dev.txt")) {
+        Write-Info "Installing development dependencies with pip..."
         & $pipCmd install -r requirements-dev.txt
         if ($LASTEXITCODE -eq 0) {
             Write-Success "Development dependencies installed"
         } else {
             Write-Warning "Failed to install dev dependencies, continuing..."
         }
+    } elseif ($InstallDevDependencies -and !(Test-Path "requirements-dev.txt")) {
+        Write-Warning "Development dependencies requested but requirements-dev.txt not found"
     }
     
     Write-Success "Dependencies installed successfully"
@@ -1797,7 +1832,7 @@ function Start-MainProcess {
     
     # Step 6: Install dependencies
     try {
-        Install-Dependencies $pythonPath
+        Install-Dependencies $pythonPath -InstallDevDependencies:$Dev
     } catch {
         Write-Error "Failed to install dependencies: $_"
         exit 1
