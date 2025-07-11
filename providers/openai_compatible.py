@@ -1,6 +1,5 @@
 """Base class for OpenAI-compatible API providers."""
 
-import base64
 import ipaddress
 import logging
 import os
@@ -788,30 +787,29 @@ class OpenAICompatibleProvider(ModelProvider):
     def _process_image(self, image_path: str) -> Optional[dict]:
         """Process an image for OpenAI-compatible API."""
         try:
-            if image_path.startswith("data:image/"):
+            if image_path.startswith("data:"):
+                # Validate the data URL
+                self.validate_image(image_path)
                 # Handle data URL: data:image/png;base64,iVBORw0...
                 return {"type": "image_url", "image_url": {"url": image_path}}
             else:
-                # Handle file path
-                if not os.path.exists(image_path):
-                    logging.warning(f"Image file not found: {image_path}")
-                    return None
-
-                # Detect MIME type from file extension using centralized mappings
-                from utils.file_types import get_image_mime_type
-
-                ext = os.path.splitext(image_path)[1].lower()
-                mime_type = get_image_mime_type(ext)
-                logging.debug(f"Processing image '{image_path}' with extension '{ext}' as MIME type '{mime_type}'")
+                # Use base class validation
+                image_bytes, mime_type = self.validate_image(image_path)
 
                 # Read and encode the image
-                with open(image_path, "rb") as f:
-                    image_data = base64.b64encode(f.read()).decode()
+                import base64
+
+                image_data = base64.b64encode(image_bytes).decode()
+                logging.debug(f"Processing image '{image_path}' as MIME type '{mime_type}'")
 
                 # Create data URL for OpenAI API
                 data_url = f"data:{mime_type};base64,{image_data}"
 
                 return {"type": "image_url", "image_url": {"url": data_url}}
+
+        except ValueError as e:
+            logging.warning(str(e))
+            return None
         except Exception as e:
             logging.error(f"Error processing image {image_path}: {e}")
             return None
