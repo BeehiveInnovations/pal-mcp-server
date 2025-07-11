@@ -26,7 +26,7 @@ class XAIModelProvider(OpenAICompatibleProvider):
             model_name="grok-4-0709",
             friendly_name="X.AI (Grok 4)",
             context_window=256_000,  # 256K tokens
-            max_output_tokens=256000,
+            max_output_tokens=16_384,
             supports_extended_thinking=True,  # Supports reasoning mode
             supports_system_prompts=True,
             supports_streaming=True,
