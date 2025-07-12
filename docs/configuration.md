@@ -74,7 +74,8 @@ DEFAULT_MODEL=auto  # Claude picks best model for each task (recommended)
 - **`o3`**: Strong logical reasoning (200K context)
 - **`o3-mini`**: Balanced speed/quality (200K context)
 - **`o4-mini`**: Latest reasoning model, optimized for shorter contexts
-- **`grok`**: GROK-3 advanced reasoning (131K context)
+- **`grok-3`**: GROK-3 advanced reasoning (131K context)
+- **`grok-4-latest`**: GROK-4 latest flagship model (256K context)
 - **Custom models**: via OpenRouter or local APIs
 
 ### Thinking Mode Configuration
@@ -107,7 +108,7 @@ OPENAI_ALLOWED_MODELS=o3-mini,o4-mini,mini
 GOOGLE_ALLOWED_MODELS=flash,pro
 
 # X.AI GROK model restrictions
-XAI_ALLOWED_MODELS=grok-3,grok-3-fast
+XAI_ALLOWED_MODELS=grok-3,grok-3-fast,grok-4-latest
 
 # OpenRouter model restrictions (affects models via custom provider)
 OPENROUTER_ALLOWED_MODELS=opus,sonnet,mistral
@@ -128,9 +129,11 @@ OPENROUTER_ALLOWED_MODELS=opus,sonnet,mistral
 - `pro` (shorthand for Pro model)
 
 **X.AI GROK Models:**
+- `grok-4-latest` (256K context, latest flagship model with reasoning, vision, and structured outputs)
 - `grok-3` (131K context, advanced reasoning)
 - `grok-3-fast` (131K context, higher performance)
-- `grok` (shorthand for grok-3)
+- `grok` (shorthand for grok-4-latest)
+- `grok4` (shorthand for grok-4-latest)
 - `grok3` (shorthand for grok-3)
 - `grokfast` (shorthand for grok-3-fast)
 

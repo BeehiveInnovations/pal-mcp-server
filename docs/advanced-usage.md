@@ -39,6 +39,9 @@ Regardless of your default configuration, you can specify models per request:
 | **`o3-mini`** | OpenAI | 200K tokens | Balanced speed/quality | Moderate complexity tasks |
 | **`o4-mini`** | OpenAI | 200K tokens | Latest reasoning model | Optimized for shorter contexts |
 | **`gpt4.1`** | OpenAI | 1M tokens | Latest GPT-4 with extended context | Large codebase analysis, comprehensive reviews |
+| **`grok-4-latest`** | X.AI | 256K tokens | Latest flagship model with reasoning, vision | Complex analysis, reasoning tasks |
+| **`grok-3`** | X.AI | 131K tokens | Advanced reasoning model | Deep analysis, complex problems |
+| **`grok-3-fast`** | X.AI | 131K tokens | Higher performance variant | Fast responses with reasoning |
 | **`llama`** (Llama 3.2) | Custom/Local | 128K tokens | Local inference, privacy | On-device analysis, cost-free processing |
 | **Any model** | OpenRouter | Varies | Access to GPT-4, Claude, Llama, etc. | User-specified or based on task requirements |
 
@@ -49,6 +52,8 @@ cloud models (expensive/powerful) AND local models (free/private) in the same co
 - **Gemini Models**: Support thinking modes (minimal to max), web search, 1M context
 - **O3 Models**: Excellent reasoning, systematic analysis, 200K context
 - **GPT-4.1**: Extended context window (1M tokens), general capabilities
+- **Grok-4**: Extended thinking support, vision capabilities, 256K context
+- **Grok-3 Models**: Advanced reasoning, 131K context
 
 ## Model Usage Restrictions
 
