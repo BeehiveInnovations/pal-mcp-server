@@ -8,7 +8,7 @@ def inject_transport(monkeypatch, cassette_path: str):
 
     This helper simplifies the monkey patching pattern used across tests
     to inject custom HTTP transports for recording/replaying API calls.
-    
+
     Also ensures OpenAI provider is properly registered for tests that need it.
 
     Args:
@@ -21,14 +21,15 @@ def inject_transport(monkeypatch, cassette_path: str):
     Example:
         transport = inject_transport(monkeypatch, "path/to/cassette.json")
     """
-    # Ensure OpenAI provider is registered if API key is available
+    # Ensure OpenAI provider is registered - always needed for transport injection
     import os
-    if os.getenv("OPENAI_API_KEY"):
-        from providers.registry import ModelProviderRegistry
-        from providers.base import ProviderType
-        from providers.openai_provider import OpenAIModelProvider
-        ModelProviderRegistry.register_provider(ProviderType.OPENAI, OpenAIModelProvider)
+    from providers.base import ProviderType
+    from providers.openai_provider import OpenAIModelProvider
+    from providers.registry import ModelProviderRegistry
     
+    # Always register OpenAI provider for transport tests (API key might be dummy)
+    ModelProviderRegistry.register_provider(ProviderType.OPENAI, OpenAIModelProvider)
+
     # Create transport
     transport = TransportFactory.create_transport(str(cassette_path))
 

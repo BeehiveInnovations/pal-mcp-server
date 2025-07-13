@@ -442,6 +442,17 @@ class ModelProviderRegistry:
         instance._initialized_providers.clear()
 
     @classmethod
+    def reset_for_testing(cls) -> None:
+        """Reset the registry to a clean state for testing.
+
+        This provides a safe, public API for tests to clean up registry state
+        without directly manipulating private attributes.
+        """
+        cls._instance = None
+        if hasattr(cls, "_providers"):
+            cls._providers = {}
+
+    @classmethod
     def unregister_provider(cls, provider_type: ProviderType) -> None:
         """Unregister a provider (mainly for testing)."""
         instance = cls()

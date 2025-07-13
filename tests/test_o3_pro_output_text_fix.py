@@ -17,8 +17,6 @@ import pytest
 from dotenv import load_dotenv
 
 from providers import ModelProviderRegistry
-from providers.base import ProviderType
-from providers.openai_provider import OpenAIModelProvider
 from tests.transport_helpers import inject_transport
 from tools.chat import ChatTool
 
@@ -35,32 +33,20 @@ class TestO3ProOutputTextFix:
     """Test o3-pro response parsing fix using respx for HTTP recording/replay."""
 
     def setup_method(self):
-        """Set up the test by ensuring OpenAI provider is registered."""
-        # Clear any cached providers to ensure clean state
-        ModelProviderRegistry.clear_cache()
-        # Reset the entire registry to ensure clean state
-        ModelProviderRegistry._instance = None
-        # Clear both class and instance level attributes
-        if hasattr(ModelProviderRegistry, "_providers"):
-            ModelProviderRegistry._providers = {}
-        # Get the instance and clear its providers
-        instance = ModelProviderRegistry()
-        instance._providers = {}
-        instance._initialized_providers = {}
-        # Manually register the OpenAI provider to ensure it's available
-        ModelProviderRegistry.register_provider(ProviderType.OPENAI, OpenAIModelProvider)
+        """Set up the test by ensuring clean registry state."""
+        # Use the new public API for registry cleanup
+        ModelProviderRegistry.reset_for_testing()
+        # Provider registration is now handled by inject_transport helper
 
     def teardown_method(self):
         """Clean up after test to ensure no state pollution."""
-        # Clear registry to prevent affecting other tests
-        ModelProviderRegistry.clear_cache()
-        ModelProviderRegistry._instance = None
-        ModelProviderRegistry._providers = {}
+        # Use the new public API for registry cleanup
+        ModelProviderRegistry.reset_for_testing()
 
     @pytest.mark.no_mock_provider  # Disable provider mocking for this test
     async def test_o3_pro_uses_output_text_field(self, monkeypatch):
         """Test that o3-pro parsing uses the output_text convenience field via ChatTool."""
-        # Set API key inline - helper will handle provider registration 
+        # Set API key inline - helper will handle provider registration
         monkeypatch.setenv("OPENAI_API_KEY", "dummy-key-for-replay")
 
         cassette_path = cassette_dir / "o3_pro_basic_math.json"
