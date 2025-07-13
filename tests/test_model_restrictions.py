@@ -694,6 +694,6 @@ class TestAutoModeWithRestrictions:
             registry._initialized_providers.clear()
             registry._providers.update(original_providers)
             registry._initialized_providers.update(original_initialized)
-            
+
             # Clear the restriction service to prevent state leakage
             utils.model_restrictions._restriction_service = None

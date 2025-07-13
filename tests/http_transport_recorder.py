@@ -16,12 +16,15 @@ Key Features:
 import base64
 import hashlib
 import json
+import logging
 from pathlib import Path
 from typing import Any, Optional
 
 import httpx
 
 from .pii_sanitizer import PIISanitizer
+
+logger = logging.getLogger(__name__)
 
 
 class RecordingTransport(httpx.HTTPTransport):
@@ -36,7 +39,7 @@ class RecordingTransport(httpx.HTTPTransport):
 
     def handle_request(self, request: httpx.Request) -> httpx.Response:
         """Handle request by recording interaction and delegating to real transport."""
-        print(f"🎬 RecordingTransport: Making request to {request.method} {request.url}")
+        logger.debug(f"🎬 RecordingTransport: Making request to {request.method} {request.url}")
 
         # Record request BEFORE making the call
         request_data = self._serialize_request(request)
@@ -44,7 +47,7 @@ class RecordingTransport(httpx.HTTPTransport):
         # Make real HTTP call using parent transport
         response = super().handle_request(request)
 
-        print(f"🎬 RecordingTransport: Got response {response.status_code}")
+        logger.debug(f"🎬 RecordingTransport: Got response {response.status_code}")
 
         # Post-response content capture (proper approach)
         if self.capture_content:
@@ -53,7 +56,7 @@ class RecordingTransport(httpx.HTTPTransport):
                 # Note: httpx automatically handles gzip decompression
                 content_bytes = response.read()
                 response.close()  # Close the original stream
-                print(f"🎬 RecordingTransport: Captured {len(content_bytes)} bytes of decompressed content")
+                logger.debug(f"🎬 RecordingTransport: Captured {len(content_bytes)} bytes of decompressed content")
 
                 # Serialize response with captured content
                 response_data = self._serialize_response_with_content(response, content_bytes)
@@ -64,9 +67,9 @@ class RecordingTransport(httpx.HTTPTransport):
                 if response.headers.get("content-encoding") == "gzip":
                     import gzip
 
-                    print(f"🗜️ Re-compressing {len(content_bytes)} bytes with gzip...")
+                    logger.debug(f"🗜️ Re-compressing {len(content_bytes)} bytes with gzip...")
                     response_content = gzip.compress(content_bytes)
-                    print(f"🗜️ Compressed to {len(response_content)} bytes")
+                    logger.debug(f"🗜️ Compressed to {len(response_content)} bytes")
 
                 new_response = httpx.Response(
                     status_code=response.status_code,
@@ -83,10 +86,10 @@ class RecordingTransport(httpx.HTTPTransport):
                 return new_response
 
             except Exception as e:
-                print(f"⚠️ Content capture failed: {e}, falling back to stub")
+                logger.warning(f"⚠️ Content capture failed: {e}, falling back to stub")
                 import traceback
 
-                print(f"⚠️ Full exception traceback:\n{traceback.format_exc()}")
+                logger.warning(f"⚠️ Full exception traceback:\n{traceback.format_exc()}")
                 response_data = self._serialize_response(response)
                 self._record_interaction(request_data, response_data)
                 return response
@@ -101,7 +104,7 @@ class RecordingTransport(httpx.HTTPTransport):
         interaction = {"request": request_data, "response": response_data}
         self.recorded_interactions.append(interaction)
         self._save_cassette()
-        print(f"🎬 RecordingTransport: Saved cassette to {self.cassette_path}")
+        logger.debug(f"🎬 RecordingTransport: Saved cassette to {self.cassette_path}")
 
     def _serialize_request(self, request: httpx.Request) -> dict[str, Any]:
         """Serialize httpx.Request to JSON-compatible format."""
@@ -147,21 +150,21 @@ class RecordingTransport(httpx.HTTPTransport):
         """Serialize httpx.Response with captured content."""
         try:
             # Debug: check what we got
-            print(f"🔍 Content type: {type(content_bytes)}, size: {len(content_bytes)}")
-            print(f"🔍 First 100 chars: {content_bytes[:100]}")
+            logger.debug(f"🔍 Content type: {type(content_bytes)}, size: {len(content_bytes)}")
+            logger.debug(f"🔍 First 100 chars: {content_bytes[:100]}")
 
             # Ensure we have bytes for base64 encoding
             if not isinstance(content_bytes, bytes):
-                print(f"⚠️ Content is not bytes, converting from {type(content_bytes)}")
+                logger.warning(f"⚠️ Content is not bytes, converting from {type(content_bytes)}")
                 if isinstance(content_bytes, str):
                     content_bytes = content_bytes.encode("utf-8")
                 else:
                     content_bytes = str(content_bytes).encode("utf-8")
 
             # Encode content as base64 for JSON storage
-            print(f"🔍 Base64 encoding {len(content_bytes)} bytes...")
+            logger.debug(f"🔍 Base64 encoding {len(content_bytes)} bytes...")
             content_b64 = base64.b64encode(content_bytes).decode("utf-8")
-            print(f"✅ Base64 encoded successfully, result length: {len(content_b64)}")
+            logger.debug(f"✅ Base64 encoded successfully, result length: {len(content_b64)}")
 
             response_data = {
                 "status_code": response.status_code,
@@ -176,10 +179,10 @@ class RecordingTransport(httpx.HTTPTransport):
 
             return response_data
         except Exception as e:
-            print(f"🔍 Error in _serialize_response_with_content: {e}")
+            logger.error(f"🔍 Error in _serialize_response_with_content: {e}")
             import traceback
 
-            print(f"🔍 Full traceback: {traceback.format_exc()}")
+            logger.error(f"🔍 Full traceback: {traceback.format_exc()}")
             # Fall back to minimal info
             return {
                 "status_code": response.status_code,
@@ -231,11 +234,11 @@ class ReplayTransport(httpx.MockTransport):
 
     def _handle_request(self, request: httpx.Request) -> httpx.Response:
         """Handle request by finding matching interaction and returning saved response."""
-        print(f"🔍 ReplayTransport: Looking for {request.method} {request.url}")
+        logger.debug(f"🔍 ReplayTransport: Looking for {request.method} {request.url}")
 
         # Debug: show what we're trying to match
         request_signature = self._get_request_signature(request)
-        print(f"🔍 Request signature: {request_signature}")
+        logger.debug(f"🔍 Request signature: {request_signature}")
 
         # Debug: show actual request content
         content = request.content
@@ -245,22 +248,22 @@ class ReplayTransport(httpx.MockTransport):
             content_str = content.decode("utf-8", errors="ignore")
         else:
             content_str = str(content) if content else ""
-        print(f"🔍 Actual request content: {content_str}")
+        logger.debug(f"🔍 Actual request content: {content_str}")
 
         # Debug: show available signatures
         for i, interaction in enumerate(self.interactions):
             saved_signature = self._get_saved_request_signature(interaction["request"])
             saved_content = interaction["request"].get("content", {})
-            print(f"🔍 Available signature {i}: {saved_signature}")
-            print(f"🔍 Saved content {i}: {saved_content}")
+            logger.debug(f"🔍 Available signature {i}: {saved_signature}")
+            logger.debug(f"🔍 Saved content {i}: {saved_content}")
 
         # Find matching interaction
         interaction = self._find_matching_interaction(request)
         if not interaction:
-            print("🚨 MYSTERY SOLVED: No matching interaction found! This should fail...")
+            logger.warning("🚨 MYSTERY SOLVED: No matching interaction found! This should fail...")
             raise ValueError(f"No matching interaction found for {request.method} {request.url}")
 
-        print("✅ Found matching interaction from cassette!")
+        logger.debug("✅ Found matching interaction from cassette!")
 
         # Build response from saved data
         response_data = interaction["response"]
@@ -273,9 +276,9 @@ class ReplayTransport(httpx.MockTransport):
                 # Decode base64 content
                 try:
                     content_bytes = base64.b64decode(content["data"])
-                    print(f"🎬 ReplayTransport: Decoded {len(content_bytes)} bytes from base64")
+                    logger.debug(f"🎬 ReplayTransport: Decoded {len(content_bytes)} bytes from base64")
                 except Exception as e:
-                    print(f"⚠️ Failed to decode base64 content: {e}")
+                    logger.warning(f"⚠️ Failed to decode base64 content: {e}")
                     content_bytes = json.dumps(content).encode("utf-8")
             else:
                 # Legacy format or stub content
@@ -289,11 +292,11 @@ class ReplayTransport(httpx.MockTransport):
             # Re-compress the content for httpx
             import gzip
 
-            print(f"🗜️ ReplayTransport: Re-compressing {len(content_bytes)} bytes with gzip...")
+            logger.debug(f"🗜️ ReplayTransport: Re-compressing {len(content_bytes)} bytes with gzip...")
             content_bytes = gzip.compress(content_bytes)
-            print(f"🗜️ ReplayTransport: Compressed to {len(content_bytes)} bytes")
+            logger.debug(f"🗜️ ReplayTransport: Compressed to {len(content_bytes)} bytes")
 
-        print(f"🎬 ReplayTransport: Returning cassette response with content: {content_bytes[:100]}...")
+        logger.debug(f"🎬 ReplayTransport: Returning cassette response with content: {content_bytes[:100]}...")
 
         # Create httpx.Response
         return httpx.Response(

@@ -112,7 +112,7 @@ class PIISanitizer:
             ),
             PIIPattern.create(
                 name="phone_number",
-                pattern=r"(?:\+\d{1,3}[\s\-]?)?\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{4}",
+                pattern=r"(?:\+\d{1,3}[\s\-]?)?\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{4}\b(?![\d\.\,\]\}])",
                 replacement="(XXX) XXX-XXXX",
                 description="Phone numbers (all formats)",
             ),

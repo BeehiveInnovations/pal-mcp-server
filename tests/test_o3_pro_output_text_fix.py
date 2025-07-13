@@ -10,6 +10,7 @@ the OpenAI SDK to create real response objects that we can test.
 RECORDING: To record new responses, delete the cassette file and run with real API keys.
 """
 
+import logging
 import os
 import unittest
 from pathlib import Path
@@ -21,6 +22,8 @@ from dotenv import load_dotenv
 from providers import ModelProviderRegistry
 from tests.transport_helpers import inject_transport
 from tools.chat import ChatTool
+
+logger = logging.getLogger(__name__)
 
 # Load environment variables from .env file
 load_dotenv()
@@ -46,17 +49,27 @@ class TestO3ProOutputTextFix:
         ModelProviderRegistry.reset_for_testing()
 
     @pytest.mark.no_mock_provider  # Disable provider mocking for this test
-    @patch.dict(os.environ, {"OPENAI_ALLOWED_MODELS": "o3-pro,o3-pro-2025-06-10"})
+    @patch.dict(os.environ, {"OPENAI_ALLOWED_MODELS": "o3-pro,o3-pro-2025-06-10", "LOCALE": ""})
     async def test_o3_pro_uses_output_text_field(self, monkeypatch):
         """Test that o3-pro parsing uses the output_text convenience field via ChatTool."""
-        # Set API key inline - helper will handle provider registration
-        monkeypatch.setenv("OPENAI_API_KEY", "dummy-key-for-replay")
-
         cassette_path = cassette_dir / "o3_pro_basic_math.json"
 
-        # Require cassette for test - no cargo culting
+        # Check if we need to record or replay
         if not cassette_path.exists():
-            pytest.skip("Cassette file required - record with real OPENAI_API_KEY")
+            # Recording mode - check for real API key
+            real_api_key = os.getenv("OPENAI_API_KEY", "").strip()
+            if not real_api_key or real_api_key.startswith("dummy"):
+                pytest.fail(
+                    f"Cassette file not found at {cassette_path}. "
+                    "To record: Set OPENAI_API_KEY environment variable to a valid key and run this test. "
+                    "Note: Recording will make a real API call to OpenAI."
+                )
+            # Real API key is available, we'll record the cassette
+            logger.debug("🎬 Recording mode: Using real API key to record cassette")
+        else:
+            # Replay mode - use dummy key
+            monkeypatch.setenv("OPENAI_API_KEY", "dummy-key-for-replay")
+            logger.debug("📼 Replay mode: Using recorded cassette")
 
         # Simplified transport injection - just one line!
         inject_transport(monkeypatch, cassette_path)
@@ -90,7 +103,12 @@ class TestO3ProOutputTextFix:
 
         response_data = json.loads(result[0].text)
 
+        # Debug log the response
+        logger.debug(f"Response data: {json.dumps(response_data, indent=2)}")
+
         # Verify response structure - no cargo culting
+        if response_data["status"] == "error":
+            pytest.fail(f"Chat tool returned error: {response_data.get('error', 'Unknown error')}")
         assert response_data["status"] in ["success", "continuation_available"]
         assert "4" in response_data["content"]
 
@@ -101,11 +119,11 @@ class TestO3ProOutputTextFix:
 
 
 if __name__ == "__main__":
-    print("🎥 OpenAI Response Recording Tests for O3-Pro Output Text Fix")
-    print("=" * 50)
-    print("RECORD MODE: Requires OPENAI_API_KEY - makes real API calls through ChatTool")
-    print("REPLAY MODE: Uses recorded HTTP responses - free and fast")
-    print("RECORDING: Delete .json files in tests/openai_cassettes/ to re-record")
-    print()
+    logging.basicConfig(level=logging.INFO)
+    logger.info("🎥 OpenAI Response Recording Tests for O3-Pro Output Text Fix")
+    logger.info("=" * 50)
+    logger.info("RECORD MODE: Requires OPENAI_API_KEY - makes real API calls through ChatTool")
+    logger.info("REPLAY MODE: Uses recorded HTTP responses - free and fast")
+    logger.info("RECORDING: Delete .json files in tests/openai_cassettes/ to re-record")
 
     unittest.main()
