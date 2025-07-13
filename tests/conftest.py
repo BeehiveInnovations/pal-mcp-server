@@ -88,15 +88,9 @@ def pytest_configure(config):
 
 def pytest_collection_modifyitems(session, config, items):
     """Hook that runs after test collection to check for no_mock_provider markers."""
-    # Check if any test has the no_mock_provider marker
-    for item in items:
-        if item.get_closest_marker("no_mock_provider"):
-            config._needs_dummy_keys = False
-            break
-
-    # Set dummy keys only if no test needs real keys
-    if config._needs_dummy_keys:
-        _set_dummy_keys_if_missing()
+    # Always set dummy keys if real keys are missing
+    # This ensures tests work in CI even with no_mock_provider marker
+    _set_dummy_keys_if_missing()
 
 
 @pytest.fixture(autouse=True)
