@@ -1,10 +1,10 @@
 """
-Tests for o3-pro output_text parsing fix using respx response recording.
+Tests for o3-pro output_text parsing fix using HTTP transport recording.
 
 This test validates the fix that uses `response.output_text` convenience field
 instead of manually parsing `response.output.content[].text`.
 
-Uses respx to record real o3-pro API responses at the HTTP level while allowing
+Uses HTTP transport recorder to record real o3-pro API responses at the HTTP level while allowing
 the OpenAI SDK to create real response objects that we can test.
 
 RECORDING: To record new responses, delete the cassette file and run with real API keys.
