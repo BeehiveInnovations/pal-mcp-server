@@ -2,7 +2,7 @@
 """Test cases for PII sanitizer."""
 
 import unittest
-from pii_sanitizer import PIISanitizer, PIIPattern
+from tests.pii_sanitizer import PIISanitizer, PIIPattern
 
 
 class TestPIISanitizer(unittest.TestCase):
@@ -26,8 +26,8 @@ class TestPIISanitizer(unittest.TestCase):
             ("AIzaSyD-1234567890abcdefghijklmnopqrstuv", "AIza-SANITIZED"),
             
             # GitHub tokens
-            ("ghp_1234567890abcdefghijklmnopqrstuvwxyz", "ghp_SANITIZED"),
-            ("ghs_1234567890abcdefghijklmnopqrstuvwxyz", "ghs_SANITIZED"),
+            ("ghp_1234567890abcdefghijklmnopqrstuvwxyz", "gh_SANITIZED"),
+            ("ghs_1234567890abcdefghijklmnopqrstuvwxyz", "gh_SANITIZED"),
         ]
         
         for original, expected in test_cases:
@@ -42,10 +42,10 @@ class TestPIISanitizer(unittest.TestCase):
             ("john.doe@example.com", "user@example.com"),
             ("test123@company.org", "user@example.com"),
             
-            # Phone numbers
+            # Phone numbers (all now use the same pattern)
             ("(555) 123-4567", "(XXX) XXX-XXXX"),
             ("555-123-4567", "(XXX) XXX-XXXX"),
-            ("+1-555-123-4567", "+X-XXX-XXX-XXXX"),
+            ("+1-555-123-4567", "(XXX) XXX-XXXX"),
             
             # SSN
             ("123-45-6789", "XXX-XX-XXXX"),
@@ -99,7 +99,7 @@ class TestPIISanitizer(unittest.TestCase):
         
         self.assertEqual(sanitized["user"]["email"], "user@example.com")
         self.assertEqual(sanitized["user"]["api_key"], "sk-proj-SANITIZED")
-        self.assertEqual(sanitized["tokens"][0], "ghp_SANITIZED")
+        self.assertEqual(sanitized["tokens"][0], "gh_SANITIZED")
         self.assertEqual(sanitized["tokens"][1], "Bearer sk-ant-SANITIZED")
         self.assertEqual(sanitized["metadata"]["ip"], "0.0.0.0")
         self.assertEqual(sanitized["metadata"]["phone"], "(XXX) XXX-XXXX")

@@ -8,9 +8,7 @@ tokens, personal information, and other sensitive data.
 """
 
 import re
-import base64
-import json
-from typing import Any, Dict, List, Optional, Pattern, Tuple
+from typing import Any, Dict, List, Optional, Pattern
 from dataclasses import dataclass
 from copy import deepcopy
 import logging
@@ -52,7 +50,7 @@ class PIISanitizer:
     def _add_default_patterns(self):
         """Add comprehensive default PII patterns."""
         default_patterns = [
-            # API Keys and Tokens
+            # API Keys - Core patterns (Bearer tokens handled in sanitize_headers)
             PIIPattern.create(
                 name="openai_api_key_proj",
                 pattern=r'sk-proj-[A-Za-z0-9\-_]{48,}',
@@ -78,49 +76,17 @@ class PIISanitizer:
                 description="Google API keys"
             ),
             PIIPattern.create(
-                name="github_token_personal",
-                pattern=r'ghp_[A-Za-z0-9]{36}',
-                replacement="ghp_SANITIZED",
-                description="GitHub personal access tokens"
-            ),
-            PIIPattern.create(
-                name="github_token_server",
-                pattern=r'ghs_[A-Za-z0-9]{36}',
-                replacement="ghs_SANITIZED",
-                description="GitHub server tokens"
-            ),
-            PIIPattern.create(
-                name="github_token_refresh",
-                pattern=r'ghr_[A-Za-z0-9]{36}',
-                replacement="ghr_SANITIZED",
-                description="GitHub refresh tokens"
-            ),
-            
-            # Bearer tokens with specific API keys (must come before generic patterns)
-            PIIPattern.create(
-                name="bearer_openai_proj",
-                pattern=r'Bearer\s+sk-proj-[A-Za-z0-9\-_]{48,}',
-                replacement="Bearer sk-proj-SANITIZED",
-                description="Bearer with OpenAI project key"
-            ),
-            PIIPattern.create(
-                name="bearer_openai",
-                pattern=r'Bearer\s+sk-[A-Za-z0-9]{48,}',
-                replacement="Bearer sk-SANITIZED",
-                description="Bearer with OpenAI key"
-            ),
-            PIIPattern.create(
-                name="bearer_anthropic",
-                pattern=r'Bearer\s+sk-ant-[A-Za-z0-9\-_]{48,}',
-                replacement="Bearer sk-ant-SANITIZED",
-                description="Bearer with Anthropic key"
+                name="github_tokens",
+                pattern=r'gh[psr]_[A-Za-z0-9]{36}',
+                replacement="gh_SANITIZED",
+                description="GitHub tokens (all types)"
             ),
             
             # JWT tokens
             PIIPattern.create(
                 name="jwt_token",
                 pattern=r'eyJ[A-Za-z0-9\-_]+\.eyJ[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+',
-                replacement="eyJ-SANITIZED.eyJ-SANITIZED.SANITIZED",
+                replacement="eyJ-SANITIZED",
                 description="JSON Web Tokens"
             ),
             
@@ -138,12 +104,6 @@ class PIISanitizer:
                 description="IPv4 addresses"
             ),
             PIIPattern.create(
-                name="ipv6_address",
-                pattern=r'(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}',
-                replacement="::1",
-                description="IPv6 addresses"
-            ),
-            PIIPattern.create(
                 name="ssn",
                 pattern=r'\b\d{3}-\d{2}-\d{4}\b',
                 replacement="XXX-XX-XXXX",
@@ -155,18 +115,11 @@ class PIISanitizer:
                 replacement="XXXX-XXXX-XXXX-XXXX",
                 description="Credit card numbers"
             ),
-            # Phone patterns - international first to avoid partial matches
             PIIPattern.create(
-                name="phone_intl",
-                pattern=r'\+\d{1,3}[\s\-]?\d{3}[\s\-]?\d{3}[\s\-]?\d{4}',
-                replacement="+X-XXX-XXX-XXXX",
-                description="International phone numbers"
-            ),
-            PIIPattern.create(
-                name="phone_us",
-                pattern=r'\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{4}',
+                name="phone_number",
+                pattern=r'(?:\+\d{1,3}[\s\-]?)?\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{4}',
                 replacement="(XXX) XXX-XXXX",
-                description="US phone numbers"
+                description="Phone numbers (all formats)"
             ),
             
             # AWS
@@ -175,12 +128,6 @@ class PIISanitizer:
                 pattern=r'AKIA[0-9A-Z]{16}',
                 replacement="AKIA-SANITIZED",
                 description="AWS access keys"
-            ),
-            PIIPattern.create(
-                name="aws_secret_key",
-                pattern=r'(?i)aws[_\s]*secret[_\s]*access[_\s]*key["\s]*[:=]["\s]*[A-Za-z0-9/+=]{40}',
-                replacement="aws_secret_access_key=SANITIZED",
-                description="AWS secret keys"
             ),
             
             # Other common patterns
@@ -224,28 +171,17 @@ class PIISanitizer:
             return headers
         
         sanitized_headers = {}
-        sensitive_headers = {
-            'authorization', 'api-key', 'x-api-key', 'cookie', 
-            'set-cookie', 'x-auth-token', 'x-access-token'
-        }
         
         for key, value in headers.items():
-            lower_key = key.lower()
-            
-            if lower_key in sensitive_headers:
-                # Special handling for authorization headers
-                if lower_key == 'authorization':
-                    if value.startswith('Bearer '):
-                        sanitized_headers[key] = 'Bearer SANITIZED'
-                    elif value.startswith('Basic '):
-                        sanitized_headers[key] = 'Basic SANITIZED'
-                    else:
-                        sanitized_headers[key] = 'SANITIZED'
+            # Special case for Authorization headers to preserve auth type
+            if key.lower() == 'authorization' and ' ' in value:
+                auth_type = value.split(' ', 1)[0]
+                if auth_type in ('Bearer', 'Basic'):
+                    sanitized_headers[key] = f'{auth_type} SANITIZED'
                 else:
-                    # For other sensitive headers, sanitize the value
                     sanitized_headers[key] = self.sanitize_string(value)
             else:
-                # For non-sensitive headers, still check for PII patterns
+                # Apply standard sanitization to all other headers
                 sanitized_headers[key] = self.sanitize_string(value)
         
         return sanitized_headers
@@ -256,27 +192,13 @@ class PIISanitizer:
             return value
         
         if isinstance(value, str):
-            # Check if it might be base64 encoded
-            if self._is_base64(value) and len(value) > 20:
-                try:
-                    decoded = base64.b64decode(value).decode('utf-8')
-                    if self._contains_pii(decoded):
-                        sanitized = self.sanitize_string(decoded)
-                        return base64.b64encode(sanitized.encode()).decode()
-                except:
-                    pass  # Not valid base64 or not UTF-8
-            
             return self.sanitize_string(value)
-        
         elif isinstance(value, dict):
             return {k: self.sanitize_value(v) for k, v in value.items()}
-        
         elif isinstance(value, list):
             return [self.sanitize_value(item) for item in value]
-        
         elif isinstance(value, tuple):
             return tuple(self.sanitize_value(item) for item in value)
-        
         else:
             # For other types (int, float, bool, None), return as-is
             return value
@@ -311,21 +233,6 @@ class PIISanitizer:
         
         return url
     
-    def _is_base64(self, s: str) -> bool:
-        """Check if a string might be base64 encoded."""
-        try:
-            if len(s) % 4 != 0:
-                return False
-            return re.match(r'^[A-Za-z0-9+/]*={0,2}$', s) is not None
-        except:
-            return False
-    
-    def _contains_pii(self, text: str) -> bool:
-        """Quick check if text contains any PII patterns."""
-        for pattern in self.patterns:
-            if pattern.pattern.search(text):
-                return True
-        return False
     
     def sanitize_request(self, request_data: Dict[str, Any]) -> Dict[str, Any]:
         """Sanitize a complete request dictionary."""
