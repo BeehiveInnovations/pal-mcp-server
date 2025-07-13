@@ -41,11 +41,12 @@ class TestO3ProOutputTextFix:
         # Use the new public API for registry cleanup
         ModelProviderRegistry.reset_for_testing()
         # Provider registration is now handled by inject_transport helper
-        
+
         # Clear restriction service to ensure it re-reads environment
         # This is necessary because previous tests may have set restrictions
         # that are cached in the singleton
         import utils.model_restrictions
+
         utils.model_restrictions._restriction_service = None
 
     def teardown_method(self):
