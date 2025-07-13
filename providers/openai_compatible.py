@@ -1,6 +1,7 @@
 """Base class for OpenAI-compatible API providers."""
 
 import base64
+import copy
 import ipaddress
 import logging
 import os
@@ -283,8 +284,6 @@ class OpenAICompatibleProvider(ModelProvider):
         Returns:
             dict: Sanitized copy of parameters safe for logging
         """
-        import copy
-
         sanitized = copy.deepcopy(params)
 
         # Sanitize messages content

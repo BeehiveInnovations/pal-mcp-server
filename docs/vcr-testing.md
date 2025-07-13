@@ -8,22 +8,19 @@ The HTTP Transport Recorder captures and replays HTTP interactions at the transp
 - Cost-efficient testing of expensive APIs (record once, replay forever)
 - Deterministic tests with real API responses
 - Seamless integration with httpx and OpenAI SDK
+- Automatic PII sanitization for secure recordings
 
 ## Quick Start
 
 ```python
-from tests.http_transport_recorder import TransportFactory
-from providers import ModelProviderRegistry
+from tests.transport_helpers import inject_transport
 
-# Setup transport recorder
-cassette_path = "tests/openai_cassettes/my_test.json"
-transport = TransportFactory.create_transport(cassette_path)
-
-# Inject into provider
-provider = ModelProviderRegistry.get_provider_for_model("o3-pro")
-provider._test_transport = transport
-
-# Make API calls - automatically recorded/replayed
+# Simple one-line setup with automatic transport injection
+def test_expensive_api_call(monkeypatch):
+    inject_transport(monkeypatch, "tests/openai_cassettes/my_test.json")
+    
+    # Make API calls - automatically recorded/replayed with PII sanitization
+    result = await chat_tool.execute({"prompt": "2+2?", "model": "o3-pro"})
 ```
 
 ## How It Works
@@ -34,16 +31,34 @@ provider._test_transport = transport
 
 ## Usage in Tests
 
-See `test_o3_pro_output_text_fix.py` for a complete example:
+The `transport_helpers.inject_transport()` function simplifies test setup:
 
 ```python
-async def test_with_recording():
-    # Transport factory auto-detects record vs replay mode
-    transport = TransportFactory.create_transport("tests/openai_cassettes/my_test.json")
-    provider._test_transport = transport
+from tests.transport_helpers import inject_transport
 
-    # Use normally - recording happens transparently
+async def test_with_recording(monkeypatch):
+    # One-line setup - handles all transport injection complexity
+    inject_transport(monkeypatch, "tests/openai_cassettes/my_test.json")
+    
+    # Use API normally - recording/replay happens transparently
     result = await chat_tool.execute({"prompt": "2+2?", "model": "o3-pro"})
+```
+
+For manual setup, see `test_o3_pro_output_text_fix.py`.
+
+## Automatic PII Sanitization
+
+All recordings are automatically sanitized to remove sensitive data:
+
+- **API Keys & Tokens**: Bearer tokens, API keys, and auth headers
+- **Personal Data**: Email addresses, IP addresses, phone numbers
+- **URLs**: Sensitive query parameters and paths
+- **Custom Patterns**: Add your own sanitization rules
+
+Sanitization is enabled by default in `RecordingTransport`. To disable:
+
+```python
+transport = TransportFactory.create_transport(cassette_path, sanitize=False)
 ```
 
 ## File Structure
@@ -53,8 +68,31 @@ tests/
 ├── openai_cassettes/           # Recorded API interactions
 │   └── *.json                  # Cassette files
 ├── http_transport_recorder.py  # Transport implementation
+├── pii_sanitizer.py           # Automatic PII sanitization
+├── transport_helpers.py       # Simplified transport injection
+├── sanitize_cassettes.py      # Batch sanitization script
 └── test_o3_pro_output_text_fix.py  # Example usage
 ```
+
+## Sanitizing Existing Cassettes
+
+Use the `sanitize_cassettes.py` script to clean existing recordings:
+
+```bash
+# Sanitize all cassettes (creates backups)
+python tests/sanitize_cassettes.py
+
+# Sanitize specific cassette
+python tests/sanitize_cassettes.py tests/openai_cassettes/my_test.json
+
+# Skip backup creation
+python tests/sanitize_cassettes.py --no-backup
+```
+
+The script will:
+- Create timestamped backups of original files
+- Apply comprehensive PII sanitization
+- Preserve JSON structure and functionality
 
 ## Cost Management
 
@@ -76,12 +114,15 @@ python -m pytest tests/test_o3_pro_output_text_fix.py
 
 ## Implementation Details
 
-- **RecordingTransport**: Captures real HTTP calls
-- **ReplayTransport**: Serves saved responses
+- **RecordingTransport**: Captures real HTTP calls with automatic PII sanitization
+- **ReplayTransport**: Serves saved responses from cassettes
 - **TransportFactory**: Auto-selects mode based on cassette existence
-- **PII Sanitization**: Automatically removes API keys from recordings
+- **PIISanitizer**: Comprehensive sanitization of sensitive data (integrated by default)
 
-**Security Note**: Always review new cassette files before committing to ensure no sensitive data is included.
+**Security Note**: While recordings are automatically sanitized, always review new cassette files before committing. The sanitizer removes known patterns of sensitive data, but domain-specific secrets may need custom rules.
 
-For implementation details, see `tests/http_transport_recorder.py`.
+For implementation details, see:
+- `tests/http_transport_recorder.py` - Core transport implementation
+- `tests/pii_sanitizer.py` - Sanitization patterns and logic
+- `tests/transport_helpers.py` - Simplified test integration
 
