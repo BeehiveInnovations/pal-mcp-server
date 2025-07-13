@@ -656,9 +656,13 @@ class TestAutoModeWithRestrictions:
             model = ModelProviderRegistry.get_preferred_fallback_model(ToolModelCategory.FAST_RESPONSE)
             assert model == "o4-mini"
 
-    @patch.dict(os.environ, {"OPENAI_ALLOWED_MODELS": "mini", "GEMINI_API_KEY": "", "OPENAI_API_KEY": "test-key"})
-    def test_fallback_with_shorthand_restrictions(self):
+    def test_fallback_with_shorthand_restrictions(self, monkeypatch):
         """Test fallback model selection with shorthand restrictions."""
+        # Use monkeypatch to set environment variables with automatic cleanup
+        monkeypatch.setenv("OPENAI_ALLOWED_MODELS", "mini")
+        monkeypatch.setenv("GEMINI_API_KEY", "")
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+        
         # Clear caches and reset registry
         import utils.model_restrictions
         from providers.registry import ModelProviderRegistry
@@ -694,6 +698,3 @@ class TestAutoModeWithRestrictions:
             registry._initialized_providers.clear()
             registry._providers.update(original_providers)
             registry._initialized_providers.update(original_initialized)
-
-            # Clear the restriction service to prevent state leakage
-            utils.model_restrictions._restriction_service = None
