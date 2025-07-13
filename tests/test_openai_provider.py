@@ -230,10 +230,8 @@ class TestOpenAIProvider:
         mock_openai_class.return_value = mock_client
 
         mock_response = MagicMock()
-        mock_response.output = MagicMock()
-        mock_response.output.content = [MagicMock()]
-        mock_response.output.content[0].type = "output_text"
-        mock_response.output.content[0].text = "4"
+        # New o3-pro format: direct output_text field
+        mock_response.output_text = "4"
         mock_response.model = "o3-pro-2025-06-10"
         mock_response.id = "test-id"
         mock_response.created_at = 1234567890

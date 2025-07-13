@@ -221,7 +221,7 @@ class OpenAICompatibleProvider(ModelProvider):
                 # Create httpx client with minimal config to avoid proxy conflicts
                 # Note: proxies parameter was removed in httpx 0.28.0
                 # Check for test transport injection
-                if hasattr(self, '_test_transport'):
+                if hasattr(self, "_test_transport"):
                     # Use custom transport for testing (HTTP recording/replay)
                     http_client = httpx.Client(
                         transport=self._test_transport,
@@ -318,13 +318,13 @@ class OpenAICompatibleProvider(ModelProvider):
         """
         logging.debug(f"Response object type: {type(response)}")
         logging.debug(f"Response attributes: {dir(response)}")
-        
+
         if not hasattr(response, "output_text"):
             raise ValueError(f"o3-pro response missing output_text field. Response type: {type(response).__name__}")
 
         content = response.output_text
         logging.debug(f"Extracted output_text: '{content}' (type: {type(content)})")
-        
+
         if content is None:
             raise ValueError("o3-pro returned None for output_text")
 

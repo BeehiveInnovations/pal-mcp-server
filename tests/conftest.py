@@ -93,7 +93,7 @@ def pytest_collection_modifyitems(session, config, items):
         if item.get_closest_marker("no_mock_provider"):
             config._needs_dummy_keys = False
             break
-    
+
     # Set dummy keys only if no test needs real keys
     if config._needs_dummy_keys:
         _set_dummy_keys_if_missing()

@@ -18,11 +18,11 @@ from pathlib import Path
 import pytest
 from dotenv import load_dotenv
 
-from tools.chat import ChatTool
 from providers import ModelProviderRegistry
 from providers.base import ProviderType
 from providers.openai_provider import OpenAIModelProvider
 from tests.http_transport_recorder import TransportFactory
+from tools.chat import ChatTool
 
 # Load environment variables from .env file
 load_dotenv()
@@ -32,54 +32,87 @@ cassette_dir = Path(__file__).parent / "openai_cassettes"
 cassette_dir.mkdir(exist_ok=True)
 
 
+@pytest.fixture
+def allow_all_models(monkeypatch):
+    """Allow all models by resetting the restriction service singleton."""
+    # Import here to avoid circular imports
+    from utils.model_restrictions import _restriction_service
+    
+    # Store original state
+    original_service = _restriction_service
+    original_allowed_models = os.getenv("ALLOWED_MODELS")
+    original_openai_key = os.getenv("OPENAI_API_KEY")
+    
+    # Reset the singleton so it will re-read env vars inside this fixture
+    monkeypatch.setattr("utils.model_restrictions._restriction_service", None)
+    monkeypatch.setenv("ALLOWED_MODELS", "")  # empty string = no restrictions
+    monkeypatch.setenv("OPENAI_API_KEY", "dummy-key-for-replay")  # transport layer expects a key
+    
+    # Also clear the provider registry cache to ensure clean state
+    from providers.registry import ModelProviderRegistry
+    ModelProviderRegistry.clear_cache()
+    
+    yield
+    
+    # Clean up: reset singleton again so other tests don't see the unrestricted version
+    monkeypatch.setattr("utils.model_restrictions._restriction_service", None)
+    # Clear registry cache again for other tests
+    ModelProviderRegistry.clear_cache()
+
+
 @pytest.mark.no_mock_provider  # Disable provider mocking for this test
 class TestO3ProOutputTextFix(unittest.IsolatedAsyncioTestCase):
     """Test o3-pro response parsing fix using respx for HTTP recording/replay."""
 
     def setUp(self):
         """Set up the test by ensuring OpenAI provider is registered."""
+        # Clear any cached providers to ensure clean state
+        ModelProviderRegistry.clear_cache()
         # Manually register the OpenAI provider to ensure it's available
         ModelProviderRegistry.register_provider(ProviderType.OPENAI, OpenAIModelProvider)
 
+    @pytest.mark.usefixtures("allow_all_models")
     async def test_o3_pro_uses_output_text_field(self):
         """Test that o3-pro parsing uses the output_text convenience field via ChatTool."""
         cassette_path = cassette_dir / "o3_pro_basic_math.json"
-        
+
         # Skip if no API key available and cassette doesn't exist
         if not cassette_path.exists() and not os.getenv("OPENAI_API_KEY"):
             pytest.skip("Set real OPENAI_API_KEY to record cassettes")
 
         # Create transport (automatically selects record vs replay mode)
         transport = TransportFactory.create_transport(str(cassette_path))
-        
+
         # Get provider and inject custom transport
         provider = ModelProviderRegistry.get_provider_for_model("o3-pro")
         if not provider:
             self.fail("OpenAI provider not available for o3-pro model")
-        
+
         # Inject transport for this test
-        original_transport = getattr(provider, '_test_transport', None)
+        original_transport = getattr(provider, "_test_transport", None)
         provider._test_transport = transport
-        
+
         try:
             # Execute ChatTool test with custom transport
             result = await self._execute_chat_tool_test()
-            
+
             # Verify the response works correctly
             self._verify_chat_tool_response(result)
-            
+
             # Verify cassette was created/used
             if not cassette_path.exists():
                 self.fail(f"Cassette should exist at {cassette_path}")
-                
-            print(f"✅ HTTP transport {'recorded' if isinstance(transport, type(transport).__bases__[0]) else 'replayed'} o3-pro interaction")
-            
+
+            print(
+                f"✅ HTTP transport {'recorded' if isinstance(transport, type(transport).__bases__[0]) else 'replayed'} o3-pro interaction"
+            )
+
         finally:
             # Restore original transport (if any)
             if original_transport:
                 provider._test_transport = original_transport
-            elif hasattr(provider, '_test_transport'):
-                delattr(provider, '_test_transport')
+            elif hasattr(provider, "_test_transport"):
+                delattr(provider, "_test_transport")
 
     async def _execute_chat_tool_test(self):
         """Execute the ChatTool with o3-pro and return the result."""
