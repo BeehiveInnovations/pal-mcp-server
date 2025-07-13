@@ -662,7 +662,7 @@ class TestAutoModeWithRestrictions:
         monkeypatch.setenv("OPENAI_ALLOWED_MODELS", "mini")
         monkeypatch.setenv("GEMINI_API_KEY", "")
         monkeypatch.setenv("OPENAI_API_KEY", "test-key")
-        
+
         # Clear caches and reset registry
         import utils.model_restrictions
         from providers.registry import ModelProviderRegistry
