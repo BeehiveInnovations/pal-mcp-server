@@ -12,7 +12,6 @@ RECORDING: To record new responses, delete the cassette file and run with real A
 
 import logging
 import os
-import unittest
 from pathlib import Path
 from unittest.mock import patch
 
@@ -116,14 +115,3 @@ class TestO3ProOutputTextFix:
         metadata = response_data["metadata"]
         assert metadata["model_used"] == "o3-pro"
         assert metadata["provider_used"] == "openai"
-
-
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    logger.info("🎥 OpenAI Response Recording Tests for O3-Pro Output Text Fix")
-    logger.info("=" * 50)
-    logger.info("RECORD MODE: Requires OPENAI_API_KEY - makes real API calls through ChatTool")
-    logger.info("REPLAY MODE: Uses recorded HTTP responses - free and fast")
-    logger.info("RECORDING: Delete .json files in tests/openai_cassettes/ to re-record")
-
-    unittest.main()
