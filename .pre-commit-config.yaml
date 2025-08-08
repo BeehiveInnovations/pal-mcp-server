@@ -5,7 +5,6 @@ repos:
     rev: 25.1.0
     hooks:
       - id: black
-        exclude: ^test_simulation_files/
 
   - repo: https://github.com/pycqa/isort
     rev: 6.0.1
@@ -18,7 +17,6 @@ repos:
     hooks:
       - id: ruff
         args: [--fix]
-        exclude: ^test_simulation_files/
 
 # Configuration for specific tools
 default_language_version:
@@ -37,4 +35,4 @@ exclude: |
     dist/|
     build/|
     test_simulation_files/
-  )$
+  )
