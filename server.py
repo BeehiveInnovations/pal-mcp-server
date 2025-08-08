@@ -1270,7 +1270,12 @@ async def handle_get_prompt(name: str, arguments: dict[str, Any] = None) -> GetP
     # Generate tool call instruction
     if name.lower() == "continue":
         # "/zen:continue" case
-        tool_instruction = f"Continue the previous conversation using the {tool_name} tool"
+        tool_instruction = (
+            f"Continue the previous conversation using the {tool_name} tool. "
+            "CRITICAL: You MUST provide the continuation_id from the previous response to maintain conversation context. "
+            "Additionally, you should reuse the same model that was used in the previous exchange for consistency, unless "
+            "the user specifically asks for a different model name to be used."
+        )
     else:
         # Simple prompt case
         tool_instruction = prompt_text
