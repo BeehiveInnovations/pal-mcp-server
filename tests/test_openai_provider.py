@@ -278,11 +278,9 @@ class TestOpenAIProvider:
         mock_openai_class.return_value = mock_client
 
         mock_response = MagicMock()
-        mock_response.output = MagicMock()
-        mock_response.output.content = [MagicMock()]
-        mock_response.output.content[0].type = "output_text"
-        mock_response.output.content[0].text = "4"
-        mock_response.model = "o3-pro"
+        # New o3-pro format: direct output_text field
+        mock_response.output_text = "4"
+        mock_response.model = "o3-pro-2025-06-10"
         mock_response.id = "test-id"
         mock_response.created_at = 1234567890
         mock_response.usage = MagicMock()
@@ -300,13 +298,13 @@ class TestOpenAIProvider:
         # Verify responses.create was called
         mock_client.responses.create.assert_called_once()
         call_args = mock_client.responses.create.call_args[1]
-        assert call_args["model"] == "o3-pro"
+        assert call_args["model"] == "o3-pro-2025-06-10"
         assert call_args["input"][0]["role"] == "user"
         assert "What is 2 + 2?" in call_args["input"][0]["content"][0]["text"]
 
         # Verify the response
         assert result.content == "4"
-        assert result.model_name == "o3-pro"
+        assert result.model_name == "o3-pro-2025-06-10"
         assert result.metadata["endpoint"] == "responses"
 
     @patch("providers.openai_compatible.OpenAI")
