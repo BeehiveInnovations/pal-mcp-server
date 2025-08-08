@@ -1,4 +1,32 @@
-#!/usr/bin/env pwsh
+<#
+.SYNOPSIS
+    Integration test runner script for the Zen MCP server on Windows.
+
+.DESCRIPTION
+    This PowerShell script prepares and runs integration tests for the Zen MCP server:
+    - Sets up the test environment
+    - Installs required dependencies
+    - Runs automated integration tests
+    - Displays test results and related logs
+    - Allows output customization via parameters (e.g., display color)
+
+.PARAMETER Color
+    Sets the display color for console messages (default: White).
+
+.EXAMPLE
+    .\run_integration_tests.ps1
+    Prepares the environment and runs all integration tests.
+
+    .\run_integration_tests.ps1 -Color Cyan
+    Runs the tests with messages displayed in cyan.
+
+.NOTES
+    Project Author      : BeehiveInnovations
+    Script Author       : GiGiDKR (https://github.com/GiGiDKR)
+    Date                : 07-05-2025
+    Version             : See config.py (__version__)
+    References          : https://github.com/BeehiveInnovations/zen-mcp-server
+#>
 #Requires -Version 5.1
 [CmdletBinding()]
 param(

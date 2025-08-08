@@ -12,6 +12,8 @@ work correctly on Windows, including:
 5. Communication simulator logger and Python path fixes
 6. BaseSimulatorTest logger and Python path fixes
 7. Shell scripts Windows virtual environment support
+8. Docker path validation and mode compatibility
+9. Conversation tests Docker mode compatibility
 
 Tests cover all modified files:
 - utils/file_utils.py
@@ -21,8 +23,10 @@ Tests cover all modified files:
 - simulator_tests/base_test.py
 - run_integration_tests.sh
 - code_quality_checks.sh
+- tests/test_conversation_file_features.py (Docker mode)
 """
 
+import os
 import sys
 import tempfile
 from pathlib import Path
@@ -376,6 +380,163 @@ def test_shell_scripts_windows_support():
         return False
 
 
+def test_docker_path_validation():
+    """Test 8: Docker path validation in file_utils.py."""
+    print("\n🧪 Test 8: Docker path validation")
+    print("-" * 60)
+
+    try:
+        # Test that path_detector import is available
+        try:
+            from utils.path_detector import PathModeDetector
+
+            detector_import = True
+            print("  ✅ Path detector import: True")
+        except ImportError as e:
+            detector_import = False
+            print(f"  ❌ Path detector import: False ({e})")
+
+        # Test Docker path validation with mocked Docker mode
+        try:
+            # Mock Docker mode
+            with patch.dict(os.environ, {"MCP_FILE_PATH_MODE": "docker"}):
+                # Reset singleton to pick up new environment
+                PathModeDetector._instance = None
+
+                # Test Docker path validation
+                docker_path = "/app/project/test.py"
+                try:
+                    from utils.file_utils import resolve_and_validate_path
+
+                    resolve_and_validate_path(docker_path)
+                    docker_validation = True
+                    print("  ✅ Docker path validation: True")
+                except ValueError as e:
+                    if "Relative paths are not supported" in str(e):
+                        docker_validation = False
+                        print("  ❌ Docker path validation: False (still rejected)")
+                    else:
+                        docker_validation = True  # Different error, not path format
+                        print("  ✅ Docker path validation: True (security error)")
+                except Exception as e:
+                    docker_validation = False
+                    print(f"  ❌ Docker path validation: Error ({e})")
+
+                # Reset singleton after test
+                PathModeDetector._instance = None
+
+        except Exception as e:
+            docker_validation = False
+            print(f"  ❌ Docker path test error: {e}")
+
+        # Test that file_utils.py contains Docker-related code
+        try:
+            with open("utils/file_utils.py", encoding="utf-8") as f:
+                file_utils_content = f.read()
+
+            has_detector_import = "from utils.path_detector import get_path_detector" in file_utils_content
+            has_docker_check = "is_docker_path = converted_path_str.startswith" in file_utils_content
+            has_docker_mode = "is_docker_mode" in file_utils_content
+
+            print(f"  ✅ Has detector import: {has_detector_import}")
+            print(f"  ✅ Has Docker path check: {has_docker_check}")
+            print(f"  ✅ Has Docker mode check: {has_docker_mode}")
+
+            file_content_ok = has_detector_import and has_docker_check and has_docker_mode
+
+        except FileNotFoundError:
+            file_content_ok = False
+            print("  ❌ utils/file_utils.py not found")
+
+        success = detector_import and docker_validation and file_content_ok
+        print(f"\nResult: Docker path validation {'passed' if success else 'failed'}")
+
+        return success
+
+    except Exception as e:
+        print(f"  ❌ Error testing Docker path validation: {e}")
+        print("\nResult: Docker path validation failed")
+        return False
+
+
+def test_conversation_docker_compatibility():
+    """Test 9: Conversation tests Docker mode compatibility."""
+    print("\n🧪 Test 9: Conversation tests Docker mode compatibility")
+    print("-" * 60)
+
+    try:
+        # Test that test_conversation_file_features.py contains Docker fixes
+        try:
+            with open("tests/test_conversation_file_features.py", encoding="utf-8") as f:
+                test_content = f.read()
+
+            has_local_mode = '"MCP_FILE_PATH_MODE": "local"' in test_content
+            has_detector_reset = "PathModeDetector._instance = None" in test_content
+            has_cache_reset = "detector._cached_mode = None" in test_content
+            has_subdir = "zen-mcp-server" in test_content
+
+            print(f"  ✅ Forces local mode: {has_local_mode}")
+            print(f"  ✅ Resets PathModeDetector: {has_detector_reset}")
+            print(f"  ✅ Resets detector cache: {has_cache_reset}")
+            print(f"  ✅ Uses project subdirectory: {has_subdir}")
+
+            test_content_ok = has_local_mode and has_detector_reset and has_cache_reset
+
+        except FileNotFoundError:
+            test_content_ok = False
+            print("  ❌ tests/test_conversation_file_features.py not found")
+
+        # Test PathModeDetector cache reset functionality
+        try:
+            from utils.path_detector import PathModeDetector, get_path_detector
+
+            # Test that we can reset the singleton
+            detector1 = get_path_detector()
+            detector1.get_path_mode()
+
+            # Reset and test again
+            PathModeDetector._instance = None
+            detector2 = get_path_detector()
+
+            # Test cache reset
+            detector2._cached_mode = None
+            detector2.get_path_mode()
+
+            reset_works = True
+            print("  ✅ PathModeDetector reset: True")
+
+        except Exception as e:
+            reset_works = False
+            print(f"  ❌ PathModeDetector reset: False ({e})")
+
+        # Test environment patching works
+        try:
+            from utils.path_detector import get_path_detector
+
+            with patch.dict(os.environ, {"MCP_FILE_PATH_MODE": "local"}):
+                PathModeDetector._instance = None
+                detector = get_path_detector()
+                detector._cached_mode = None
+                mode = detector.get_path_mode()
+
+                env_patch_works = mode == "local"
+                print(f"  ✅ Environment patching: {env_patch_works}")
+
+        except Exception as e:
+            env_patch_works = False
+            print(f"  ❌ Environment patching: False ({e})")
+
+        success = test_content_ok and reset_works and env_patch_works
+        print(f"\nResult: Conversation Docker compatibility {'passed' if success else 'failed'}")
+
+        return success
+
+    except Exception as e:
+        print(f"  ❌ Error testing conversation Docker compatibility: {e}")
+        print("\nResult: Conversation Docker compatibility failed")
+        return False
+
+
 def main():
     """Main validation function."""
     print("🔧 Final validation of cross-platform fixes")
@@ -393,6 +554,8 @@ def main():
     results.append(("Communication simulator", test_communication_simulator_fixes()))
     results.append(("BaseSimulatorTest", test_base_simulator_test_fixes()))
     results.append(("Shell scripts Windows support", test_shell_scripts_windows_support()))
+    results.append(("Docker path validation", test_docker_path_validation()))
+    results.append(("Conversation Docker compatibility", test_conversation_docker_compatibility()))
 
     # Final summary
     print("\n" + "=" * 70)

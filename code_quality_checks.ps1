@@ -1,4 +1,33 @@
-#!/usr/bin/env pwsh
+<#
+.SYNOPSIS
+    Code quality checks script for Zen MCP server on Windows.
+
+.DESCRIPTION
+    This PowerShell script performs code quality checks for the Zen MCP server project:
+    - Runs static analysis and linting tools on the codebase
+    - Ensures code style compliance and detects potential issues
+    - Can be integrated into CI/CD pipelines or used locally before commits
+
+.PARAMETER Help
+    Displays help information for using the script.
+
+.PARAMETER Verbose
+    Enables detailed output during code quality checks.
+
+.EXAMPLE
+    .\code_quality_checks.ps1
+    Runs all code quality checks on the project.
+
+    .\code_quality_checks.ps1 -Verbose
+    Runs code quality checks with detailed output.
+
+.NOTES
+    Project Author     : BeehiveInnovations
+    Script Author      : GiGiDKR (https://github.com/GiGiDKR)
+    Date               : 07-05-2025
+    Version            : See project documentation
+    References         : https://github.com/BeehiveInnovations/zen-mcp-server
+#>
 #Requires -Version 5.1
 [CmdletBinding()]
 param(
