@@ -154,7 +154,10 @@ def multiply(x, y):
             openai_model_usage = len(openai_model_logs) >= 1  # Should see at least 1 model usage log
             openai_responses_received = len(openai_response_logs) >= 1  # Should see at least 1 response
             some_chat_calls_to_openai = len(chat_openai_logs) >= 1  # Should see at least 1 chat call
-            some_workflow_calls_to_openai = len(codereview_openai_logs) >= 1 or len([line for line in logs.split("\n") if "openai" in line and "codereview" in line]) > 0  # Should see evidence of workflow tool usage
+            some_workflow_calls_to_openai = (
+                len(codereview_openai_logs) >= 1
+                or len([line for line in logs.split("\n") if "openai" in line and "codereview" in line]) > 0
+            )  # Should see evidence of workflow tool usage
 
             self.logger.info(f"   OpenAI API call logs: {len(openai_api_logs)}")
             self.logger.info(f"   OpenAI model usage logs: {len(openai_model_logs)}")
@@ -179,7 +182,10 @@ def multiply(x, y):
                 ("OpenAI model usage logged", openai_model_usage),
                 ("OpenAI responses received", openai_responses_received),
                 ("Chat tool used OpenAI", some_chat_calls_to_openai),
-                ("Workflow tool attempted", some_workflow_calls_to_openai or response3 is not None),  # More flexible check
+                (
+                    "Workflow tool attempted",
+                    some_workflow_calls_to_openai or response3 is not None,
+                ),  # More flexible check
             ]
 
             passed_criteria = sum(1 for _, passed in success_criteria if passed)
