@@ -24,8 +24,12 @@ EXAMPLE:
 
             # Step 2: Continue with codereview tool - memory is preserved!
             result2, _ = self.call_mcp_tool_direct("codereview", {
-                "files": ["/path/to/file.py"],
-                "prompt": "Focus on security issues",
+                "step": "Focus on security issues in this code",
+                "step_number": 1,
+                "total_steps": 1,
+                "next_step_required": False,
+                "findings": "Starting security-focused code review",
+                "relevant_files": ["/path/to/file.py"],
                 "continuation_id": continuation_id
             })
 """

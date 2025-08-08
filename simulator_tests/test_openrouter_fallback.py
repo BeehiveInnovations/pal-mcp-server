@@ -82,8 +82,12 @@ class OpenRouterFallbackTest(BaseSimulatorTest):
             response2, _ = self.call_mcp_tool(
                 "codereview",
                 {
-                    "files": [test_file],
-                    "prompt": "Quick review of this sum function",
+                    "step": "Quick review of this sum function for quality and potential issues",
+                    "step_number": 1,
+                    "total_steps": 1,
+                    "next_step_required": False,
+                    "findings": "Starting code review of sum function",
+                    "relevant_files": [test_file],
                     "model": "flash",
                     "temperature": 0.1,
                 },
@@ -101,8 +105,12 @@ class OpenRouterFallbackTest(BaseSimulatorTest):
             response3, _ = self.call_mcp_tool(
                 "analyze",
                 {
-                    "files": [self.test_files["python"]],
-                    "prompt": "Analyze the structure of this Python code",
+                    "step": "Analyze the structure of this Python code",
+                    "step_number": 1,
+                    "total_steps": 1,
+                    "next_step_required": False,
+                    "findings": "Starting code structure analysis",
+                    "relevant_files": [self.test_files["python"]],
                     "model": "pro",
                     "temperature": 0.1,
                 },
@@ -120,7 +128,11 @@ class OpenRouterFallbackTest(BaseSimulatorTest):
             response4, _ = self.call_mcp_tool(
                 "debug",
                 {
-                    "prompt": "Why might a function return None instead of a value?",
+                    "step": "Why might a function return None instead of a value?",
+                    "step_number": 1,
+                    "total_steps": 1,
+                    "next_step_required": False,
+                    "findings": "Starting debug investigation of None return values",
                     "model": "flash",  # Should map to OpenRouter
                     "temperature": 0.1,
                 },

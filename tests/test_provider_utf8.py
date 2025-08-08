@@ -126,7 +126,7 @@ class TestProviderUTF8Encoding(unittest.TestCase):
         mock_response.usage = Mock()
         mock_response.usage.input_tokens = 50
         mock_response.usage.output_tokens = 25
-        mock_response.model = "o3-pro-2025-06-10"
+        mock_response.model = "o3-pro"
         mock_response.id = "test-id"
         mock_response.created_at = 1234567890
 
@@ -141,7 +141,7 @@ class TestProviderUTF8Encoding(unittest.TestCase):
         with patch("logging.info") as mock_logging:
             response = provider.generate_content(
                 prompt="Analyze this Python code for issues",
-                model_name="o3-pro-2025-06-10",
+                model_name="o3-pro",
                 system_prompt="You are a code review expert.",
             )
 
@@ -351,7 +351,7 @@ class TestLocaleModelIntegration(unittest.TestCase):
     def test_model_name_resolution_utf8(self):
         """Test model name resolution with UTF-8."""
         provider = OpenAIModelProvider(api_key="test")
-        model_names = ["gpt-4", "gemini-2.5-flash", "claude-3-opus", "o3-pro-2025-06-10"]
+        model_names = ["gpt-4", "gemini-2.5-flash", "claude-3-opus", "o3-pro"]
         for model_name in model_names:
             resolved = provider._resolve_model_name(model_name)
             self.assertIsInstance(resolved, str)

@@ -113,7 +113,7 @@ class TestDIALProvider:
         # Test temperature constraint
         assert capabilities.temperature_constraint.min_temp == 0.0
         assert capabilities.temperature_constraint.max_temp == 2.0
-        assert capabilities.temperature_constraint.default_temp == 0.7
+        assert capabilities.temperature_constraint.default_temp == 0.3
 
     @patch.dict(os.environ, {"DIAL_ALLOWED_MODELS": ""}, clear=False)
     @patch("utils.model_restrictions._restriction_service", None)

@@ -48,7 +48,8 @@ class TestAliasTargetRestrictions:
         """Test that restriction policy allows alias when target model is allowed.
 
         This is the correct user-friendly behavior - if you allow 'o4-mini',
-        you should be able to use its alias 'mini' as well.
+        you should be able to use its aliases 'o4mini' and 'o4-mini'.
+        Note: 'mini' is now an alias for 'gpt-5-mini', not 'o4-mini'.
         """
         # Clear cached restriction service
         import utils.model_restrictions
@@ -57,15 +58,16 @@ class TestAliasTargetRestrictions:
 
         provider = OpenAIModelProvider(api_key="test-key")
 
-        # Both target and alias should be allowed
+        # Both target and its actual aliases should be allowed
         assert provider.validate_model_name("o4-mini")
-        assert provider.validate_model_name("mini")
+        assert provider.validate_model_name("o4mini")
 
     @patch.dict(os.environ, {"OPENAI_ALLOWED_MODELS": "mini"})  # Allow alias only
     def test_restriction_policy_allows_only_alias_when_alias_specified(self):
         """Test that restriction policy allows only the alias when just alias is specified.
 
-        If you restrict to 'mini', only the alias should work, not the direct target.
+        If you restrict to 'mini' (which is an alias for gpt-5-mini),
+        only the alias should work, not other models.
         This is the correct restrictive behavior.
         """
         # Clear cached restriction service
@@ -77,7 +79,9 @@ class TestAliasTargetRestrictions:
 
         # Only the alias should be allowed
         assert provider.validate_model_name("mini")
-        # Direct target should NOT be allowed
+        # Direct target for this alias should NOT be allowed (mini -> gpt-5-mini)
+        assert not provider.validate_model_name("gpt-5-mini")
+        # Other models should NOT be allowed
         assert not provider.validate_model_name("o4-mini")
 
     @patch.dict(os.environ, {"GOOGLE_ALLOWED_MODELS": "gemini-2.5-flash"})  # Allow target
@@ -127,12 +131,15 @@ class TestAliasTargetRestrictions:
 
                 # The warning should include both aliases and targets in known models
                 warning_message = str(warning_calls[0])
-                assert "mini" in warning_message  # alias should be in known models
-                assert "o4-mini" in warning_message  # target should be in known models
+                assert "o4mini" in warning_message or "o4-mini" in warning_message  # aliases should be in known models
 
-    @patch.dict(os.environ, {"OPENAI_ALLOWED_MODELS": "mini,o4-mini"})  # Allow both alias and target
+    @patch.dict(os.environ, {"OPENAI_ALLOWED_MODELS": "mini,gpt-5-mini,o4-mini,o4mini"})  # Allow different models
     def test_both_alias_and_target_allowed_when_both_specified(self):
-        """Test that both alias and target work when both are explicitly allowed."""
+        """Test that both alias and target work when both are explicitly allowed.
+
+        mini -> gpt-5-mini
+        o4mini -> o4-mini
+        """
         # Clear cached restriction service
         import utils.model_restrictions
 
@@ -140,9 +147,11 @@ class TestAliasTargetRestrictions:
 
         provider = OpenAIModelProvider(api_key="test-key")
 
-        # Both should be allowed
-        assert provider.validate_model_name("mini")
-        assert provider.validate_model_name("o4-mini")
+        # All should be allowed since we explicitly allowed them
+        assert provider.validate_model_name("mini")  # alias for gpt-5-mini
+        assert provider.validate_model_name("gpt-5-mini")  # target
+        assert provider.validate_model_name("o4-mini")  # target
+        assert provider.validate_model_name("o4mini")  # alias for o4-mini
 
     def test_alias_target_policy_regression_prevention(self):
         """Regression test to ensure aliases and targets are both validated properly.

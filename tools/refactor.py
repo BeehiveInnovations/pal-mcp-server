@@ -44,6 +44,9 @@ REFACTOR_FIELD_DESCRIPTIONS = {
         "structure, understand the business logic, and identify areas requiring refactoring. In all later steps, continue "
         "exploring with precision: trace dependencies, verify assumptions, and adapt your understanding as you uncover "
         "more refactoring opportunities."
+        "IMPORTANT: When referring to code, use the relevant_files parameter to pass relevant files and only use the prompt to refer to "
+        "function / method names or very small code snippets if absolutely necessary to explain the issue. Do NOT "
+        "pass large code snippets in the prompt as this is exclusively reserved for descriptive text only. "
     ),
     "step_number": (
         "The index of the current step in the refactoring investigation sequence, beginning at 1. Each step should "

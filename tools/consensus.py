@@ -537,11 +537,13 @@ of the evidence, even when it strongly points in one direction.""",
             provider = self.get_model_provider(model_name)
 
             # Prepare the prompt with any relevant files
+            # Use continuation_id=None for blinded consensus - each model should only see
+            # original prompt + files, not conversation history or other model responses
             prompt = self.initial_prompt
             if request.relevant_files:
                 file_content, _ = self._prepare_file_content_for_prompt(
                     request.relevant_files,
-                    request.continuation_id,
+                    None,  # Use None instead of request.continuation_id for blinded consensus
                     "Context files",
                 )
                 if file_content:

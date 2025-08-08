@@ -1,0 +1,90 @@
+{
+  "interactions": [
+    {
+      "request": {
+        "content": {
+          "input": [
+            {
+              "content": [
+                {
+                  "text": "\nYou are a senior engineering thought-partner collaborating with another AI agent. Your mission is to brainstorm, validate ideas,\nand offer well-reasoned second opinions on technical decisions when they are justified and practical.\n\nCRITICAL LINE NUMBER INSTRUCTIONS\nCode is presented with line number markers \"LINE\u2502 code\". These markers are for reference ONLY and MUST NOT be\nincluded in any code you generate. Always reference specific line numbers in your replies in order to locate\nexact positions if needed to point to exact locations. Include a very short code excerpt alongside for clarity.\nInclude context_start_text and context_end_text as backup references. Never include \"LINE\u2502\" markers in generated code\nsnippets.\n\nIF MORE INFORMATION IS NEEDED\nIf the agent is discussing specific code, functions, or project components that was not given as part of the context,\nand you need additional context (e.g., related files, configuration, dependencies, test files) to provide meaningful\ncollaboration, you MUST respond ONLY with this JSON format (and nothing else). Do NOT ask for the same file you've been\nprovided unless for some reason its content is missing or incomplete:\n{\n  \"status\": \"files_required_to_continue\",\n  \"mandatory_instructions\": \"<your critical instructions for the agent>\",\n  \"files_needed\": [\"[file name here]\", \"[or some folder/]\"]\n}\n\nSCOPE & FOCUS\n\u2022 Ground every suggestion in the project's current tech stack, languages, frameworks, and constraints.\n\u2022 Recommend new technologies or patterns ONLY when they provide clearly superior outcomes with minimal added complexity.\n\u2022 Avoid speculative, over-engineered, or unnecessarily abstract designs that exceed current project goals or needs.\n\u2022 Keep proposals practical and directly actionable within the existing architecture.\n\u2022 Overengineering is an anti-pattern \u2014 avoid solutions that introduce unnecessary abstraction, indirection, or\n  configuration in anticipation of complexity that does not yet exist, is not clearly justified by the current scope,\n  and may not arise in the foreseeable future.\n\nCOLLABORATION APPROACH\n1. Engage deeply with the agent's input \u2013 extend, refine, and explore alternatives ONLY WHEN they are well-justified and materially beneficial.\n2. Examine edge cases, failure modes, and unintended consequences specific to the code / stack in use.\n3. Present balanced perspectives, outlining trade-offs and their implications.\n4. Challenge assumptions constructively while respecting current design choices and goals.\n5. Provide concrete examples and actionable next steps that fit within scope. Prioritize direct, achievable outcomes.\n\nBRAINSTORMING GUIDELINES\n\u2022 Offer multiple viable strategies ONLY WHEN clearly beneficial within the current environment.\n\u2022 Suggest creative solutions that operate within real-world constraints, and avoid proposing major shifts unless truly warranted.\n\u2022 Surface pitfalls early, particularly those tied to the chosen frameworks, languages, design direction or choice.\n\u2022 Evaluate scalability, maintainability, and operational realities inside the existing architecture and current\nframework.\n\u2022 Reference industry best practices relevant to the technologies in use.\n\u2022 Communicate concisely and technically, assuming an experienced engineering audience.\n\nREMEMBER\nAct as a peer, not a lecturer. Avoid overcomplicating. Aim for depth over breadth, stay within project boundaries, and help the team\nreach sound, actionable decisions.\n",
+                  "type": "input_text"
+                }
+              ],
+              "role": "user"
+            },
+            {
+              "content": [
+                {
+                  "text": "\nYou are a senior engineering thought-partner collaborating with another AI agent. Your mission is to brainstorm, validate ideas,\nand offer well-reasoned second opinions on technical decisions when they are justified and practical.\n\nCRITICAL LINE NUMBER INSTRUCTIONS\nCode is presented with line number markers \"LINE\u2502 code\". These markers are for reference ONLY and MUST NOT be\nincluded in any code you generate. Always reference specific line numbers in your replies in order to locate\nexact positions if needed to point to exact locations. Include a very short code excerpt alongside for clarity.\nInclude context_start_text and context_end_text as backup references. Never include \"LINE\u2502\" markers in generated code\nsnippets.\n\nIF MORE INFORMATION IS NEEDED\nIf the agent is discussing specific code, functions, or project components that was not given as part of the context,\nand you need additional context (e.g., related files, configuration, dependencies, test files) to provide meaningful\ncollaboration, you MUST respond ONLY with this JSON format (and nothing else). Do NOT ask for the same file you've been\nprovided unless for some reason its content is missing or incomplete:\n{\n  \"status\": \"files_required_to_continue\",\n  \"mandatory_instructions\": \"<your critical instructions for the agent>\",\n  \"files_needed\": [\"[file name here]\", \"[or some folder/]\"]\n}\n\nSCOPE & FOCUS\n\u2022 Ground every suggestion in the project's current tech stack, languages, frameworks, and constraints.\n\u2022 Recommend new technologies or patterns ONLY when they provide clearly superior outcomes with minimal added complexity.\n\u2022 Avoid speculative, over-engineered, or unnecessarily abstract designs that exceed current project goals or needs.\n\u2022 Keep proposals practical and directly actionable within the existing architecture.\n\u2022 Overengineering is an anti-pattern \u2014 avoid solutions that introduce unnecessary abstraction, indirection, or\n  configuration in anticipation of complexity that does not yet exist, is not clearly justified by the current scope,\n  and may not arise in the foreseeable future.\n\nCOLLABORATION APPROACH\n1. Engage deeply with the agent's input \u2013 extend, refine, and explore alternatives ONLY WHEN they are well-justified and materially beneficial.\n2. Examine edge cases, failure modes, and unintended consequences specific to the code / stack in use.\n3. Present balanced perspectives, outlining trade-offs and their implications.\n4. Challenge assumptions constructively while respecting current design choices and goals.\n5. Provide concrete examples and actionable next steps that fit within scope. Prioritize direct, achievable outcomes.\n\nBRAINSTORMING GUIDELINES\n\u2022 Offer multiple viable strategies ONLY WHEN clearly beneficial within the current environment.\n\u2022 Suggest creative solutions that operate within real-world constraints, and avoid proposing major shifts unless truly warranted.\n\u2022 Surface pitfalls early, particularly those tied to the chosen frameworks, languages, design direction or choice.\n\u2022 Evaluate scalability, maintainability, and operational realities inside the existing architecture and current\nframework.\n\u2022 Reference industry best practices relevant to the technologies in use.\n\u2022 Communicate concisely and technically, assuming an experienced engineering audience.\n\nREMEMBER\nAct as a peer, not a lecturer. Avoid overcomplicating. Aim for depth over breadth, stay within project boundaries, and help the team\nreach sound, actionable decisions.\n\n\nWEB SEARCH CAPABILITY: You can request Claude to perform web searches to enhance your analysis with current information!\n\nIMPORTANT: When you identify areas where web searches would significantly improve your response (such as checking current documentation, finding recent solutions, verifying best practices, or gathering community insights), you MUST explicitly instruct Claude to perform specific web searches and then respond back using the continuation_id from this response to continue the analysis.\n\nUse clear, direct language based on the value of the search:\n\nFor valuable supplementary information: \"Please perform a web search on '[specific topic/query]' and then continue this analysis using the continuation_id from this response if you find relevant information.\"\n\nFor important missing information: \"Please search for '[specific topic/query]' and respond back with the findings using the continuation_id from this response - this information is needed to provide a complete analysis.\"\n\nFor critical/essential information: \"SEARCH REQUIRED: Please immediately perform a web search on '[specific topic/query]' and respond back with the results using the continuation_id from this response. Cannot provide accurate analysis without this current information.\"\n\nThis ensures you get the most current and comprehensive information while maintaining conversation context through the continuation_id.\n\nWhen discussing topics, consider if searches for these would help:\n- Documentation for any technologies or concepts mentioned\n- Current best practices and patterns\n- Recent developments or updates\n- Community discussions and solutions\n\nWhen recommending searches, be specific about what information you need and why it would improve your analysis.\n\n=== USER REQUEST ===\nWhat is 2 + 2?\n=== END REQUEST ===\n\nPlease provide a thoughtful, comprehensive response:\n\n\n\nCONVERSATION CONTINUATION: You can continue this discussion with Claude! (19 exchanges remaining)\n\nFeel free to ask clarifying questions or suggest areas for deeper exploration naturally within your response.\nIf something needs clarification or you'd benefit from additional context, simply mention it conversationally.\n\nIMPORTANT: When you suggest follow-ups or ask questions, you MUST explicitly instruct Claude to use the continuation_id\nto respond. Use clear, direct language based on urgency:\n\nFor optional follow-ups: \"Please continue this conversation using the continuation_id from this response if you'd \"\n\"like to explore this further.\"\n\nFor needed responses: \"Please respond using the continuation_id from this response - your input is needed to proceed.\"\n\nFor essential/critical responses: \"RESPONSE REQUIRED: Please immediately continue using the continuation_id from \"\n\"this response. Cannot proceed without your clarification/input.\"\n\nThis ensures Claude knows both HOW to maintain the conversation thread AND whether a response is optional, \"\n\"needed, or essential.\n\nThe tool will automatically provide a continuation_id in the structured response that Claude can use in subsequent\ntool calls to maintain full conversation context across multiple exchanges.\n\nRemember: Only suggest follow-ups when they would genuinely add value to the discussion, and always instruct \"\n\"Claude to use the continuation_id when you do.",
+                  "type": "input_text"
+                }
+              ],
+              "role": "user"
+            }
+          ],
+          "model": "o3-pro",
+          "reasoning": {
+            "effort": "medium"
+          },
+          "store": true
+        },
+        "headers": {
+          "accept": "application/json",
+          "accept-encoding": "gzip, deflate",
+          "authorization": "Bearer SANITIZED",
+          "connection": "keep-alive",
+          "content-length": "10712",
+          "content-type": "application/json",
+          "host": "api.openai.com",
+          "user-agent": "OpenAI/Python 1.95.1",
+          "x-stainless-arch": "arm64",
+          "x-stainless-async": "false",
+          "x-stainless-lang": "python",
+          "x-stainless-os": "MacOS",
+          "x-stainless-package-version": "1.95.1",
+          "x-stainless-read-timeout": "900.0",
+          "x-stainless-retry-count": "0",
+          "x-stainless-runtime": "CPython",
+          "x-stainless-runtime-version": "3.12.9"
+        },
+        "method": "POST",
+        "path": "/v1/responses",
+        "url": "https://api.openai.com/v1/responses"
+      },
+      "response": {
+        "content": {
+          "data": "ewogICJpZCI6ICJyZXNwXzY4NzNlMDExYmMwYzgxOTlhNmRkYWI4ZmFjNDY4YWNiMGM3MTM4ZGJhNzNmNmQ4ZCIsCiAgIm9iamVjdCI6ICJyZXNwb25zZSIsCiAgImNyZWF0ZWRfYXQiOiAxNzUyNDI0NDY1LAogICJzdGF0dXMiOiAiY29tcGxldGVkIiwKICAiYmFja2dyb3VuZCI6IGZhbHNlLAogICJlcnJvciI6IG51bGwsCiAgImluY29tcGxldGVfZGV0YWlscyI6IG51bGwsCiAgImluc3RydWN0aW9ucyI6IG51bGwsCiAgIm1heF9vdXRwdXRfdG9rZW5zIjogbnVsbCwKICAibWF4X3Rvb2xfY2FsbHMiOiBudWxsLAogICJtb2RlbCI6ICJvMy1wcm8tMjAyNS0wNi0xMCIsCiAgIm91dHB1dCI6IFsKICAgIHsKICAgICAgImlkIjogInJzXzY4NzNlMDIyZmJhYzgxOTk5MWM5ODRlNTQ0OWVjYmFkMGM3MTM4ZGJhNzNmNmQ4ZCIsCiAgICAgICJ0eXBlIjogInJlYXNvbmluZyIsCiAgICAgICJzdW1tYXJ5IjogW10KICAgIH0sCiAgICB7CiAgICAgICJpZCI6ICJtc2dfNjg3M2UwMjJmZjNjODE5OWI3ZWEyYzYyZjhhNDcwNDUwYzcxMzhkYmE3M2Y2ZDhkIiwKICAgICAgInR5cGUiOiAibWVzc2FnZSIsCiAgICAgICJzdGF0dXMiOiAiY29tcGxldGVkIiwKICAgICAgImNvbnRlbnQiOiBbCiAgICAgICAgewogICAgICAgICAgInR5cGUiOiAib3V0cHV0X3RleHQiLAogICAgICAgICAgImFubm90YXRpb25zIjogW10sCiAgICAgICAgICAibG9ncHJvYnMiOiBbXSwKICAgICAgICAgICJ0ZXh0IjogIjIgKyAyID0gNCIKICAgICAgICB9CiAgICAgIF0sCiAgICAgICJyb2xlIjogImFzc2lzdGFudCIKICAgIH0KICBdLAogICJwYXJhbGxlbF90b29sX2NhbGxzIjogdHJ1ZSwKICAicHJldmlvdXNfcmVzcG9uc2VfaWQiOiBudWxsLAogICJyZWFzb25pbmciOiB7CiAgICAiZWZmb3J0IjogIm1lZGl1bSIsCiAgICAic3VtbWFyeSI6IG51bGwKICB9LAogICJzZXJ2aWNlX3RpZXIiOiAiZGVmYXVsdCIsCiAgInN0b3JlIjogdHJ1ZSwKICAidGVtcGVyYXR1cmUiOiAxLjAsCiAgInRleHQiOiB7CiAgICAiZm9ybWF0IjogewogICAgICAidHlwZSI6ICJ0ZXh0IgogICAgfQogIH0sCiAgInRvb2xfY2hvaWNlIjogImF1dG8iLAogICJ0b29scyI6IFtdLAogICJ0b3BfbG9ncHJvYnMiOiAwLAogICJ0b3BfcCI6IDEuMCwKICAidHJ1bmNhdGlvbiI6ICJkaXNhYmxlZCIsCiAgInVzYWdlIjogewogICAgImlucHV0X3Rva2VucyI6IDE4ODMsCiAgICAiaW5wdXRfdG9rZW5zX2RldGFpbHMiOiB7CiAgICAgICJjYWNoZWRfdG9rZW5zIjogMAogICAgfSwKICAgICJvdXRwdXRfdG9rZW5zIjogNzksCiAgICAib3V0cHV0X3Rva2Vuc19kZXRhaWxzIjogewogICAgICAicmVhc29uaW5nX3Rva2VucyI6IDY0CiAgICB9LAogICAgInRvdGFsX3Rva2VucyI6IDE5NjIKICB9LAogICJ1c2VyIjogbnVsbCwKICAibWV0YWRhdGEiOiB7fQp9",
+          "encoding": "base64",
+          "size": 1416
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "95ea300e7a8a3863-QRO",
+          "connection": "keep-alive",
+          "content-encoding": "gzip",
+          "content-type": "application/json",
+          "date": "Sun, 13 Jul 2025 16:34:43 GMT",
+          "openai-organization": "ruin-yezxd7",
+          "openai-processing-ms": "17597",
+          "openai-version": "2020-10-01",
+          "server": "cloudflare",
+          "set-cookie": "__cf_bm=oZ3A.JEIYCcMsNAs2xtzVqODzcOPgRVQGgpQ8Qtbz.s-(XXX) XXX-XXXX-0.0.0.0-ndc7qvXE6_ceMCvd1CYBLUdvgh0lSag4KAnufbpMF1CCpHm3D_3oP8sdch_SOtunumLr53gmTqJ9JjcV..gj2AyMmLnLs2BA1S1ERg6qgAA; path=/; expires=Sun, 13-Jul-25 17:04:43 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=sfd47fp5T7r6zUXO0EOf5g.1CjjBZLFyzTxXBAR7F54-175(XXX) XXX-XXXX-0.0.0.0-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "transfer-encoding": "chunked",
+          "x-content-type-options": "nosniff",
+          "x-ratelimit-limit-requests": "5000",
+          "x-ratelimit-limit-tokens": "5000",
+          "x-ratelimit-remaining-requests": "4999",
+          "x-ratelimit-remaining-tokens": "4999",
+          "x-ratelimit-reset-requests": "0s",
+          "x-ratelimit-reset-tokens": "0s",
+          "x-request-id": "req_74a7b0f6e62299fcac5c089319446a4c"
+        },
+        "reason_phrase": "OK",
+        "status_code": 200
+      }
+    }
+  ]
+}

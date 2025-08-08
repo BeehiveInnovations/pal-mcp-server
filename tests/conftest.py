@@ -15,13 +15,6 @@ parent_dir = Path(__file__).resolve().parent.parent
 if str(parent_dir) not in sys.path:
     sys.path.insert(0, str(parent_dir))
 
-# Set dummy API keys for tests if not already set or if empty
-if not os.environ.get("GEMINI_API_KEY"):
-    os.environ["GEMINI_API_KEY"] = "dummy-key-for-tests"
-if not os.environ.get("OPENAI_API_KEY"):
-    os.environ["OPENAI_API_KEY"] = "dummy-key-for-tests"
-if not os.environ.get("XAI_API_KEY"):
-    os.environ["XAI_API_KEY"] = "dummy-key-for-tests"
 
 # Set default model to a specific value for tests to avoid auto mode
 # This prevents all tests from failing due to missing model parameter
@@ -77,11 +70,27 @@ def project_path(tmp_path):
     return test_dir
 
 
+def _set_dummy_keys_if_missing():
+    """Set dummy API keys only when they are completely absent."""
+    for var in ("GEMINI_API_KEY", "OPENAI_API_KEY", "XAI_API_KEY"):
+        if not os.environ.get(var):
+            os.environ[var] = "dummy-key-for-tests"
+
+
 # Pytest configuration
 def pytest_configure(config):
     """Configure pytest with custom markers"""
     config.addinivalue_line("markers", "asyncio: mark test as async")
     config.addinivalue_line("markers", "no_mock_provider: disable automatic provider mocking")
+    # Assume we need dummy keys until we learn otherwise
+    config._needs_dummy_keys = True
+
+
+def pytest_collection_modifyitems(session, config, items):
+    """Hook that runs after test collection to check for no_mock_provider markers."""
+    # Always set dummy keys if real keys are missing
+    # This ensures tests work in CI even with no_mock_provider marker
+    _set_dummy_keys_if_missing()
 
 
 @pytest.fixture(autouse=True)

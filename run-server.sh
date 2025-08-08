@@ -125,7 +125,7 @@ get_claude_config_path() {
                 win_appdata=$(wslvar APPDATA 2>/dev/null)
             fi
             
-            if [[ -n "$win_appdata" ]]; then
+            if [[ -n "${win_appdata:-}" ]]; then
                 echo "$(wslpath "$win_appdata")/Claude/claude_desktop_config.json"
             else
                 print_warning "Could not determine Windows user path automatically. Please ensure APPDATA is set correctly or provide the full path manually."

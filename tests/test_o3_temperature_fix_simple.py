@@ -230,7 +230,7 @@ class TestO3TemperatureParameterFixSimple:
         assert temp_constraint.validate(0.5) is False
 
         # Test regular model constraints - use gpt-4.1 which is supported
-        gpt41_capabilities = provider.get_capabilities("gpt-4.1-2025-04-14")
+        gpt41_capabilities = provider.get_capabilities("gpt-4.1")
         assert gpt41_capabilities.temperature_constraint is not None
 
         # Regular models should allow a range

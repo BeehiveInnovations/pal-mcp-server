@@ -97,10 +97,10 @@ class TestAutoModeProviderSelection:
             fast_response = ModelProviderRegistry.get_preferred_fallback_model(ToolModelCategory.FAST_RESPONSE)
             balanced = ModelProviderRegistry.get_preferred_fallback_model(ToolModelCategory.BALANCED)
 
-            # Should select appropriate OpenAI models
-            assert extended_reasoning in ["o3", "o3-mini", "o4-mini"]  # Any available OpenAI model for reasoning
-            assert fast_response in ["o4-mini", "o3-mini"]  # Prefer faster models
-            assert balanced in ["o4-mini", "o3-mini"]  # Balanced selection
+            # Should select appropriate OpenAI models based on new preference order
+            assert extended_reasoning == "o3"  # O3 for extended reasoning
+            assert fast_response == "gpt-5"  # gpt-5 comes first in fast response preference
+            assert balanced == "gpt-5"  # gpt-5 for balanced
 
         finally:
             # Restore original environment
@@ -138,11 +138,11 @@ class TestAutoModeProviderSelection:
             )
             fast_response = ModelProviderRegistry.get_preferred_fallback_model(ToolModelCategory.FAST_RESPONSE)
 
-            # Should prefer OpenAI for reasoning (based on fallback logic)
-            assert extended_reasoning == "o3"  # Should prefer O3 for extended reasoning
+            # Should prefer Gemini now (based on new provider priority: Gemini before OpenAI)
+            assert extended_reasoning == "gemini-2.5-pro"  # Gemini has higher priority now
 
-            # Should prefer OpenAI for fast response
-            assert fast_response == "o4-mini"  # Should prefer O4-mini for fast response
+            # Should prefer Gemini for fast response
+            assert fast_response == "gemini-2.5-flash"  # Gemini has higher priority now
 
         finally:
             # Restore original environment
@@ -318,9 +318,9 @@ class TestAutoModeProviderSelection:
             test_cases = [
                 ("flash", ProviderType.GOOGLE, "gemini-2.5-flash"),
                 ("pro", ProviderType.GOOGLE, "gemini-2.5-pro"),
-                ("mini", ProviderType.OPENAI, "o4-mini"),
+                ("mini", ProviderType.OPENAI, "gpt-5-mini"),  # "mini" now resolves to gpt-5-mini
                 ("o3mini", ProviderType.OPENAI, "o3-mini"),
-                ("grok", ProviderType.XAI, "grok-3"),
+                ("grok", ProviderType.XAI, "grok-4"),
                 ("grokfast", ProviderType.XAI, "grok-3-fast"),
             ]
 

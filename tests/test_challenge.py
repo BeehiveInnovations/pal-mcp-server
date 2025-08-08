@@ -93,7 +93,7 @@ class TestChallengeTool:
         response_data = json.loads(result[0].text)
 
         # Check response structure
-        assert response_data["status"] == "challenge_created"
+        assert response_data["status"] == "challenge_accepted"
         assert response_data["original_statement"] == "All software bugs are caused by syntax errors"
         assert "challenge_prompt" in response_data
         assert "instructions" in response_data

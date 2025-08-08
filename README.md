@@ -290,6 +290,7 @@ nano .env
 # The file will contain, at least one should be set:
 # GEMINI_API_KEY=your-gemini-api-key-here  # For Gemini models
 # OPENAI_API_KEY=your-openai-api-key-here  # For O3 model
+# XAI_API_KEY=your-xai-api-key-here        # For Grok models
 # OPENROUTER_API_KEY=your-openrouter-key  # For OpenRouter (see docs/custom_models.md)
 # DIAL_API_KEY=your-dial-api-key-here      # For DIAL platform
 

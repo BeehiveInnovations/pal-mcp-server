@@ -115,6 +115,14 @@ Test isolated components and functions:
 - **File handling**: Path validation, token limits, deduplication
 - **Auto mode**: Model selection logic and fallback behavior
 
+### HTTP Recording/Replay Tests (HTTP Transport Recorder)
+Tests for expensive API calls (like o3-pro) use custom recording/replay:
+- **Real API validation**: Tests against actual provider responses
+- **Cost efficiency**: Record once, replay forever
+- **Provider compatibility**: Validates fixes against real APIs
+- Uses HTTP Transport Recorder for httpx-based API calls
+- See [HTTP Recording/Replay Testing Guide](./vcr-testing.md) for details
+
 ### Simulator Tests
 Validate real-world usage scenarios by simulating actual Claude prompts:
 - **Basic conversations**: Multi-turn chat functionality with real prompts

@@ -390,6 +390,23 @@ class WorkflowTool(BaseTool, BaseWorkflowMixin):
         """Get status for skipped expert analysis. Override for tool-specific status."""
         return "skipped_by_tool_design"
 
+    def is_continuation_workflow(self, request) -> bool:
+        """
+        Check if this is a continuation workflow that should skip multi-step investigation.
+
+        When continuation_id is provided, the workflow typically continues from a previous
+        conversation and should go directly to expert analysis rather than starting a new
+        multi-step investigation.
+
+        Args:
+            request: The workflow request object
+
+        Returns:
+            True if this is a continuation that should skip multi-step workflow
+        """
+        continuation_id = self.get_request_continuation_id(request)
+        return bool(continuation_id)
+
     # Abstract methods that must be implemented by specific workflow tools
     # (These are inherited from BaseWorkflowMixin and must be implemented)
 

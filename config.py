@@ -14,9 +14,9 @@ import os
 # These values are used in server responses and for tracking releases
 # IMPORTANT: This is the single source of truth for version and author info
 # Semantic versioning: MAJOR.MINOR.PATCH
-__version__ = "5.8.2"
+__version__ = "5.8.3"
 # Last update date in ISO format
-__updated__ = "2025-06-30"
+__updated__ = "2025-08-08"
 # Primary maintainer
 __author__ = "Fahad Gilani"
 
@@ -75,10 +75,10 @@ DEFAULT_CONSENSUS_MAX_INSTANCES_PER_COMBINATION = 2
 #
 # IMPORTANT: This limit ONLY applies to the Claude CLI ↔ MCP Server transport boundary.
 # It does NOT limit internal MCP Server operations like system prompts, file embeddings,
-# conversation history, or content sent to external models (Gemini/O3/OpenRouter).
+# conversation history, or content sent to external models (Gemini/OpenAI/OpenRouter).
 #
 # MCP Protocol Architecture:
-# Claude CLI ←→ MCP Server ←→ External Model (Gemini/O3/etc.)
+# Claude CLI ←→ MCP Server ←→ External Model (Gemini/OpenAI/etc.)
 #     ↑                              ↑
 #     │                              │
 # MCP transport                Internal processing
