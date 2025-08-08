@@ -221,7 +221,7 @@ class OpenAIModelProvider(OpenAICompatibleProvider):
         prompt: str,
         model_name: str,
         system_prompt: Optional[str] = None,
-        temperature: float = 0.7,
+        temperature: float = 0.3,
         max_output_tokens: Optional[int] = None,
         **kwargs,
     ) -> ModelResponse:

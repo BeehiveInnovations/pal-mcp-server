@@ -108,9 +108,9 @@ class TestAutoModeComprehensive:
                     "OPENROUTER_API_KEY": None,
                 },
                 {
-                    "EXTENDED_REASONING": "grok-3",  # GROK-3 for reasoning
+                    "EXTENDED_REASONING": "grok-4",  # GROK-4 for reasoning (now preferred)
                     "FAST_RESPONSE": "grok-3-fast",  # GROK-3-fast for speed
-                    "BALANCED": "grok-3",  # GROK-3 as balanced
+                    "BALANCED": "grok-4",  # GROK-4 as balanced (now preferred)
                 },
             ),
             # Both Gemini and OpenAI available - Google comes first in priority
