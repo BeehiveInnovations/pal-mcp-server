@@ -90,6 +90,11 @@ class BaseWorkflowMixin(ABC):
         pass
 
     @abstractmethod
+    def get_language_instruction(self) -> str:
+        """Return the language instruction for localization. Usually provided by BaseTool."""
+        pass
+
+    @abstractmethod
     def get_default_temperature(self) -> float:
         """Return the default temperature for this tool. Usually provided by BaseTool."""
         pass
@@ -107,9 +112,11 @@ class BaseWorkflowMixin(ABC):
     @abstractmethod
     def _prepare_file_content_for_prompt(
         self,
-        files: list[str],
+        request_files: list[str],
         continuation_id: Optional[str],
-        description: str,
+        context_description: str = "New files",
+        max_tokens: Optional[int] = None,
+        reserve_tokens: int = 1_000,
         remaining_budget: Optional[int] = None,
         arguments: Optional[dict[str, Any]] = None,
         model_context: Optional[Any] = None,
@@ -299,7 +306,7 @@ class BaseWorkflowMixin(ABC):
             f"MANDATORY: DO NOT call the {self.get_name()} tool again immediately. "
             f"You MUST first work using appropriate tools. "
             f"REQUIRED ACTIONS before calling {self.get_name()} step {next_step_number}:\n"
-            + "\n".join(f"{i+1}. {action}" for i, action in enumerate(required_actions))
+            + "\n".join(f"{i + 1}. {action}" for i, action in enumerate(required_actions))
             + f"\n\nOnly call {self.get_name()} again with step_number: {next_step_number} "
             f"AFTER completing this work."
         )
@@ -1453,8 +1460,10 @@ class BaseWorkflowMixin(ABC):
                 if file_content:
                     expert_context = self._add_files_to_expert_context(expert_context, file_content)
 
-            # Get system prompt for this tool
-            system_prompt = self.get_system_prompt()
+            # Get system prompt for this tool with localization support
+            base_system_prompt = self.get_system_prompt()
+            language_instruction = self.get_language_instruction()
+            system_prompt = language_instruction + base_system_prompt
 
             # Check if tool wants system prompt embedded in main prompt
             if self.should_embed_system_prompt():
@@ -1553,36 +1562,21 @@ class BaseWorkflowMixin(ABC):
 
     # Default implementations for methods that workflow-based tools typically don't need
 
-    def prepare_prompt(self, request, continuation_id=None, max_tokens=None, reserve_tokens=0):
+    async def prepare_prompt(self, request) -> str:
         """
-        Base implementation for workflow tools.
+        Base implementation for workflow tools - compatible with BaseTool signature.
 
-        Allows subclasses to customize prompt preparation behavior by overriding
-        customize_prompt_preparation().
-        """
-        # Allow subclasses to customize the prompt preparation
-        self.customize_prompt_preparation(request, continuation_id, max_tokens, reserve_tokens)
-
-        # Workflow tools typically don't need to return a prompt
-        # since they handle their own prompt preparation internally
-        return "", ""
-
-    def customize_prompt_preparation(self, request, continuation_id=None, max_tokens=None, reserve_tokens=0):
-        """
-        Override this method in subclasses to customize prompt preparation.
-
-        Base implementation does nothing - subclasses can extend this to add
-        custom prompt preparation logic without the base class needing to
-        know about specific tool capabilities.
+        Workflow tools typically don't need to return a prompt since they handle
+        their own prompt preparation internally through the workflow execution.
 
         Args:
-            request: The request object (may have files, prompt, etc.)
-            continuation_id: Optional continuation ID
-            max_tokens: Optional max token limit
-            reserve_tokens: Optional reserved token count
+            request: The validated request object
+
+        Returns:
+            Empty string since workflow tools manage prompts internally
         """
-        # Base implementation does nothing - subclasses override as needed
-        return None
+        # Workflow tools handle their prompts internally during workflow execution
+        return ""
 
     def format_response(self, response: str, request, model_info=None):
         """
