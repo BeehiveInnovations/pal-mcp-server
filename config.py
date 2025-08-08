@@ -75,10 +75,10 @@ DEFAULT_CONSENSUS_MAX_INSTANCES_PER_COMBINATION = 2
 #
 # IMPORTANT: This limit ONLY applies to the Claude CLI ↔ MCP Server transport boundary.
 # It does NOT limit internal MCP Server operations like system prompts, file embeddings,
-# conversation history, or content sent to external models (Gemini/O3/OpenRouter).
+# conversation history, or content sent to external models (Gemini/OpenAI/OpenRouter).
 #
 # MCP Protocol Architecture:
-# Claude CLI ←→ MCP Server ←→ External Model (Gemini/O3/etc.)
+# Claude CLI ←→ MCP Server ←→ External Model (Gemini/OpenAI/etc.)
 #     ↑                              ↑
 #     │                              │
 # MCP transport                Internal processing

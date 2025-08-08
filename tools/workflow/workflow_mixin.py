@@ -663,12 +663,12 @@ class BaseWorkflowMixin(ABC):
                 self._current_model_name = None
                 self._model_context = None
 
+            # Handle continuation
+            continuation_id = request.continuation_id
+
             # Adjust total steps if needed
             if request.step_number > request.total_steps:
                 request.total_steps = request.step_number
-
-            # Handle continuation
-            continuation_id = request.continuation_id
 
             # Create thread for first step
             if not continuation_id and request.step_number == 1:

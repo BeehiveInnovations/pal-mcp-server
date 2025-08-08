@@ -1,7 +1,10 @@
 """X.AI (GROK) model provider implementation."""
 
 import logging
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
+
+if TYPE_CHECKING:
+    from tools.models import ToolModelCategory
 
 from .base import (
     ModelCapabilities,
@@ -133,3 +136,41 @@ class XAIModelProvider(OpenAICompatibleProvider):
         # Currently GROK models do not support extended thinking
         # This may change with future GROK model releases
         return False
+
+    def get_preferred_model(self, category: "ToolModelCategory", allowed_models: list[str]) -> Optional[str]:
+        """Get XAI's preferred model for a given category from allowed models.
+
+        Args:
+            category: The tool category requiring a model
+            allowed_models: Pre-filtered list of models allowed by restrictions
+
+        Returns:
+            Preferred model name or None
+        """
+        from tools.models import ToolModelCategory
+
+        if not allowed_models:
+            return None
+
+        if category == ToolModelCategory.EXTENDED_REASONING:
+            # Prefer GROK-3 for reasoning
+            if "grok-3" in allowed_models:
+                return "grok-3"
+            # Fall back to any available model
+            return allowed_models[0]
+
+        elif category == ToolModelCategory.FAST_RESPONSE:
+            # Prefer GROK-3-Fast for speed
+            if "grok-3-fast" in allowed_models:
+                return "grok-3-fast"
+            # Fall back to any available model
+            return allowed_models[0]
+
+        else:  # BALANCED or default
+            # Prefer standard GROK-3 for balanced use
+            if "grok-3" in allowed_models:
+                return "grok-3"
+            elif "grok-3-fast" in allowed_models:
+                return "grok-3-fast"
+            # Fall back to any available model
+            return allowed_models[0]

@@ -88,7 +88,7 @@ class TestXAIProvider:
         # Test temperature range
         assert capabilities.temperature_constraint.min_temp == 0.0
         assert capabilities.temperature_constraint.max_temp == 2.0
-        assert capabilities.temperature_constraint.default_temp == 0.7
+        assert capabilities.temperature_constraint.default_temp == 0.3
 
     def test_get_capabilities_grok3_fast(self):
         """Test getting model capabilities for GROK-3 Fast."""

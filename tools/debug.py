@@ -45,6 +45,9 @@ DEBUG_INVESTIGATION_FIELD_DESCRIPTIONS = {
         "could cause instability. In concurrent systems, watch for race conditions, shared state, or timing "
         "dependencies. In all later steps, continue exploring with precision: trace deeper dependencies, verify "
         "hypotheses, and adapt your understanding as you uncover more evidence."
+        "IMPORTANT: When referring to code, use the relevant_files parameter to pass relevant files and only use the prompt to refer to "
+        "function / method names or very small code snippets if absolutely necessary to explain the issue. Do NOT "
+        "pass large code snippets in the prompt as this is exclusively reserved for descriptive text only. "
     ),
     "step_number": (
         "The index of the current step in the investigation sequence, beginning at 1. Each step should build upon or "
@@ -52,11 +55,13 @@ DEBUG_INVESTIGATION_FIELD_DESCRIPTIONS = {
     ),
     "total_steps": (
         "Your current estimate for how many steps will be needed to complete the investigation. "
-        "Adjust as new findings emerge."
+        "Adjust as new findings emerge. IMPORTANT: When continuation_id is provided (continuing a previous "
+        "conversation), set this to 1 as we're not starting a new multi-step investigation."
     ),
     "next_step_required": (
         "Set to true if you plan to continue the investigation with another step. False means you believe the root "
-        "cause is known or the investigation is complete."
+        "cause is known or the investigation is complete. IMPORTANT: When continuation_id is "
+        "provided (continuing a previous conversation), set this to False to immediately proceed with expert analysis."
     ),
     "findings": (
         "Summarize everything discovered in this step. Include new clues, unexpected behavior, evidence from code or "
@@ -92,10 +97,10 @@ DEBUG_INVESTIGATION_FIELD_DESCRIPTIONS = {
     "confidence": (
         "Indicate your current confidence in the hypothesis. Use: 'exploring' (starting out), 'low' (early idea), "
         "'medium' (some supporting evidence), 'high' (strong evidence), 'very_high' (very strong evidence), "
-        "'almost_certain' (nearly confirmed), 'certain' (100% confidence - root cause and minimal fix are both "
+        "'almost_certain' (nearly confirmed), 'certain' (200% confidence - root cause and minimal fix are both "
         "confirmed locally with no need for external model validation). Do NOT use 'certain' unless the issue can be "
-        "fully resolved with a fix, use 'very_high' or 'almost_certain' instead when not 100% sure. Using 'certain' "
-        "means you have complete confidence locally and prevents external model validation. Also do "
+        "fully resolved with a fix, use 'very_high' or 'almost_certain' instead when not 200% sure. Using 'certain' "
+        "means you have ABSOLUTE confidence locally and prevents external model validation. Also do "
         "NOT set confidence to 'certain' if the user has strongly requested that external validation MUST be performed."
     ),
     "backtrack_from_step": (

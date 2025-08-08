@@ -95,8 +95,8 @@ class TestAutoModeComprehensive:
                 },
                 {
                     "EXTENDED_REASONING": "o3",  # O3 for deep reasoning
-                    "FAST_RESPONSE": "o4-mini",  # O4-mini for speed
-                    "BALANCED": "o4-mini",  # O4-mini as balanced
+                    "FAST_RESPONSE": "gpt-5",  # Prefer gpt-5 for speed
+                    "BALANCED": "gpt-5",  # Prefer gpt-5 for balanced
                 },
             ),
             # Only X.AI API available
@@ -113,7 +113,7 @@ class TestAutoModeComprehensive:
                     "BALANCED": "grok-3",  # GROK-3 as balanced
                 },
             ),
-            # Both Gemini and OpenAI available - should prefer based on tool category
+            # Both Gemini and OpenAI available - Google comes first in priority
             (
                 {
                     "GEMINI_API_KEY": "real-key",
@@ -122,12 +122,12 @@ class TestAutoModeComprehensive:
                     "OPENROUTER_API_KEY": None,
                 },
                 {
-                    "EXTENDED_REASONING": "o3",  # Prefer O3 for deep reasoning
-                    "FAST_RESPONSE": "o4-mini",  # Prefer O4-mini for speed
-                    "BALANCED": "o4-mini",  # Prefer OpenAI for balanced
+                    "EXTENDED_REASONING": "gemini-2.5-pro",  # Gemini comes first in priority
+                    "FAST_RESPONSE": "gemini-2.5-flash",  # Prefer flash for speed
+                    "BALANCED": "gemini-2.5-flash",  # Prefer flash for balanced
                 },
             ),
-            # All native APIs available - should prefer based on tool category
+            # All native APIs available - Google still comes first
             (
                 {
                     "GEMINI_API_KEY": "real-key",
@@ -136,9 +136,9 @@ class TestAutoModeComprehensive:
                     "OPENROUTER_API_KEY": None,
                 },
                 {
-                    "EXTENDED_REASONING": "o3",  # Prefer O3 for deep reasoning
-                    "FAST_RESPONSE": "o4-mini",  # Prefer O4-mini for speed
-                    "BALANCED": "o4-mini",  # Prefer OpenAI for balanced
+                    "EXTENDED_REASONING": "gemini-2.5-pro",  # Gemini comes first in priority
+                    "FAST_RESPONSE": "gemini-2.5-flash",  # Prefer flash for speed
+                    "BALANCED": "gemini-2.5-flash",  # Prefer flash for balanced
                 },
             ),
         ],

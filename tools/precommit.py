@@ -42,6 +42,9 @@ PRECOMMIT_WORKFLOW_FIELD_DESCRIPTIONS = {
         "performance impacts, and maintainability concerns. Map out changed files, understand the business logic, "
         "and identify areas requiring deeper analysis. In all later steps, continue exploring with precision: "
         "trace dependencies, verify hypotheses, and adapt your understanding as you uncover more evidence."
+        "IMPORTANT: When referring to code, use the relevant_files parameter to pass relevant files and only use the prompt to refer to "
+        "function / method names or very small code snippets if absolutely necessary to explain the issue. Do NOT "
+        "pass large code snippets in the prompt as this is exclusively reserved for descriptive text only. "
     ),
     "step_number": (
         "The index of the current step in the pre-commit investigation sequence, beginning at 1. Each step should "
@@ -49,11 +52,13 @@ PRECOMMIT_WORKFLOW_FIELD_DESCRIPTIONS = {
     ),
     "total_steps": (
         "Your current estimate for how many steps will be needed to complete the pre-commit investigation. "
-        "Adjust as new findings emerge."
+        "Adjust as new findings emerge. IMPORTANT: When continuation_id is provided (continuing a previous "
+        "conversation), set this to 1 as we're not starting a new multi-step investigation."
     ),
     "next_step_required": (
         "Set to true if you plan to continue the investigation with another step. False means you believe the "
-        "pre-commit analysis is complete and ready for expert validation."
+        "pre-commit analysis is complete and ready for expert validation. IMPORTANT: When continuation_id is "
+        "provided (continuing a previous conversation), set this to False to immediately proceed with expert analysis."
     ),
     "findings": (
         "Summarize everything discovered in this step about the changes being committed. Include analysis of git diffs, "
@@ -87,9 +92,10 @@ PRECOMMIT_WORKFLOW_FIELD_DESCRIPTIONS = {
     "confidence": (
         "Indicate your current confidence in the assessment. Use: 'exploring' (starting analysis), 'low' (early "
         "investigation), 'medium' (some evidence gathered), 'high' (strong evidence), "
-        "'very_high' (very strong evidence), 'almost_certain' (nearly complete validation), 'certain' (100% confidence - "
+        "'very_high' (very strong evidence), 'almost_certain' (nearly complete validation), 'certain' (200% confidence - "
         "analysis is complete and all issues are identified with no need for external model validation). "
-        "Do NOT use 'certain' unless the pre-commit validation is thoroughly complete, use 'very_high' or 'almost_certain' instead if not 100% sure. "
+        "Do NOT use 'certain' unless the pre-commit validation is thoroughly complete, use 'very_high' or 'almost_certain' "
+        "instead if not 200% sure. "
         "Using 'certain' means you have complete confidence locally and prevents external model validation. Also "
         "do NOT set confidence to 'certain' if the user has strongly requested that external validation MUST be performed."
     ),
@@ -584,6 +590,17 @@ class PrecommitTool(WorkflowTool):
         """
         Provide step-specific guidance for precommit workflow.
         """
+        # Check if this is a continuation - if so, skip workflow and go to expert analysis
+        continuation_id = self.get_request_continuation_id(request)
+        if continuation_id:
+            return {
+                "next_steps": (
+                    "Continuing previous conversation. The expert analysis will now be performed based on the "
+                    "accumulated context from the previous conversation. The analysis will build upon the prior "
+                    "findings without repeating the investigation steps."
+                )
+            }
+
         # Generate the next steps instruction based on required actions
         required_actions = self.get_required_actions(step_number, confidence, request.findings, request.total_steps)
 

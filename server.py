@@ -409,9 +409,9 @@ def configure_providers():
     openai_key = os.getenv("OPENAI_API_KEY")
     logger.debug(f"OpenAI key check: key={'[PRESENT]' if openai_key else '[MISSING]'}")
     if openai_key and openai_key != "your_openai_api_key_here":
-        valid_providers.append("OpenAI (o3)")
+        valid_providers.append("OpenAI")
         has_native_apis = True
-        logger.info("OpenAI API key found - o3 model available")
+        logger.info("OpenAI API key found")
     else:
         if not openai_key:
             logger.debug("OpenAI API key not found in environment")
@@ -493,7 +493,7 @@ def configure_providers():
         raise ValueError(
             "At least one API configuration is required. Please set either:\n"
             "- GEMINI_API_KEY for Gemini models\n"
-            "- OPENAI_API_KEY for OpenAI o3 model\n"
+            "- OPENAI_API_KEY for OpenAI models\n"
             "- XAI_API_KEY for X.AI GROK models\n"
             "- DIAL_API_KEY for DIAL models\n"
             "- OPENROUTER_API_KEY for OpenRouter (multiple models)\n"
@@ -742,7 +742,9 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[TextCon
         # Parse model:option format if present
         model_name, model_option = parse_model_option(model_name)
         if model_option:
-            logger.debug(f"Parsed model format - model: '{model_name}', option: '{model_option}'")
+            logger.info(f"Parsed model format - model: '{model_name}', option: '{model_option}'")
+        else:
+            logger.info(f"Parsed model format - model: '{model_name}'")
 
         # Consensus tool handles its own model configuration validation
         # No special handling needed at server level
@@ -1190,16 +1192,16 @@ async def handle_get_prompt(name: str, arguments: dict[str, Any] = None) -> GetP
     """
     Get prompt details and generate the actual prompt text.
 
-    This handler is called when a user invokes a prompt (e.g., /zen:thinkdeeper or /zen:chat:o3).
+    This handler is called when a user invokes a prompt (e.g., /zen:thinkdeeper or /zen:chat:gpt5).
     It generates the appropriate text that Claude will then use to call the
     underlying tool.
 
-    Supports structured prompt names like "chat:o3" where:
+    Supports structured prompt names like "chat:gpt5" where:
     - "chat" is the tool name
-    - "o3" is the model to use
+    - "gpt5" is the model to use
 
     Args:
-        name: The name of the prompt to execute (can include model like "chat:o3")
+        name: The name of the prompt to execute (can include model like "chat:gpt5")
         arguments: Optional arguments for the prompt (e.g., model, thinking_mode)
 
     Returns:

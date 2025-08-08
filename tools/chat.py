@@ -23,6 +23,9 @@ from .simple.base import SimpleTool
 CHAT_FIELD_DESCRIPTIONS = {
     "prompt": (
         "You MUST provide a thorough, expressive question or share an idea with as much context as possible. "
+        "IMPORTANT: When referring to code, use the files parameter to pass relevant files and only use the prompt to refer to "
+        "function / method names or very small code snippets if absolutely necessary to explain the issue. Do NOT "
+        "pass large code snippets in the prompt as this is exclusively reserved for descriptive text only. "
         "Remember: you're talking to an assistant who has deep expertise and can provide nuanced insights. Include your "
         "current thinking, specific challenges, background context, what you've already tried, and what "
         "kind of response would be most helpful. The more context and detail you provide, the more "

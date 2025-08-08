@@ -635,6 +635,13 @@ class TestAutoModeWithRestrictions:
         mock_openai.list_models = openai_list_models
         mock_openai.list_all_known_models.return_value = ["o3", "o3-mini", "o4-mini"]
 
+        # Add get_preferred_model method to mock to match new implementation
+        def get_preferred_model(category, allowed_models):
+            # Simple preference logic for testing - just return first allowed model
+            return allowed_models[0] if allowed_models else None
+
+        mock_openai.get_preferred_model = get_preferred_model
+
         def get_provider_side_effect(provider_type):
             if provider_type == ProviderType.OPENAI:
                 return mock_openai
@@ -685,8 +692,9 @@ class TestAutoModeWithRestrictions:
             model = ModelProviderRegistry.get_preferred_fallback_model(ToolModelCategory.FAST_RESPONSE)
 
             # The fallback will depend on how get_available_models handles aliases
-            # For now, we accept either behavior and document it
-            assert model in ["o4-mini", "gemini-2.5-flash"]
+            # When "mini" is allowed, it's returned as the allowed model
+            # "mini" is now an alias for gpt-5-mini, but the list shows "mini" itself
+            assert model in ["mini", "gpt-5-mini", "o4-mini", "gemini-2.5-flash"]
         finally:
             # Restore original registry state
             registry = ModelProviderRegistry()

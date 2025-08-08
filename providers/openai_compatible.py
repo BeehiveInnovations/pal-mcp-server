@@ -309,8 +309,10 @@ class OpenAICompatibleProvider(ModelProvider):
         max_retries = 4
         retry_delays = [1, 3, 5, 8]
         last_exception = None
+        actual_attempts = 0
 
         for attempt in range(max_retries):
+            actual_attempts = attempt + 1  # Convert from 0-based index to human-readable count
             try:  # Log the exact payload being sent for debugging
                 import json
 
@@ -371,14 +373,13 @@ class OpenAICompatibleProvider(ModelProvider):
                 if is_retryable and attempt < max_retries - 1:
                     delay = retry_delays[attempt]
                     logging.warning(
-                        f"Retryable error for o3-pro responses endpoint, attempt {attempt + 1}/{max_retries}: {str(e)}. Retrying in {delay}s..."
+                        f"Retryable error for o3-pro responses endpoint, attempt {actual_attempts}/{max_retries}: {str(e)}. Retrying in {delay}s..."
                     )
                     time.sleep(delay)
                 else:
                     break
 
         # If we get here, all retries failed
-        actual_attempts = attempt + 1  # Convert from 0-based index to human-readable count
         error_msg = f"o3-pro responses endpoint error after {actual_attempts} attempt{'s' if actual_attempts > 1 else ''}: {str(last_exception)}"
         logging.error(error_msg)
         raise RuntimeError(error_msg) from last_exception
@@ -481,7 +482,7 @@ class OpenAICompatibleProvider(ModelProvider):
                 completion_params[key] = value
 
         # Check if this is o3-pro and needs the responses endpoint
-        if resolved_model == "o3-pro-2025-06-10":
+        if resolved_model == "o3-pro":
             # This model requires the /v1/responses endpoint
             # If it fails, we should not fall back to chat/completions
             return self._generate_with_responses_endpoint(
@@ -497,8 +498,10 @@ class OpenAICompatibleProvider(ModelProvider):
         retry_delays = [1, 3, 5, 8]  # Progressive delays: 1s, 3s, 5s, 8s
 
         last_exception = None
+        actual_attempts = 0
 
         for attempt in range(max_retries):
+            actual_attempts = attempt + 1  # Convert from 0-based index to human-readable count
             try:
                 # Generate completion
                 response = self.client.chat.completions.create(**completion_params)
@@ -536,12 +539,11 @@ class OpenAICompatibleProvider(ModelProvider):
 
                 # Log retry attempt
                 logging.warning(
-                    f"{self.FRIENDLY_NAME} error for model {model_name}, attempt {attempt + 1}/{max_retries}: {str(e)}. Retrying in {delay}s..."
+                    f"{self.FRIENDLY_NAME} error for model {model_name}, attempt {actual_attempts}/{max_retries}: {str(e)}. Retrying in {delay}s..."
                 )
                 time.sleep(delay)
 
         # If we get here, all retries failed
-        actual_attempts = attempt + 1  # Convert from 0-based index to human-readable count
         error_msg = f"{self.FRIENDLY_NAME} API error for model {model_name} after {actual_attempts} attempt{'s' if actual_attempts > 1 else ''}: {str(last_exception)}"
         logging.error(error_msg)
         raise RuntimeError(error_msg) from last_exception
@@ -576,11 +578,7 @@ class OpenAICompatibleProvider(ModelProvider):
             try:
                 encoding = tiktoken.encoding_for_model(model_name)
             except KeyError:
-                # Try common encodings based on model patterns
-                if "gpt-4" in model_name or "gpt-3.5" in model_name:
-                    encoding = tiktoken.get_encoding("cl100k_base")
-                else:
-                    encoding = tiktoken.get_encoding("cl100k_base")  # Default
+                encoding = tiktoken.get_encoding("cl100k_base")
 
             return len(encoding.encode(text))
 
@@ -679,11 +677,13 @@ class OpenAICompatibleProvider(ModelProvider):
         """
         # Common vision-capable models - only include models that actually support images
         vision_models = {
+            "gpt-5",
+            "gpt-5-mini",
             "gpt-4o",
             "gpt-4o-mini",
             "gpt-4-turbo",
             "gpt-4-vision-preview",
-            "gpt-4.1-2025-04-14",  # GPT-4.1 supports vision
+            "gpt-4.1-2025-04-14",
             "o3",
             "o3-mini",
             "o3-pro",

@@ -132,8 +132,11 @@ class TestBuggyBehaviorPrevention:
             assert not provider.validate_model_name("o3-pro")  # Not in allowed list
             assert not provider.validate_model_name("o3")  # Not in allowed list
 
-            # This should be ALLOWED because it resolves to o4-mini which is in the allowed list
-            assert provider.validate_model_name("mini")  # Resolves to o4-mini, which IS allowed
+            # "mini" now resolves to gpt-5-mini, not o4-mini, so it should be blocked
+            assert not provider.validate_model_name("mini")  # Resolves to gpt-5-mini, which is NOT allowed
+
+            # But o4mini (the actual alias for o4-mini) should work
+            assert provider.validate_model_name("o4mini")  # Resolves to o4-mini, which IS allowed
 
             # Verify our list_all_known_models includes the restricted models
             all_known = provider.list_all_known_models()
