@@ -23,7 +23,7 @@
               "role": "user"
             }
           ],
-          "model": "o3-pro-2025-06-10",
+          "model": "o3-pro",
           "reasoning": {
             "effort": "medium"
           },

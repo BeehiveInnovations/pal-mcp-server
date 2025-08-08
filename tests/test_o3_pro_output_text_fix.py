@@ -55,7 +55,7 @@ class TestO3ProOutputTextFix:
         ModelProviderRegistry.reset_for_testing()
 
     @pytest.mark.no_mock_provider  # Disable provider mocking for this test
-    @patch.dict(os.environ, {"OPENAI_ALLOWED_MODELS": "o3-pro,o3-pro-2025-06-10", "LOCALE": ""})
+    @patch.dict(os.environ, {"OPENAI_ALLOWED_MODELS": "o3-pro", "LOCALE": ""})
     async def test_o3_pro_uses_output_text_field(self, monkeypatch):
         """Test that o3-pro parsing uses the output_text convenience field via ChatTool."""
         cassette_path = cassette_dir / "o3_pro_basic_math.json"

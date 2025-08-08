@@ -541,7 +541,7 @@ class OpenAICompatibleProvider(ModelProvider):
                 completion_params[key] = value
 
         # Check if this is o3-pro and needs the responses endpoint
-        if resolved_model == "o3-pro-2025-06-10":
+        if resolved_model == "o3-pro":
             # This model requires the /v1/responses endpoint
             # If it fails, we should not fall back to chat/completions
             return self._generate_with_responses_endpoint(
