@@ -853,8 +853,8 @@ setup_venv() {
 # Check if package is installed
 check_package() {
     local python_cmd="$1"
-    local package="$2"
-    $python_cmd -c "import $package" 2>/dev/null
+    local module_name="$2"
+    "$python_cmd" -c "import importlib, sys; importlib.import_module(sys.argv[1])" "$module_name" &>/dev/null
 }
 
 # Install dependencies
@@ -862,20 +862,67 @@ install_dependencies() {
     local python_cmd="$1"
     local deps_needed=false
     
-    # First verify pip is available (always check, even for uv environments)
-    if ! $python_cmd -m pip --version &>/dev/null 2>&1; then
+    # First verify pip is available with retry logic and bootstrap fallback
+    local pip_available=false
+    local max_attempts=3
+    
+    for ((attempt=1; attempt<=max_attempts; attempt++)); do
+        if "$python_cmd" -m pip --version &>/dev/null; then
+            pip_available=true
+            break
+        else
+            if (( attempt < max_attempts )); then
+                print_warning "Attempt $attempt/$max_attempts: pip not available, retrying in 1 second..."
+                sleep 1
+            fi
+        fi
+    done
+    
+    # If pip is still not available after retries, try to bootstrap it
+    if [[ "$pip_available" == false ]]; then
+        print_warning "pip is not available in the Python environment after $max_attempts attempts"
+        print_info "Python command: $python_cmd"
+        print_info "Attempting to bootstrap pip..."
+        
+        # Extract the base python command for bootstrap (fallback to python3)
+        local base_python_cmd="python3"
+        if command -v python &> /dev/null; then
+            base_python_cmd="python"
+        fi
+        
+        # Try to bootstrap pip
+        if bootstrap_pip "$python_cmd" "$base_python_cmd"; then
+            print_success "Successfully bootstrapped pip"
+            
+            # Verify pip is now available
+            if $python_cmd -m pip --version &>/dev/null 2>&1; then
+                pip_available=true
+            else
+                print_error "pip still not available after bootstrap attempt"
+            fi
+        else
+            print_error "Failed to bootstrap pip"
+        fi
+    fi
+    
+    # Final check - if pip is still not available, exit with error
+    if [[ "$pip_available" == false ]]; then
         print_error "pip is not available in the Python environment"
         echo ""
-        echo "This indicates an incomplete Python installation."
-        echo "Please see the instructions above for installing the required packages."
+        echo "This indicates an incomplete Python installation or a problem with the virtual environment."
+        echo ""
+        echo "Troubleshooting steps:"
+        echo "1. Delete the virtual environment: rm -rf $VENV_PATH"
+        echo "2. Run this script again: ./run-server.sh"
+        echo "3. If the problem persists, check your Python installation"
+        echo ""
         return 1
     fi
     
     # Check required packages
-    local packages=("mcp" "google.generativeai" "openai" "pydantic" "dotenv")
+    local packages=("mcp" "google.genai" "openai" "pydantic" "dotenv")
     for package in "${packages[@]}"; do
-        local import_name=${package%%.*}  # Get first part before dot
-        if ! check_package "$python_cmd" "$import_name"; then
+        if ! check_package "$python_cmd" "$package"; then
             deps_needed=true
             break
         fi
@@ -895,29 +942,20 @@ install_dependencies() {
     echo "  • Environment configuration"
     echo ""
     
-    # Determine installation method - prefer uv if available and we're in a uv-created environment
-    local install_cmd
-    local use_uv=false
-    
-    if command -v uv &> /dev/null && [[ -f "$VENV_PATH/uv_created" ]]; then
-        # Use uv for faster installation if environment was created by uv
-        install_cmd="uv pip install -q -r requirements.txt --python $python_cmd"
-        use_uv=true
-        print_info "Using uv for faster package installation..."
-    elif [[ -n "${VIRTUAL_ENV:-}" ]] || [[ "$python_cmd" == *"$VENV_PATH"* ]]; then
-        install_cmd="$python_cmd -m pip install -q -r requirements.txt"
-    else
-        install_cmd="$python_cmd -m pip install -q --user -r requirements.txt"
-    fi
-    
-    # Install packages with better error handling
-    echo -n "Downloading packages..."
+    # Determine installation method and execute directly to handle paths with spaces
     local install_output
-    local install_error
+    local exit_code=0
     
-    # Capture both stdout and stderr
-    install_output=$($install_cmd 2>&1)
-    local exit_code=$?
+    echo -n "Downloading packages..."
+
+    if command -v uv &> /dev/null && [[ -f "$VENV_PATH/uv_created" ]]; then
+        print_info "Using uv for faster package installation..."
+        install_output=$(uv pip install -q -r requirements.txt --python "$python_cmd" 2>&1) || exit_code=$?
+    elif [[ -n "${VIRTUAL_ENV:-}" ]] || [[ "$python_cmd" == *"$VENV_PATH"* ]]; then
+        install_output=$("$python_cmd" -m pip install -q -r requirements.txt 2>&1) || exit_code=$?
+    else
+        install_output=$("$python_cmd" -m pip install -q --user -r requirements.txt 2>&1) || exit_code=$?
+    fi
     
     if [[ $exit_code -ne 0 ]]; then
         echo -e "\r${RED}✗ Setup failed${NC}                      "
