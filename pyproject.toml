@@ -12,7 +12,7 @@ dependencies = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["tools*", "providers*", "systemprompts*", "utils*"]
+include = ["tools*", "providers*", "systemprompts*", "utils*", "conf*"]
 
 [tool.setuptools]
 py-modules = ["server", "config"]

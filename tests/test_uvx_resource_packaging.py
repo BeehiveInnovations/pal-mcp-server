@@ -53,7 +53,7 @@ class TestUvxPathResolution:
             assert registry.config_path == config_path
             assert len(registry.list_models()) > 0
 
-    @patch("providers.openrouter_registry.files")
+    @patch("providers.openrouter_registry.importlib.resources.files")
     @patch("pathlib.Path.exists")
     def test_multiple_path_fallback(self, mock_exists, mock_files):
         """Test that multiple path resolution works for different deployment scenarios."""
@@ -70,7 +70,7 @@ class TestUvxPathResolution:
         assert not registry.use_resources, "Should fall back to file system when resources fail"
 
         # Assert that the registry fell back to the second potential path
-        assert registry.config_path == Path("conf/custom_models.json")
+        assert registry.config_path == Path.cwd() / "conf" / "custom_models.json"
 
         # Should load models successfully
         assert len(registry.list_models()) > 0

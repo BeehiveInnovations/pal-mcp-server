@@ -1,16 +1,12 @@
 """OpenRouter model registry for managing model configurations and aliases."""
 
+import importlib.resources
 import logging
 import os
 from pathlib import Path
 from typing import Optional
 
-try:
-    from importlib.resources import files
-except ImportError:
-    # Python < 3.9 fallback
-    from importlib_resources import files
-
+# Import handled via importlib.resources.files() calls directly
 from utils.file_utils import read_json_file
 
 from .base import (
@@ -44,31 +40,31 @@ class OpenRouterModelRegistry:
                 # Environment variable path
                 self.config_path = Path(env_path)
             else:
-                # Try importlib.resources first (proper way for packaged environments)
+                # Try importlib.resources for robust packaging support
+                self.config_path = None
+                self.use_resources = False
+
                 try:
-                    # Test if we can access the config via resources
-                    resource_path = files("providers") / "../conf/custom_models.json"
-                    if hasattr(resource_path, "read_text"):
-                        # Resource exists and is accessible
-                        self.config_path = None
+                    resource_traversable = importlib.resources.files('conf').joinpath('custom_models.json')
+                    if hasattr(resource_traversable, 'read_text'):
                         self.use_resources = True
                     else:
-                        raise FileNotFoundError("Resource method not available")
+                        raise AttributeError("read_text not available")
                 except Exception:
-                    # Fall back to file system paths
+                    pass
+
+                if not self.use_resources:
+                    # Fallback to file system paths
                     potential_paths = [
-                        Path(__file__).parent.parent / "conf" / "custom_models.json",  # Development
-                        Path("conf/custom_models.json"),  # Working directory
+                        Path(__file__).parent.parent / "conf" / "custom_models.json",
+                        Path.cwd() / "conf" / "custom_models.json",
                     ]
 
-                    # Find first existing path
-                    self.config_path = None
                     for path in potential_paths:
                         if path.exists():
                             self.config_path = path
                             break
 
-                    # If none found, default to the first one for error reporting
                     if self.config_path is None:
                         self.config_path = potential_paths[0]
 
@@ -131,7 +127,7 @@ class OpenRouterModelRegistry:
             if self.use_resources:
                 # Use importlib.resources for packaged environments
                 try:
-                    resource_path = files("providers") / "../conf/custom_models.json"
+                    resource_path = importlib.resources.files('conf').joinpath('custom_models.json')
                     if hasattr(resource_path, "read_text"):
                         # Python 3.9+
                         config_text = resource_path.read_text(encoding="utf-8")
