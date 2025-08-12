@@ -57,7 +57,7 @@ cloud models (expensive/powerful) AND local models (free/private) in the same co
 - **Gemini Models**: Support thinking modes (minimal to max), web search, 1M context
   - **Pro 2.5**: Deep analysis with max 32K thinking tokens
   - **Flash 2.5**: Ultra-fast with thinking support (24K thinking tokens)
-  - **Flash 2.0**: Latest fast model with audio/video input (24K thinking tokens)  
+  - **Flash 2.0**: Latest fast model with audio/video input (24K thinking tokens)
   - **Flash Lite 2.0**: Text-only lightweight model (no thinking support)
 - **O3/O4 Models**: Excellent reasoning, systematic analysis, 200K context
 - **GPT-4.1**: Extended context window (1M tokens), general capabilities
