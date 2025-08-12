@@ -1,28 +1,35 @@
 ## PR Title Format
 
-**Please ensure your PR title follows one of these formats:**
+**Please ensure your PR title follows [Conventional Commits](https://www.conventionalcommits.org/) format:**
 
-### Version Bumping Prefixes (trigger Docker build + version bump):
-- `feat: <description>` - New features (triggers MINOR version bump)
-- `fix: <description>` - Bug fixes (triggers PATCH version bump)
-- `breaking: <description>` or `BREAKING CHANGE: <description>` - Breaking changes (triggers MAJOR version bump)
-- `perf: <description>` - Performance improvements (triggers PATCH version bump)
-- `refactor: <description>` - Code refactoring (triggers PATCH version bump)
+### Version Bumping Types (trigger semantic release):
+- `feat: <description>` - New features → **MINOR** version bump (1.1.0 → 1.2.0)
+- `fix: <description>` - Bug fixes → **PATCH** version bump (1.1.0 → 1.1.1) 
+- `perf: <description>` - Performance improvements → **PATCH** version bump (1.1.0 → 1.1.1)
 
-### Non-Version Prefixes (no version bump):
-- `docs: <description>` - Documentation only
+### Breaking Changes (trigger MAJOR version bump):
+For breaking changes, use any commit type above with `BREAKING CHANGE:` in the commit body or `!` after the type:
+- `feat!: <description>` → **MAJOR** version bump (1.1.0 → 2.0.0)
+- `fix!: <description>` → **MAJOR** version bump (1.1.0 → 2.0.0)
+
+### Non-Versioning Types (no release):
+- `build: <description>` - Build system changes
 - `chore: <description>` - Maintenance tasks
-- `test: <description>` - Test additions/changes
 - `ci: <description>` - CI/CD changes
-- `style: <description>` - Code style changes
+- `docs: <description>` - Documentation only
+- `refactor: <description>` - Code refactoring (no functional changes)
+- `style: <description>` - Code style/formatting changes
+- `test: <description>` - Test additions/changes
 
-### Docker Build Options:
-- `docker: <description>` - Force Docker build without version bump
-- `docs+docker: <description>` - Documentation + Docker build
-- `chore+docker: <description>` - Maintenance + Docker build
-- `test+docker: <description>` - Tests + Docker build
-- `ci+docker: <description>` - CI changes + Docker build
-- `style+docker: <description>` - Style changes + Docker build
+### Docker Build Triggering:
+
+Docker builds are **independent** of versioning and trigger based on:
+
+**Automatic**: When PRs modify relevant files:
+- Python files (`*.py`), `requirements*.txt`, `pyproject.toml`
+- Docker files (`Dockerfile`, `docker-compose.yml`, `.dockerignore`)
+
+**Manual**: Add the `docker-build` label to force builds for any PR.
 
 ## Description
 
