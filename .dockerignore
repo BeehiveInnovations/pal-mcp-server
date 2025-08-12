@@ -50,7 +50,6 @@ pytest.ini
 .env
 .env.local
 examples/
-scripts/bump_version.py
 code_quality_checks.sh
 run_integration_tests.sh
 
