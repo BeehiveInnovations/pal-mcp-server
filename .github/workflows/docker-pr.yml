@@ -2,7 +2,7 @@ name: PR Docker Build
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, labeled, unlabeled]
     paths:
       - '**.py'
       - 'requirements*.txt'
@@ -10,8 +10,6 @@ on:
       - 'Dockerfile'
       - 'docker-compose.yml'
       - '.dockerignore'
-      - 'server.py'
-      - 'config.py'
 
 permissions:
   contents: read
@@ -20,8 +18,13 @@ permissions:
 
 jobs:
   docker:
-    name: Build PR Docker Image
+    name: Build Docker Image
     runs-on: ubuntu-latest
+    if: |
+      github.event.action == 'opened' ||
+      github.event.action == 'synchronize' ||
+      github.event.action == 'reopened' ||
+      contains(github.event.pull_request.labels.*.name, 'docker-build')
     
     steps:
       - name: Checkout
@@ -72,99 +75,70 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Comment on PR with Docker info (internal PRs)
+      - name: Add Docker build comment (internal PRs)
         if: github.event.pull_request.head.repo.full_name == github.repository
-        uses: actions/github-script@v7
+        uses: marocchino/sticky-pull-request-comment@d2ad0de260ae8b0235ce059e63f2949ba9e05943 # v2.9.3
         with:
-          script: |
-            const prNumber = context.payload.pull_request.number;
-            const sha = context.sha.substring(0, 7);
-            const repo = context.repo.repo;
-            const owner = context.repo.owner;
+          header: docker-build
+          message: |
+            ## 🐳 Docker Build Complete
             
-            const comment = `🐳 **Docker Image Built Successfully**
+            **PR**: #${{ github.event.number }} | **Commit**: `${{ github.sha }}`
             
-            This PR has been built and pushed as a Docker image for testing:
+            ```
+            ${{ steps.meta.outputs.tags }}
+            ```
             
-            **Available Tags:**
-            - \`ghcr.io/${owner}/${repo}:pr-${prNumber}-${context.sha}\`
-            - \`ghcr.io/${owner}/${repo}:pr-${prNumber}\` (latest for this PR)
+            **Test:** `docker pull ghcr.io/${{ github.repository }}:pr-${{ github.event.number }}`
             
-            **Test the changes:**
-            \`\`\`bash
-            docker pull ghcr.io/${owner}/${repo}:pr-${prNumber}
-            \`\`\`
-            
-            **Claude Desktop configuration:**
-            \`\`\`json
+            **Claude config:**
+            ```json
             {
               "mcpServers": {
-                "zen-mcp-server": {
+                "zen": {
                   "command": "docker",
-                  "args": [
-                    "run", "--rm", "-i",
-                    "-e", "GEMINI_API_KEY",
-                    "ghcr.io/${owner}/${repo}:pr-${prNumber}"
-                  ],
-                  "env": {
-                    "GEMINI_API_KEY": "your-api-key-here"
-                  }
+                  "args": ["run", "--rm", "-i", "-e", "GEMINI_API_KEY", "ghcr.io/${{ github.repository }}:pr-${{ github.event.number }}"],
+                  "env": { "GEMINI_API_KEY": "your-key" }
                 }
               }
             }
-            \`\`\`
+            ```
             
-            The image will be updated automatically when you push new commits to this PR.`;
-            
-            github.rest.issues.createComment({
-              issue_number: prNumber,
-              owner: owner,
-              repo: repo,
-              body: comment
-            });
+            💡 Add `docker-build` label to manually trigger builds
 
-      - name: Comment on PR with Docker info (fork PRs)
+      - name: Add Docker build comment (fork PRs)
         if: github.event.pull_request.head.repo.full_name != github.repository
-        uses: actions/github-script@v7
+        uses: marocchino/sticky-pull-request-comment@d2ad0de260ae8b0235ce059e63f2949ba9e05943 # v2.9.3
         with:
-          script: |
-            const prNumber = context.payload.pull_request.number;
-            const sha = context.sha.substring(0, 7);
+          header: docker-build
+          message: |
+            ## 🐳 Docker Build Complete (Build Only)
             
-            const comment = `🐳 **Docker Build Complete (Build Only)**
-            
-            **PR**: #${prNumber} | **Commit**: \`${sha}\`
+            **PR**: #${{ github.event.number }} | **Commit**: `${{ github.sha }}`
             
             ✅ **Docker build successful** - Multi-platform image built and tested
             
             **Note**: Fork PRs only build (no push) for security. Images will be available once PR is merged.
             
-            The Docker build confirms your changes are compatible with the containerized deployment.`;
-            
-            github.rest.issues.createComment({
-              issue_number: prNumber,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });
+            💡 Add `docker-build` label to manually trigger builds
 
-      - name: Create deployment summary (internal PRs)
+      - name: Update job summary (internal PRs)
         if: github.event.pull_request.head.repo.full_name == github.repository
         run: |
-          echo "## 🐳 PR Docker Build Complete" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**PR**: #${{ github.event.number }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Images built:**" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          echo "${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## 🐳 Docker Build Complete"
+            echo "**PR**: #${{ github.event.number }} | **Commit**: ${{ github.sha }}"
+            echo '```'
+            echo "${{ steps.meta.outputs.tags }}"
+            echo '```'
+          } >> $GITHUB_STEP_SUMMARY
 
-      - name: Create deployment summary (fork PRs)
+      - name: Update job summary (fork PRs)
         if: github.event.pull_request.head.repo.full_name != github.repository
         run: |
-          echo "## 🐳 Docker Build Complete (Build Only)" >> $GITHUB_STEP_SUMMARY
-          echo "** PR**: #${{ github.event.number }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Multi-platform Docker build successful" >> $GITHUB_STEP_SUMMARY
-          echo "Note: Fork PRs only build (no push) for security" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## 🐳 Docker Build Complete (Build Only)"
+            echo "**PR**: #${{ github.event.number }} | **Commit**: ${{ github.sha }}"
+            echo "✅ Multi-platform Docker build successful"
+            echo "Note: Fork PRs only build (no push) for security"
+          } >> $GITHUB_STEP_SUMMARY
