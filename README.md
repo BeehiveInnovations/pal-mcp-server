@@ -36,7 +36,10 @@
     "zen": {
       "command": "uvx",
       "args": ["--from", "git+https://github.com/BeehiveInnovations/zen-mcp-server.git", "zen-mcp-server"],
-      "env": { "GEMINI_API_KEY": "your-key-here" }
+      "env": {
+        "PATH": "/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin:~/.local/bin",
+        "GEMINI_API_KEY": "your-key-here"
+      }
     }
   }
 }
