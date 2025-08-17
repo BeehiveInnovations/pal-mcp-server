@@ -185,4 +185,4 @@ logs/
 *.backup
 /.desktop_configured
 
-/worktrees
+/worktrees/
