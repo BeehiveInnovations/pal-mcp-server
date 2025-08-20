@@ -10,9 +10,9 @@ Key features:
 - Step-by-step pre-commit investigation workflow with progress tracking
 - Context-aware file embedding (references during investigation, full content for analysis)
 - Automatic git repository discovery and change analysis
-- Expert analysis integration with external models
+- Expert analysis integration with external models (default)
 - Support for multiple repositories and change types
-- Confidence-based workflow optimization
+- Configurable validation type (external with expert model or internal only)
 """
 
 import logging
@@ -89,15 +89,11 @@ PRECOMMIT_WORKFLOW_FIELD_DESCRIPTIONS = {
         "(critical, high, medium, low) and 'description' fields. Include potential bugs, security concerns, "
         "performance issues, missing tests, incomplete implementations, etc."
     ),
-    "confidence": (
-        "Indicate your current confidence in the assessment. Use: 'exploring' (starting analysis), 'low' (early "
-        "investigation), 'medium' (some evidence gathered), 'high' (strong evidence), "
-        "'very_high' (very strong evidence), 'almost_certain' (nearly complete validation), 'certain' (200% confidence - "
-        "analysis is complete and all issues are identified with no need for external model validation). "
-        "Do NOT use 'certain' unless the pre-commit validation is thoroughly complete, use 'very_high' or 'almost_certain' "
-        "instead if not 200% sure. "
-        "Using 'certain' means you have complete confidence locally and prevents external model validation. Also "
-        "do NOT set confidence to 'certain' if the user has strongly requested that external validation MUST be performed."
+    "precommit_type": (
+        "Type of pre-commit validation to perform: 'external' (default - uses external model for validation) or 'internal' "
+        "(performs validation without external model review). IMPORTANT: Always default to 'external' unless the "
+        "user explicitly requests internal-only validation or asks you not to use another model. External validation "
+        "provides additional expert review and should be the standard approach for comprehensive pre-commit validation."
     ),
     "backtrack_from_step": (
         "If an earlier finding or assessment needs to be revised or discarded, specify the step number from which to "
@@ -145,7 +141,9 @@ class PrecommitRequest(WorkflowRequest):
     issues_found: list[dict] = Field(
         default_factory=list, description=PRECOMMIT_WORKFLOW_FIELD_DESCRIPTIONS["issues_found"]
     )
-    confidence: Optional[str] = Field("low", description=PRECOMMIT_WORKFLOW_FIELD_DESCRIPTIONS["confidence"])
+    precommit_type: Optional[Literal["external", "internal"]] = Field(
+        "external", description=PRECOMMIT_WORKFLOW_FIELD_DESCRIPTIONS["precommit_type"]
+    )
 
     # Optional backtracking field
     backtrack_from_step: Optional[int] = Field(
@@ -273,10 +271,11 @@ class PrecommitTool(WorkflowTool):
                 "items": {"type": "string"},
                 "description": PRECOMMIT_WORKFLOW_FIELD_DESCRIPTIONS["relevant_files"],
             },
-            "confidence": {
+            "precommit_type": {
                 "type": "string",
-                "enum": ["exploring", "low", "medium", "high", "very_high", "almost_certain", "certain"],
-                "description": PRECOMMIT_WORKFLOW_FIELD_DESCRIPTIONS["confidence"],
+                "enum": ["external", "internal"],
+                "default": "external",
+                "description": PRECOMMIT_WORKFLOW_FIELD_DESCRIPTIONS["precommit_type"],
             },
             "backtrack_from_step": {
                 "type": "integer",
@@ -332,7 +331,9 @@ class PrecommitTool(WorkflowTool):
             tool_name=self.get_name(),
         )
 
-    def get_required_actions(self, step_number: int, confidence: str, findings: str, total_steps: int) -> list[str]:
+    def get_required_actions(
+        self, step_number: int, findings_count: int, issues_count: int, total_steps: int
+    ) -> list[str]:
         """Define required actions for each investigation phase."""
         if step_number == 1:
             # Initial pre-commit investigation tasks
@@ -343,7 +344,7 @@ class PrecommitTool(WorkflowTool):
                 "Understand what functionality was added, modified, or removed",
                 "Identify the scope and intent of the changes being committed",
             ]
-        elif confidence in ["exploring", "low"]:
+        elif step_number == 2:
             # Need deeper investigation
             return [
                 "Examine the specific files you've identified as changed or relevant",
@@ -352,7 +353,7 @@ class PrecommitTool(WorkflowTool):
                 "Verify that changes align with good coding practices and patterns",
                 "Look for missing tests, documentation, or configuration updates",
             ]
-        elif confidence in ["medium", "high"]:
+        elif step_number >= 2 and (findings_count > 2 or issues_count > 0):
             # Close to completion - need final verification
             return [
                 "Verify all identified issues have been properly documented",
@@ -374,11 +375,16 @@ class PrecommitTool(WorkflowTool):
         """
         Decide when to call external model based on investigation completeness.
 
-        Don't call expert analysis if the CLI agent has certain confidence - trust their judgment.
+        For continuations with external type, always proceed with expert analysis.
         """
         # Check if user requested to skip assistant model
         if request and not self.get_request_use_assistant_model(request):
             return False
+
+        # For continuations with external type, always proceed with expert analysis
+        continuation_id = self.get_request_continuation_id(request)
+        if continuation_id and request.precommit_type == "external":
+            return True  # Always perform expert analysis for external continuations
 
         # Check if we have meaningful investigation data
         return (
@@ -420,8 +426,7 @@ class PrecommitTool(WorkflowTool):
         # Add assessment evolution if available
         if consolidated_findings.hypotheses:
             assessments_text = "\\n".join(
-                f"Step {h['step']} ({h['confidence']} confidence): {h['hypothesis']}"
-                for h in consolidated_findings.hypotheses
+                f"Step {h['step']}: {h['hypothesis']}" for h in consolidated_findings.hypotheses
             )
             context_parts.append(f"\\n=== ASSESSMENT EVOLUTION ===\\n{assessments_text}\\n=== END ASSESSMENTS ===")
 
@@ -486,17 +491,25 @@ class PrecommitTool(WorkflowTool):
             "relevant_files": request.relevant_files,
             "relevant_context": request.relevant_context,
             "issues_found": request.issues_found,
-            "confidence": request.confidence,
+            "precommit_type": request.precommit_type,
             "hypothesis": request.findings,  # Map findings to hypothesis for compatibility
             "images": request.images or [],
+            "confidence": "high",  # Dummy value for workflow_mixin compatibility
         }
         return step_data
 
     def should_skip_expert_analysis(self, request, consolidated_findings) -> bool:
         """
-        Precommit workflow skips expert analysis when the CLI agent has "certain" confidence.
+        Precommit workflow skips expert analysis only when precommit_type is "internal".
+        Default is always to use expert analysis (external).
+        For continuations with external type, always perform expert analysis immediately.
         """
-        return request.confidence == "certain" and not request.next_step_required
+        # If it's a continuation and precommit_type is external, don't skip
+        continuation_id = self.get_request_continuation_id(request)
+        if continuation_id and request.precommit_type != "internal":
+            return False  # Always do expert analysis for external continuations
+
+        return request.precommit_type == "internal" and not request.next_step_required
 
     def store_initial_issue(self, step_description: str):
         """Store initial request for expert analysis."""
@@ -516,14 +529,14 @@ class PrecommitTool(WorkflowTool):
         """Precommit tools use 'findings' field."""
         return request.findings
 
-    def get_confidence_level(self, request) -> str:
-        """Precommit tools use 'certain' for high confidence."""
-        return "certain"
+    def get_precommit_type(self, request) -> str:
+        """Precommit tools use precommit_type field."""
+        return request.precommit_type or "external"
 
     def get_completion_message(self) -> str:
         """Precommit-specific completion message."""
         return (
-            "Pre-commit validation complete with CERTAIN confidence. You have identified all issues "
+            "Pre-commit validation complete. You have identified all issues "
             "and verified commit readiness. MANDATORY: Present the user with the complete validation results "
             "and IMMEDIATELY proceed with commit if no critical issues found, or provide specific fix guidance "
             "if issues need resolution. Focus on actionable next steps."
@@ -531,11 +544,13 @@ class PrecommitTool(WorkflowTool):
 
     def get_skip_reason(self) -> str:
         """Precommit-specific skip reason."""
-        return "Completed comprehensive pre-commit validation with full confidence locally"
+        return (
+            "Completed comprehensive pre-commit validation with internal analysis only (no external model validation)"
+        )
 
     def get_skip_expert_analysis_status(self) -> str:
         """Precommit-specific expert analysis skip status."""
-        return "skipped_due_to_certain_validation_confidence"
+        return "skipped_due_to_internal_analysis_type"
 
     def prepare_work_summary(self) -> str:
         """Precommit-specific work summary."""
@@ -583,26 +598,40 @@ class PrecommitTool(WorkflowTool):
         """
         Precommit-specific step guidance with detailed investigation instructions.
         """
-        step_guidance = self.get_precommit_step_guidance(request.step_number, request.confidence, request)
+        step_guidance = self.get_precommit_step_guidance(request.step_number, request)
         return step_guidance["next_steps"]
 
-    def get_precommit_step_guidance(self, step_number: int, confidence: str, request) -> dict[str, Any]:
+    def get_precommit_step_guidance(self, step_number: int, request) -> dict[str, Any]:
         """
         Provide step-specific guidance for precommit workflow.
         """
         # Check if this is a continuation - if so, skip workflow and go to expert analysis
         continuation_id = self.get_request_continuation_id(request)
         if continuation_id:
-            return {
-                "next_steps": (
-                    "Continuing previous conversation. The expert analysis will now be performed based on the "
-                    "accumulated context from the previous conversation. The analysis will build upon the prior "
-                    "findings without repeating the investigation steps."
-                )
-            }
+            if request.precommit_type == "external":
+                return {
+                    "next_steps": (
+                        "Continuing previous conversation with external validation. CRITICAL: You MUST first gather "
+                        "the complete git changeset (git status, git diff --cached, git diff) to provide to the expert. "
+                        "No minimum steps required - as soon as you provide the git changes in your response, "
+                        "the expert analysis will be performed immediately. The expert needs the FULL context of "
+                        "all changes to provide comprehensive validation. Include staged changes, unstaged changes, "
+                        "and any untracked files that are part of this commit."
+                    )
+                }
+            else:
+                return {
+                    "next_steps": (
+                        "Continuing previous conversation with internal validation only. The analysis will build "
+                        "upon the prior findings without external model validation. Proceed with your own assessment "
+                        "of the changes based on the accumulated context."
+                    )
+                }
 
         # Generate the next steps instruction based on required actions
-        required_actions = self.get_required_actions(step_number, confidence, request.findings, request.total_steps)
+        findings_count = len(request.findings.split("\n")) if request.findings else 0
+        issues_count = len(request.issues_found) if request.issues_found else 0
+        required_actions = self.get_required_actions(step_number, findings_count, issues_count, request.total_steps)
 
         if step_number == 1:
             next_steps = (
@@ -614,7 +643,7 @@ class PrecommitTool(WorkflowTool):
                 f"When you call {self.get_name()} next time, use step_number: {step_number + 1} and report specific "
                 f"files examined, changes analyzed, and validation findings discovered."
             )
-        elif confidence in ["exploring", "low"]:
+        elif step_number == 2:
             next_steps = (
                 f"STOP! Do NOT call {self.get_name()} again yet. Based on your findings, you've identified areas that need "
                 f"deeper analysis. MANDATORY ACTIONS before calling {self.get_name()} step {step_number + 1}:\\n"
@@ -622,7 +651,7 @@ class PrecommitTool(WorkflowTool):
                 + f"\\n\\nOnly call {self.get_name()} again with step_number: {step_number + 1} AFTER "
                 + "completing these validations."
             )
-        elif confidence in ["medium", "high"]:
+        elif step_number >= 2:
             next_steps = (
                 f"WAIT! Your validation needs final verification. DO NOT call {self.get_name()} immediately. REQUIRED ACTIONS:\\n"
                 + "\\n".join(f"{i+1}. {action}" for i, action in enumerate(required_actions))
@@ -677,7 +706,7 @@ class PrecommitTool(WorkflowTool):
             response_data["validation_status"] = response_data.pop(f"{tool_name}_status")
             # Add precommit-specific status fields
             response_data["validation_status"]["issues_identified"] = len(self.consolidated_findings.issues_found)
-            response_data["validation_status"]["assessment_confidence"] = self.get_request_confidence(request)
+            response_data["validation_status"]["precommit_type"] = request.precommit_type or "external"
 
         # Map complete_precommitworkflow to complete_validation
         if f"complete_{tool_name}" in response_data:

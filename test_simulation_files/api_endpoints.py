@@ -1,75 +1,54 @@
 #!/usr/bin/env python3
+from flask import Flask, request, jsonify
+import sqlite3
 import os
-import subprocess
-
-import requests
-from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
-# A05: Security Misconfiguration - Debug mode enabled
-app.config["DEBUG"] = True
-app.config["SECRET_KEY"] = "dev-secret-key"  # Hardcoded secret
+
+@app.route("/api/user/<user_id>", methods=["GET"])
+def get_user(user_id):
+    """Get user information by ID"""
+    # Potential SQL injection vulnerability
+    conn = sqlite3.connect("users.db")
+    cursor = conn.cursor()
+
+    # BUG: Direct string interpolation creates SQL injection risk
+    query = f"SELECT * FROM users WHERE id = {user_id}"
+    cursor.execute(query)
+
+    result = cursor.fetchone()
+    conn.close()
+
+    if result:
+        return jsonify(
+            {
+                "id": result[0],
+                "username": result[1],
+                "email": result[2],
+                "password_hash": result[3],  # Security issue: exposing password hash
+            }
+        )
+    else:
+        return jsonify({"error": "User not found"}), 404
 
 
-@app.route("/api/search", methods=["GET"])
-def search():
-    """Search endpoint with multiple vulnerabilities"""
-    # A03: Injection - XSS vulnerability, no input sanitization
-    query = request.args.get("q", "")
+@app.route("/api/admin/users", methods=["GET"])
+def list_all_users():
+    """Admin endpoint to list all users"""
+    # Missing authentication check
+    conn = sqlite3.connect("users.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, username, email FROM users")
 
-    # A03: Injection - Command injection vulnerability
-    if "file:" in query:
-        filename = query.split("file:")[1]
-        # Direct command execution
-        result = subprocess.run(f"cat {filename}", shell=True, capture_output=True, text=True)
-        return jsonify({"result": result.stdout})
+    users = []
+    for row in cursor.fetchall():
+        users.append({"id": row[0], "username": row[1], "email": row[2]})
 
-    # A10: Server-Side Request Forgery (SSRF)
-    if query.startswith("http"):
-        # No validation of URL, allows internal network access
-        response = requests.get(query)
-        return jsonify({"content": response.text})
+    conn.close()
+    return jsonify(users)
 
-    # Return search results without output encoding
-    return f"<h1>Search Results for: {query}</h1>"
-
-
-@app.route("/api/admin", methods=["GET"])
-def admin_panel():
-    """Admin panel with broken access control"""
-    # A01: Broken Access Control - No authentication check
-    # Anyone can access admin functionality
-    action = request.args.get("action")
-
-    if action == "delete_user":
-        user_id = request.args.get("user_id")
-        # Performs privileged action without authorization
-        return jsonify({"status": "User deleted", "user_id": user_id})
-
-    return jsonify({"status": "Admin panel"})
-
-
-@app.route("/api/upload", methods=["POST"])
-def upload_file():
-    """File upload with security issues"""
-    # A05: Security Misconfiguration - No file type validation
-    file = request.files.get("file")
-    if file:
-        # Saves any file type to server
-        filename = file.filename
-        file.save(os.path.join("/tmp", filename))
-
-        # A03: Path traversal vulnerability
-        return jsonify({"status": "File uploaded", "path": f"/tmp/{filename}"})
-
-    return jsonify({"error": "No file provided"})
-
-
-# A06: Vulnerable and Outdated Components
-# Using old Flask version with known vulnerabilities (hypothetical)
-# requirements.txt: Flask==0.12.2 (known security issues)
 
 if __name__ == "__main__":
-    # A05: Security Misconfiguration - Running on all interfaces
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    # Debug mode in production is a security risk
+    app.run(debug=True, host="0.0.0.0")

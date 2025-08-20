@@ -225,8 +225,8 @@ REQUIREMENTS:
                         {"severity": "high", "description": "Password hash exposed in API response"},
                         {"severity": "medium", "description": "Missing authentication on admin endpoint"},
                     ],
-                    "assessment": "Multiple critical security vulnerabilities found requiring immediate fixes",
-                    "confidence": "high",
+                    # Assessment field removed - using precommit_type instead
+                    # Confidence field removed - using precommit_type instead
                     "continuation_id": continuation_id,
                 },
             )
@@ -249,8 +249,8 @@ REQUIREMENTS:
                 self.logger.error("Issues found not properly tracked")
                 return False
 
-            if validation_status.get("assessment_confidence") != "high":
-                self.logger.error("Confidence level not properly tracked")
+            if validation_status.get("precommit_type") != "external":
+                self.logger.error("Precommit type not properly tracked")
                 return False
 
             self.logger.info("    ✅ Step 2 successful with proper tracking")
@@ -300,8 +300,7 @@ REQUIREMENTS:
                     "findings": "Connection pool configuration seems reasonable, might be looking in wrong place",
                     "files_checked": ["/db/connection.py", "/config/database.py"],
                     "relevant_files": [],
-                    "assessment": "Database configuration appears correct",
-                    "confidence": "low",
+                    # Assessment fields removed - using precommit_type instead
                     "continuation_id": continuation_id,
                 },
             )
@@ -326,8 +325,7 @@ REQUIREMENTS:
                     "issues_found": [
                         {"severity": "medium", "description": "N+1 query pattern in user profile loading"}
                     ],
-                    "assessment": "Query pattern optimization needed for performance",
-                    "confidence": "medium",
+                    # Assessment fields removed - using precommit_type instead
                     "backtrack_from_step": 2,  # Backtrack from step 2
                     "continuation_id": continuation_id,
                 },
@@ -397,7 +395,7 @@ REQUIREMENTS:
                         {"severity": "medium", "description": "Missing authentication on admin endpoint"},
                         {"severity": "medium", "description": "Debug mode enabled in production configuration"},
                     ],
-                    "confidence": "high",
+                    # Confidence field removed - using precommit_type instead
                     "continuation_id": continuation_id,
                     "model": "flash",  # Use flash for expert analysis
                 },
@@ -490,8 +488,7 @@ REQUIREMENTS:
                         {"severity": "high", "description": "Hardcoded secret - use environment variables"},
                         {"severity": "medium", "description": "Missing authentication - add middleware"},
                     ],
-                    "assessment": "Critical security vulnerabilities identified with clear fixes - changes must not be committed until resolved",
-                    "confidence": "certain",  # This should skip expert analysis
+                    "precommit_type": "internal",  # This should skip expert analysis
                     "path": self.test_dir,
                     "model": "flash",
                 },
@@ -517,7 +514,7 @@ REQUIREMENTS:
                 return False
 
             expert_analysis = response_certain_data.get("expert_analysis", {})
-            if expert_analysis.get("status") != "skipped_due_to_certain_validation_confidence":
+            if expert_analysis.get("status") != "skipped_due_to_internal_analysis_type":
                 self.logger.error("Expert analysis should be skipped for certain confidence")
                 return False
 
@@ -680,8 +677,7 @@ def rate_limiting_middleware(app):
                     "files_checked": [auth_file, middleware_file],
                     "relevant_files": [auth_file],  # This should be referenced, not embedded
                     "relevant_context": ["require_auth"],
-                    "assessment": "Investigating security implementation",
-                    "confidence": "low",
+                    # Assessment fields removed - using precommit_type instead
                     "path": self.test_dir,
                     "model": "flash",
                 },
@@ -724,8 +720,7 @@ def rate_limiting_middleware(app):
                     "issues_found": [
                         {"severity": "medium", "description": "Basic token validation might be insufficient"}
                     ],
-                    "assessment": "Security implementation needs improvement",
-                    "confidence": "medium",
+                    # Assessment fields removed - using precommit_type instead
                     "model": "flash",
                 },
             )
@@ -775,8 +770,8 @@ def rate_limiting_middleware(app):
                         {"severity": "low", "description": "Missing CSRF protection"},
                         {"severity": "low", "description": "Rate limiting not implemented"},
                     ],
-                    "assessment": "Security implementation needs improvements but is acceptable for commit with follow-up tasks",
-                    "confidence": "high",
+                    # Assessment field removed - using precommit_type instead
+                    # Confidence field removed - using precommit_type instead
                     "model": "flash",
                 },
             )
@@ -915,8 +910,7 @@ if __name__ == '__main__':
                     "files_checked": [db_file],
                     "relevant_files": [db_file],
                     "relevant_context": [],
-                    "assessment": "Examining database implementation for best practices",
-                    "confidence": "low",
+                    # Assessment fields removed - using precommit_type instead
                     "path": self.test_dir,
                     "model": "flash",
                 },
@@ -950,8 +944,7 @@ if __name__ == '__main__':
                     "files_checked": [db_file, test_file],
                     "relevant_files": [db_file, test_file],
                     "relevant_context": ["DatabaseManager.create_user", "TestDatabaseManager.test_create_user"],
-                    "assessment": "Implementation looks solid with proper testing",
-                    "confidence": "medium",
+                    # Assessment fields removed - using precommit_type instead
                     "model": "flash",
                 },
             )
@@ -991,8 +984,8 @@ if __name__ == '__main__':
                     "relevant_files": [db_file, test_file],
                     "relevant_context": ["DatabaseManager.get_connection", "DatabaseManager.create_user"],
                     "issues_found": [],  # No issues found
-                    "assessment": "High quality implementation with proper security measures and testing",
-                    "confidence": "high",
+                    # Assessment field removed - using precommit_type instead
+                    # Confidence field removed - using precommit_type instead
                     "model": "flash",
                 },
             )
@@ -1026,8 +1019,8 @@ if __name__ == '__main__':
                     "relevant_files": [db_file, test_file],
                     "relevant_context": ["DatabaseManager", "TestDatabaseManager"],
                     "issues_found": [],
-                    "assessment": "Code meets all security and quality standards - approved for commit",
-                    "confidence": "high",
+                    # Assessment field removed - using precommit_type instead
+                    # Confidence field removed - using precommit_type instead
                     "model": "flash",
                 },
             )

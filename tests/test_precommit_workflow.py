@@ -93,7 +93,7 @@ class TestPrecommitWorkflowTool:
             next_step_required=False,
             findings="Comprehensive findings",
             path="/test/repo",
-            confidence="high",
+            precommit_type="external",
             files_checked=["/file1.py", "/file2.py"],
             relevant_files=["/file1.py"],
             relevant_context=["function_name", "class_name"],
@@ -101,7 +101,7 @@ class TestPrecommitWorkflowTool:
             images=["/screenshot.png"],
         )
 
-        assert request.confidence == "high"
+        assert request.precommit_type == "external"
         assert len(request.files_checked) == 2
         assert len(request.relevant_files) == 1
         assert len(request.relevant_context) == 2
@@ -144,21 +144,32 @@ class TestPrecommitWorkflowTool:
         assert request.focus_on == "security issues"
         assert request.severity_filter == "high"
 
-    def test_confidence_levels(self):
-        """Test confidence level validation"""
-        valid_confidence_levels = ["exploring", "low", "medium", "high", "certain"]
+    def test_precommit_type_validation(self):
+        """Test precommit type validation"""
+        valid_types = ["external", "internal"]
 
-        for confidence in valid_confidence_levels:
+        for precommit_type in valid_types:
             request = PrecommitRequest(
-                step="Test confidence level",
+                step="Test precommit type",
                 step_number=1,
                 total_steps=1,
                 next_step_required=False,
                 findings="Test findings",
                 path="/repo",
-                confidence=confidence,
+                precommit_type=precommit_type,
             )
-            assert request.confidence == confidence
+            assert request.precommit_type == precommit_type
+
+        # Test default is external
+        request = PrecommitRequest(
+            step="Test default type",
+            step_number=1,
+            total_steps=1,
+            next_step_required=False,
+            findings="Test findings",
+            path="/repo",
+        )
+        assert request.precommit_type == "external"
 
     def test_severity_filter_options(self):
         """Test severity filter validation"""

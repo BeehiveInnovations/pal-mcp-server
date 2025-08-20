@@ -14,18 +14,20 @@ The precommit tool implements a **structured workflow** for comprehensive change
 
 **Investigation Phase (Claude-Led):**
 1. **Step 1**: Claude describes the validation plan and begins analyzing git status across repositories
-2. **Step 2+**: Claude examines changes, diffs, dependencies, and potential impacts
-3. **Throughout**: Claude tracks findings, relevant files, issues, and confidence levels
+2. **Step 2+**: Claude examines changes, diffs, dependencies, and potential impacts (minimum 2 steps)
+3. **Throughout**: Claude tracks findings, relevant files, and issues
 4. **Completion**: Once investigation is thorough, Claude signals completion
 
+**For Continuations**: When using `continuation_id` with external validation, Claude will immediately gather git changes and proceed to expert analysis without minimum step requirements.
+
 **Expert Validation Phase:**
-After Claude completes the investigation (unless confidence is **certain**):
+After Claude completes the investigation (unless precommit_type is **internal**):
 - Complete summary of all changes and their context
 - Potential issues and regressions identified
 - Requirement compliance assessment
 - Final recommendations for safe commit
 
-**Special Note**: If you want Claude to perform the entire pre-commit validation without calling another model, you can include "don't use any other model" in your prompt, and Claude will complete the full workflow independently.
+**Special Note**: If you want Claude to perform the entire pre-commit validation without calling another model, you can include "don't use any other model" in your prompt, or set the precommit_type to "internal", and Claude will complete the full workflow independently.
 
 ## Model Recommendation
 
@@ -127,9 +129,8 @@ Use zen and perform a thorough precommit ensuring there aren't any new regressio
 - `relevant_files`: Files directly relevant to the changes
 - `relevant_context`: Methods/functions/classes affected by changes
 - `issues_found`: Issues identified with severity levels
-- `confidence`: Confidence level in validation completeness (exploring/low/medium/high/certain)
+- `precommit_type`: Type of validation to perform (external/internal, default: external)
 - `backtrack_from_step`: Step number to backtrack from (for revisions)
-- `hypothesis`: Current assessment of change safety and completeness
 - `images`: Screenshots of requirements, design mockups for validation
 
 **Initial Configuration (used in step 1):**
