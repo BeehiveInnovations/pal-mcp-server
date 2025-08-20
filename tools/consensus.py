@@ -323,10 +323,11 @@ of the evidence, even when it strongly points in one direction.""",
         return schema
 
     def get_required_actions(
-        self, step_number: int, confidence: str, findings: str, total_steps: int
+        self, step_number: int, confidence: str, findings: str, total_steps: int, request=None
     ) -> list[str]:  # noqa: ARG002
         """Define required actions for each consensus phase.
 
+        Now includes request parameter for continuation-aware decisions.
         Note: confidence parameter is kept for compatibility with base class but not used.
         """
         if step_number == 1:

@@ -403,7 +403,9 @@ but also acknowledge strong insights and valid conclusions.
         except AttributeError:
             return ["comprehensive analysis"]
 
-    def get_required_actions(self, step_number: int, confidence: str, findings: str, total_steps: int) -> list[str]:
+    def get_required_actions(
+        self, step_number: int, confidence: str, findings: str, total_steps: int, request=None
+    ) -> list[str]:
         """
         Return required actions for the current thinking step.
         """

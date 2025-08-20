@@ -293,7 +293,9 @@ class DocgenTool(WorkflowTool):
             excluded_common_fields=excluded_common_fields,
         )
 
-    def get_required_actions(self, step_number: int, confidence: str, findings: str, total_steps: int) -> list[str]:
+    def get_required_actions(
+        self, step_number: int, confidence: str, findings: str, total_steps: int, request=None
+    ) -> list[str]:
         """Define required actions for comprehensive documentation analysis with step-by-step file focus."""
         if step_number == 1:
             # Initial discovery ONLY - no documentation yet

@@ -86,6 +86,7 @@ TEXT_DATA = {
     ".sbt",  # SBT
     ".pom",  # Maven POM
     ".lock",  # Lock files
+    ".changeset",  # Precommit changeset
 }
 
 # Image file extensions - limited to what AI models actually support

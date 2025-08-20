@@ -983,7 +983,8 @@ class BaseTool(ABC):
                     reserve_tokens=reserve_tokens,
                     include_line_numbers=self.wants_line_numbers_by_default(),
                 )
-                self._validate_token_limit(file_content, context_description)
+                # Note: No need to validate against MCP_PROMPT_SIZE_LIMIT here
+                # read_files already handles token-aware truncation based on model's capabilities
                 content_parts.append(file_content)
 
                 # Track the expanded files as actually processed

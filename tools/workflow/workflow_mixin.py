@@ -134,7 +134,9 @@ class BaseWorkflowMixin(ABC):
         pass
 
     @abstractmethod
-    def get_required_actions(self, step_number: int, confidence: str, findings: str, total_steps: int) -> list[str]:
+    def get_required_actions(
+        self, step_number: int, confidence: str, findings: str, total_steps: int, request=None
+    ) -> list[str]:
         """Define required actions for each work phase.
 
         Args:
@@ -142,6 +144,7 @@ class BaseWorkflowMixin(ABC):
             confidence: Current confidence level (exploring, low, medium, high, certain)
             findings: Current findings text
             total_steps: Total estimated steps for this work
+            request: Optional request object for continuation-aware decisions
 
         Returns:
             List of specific actions Claude should take before calling tool again
@@ -298,7 +301,7 @@ class BaseWorkflowMixin(ABC):
         Default implementation uses required actions.
         """
         required_actions = self.get_required_actions(
-            request.step_number, self.get_request_confidence(request), request.findings, request.total_steps
+            request.step_number, self.get_request_confidence(request), request.findings, request.total_steps, request
         )
 
         next_step_number = request.step_number + 1
@@ -672,6 +675,26 @@ class BaseWorkflowMixin(ABC):
 
             # Handle continuation
             continuation_id = request.continuation_id
+
+            # Restore workflow state on continuation
+            if continuation_id:
+                from utils.conversation_memory import get_thread
+
+                thread = get_thread(continuation_id)
+                if thread and thread.turns:
+                    # Find the most recent assistant turn from this tool with workflow state
+                    for turn in reversed(thread.turns):
+                        if turn.role == "assistant" and turn.tool_name == self.get_name() and turn.model_metadata:
+                            state = turn.model_metadata
+                            if isinstance(state, dict) and "work_history" in state:
+                                self.work_history = state.get("work_history", [])
+                                self.initial_request = state.get("initial_request")
+                                # Rebuild consolidated findings from restored history
+                                self._reprocess_consolidated_findings()
+                                logger.debug(
+                                    f"[{self.get_name()}] Restored workflow state with {len(self.work_history)} history items"
+                                )
+                                break  # State restored, exit loop
 
             # Adjust total steps if needed
             if request.step_number > request.total_steps:
@@ -1109,6 +1132,9 @@ class BaseWorkflowMixin(ABC):
         # CRITICAL: Extract clean content for conversation history (exclude internal workflow metadata)
         clean_content = self._extract_clean_workflow_content_for_history(response_data)
 
+        # Serialize workflow state for persistence across stateless tool calls
+        workflow_state = {"work_history": self.work_history, "initial_request": getattr(self, "initial_request", None)}
+
         add_turn(
             thread_id=continuation_id,
             role="assistant",
@@ -1116,6 +1142,7 @@ class BaseWorkflowMixin(ABC):
             tool_name=self.get_name(),
             files=self.get_request_relevant_files(request),
             images=self.get_request_images(request),
+            model_metadata=workflow_state,  # Persist the state
         )
 
     def _add_workflow_metadata(self, response_data: dict, arguments: dict[str, Any]) -> None:
@@ -1343,7 +1370,7 @@ class BaseWorkflowMixin(ABC):
 
         # Get tool-specific required actions
         required_actions = self.get_required_actions(
-            request.step_number, self.get_request_confidence(request), request.findings, request.total_steps
+            request.step_number, self.get_request_confidence(request), request.findings, request.total_steps, request
         )
         response_data["required_actions"] = required_actions
 

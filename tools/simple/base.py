@@ -695,8 +695,9 @@ class SimpleTool(BaseTool):
             if file_content:
                 user_content = f"{user_content}\n\n=== {file_context_title} ===\n{file_content}\n=== END CONTEXT ===="
 
-        # Check token limits
-        self._validate_token_limit(user_content, "Content")
+        # Check token limits - only validate original user prompt, not conversation history
+        content_to_validate = self.get_prompt_content_for_size_validation(user_content)
+        self._validate_token_limit(content_to_validate, "Content")
 
         # Add web search instruction if enabled
         websearch_instruction = ""

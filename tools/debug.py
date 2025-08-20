@@ -272,7 +272,9 @@ class DebugIssueTool(WorkflowTool):
             tool_name=self.get_name(),
         )
 
-    def get_required_actions(self, step_number: int, confidence: str, findings: str, total_steps: int) -> list[str]:
+    def get_required_actions(
+        self, step_number: int, confidence: str, findings: str, total_steps: int, request=None
+    ) -> list[str]:
         """Define required actions for each investigation phase."""
         if step_number == 1:
             # Initial investigation tasks

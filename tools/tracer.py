@@ -286,7 +286,9 @@ class TracerTool(WorkflowTool):
     # Abstract Methods - Required Implementation from BaseWorkflowMixin
     # ================================================================================
 
-    def get_required_actions(self, step_number: int, confidence: str, findings: str, total_steps: int) -> list[str]:
+    def get_required_actions(
+        self, step_number: int, confidence: str, findings: str, total_steps: int, request=None
+    ) -> list[str]:
         """Define required actions for each tracing phase."""
         if step_number == 1:
             # Check if we're in ask mode and need to prompt for mode selection

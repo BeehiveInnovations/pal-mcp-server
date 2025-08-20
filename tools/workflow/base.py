@@ -411,8 +411,21 @@ class WorkflowTool(BaseTool, BaseWorkflowMixin):
     # (These are inherited from BaseWorkflowMixin and must be implemented)
 
     @abstractmethod
-    def get_required_actions(self, step_number: int, confidence: str, findings: str, total_steps: int) -> list[str]:
-        """Define required actions for each work phase."""
+    def get_required_actions(
+        self, step_number: int, confidence: str, findings: str, total_steps: int, request=None
+    ) -> list[str]:
+        """Define required actions for each work phase.
+
+        Args:
+            step_number: Current step number
+            confidence: Current confidence level
+            findings: Current findings text
+            total_steps: Total estimated steps
+            request: Optional request object for continuation-aware decisions
+
+        Returns:
+            List of required actions for the current step
+        """
         pass
 
     @abstractmethod

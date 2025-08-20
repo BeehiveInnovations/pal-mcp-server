@@ -186,3 +186,4 @@ logs/
 /.desktop_configured
 
 /worktrees/
+test_simulation_files/

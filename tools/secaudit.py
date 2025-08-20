@@ -264,7 +264,9 @@ class SecauditTool(WorkflowTool):
         """
         return SECAUDIT_WORKFLOW_FIELD_DESCRIPTIONS
 
-    def get_required_actions(self, step_number: int, confidence: str, findings: str, total_steps: int) -> list[str]:
+    def get_required_actions(
+        self, step_number: int, confidence: str, findings: str, total_steps: int, request=None
+    ) -> list[str]:
         """
         Provide step-specific guidance for systematic security analysis.
 
