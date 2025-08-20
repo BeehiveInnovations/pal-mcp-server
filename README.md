@@ -63,25 +63,25 @@ cd zen-mcp-server
 
 ## Core Tools
 
-**🤝 Collaboration & Planning**
+**Collaboration & Planning**
 - **[`chat`](docs/tools/chat.md)** - Brainstorm ideas, get second opinions, validate approaches
 - **[`thinkdeep`](docs/tools/thinkdeep.md)** - Extended reasoning, edge case analysis, alternative perspectives
 - **[`planner`](docs/tools/planner.md)** - Break down complex projects into structured, actionable plans
 - **[`consensus`](docs/tools/consensus.md)** - Get expert opinions from multiple AI models with stance steering
 
-**🔍 Code Analysis & Quality**
+**Code Analysis & Quality**
 - **[`analyze`](docs/tools/analyze.md)** - Understand architecture, patterns, dependencies across entire codebases
 - **[`codereview`](docs/tools/codereview.md)** - Professional reviews with severity levels and actionable feedback
 - **[`debug`](docs/tools/debug.md)** - Systematic investigation and root cause analysis
 - **[`precommit`](docs/tools/precommit.md)** - Validate changes before committing, prevent regressions
 
-**⚒️ Development Tools**
+**Development Tools**
 - **[`refactor`](docs/tools/refactor.md)** - Intelligent code refactoring with decomposition focus
 - **[`testgen`](docs/tools/testgen.md)** - Comprehensive test generation with edge cases
 - **[`secaudit`](docs/tools/secaudit.md)** - Security audits with OWASP Top 10 analysis
 - **[`docgen`](docs/tools/docgen.md)** - Generate documentation with complexity analysis
 
-**🔧 Utilities**
+**Utilities**
 - **[`challenge`](docs/tools/challenge.md)** - Prevent "You're absolutely right!" responses with critical analysis
 - **[`tracer`](docs/tools/tracer.md)** - Static analysis prompts for call-flow mapping
 
@@ -89,19 +89,19 @@ cd zen-mcp-server
 
 ## Key Features
 
-**🧠 AI Orchestration**
+**AI Orchestration**
 - **Auto model selection** - Claude picks the right AI for each task
 - **Multi-model workflows** - Chain different models in single conversations
 - **Conversation continuity** - Context preserved across tools and models
 - **[Context revival](docs/context-revival.md)** - Continue conversations even after context resets
 
-**⚡ Model Support**
+**Model Support**
 - **Multiple providers** - Gemini, OpenAI, X.AI, OpenRouter, DIAL, Ollama
 - **Latest models** - GPT-5, Gemini 2.5 Pro, O3, Grok-4, local Llama
 - **[Thinking modes](docs/advanced-usage.md#thinking-modes)** - Control reasoning depth vs cost
 - **Vision support** - Analyze images, diagrams, screenshots
 
-**🛠 Developer Experience**
+**Developer Experience**
 - **Guided workflows** - Systematic investigation prevents rushed analysis
 - **Smart file handling** - Auto-expand directories, manage token limits
 - **Web search integration** - Access current documentation and best practices
@@ -131,13 +131,13 @@ cd zen-mcp-server
 
 ## Why Zen MCP?
 
-**🎯 Problem:** Claude is brilliant but sometimes needs:
+**Problem:** Claude is brilliant but sometimes needs:
 - Multiple AI perspectives for complex decisions
 - Systematic workflows to prevent rushed analysis
 - Extended context beyond its limits
 - Access to specialized models (reasoning, speed, local)
 
-**✅ Solution:** Zen orchestrates AI models as Claude's development team:
+**Solution:** Zen orchestrates AI models as Claude's development team:
 - **Claude stays in control** - You give instructions to Claude
 - **Models provide expertise** - Each AI contributes their strengths
 - **Context flows seamlessly** - Full conversation history across tools
