@@ -34,17 +34,12 @@ logger = logging.getLogger(__name__)
 # Tool-specific field descriptions for precommit workflow
 PRECOMMIT_WORKFLOW_FIELD_DESCRIPTIONS = {
     "step": (
-        "Describe what you're currently investigating for pre-commit validation by thinking deeply about the changes "
-        "and their potential impact. In step 1, clearly state your investigation plan and begin forming a systematic "
-        "approach after thinking carefully about what needs to be validated. CRITICAL: Remember to thoroughly examine "
-        "all git repositories, staged/unstaged changes, and understand the scope and intent of modifications. "
-        "Consider not only immediate correctness but also potential future consequences, security implications, "
-        "performance impacts, and maintainability concerns. Map out changed files, understand the business logic, "
-        "and identify areas requiring deeper analysis. In all later steps, continue exploring with precision: "
-        "trace dependencies, verify hypotheses, and adapt your understanding as you uncover more evidence."
-        "IMPORTANT: When referring to code, use the relevant_files parameter to pass relevant files and only use the prompt to refer to "
-        "function / method names or very small code snippets if absolutely necessary to explain the issue. Do NOT "
-        "pass large code snippets in the prompt as this is exclusively reserved for descriptive text only. "
+        "Write your validation plan as a technical brief to another engineer. Use direct statements: 'I will examine git changes...' NOT 'Let me examine...'. "
+        "Step 1: State validation strategy. Later steps: Report findings with precision. "
+        "MANDATORY: Examine ALL git repos, staged/unstaged changes, understand modification scope/intent. "
+        "MANDATORY: Analyze security, performance, maintainability impacts. "
+        "MANDATORY: Use relevant_files parameter for code files. "
+        "FORBIDDEN: Large code snippets in this field - use only function/method names when needed."
     ),
     "step_number": (
         "The index of the current step in the pre-commit investigation sequence, beginning at 1. Each step should "
@@ -52,15 +47,15 @@ PRECOMMIT_WORKFLOW_FIELD_DESCRIPTIONS = {
     ),
     "total_steps": (
         "Your current estimate for how many steps will be needed to complete the pre-commit investigation. "
-        "Adjust as new findings emerge. IMPORTANT: When continuation_id is provided with external validation, "
-        "set this to 2 maximum (step 1: gather git changes, step 2: proceed to expert). For internal validation "
+        "IMPORTANT: When continuation_id is provided with external validation, "
+        "set this to no more than 3 (step 1: gather git changes, step 2: continue investigation, step 3: complete). For internal validation "
         "continuations, set to 1 as we're not starting a new multi-step investigation."
     ),
     "next_step_required": (
         "Set to true if you plan to continue the investigation with another step. False means you believe the "
-        "pre-commit analysis is complete and ready for expert validation. IMPORTANT: For external continuations, "
-        "set to True only on step 1 (while gathering changes), then False on step 2 to trigger expert analysis. "
-        "For internal continuations, set to False to complete immediately."
+        "pre-commit analysis is complete and ready for expert validation. CRITICAL: If total_steps >= 3, you MUST set "
+        "next_step_required=True for all steps before the final step. Only set to False when step_number equals total_steps. "
+        "For external continuations, set to False only on the final step to trigger expert analysis."
     ),
     "findings": (
         "Summarize everything discovered in this step about the changes being committed. Include analysis of git diffs, "
@@ -107,7 +102,7 @@ PRECOMMIT_WORKFLOW_FIELD_DESCRIPTIONS = {
     ),
     "path": (
         "Starting absolute path to the directory to search for git repositories (must be FULL absolute paths - "
-        "DO NOT SHORTEN)."
+        "DO NOT SHORTEN). REQUIRED for step 1."
     ),
     "compare_to": (
         "Optional: A git ref (branch, tag, commit hash) to compare against. Check remote branches if local does not exist."
@@ -156,6 +151,7 @@ class PrecommitRequest(WorkflowRequest):
     images: Optional[list[str]] = Field(default=None, description=PRECOMMIT_WORKFLOW_FIELD_DESCRIPTIONS["images"])
 
     # Precommit-specific fields (only used in step 1 to initialize)
+    # Required for step 1, validated in model_validator
     path: Optional[str] = Field(None, description=PRECOMMIT_WORKFLOW_FIELD_DESCRIPTIONS["path"])
     compare_to: Optional[str] = Field(None, description=PRECOMMIT_WORKFLOW_FIELD_DESCRIPTIONS["compare_to"])
     include_staged: Optional[bool] = Field(True, description=PRECOMMIT_WORKFLOW_FIELD_DESCRIPTIONS["include_staged"])
@@ -252,7 +248,7 @@ class PrecommitTool(WorkflowTool):
             },
             "total_steps": {
                 "type": "integer",
-                "minimum": 1,
+                "minimum": 3,
                 "description": PRECOMMIT_WORKFLOW_FIELD_DESCRIPTIONS["total_steps"],
             },
             "next_step_required": {
@@ -347,8 +343,8 @@ class PrecommitTool(WorkflowTool):
                 if step_number == 1:
                     return [
                         "Execute git status to see all changes",
-                        "Execute git diff --cached for staged changes",
-                        "Execute git diff for unstaged changes",
+                        "Execute git diff --cached for staged changes (exclude binary files)",
+                        "Execute git diff for unstaged changes (exclude binary files)",
                         "List any relevant untracked files as well.",
                     ]
                 else:
@@ -364,38 +360,72 @@ class PrecommitTool(WorkflowTool):
                 "Search for all git repositories in the specified path using appropriate tools",
                 "Check git status to identify staged, unstaged, and untracked changes as required",
                 "Execute git status to see all changes",
-                "Execute git diff --cached for staged changes",
-                "Execute git diff for unstaged changes",
+                "Execute git diff --cached for staged changes (exclude binary files)",
+                "Execute git diff for unstaged changes (exclude binary files)",
                 "List any relevant untracked files as well.",
                 "Understand what functionality was added, modified, or removed",
                 "Identify the scope and intent of the changes being committed",
+                "CRITICAL: You are on step 1 - you MUST set next_step_required=True and continue to at least step 3 minimum",
             ]
         elif step_number == 2:
             # Need deeper investigation
-            return [
+            actions = [
                 "Examine the specific files you've identified as changed or relevant",
                 "Analyze the logic and implementation details of modifications",
                 "Check for potential issues: bugs, security risks, performance problems",
                 "Verify that changes align with good coding practices and patterns",
                 "Look for missing tests, documentation, or configuration updates",
             ]
+
+            # Add step validation reminder
+            if request and request.total_steps >= 3:
+                actions.append(
+                    f"CRITICAL: You are on step 2 of {request.total_steps} minimum steps - you MUST set next_step_required=True unless this is the final step"
+                )
+
+            return actions
         elif step_number >= 2 and (findings_count > 2 or issues_count > 0):
             # Close to completion - need final verification
-            return [
+            actions = [
                 "Verify all identified issues have been properly documented",
                 "Check for any missed dependencies or related files that need review",
                 "Confirm the completeness and correctness of your assessment",
                 "Ensure all security, performance, and quality concerns are captured",
                 "Validate that your findings are comprehensive and actionable",
             ]
+
+            # Add step validation reminder
+            if request and request.total_steps >= 3 and step_number < request.total_steps:
+                actions.append(
+                    f"CRITICAL: You are on step {step_number} of {request.total_steps} minimum steps - set next_step_required=True to continue"
+                )
+            elif request and request.total_steps >= 3 and step_number >= request.total_steps:
+                actions.append(
+                    f"You are on final step {step_number} - you may now set next_step_required=False to complete"
+                )
+
+            return actions
         else:
             # General investigation needed
-            return [
+            actions = [
                 "Continue examining the changes and their potential impact",
                 "Gather more evidence using appropriate investigation tools",
                 "Test your assumptions about the changes and their effects",
                 "Look for patterns that confirm or refute your current assessment",
             ]
+
+            # Add step validation reminder for all other cases
+            if request and request.total_steps >= 3:
+                if step_number < request.total_steps:
+                    actions.append(
+                        f"CRITICAL: You are on step {step_number} of {request.total_steps} minimum steps - set next_step_required=True to continue"
+                    )
+                else:
+                    actions.append(
+                        f"You are on final step {step_number} - you may now set next_step_required=False to complete"
+                    )
+
+            return actions
 
     def should_call_expert_analysis(self, consolidated_findings, request=None) -> bool:
         """
@@ -656,7 +686,8 @@ class PrecommitTool(WorkflowTool):
                     "MANDATORY ACTIONS:\\n"
                     + "\\n".join(f"{i+1}. {action}" for i, action in enumerate(required_actions))
                     + "\\n\\nMANDATORY: The changeset may be large. You MUST save the required changeset as a 'zen_precommit.changeset' file "
-                    "(replacing any existing one) in your work directory and include the FULL absolute path in relevant_files. "
+                    "(replacing any existing one) in your work directory and include the FULL absolute path in relevant_files (exclude any "
+                    "binary files). ONLY include the code changes, no extra commentary."
                     "Set next_step_required=True and step_number=2 for the next call."
                 )
             elif is_internal_continuation:
@@ -678,46 +709,82 @@ class PrecommitTool(WorkflowTool):
                 )
 
         elif step_number == 2:
-            if is_external_continuation:
-                # Fast-track completion
+            # CRITICAL: Check if violating minimum step requirement
+            if (
+                request.total_steps >= 3
+                and request.step_number < request.total_steps
+                and not request.next_step_required
+            ):
                 next_steps = (
-                    "Continuation complete - proceeding immediately to expert analysis. "
+                    f"ERROR: You set total_steps={request.total_steps} but next_step_required=False on step {request.step_number}. "
+                    f"This violates the minimum step requirement. You MUST set next_step_required=True until you reach the final step. "
+                    f"Call {self.get_name()} again with next_step_required=True and continue your investigation."
+                )
+            elif is_external_continuation or (not request.next_step_required and request.precommit_type == "external"):
+                # Fast-track completion or about to complete - ensure changeset is saved
+                next_steps = (
+                    "Proceeding immediately to expert analysis. "
                     f"MANDATORY: call {self.get_name()} tool immediately again, and set next_step_required=False to "
                     f"trigger external validation NOW. "
                     f"MANDATORY: Include the entire changeset! The changeset may be large. You MUST save the required "
                     f"changeset as a 'zen_precommit.changeset' file (replacing any existing one) in your work directory "
-                    f"and include the FULL absolute path in relevant_files so the expert can access the complete changeset."
+                    f"and include the FULL absolute path in relevant_files so the expert can access the complete changeset. "
+                    f"ONLY include the code changes, no extra commentary."
                 )
             else:
                 # Normal flow - deeper analysis needed
                 next_steps = (
-                    f"STOP! Do NOT call {self.get_name()} again yet. Based on your findings, you've identified areas that need "
-                    f"deeper analysis. MANDATORY ACTIONS before calling {self.get_name()} step {step_number + 1}:\\n"
+                    f"STOP! Do NOT call {self.get_name()} again yet. You are on step 2 of {request.total_steps} minimum required steps. "
+                    f"MANDATORY ACTIONS before calling {self.get_name()} step {step_number + 1}:\\n"
                     + "\\n".join(f"{i+1}. {action}" for i, action in enumerate(required_actions))
-                    + f"\\n\\nOnly call {self.get_name()} again with step_number: {step_number + 1} AFTER "
-                    + "completing these validations."
+                    + f"\\n\\nRemember: You MUST set next_step_required=True until step {request.total_steps}. "
+                    + f"Only call {self.get_name()} again with step_number: {step_number + 1} AFTER completing these validations."
                 )
 
         elif step_number >= 3:
-            # Later steps - final verification
-            next_steps = (
-                f"WAIT! Your validation needs final verification. DO NOT call {self.get_name()} immediately. REQUIRED ACTIONS:\\n"
-                + "\\n".join(f"{i+1}. {action}" for i, action in enumerate(required_actions))
-                + f"\\n\\nREMEMBER: Ensure you have identified all potential issues and verified commit readiness. "
-                f"Document findings with specific file references and issue descriptions, then call {self.get_name()} "
-                f"with step_number: {step_number + 1}."
-            )
+            if not request.next_step_required and request.precommit_type == "external":
+                # About to complete - ensure changeset is saved
+                next_steps = (
+                    "Completing validation and proceeding to expert analysis. "
+                    "MANDATORY: Save the complete git changeset as a 'zen_precommit.changeset' file "
+                    "in your work directory and include the FULL absolute path in relevant_files."
+                )
+            else:
+                # Later steps - final verification
+                next_steps = (
+                    f"WAIT! Your validation needs final verification. DO NOT call {self.get_name()} immediately. REQUIRED ACTIONS:\\n"
+                    + "\\n".join(f"{i+1}. {action}" for i, action in enumerate(required_actions))
+                    + f"\\n\\nREMEMBER: Ensure you have identified all potential issues and verified commit readiness. "
+                    f"Document findings with specific file references and issue descriptions, then call {self.get_name()} "
+                    f"with step_number: {step_number + 1}."
+                )
         else:
-            # Fallback for any other case
-            next_steps = (
-                f"PAUSE VALIDATION. Before calling {self.get_name()} step {step_number + 1}, you MUST examine more code and changes. "
-                + "Required: "
-                + ", ".join(required_actions[:2])
-                + ". "
-                + f"Your next {self.get_name()} call (step_number: {step_number + 1}) must include "
-                f"NEW evidence from actual change analysis, not just theories. NO recursive {self.get_name()} calls "
-                f"without investigation work!"
-            )
+            # Fallback for any other case - check minimum step violation first
+            if (
+                request.total_steps >= 3
+                and request.step_number < request.total_steps
+                and not request.next_step_required
+            ):
+                next_steps = (
+                    f"ERROR: You set total_steps={request.total_steps} but next_step_required=False on step {request.step_number}. "
+                    f"This violates the minimum step requirement. You MUST set next_step_required=True until step {request.total_steps}."
+                )
+            elif not request.next_step_required and request.precommit_type == "external":
+                next_steps = (
+                    "Completing validation. "
+                    "MANDATORY: Save complete git changeset as 'zen_precommit.changeset' file and include path in relevant_files, "
+                    "excluding any binary files."
+                )
+            else:
+                next_steps = (
+                    f"PAUSE VALIDATION. Before calling {self.get_name()} step {step_number + 1}, you MUST examine more code and changes. "
+                    + "Required: "
+                    + ", ".join(required_actions[:2])
+                    + ". "
+                    + f"Your next {self.get_name()} call (step_number: {step_number + 1}) must include "
+                    f"NEW evidence from actual change analysis, not just theories. NO recursive {self.get_name()} calls "
+                    f"without investigation work!"
+                )
 
         return {"next_steps": next_steps}
 
