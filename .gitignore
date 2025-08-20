@@ -184,3 +184,5 @@ CLAUDE.local.md
 logs/
 *.backup
 /.desktop_configured
+
+/worktrees/
