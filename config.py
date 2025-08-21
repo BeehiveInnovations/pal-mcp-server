@@ -14,9 +14,9 @@ import os
 # These values are used in server responses and for tracking releases
 # IMPORTANT: This is the single source of truth for version and author info
 # Semantic versioning: MAJOR.MINOR.PATCH
-__version__ = "5.8.6"
+__version__ = "5.9.0"
 # Last update date in ISO format
-__updated__ = "2025-08-20"
+__updated__ = "2025-08-21"
 # Primary maintainer
 __author__ = "Fahad Gilani"
 
