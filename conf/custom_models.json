@@ -268,7 +268,7 @@
       "max_image_size_mb": 20.0,
       "supports_temperature": true,
       "temperature_constraint": "fixed",
-      "description": "GPT-5 nano (400K context) - Fastest, cheapest version of GPT-5 for summarization and classification tasks"
+      "description": "GPT-5 nano (400K context, 128K output) - Fastest, cheapest version of GPT-5 for summarization and classification tasks"
     },
     {
       "model_name": "llama3.2",
