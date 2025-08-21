@@ -253,14 +253,21 @@ class TestOpenAIProvider:
         assert call_kwargs["model"] == "o3-mini"  # Should be unchanged
 
     def test_supports_thinking_mode(self):
-        """Test thinking mode support."""
+        """Test thinking mode support based on model capabilities."""
         provider = OpenAIModelProvider("test-key")
 
-        # GPT-5 models support thinking mode (reasoning tokens)
+        # GPT-5 models support thinking mode (reasoning tokens) - all variants
         assert provider.supports_thinking_mode("gpt-5") is True
         assert provider.supports_thinking_mode("gpt-5-mini") is True
-        assert provider.supports_thinking_mode("gpt5") is True  # Test with alias
-        assert provider.supports_thinking_mode("gpt5mini") is True  # Test with alias
+        assert provider.supports_thinking_mode("gpt-5-nano") is True  # Now included
+
+        # Test GPT-5 aliases
+        assert provider.supports_thinking_mode("gpt5") is True
+        assert provider.supports_thinking_mode("gpt5-mini") is True
+        assert provider.supports_thinking_mode("gpt5mini") is True
+        assert provider.supports_thinking_mode("gpt5-nano") is True
+        assert provider.supports_thinking_mode("gpt5nano") is True
+        assert provider.supports_thinking_mode("nano") is True  # New alias for gpt-5-nano
 
         # O3/O4 models don't support thinking mode
         assert provider.supports_thinking_mode("o3") is False
@@ -269,6 +276,9 @@ class TestOpenAIProvider:
         assert (
             provider.supports_thinking_mode("mini") is True
         )  # "mini" now resolves to gpt-5-mini which supports thinking
+
+        # Test invalid model name
+        assert provider.supports_thinking_mode("invalid-model") is False
 
     @patch("providers.openai_compatible.OpenAI")
     def test_o3_pro_routes_to_responses_endpoint(self, mock_openai_class):

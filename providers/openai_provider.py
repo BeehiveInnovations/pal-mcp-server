@@ -259,12 +259,10 @@ class OpenAIModelProvider(OpenAICompatibleProvider):
 
     def supports_thinking_mode(self, model_name: str) -> bool:
         """Check if the model supports extended thinking mode."""
-        # GPT-5 models support reasoning tokens (extended thinking)
-        resolved_name = self._resolve_model_name(model_name)
-        if resolved_name in ["gpt-5", "gpt-5-mini"]:
-            return True
-        # O3 models don't support extended thinking yet
-        return False
+        try:
+            return self.get_capabilities(model_name).supports_extended_thinking
+        except ValueError:
+            return False
 
     def get_preferred_model(self, category: "ToolModelCategory", allowed_models: list[str]) -> Optional[str]:
         """Get OpenAI's preferred model for a given category from allowed models.
@@ -303,3 +301,19 @@ class OpenAIModelProvider(OpenAICompatibleProvider):
             # Prefer balanced performance/cost models
             preferred = find_first(["gpt-5", "gpt-5-mini", "o4-mini", "o3-mini"])
             return preferred if preferred else allowed_models[0]
+
+    def get_model_configurations(self) -> dict[str, ModelCapabilities]:
+        """Get model configurations supported by this provider.
+
+        Returns:
+            Dict mapping model names to their ModelCapabilities
+        """
+        return self.SUPPORTED_MODELS.copy()
+
+    def get_all_model_aliases(self) -> dict[str, list[str]]:
+        """Get all model aliases supported by this provider.
+
+        Returns:
+            Dict mapping model names to their alias lists
+        """
+        return {model_name: caps.aliases for model_name, caps in self.SUPPORTED_MODELS.items()}

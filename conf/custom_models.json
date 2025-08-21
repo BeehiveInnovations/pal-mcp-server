@@ -229,6 +229,48 @@
       "description": "OpenAI's o4-mini model - optimized for shorter contexts with rapid reasoning and vision"
     },
     {
+      "model_name": "gpt-5",
+      "aliases": ["gpt5", "gpt-5"],
+      "context_window": 400000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 20.0,
+      "supports_temperature": true,
+      "temperature_constraint": "fixed",
+      "description": "GPT-5 (400K context, 128K output) - Advanced model with reasoning support"
+    },
+    {
+      "model_name": "gpt-5-mini",
+      "aliases": ["gpt5-mini", "gpt5mini", "mini"],
+      "context_window": 400000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 20.0,
+      "supports_temperature": true,
+      "temperature_constraint": "fixed",
+      "description": "GPT-5-mini (400K context, 128K output) - Efficient variant with reasoning support"
+    },
+    {
+      "model_name": "gpt-5-nano",
+      "aliases": ["gpt5nano", "gpt5-nano", "nano"],
+      "context_window": 400000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 20.0,
+      "supports_temperature": true,
+      "temperature_constraint": "fixed",
+      "description": "GPT-5 nano (400K context) - Fastest, cheapest version of GPT-5 for summarization and classification tasks"
+    },
+    {
       "model_name": "llama3.2",
       "aliases": ["local-llama", "local", "llama3.2", "ollama-llama"],
       "context_window": 128000,
