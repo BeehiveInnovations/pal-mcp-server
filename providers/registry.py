@@ -93,6 +93,18 @@ class ModelProviderRegistry:
                 api_key = api_key or ""
                 # Initialize custom provider with both API key and base URL
                 provider = provider_class(api_key=api_key, base_url=custom_url)
+        elif provider_type == ProviderType.GOOGLE:
+            # For Gemini, check if custom base URL is configured
+            if not api_key:
+                return None
+            gemini_base_url = os.getenv("GEMINI_BASE_URL")
+            if gemini_base_url:
+                # Initialize with custom endpoint
+                provider = provider_class(api_key=api_key, base_url=gemini_base_url)
+                logging.info(f"Initialized Gemini provider with custom endpoint: {gemini_base_url}")
+            else:
+                # Use default Google endpoint
+                provider = provider_class(api_key=api_key)
         else:
             if not api_key:
                 return None
