@@ -22,7 +22,7 @@ class TestChatTool:
     def test_tool_metadata(self):
         """Test that tool metadata matches requirements"""
         assert self.tool.get_name() == "chat"
-        assert "GENERAL CHAT & COLLABORATIVE THINKING" in self.tool.get_description()
+        assert "collaborative thinking" in self.tool.get_description()
         assert self.tool.get_system_prompt() is not None
         assert self.tool.get_default_temperature() > 0
         assert self.tool.get_model_category() is not None

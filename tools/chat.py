@@ -15,25 +15,19 @@ if TYPE_CHECKING:
 
 from config import TEMPERATURE_BALANCED
 from systemprompts import CHAT_PROMPT
-from tools.shared.base_models import ToolRequest
+from tools.shared.base_models import COMMON_FIELD_DESCRIPTIONS, ToolRequest
 
 from .simple.base import SimpleTool
 
 # Field descriptions matching the original Chat tool exactly
 CHAT_FIELD_DESCRIPTIONS = {
     "prompt": (
-        "Provide a thorough, expressive question or idea with maximum context. Include your current thinking, specific "
-        "challenges, background context, what you've tried, and what kind of response would be most helpful. "
-        "The more context and detail you provide, the more valuable and targeted the response will be. "
-        "NOTE: You're talking to a thought-partner who has deep expertise and can provide nuanced insights. "
-        "IMPORTANT: When referring to code, use the files parameter to pass relevant file paths. Use this prompt for "
-        "function/method names (along with line numbers if needed) or tiny code snippets if absolutely necessary to explain "
-        "the issue and to refer to code from the provided paths."
+        "Your question or idea for collaborative thinking. Provide detailed context, including your goal, what you've tried, and any specific challenges. "
+        "CRITICAL: To discuss code, provide file paths using the 'files' parameter instead of pasting large code blocks here."
     ),
     "files": "Absolute full-paths to existing files / folders for context. DO NOT SHORTEN.",
     "images": (
-        "Optional images for visual context. Useful for UI discussions, diagrams, visual problems, "
-        "error screens, or architectural mockups. (must be FULL absolute paths to real files / folders - DO NOT SHORTEN - OR these can be bas64 data)"
+        "Optional images for visual context (must be FULL absolute paths to real files / folders - DO NOT SHORTEN - OR these can be bas64 data)"
     ),
 }
 
@@ -62,9 +56,8 @@ class ChatTool(SimpleTool):
 
     def get_description(self) -> str:
         return (
-            "General chat and collaborative thinking partner for brainstorming, getting second opinions, and exploring ideas. "
-            "Use for bouncing ideas, validating approaches, asking questions, and getting explanations about concepts. "
-            "Perfect for collaborative analysis and general development discussions."
+            "General chat and collaborative thinking partner for brainstorming, development discussion, getting second opinions, and exploring ideas. "
+            "Use for bouncing ideas, validating approaches, asking questions, and getting explanations. "
         )
 
     def get_system_prompt(self) -> str:
@@ -114,36 +107,23 @@ class ChatTool(SimpleTool):
                 "model": self.get_model_field_schema(),
                 "temperature": {
                     "type": "number",
-                    "description": "Response creativity (0-1, default 0.5)",
+                    "description": COMMON_FIELD_DESCRIPTIONS["temperature"],
                     "minimum": 0,
                     "maximum": 1,
                 },
                 "thinking_mode": {
                     "type": "string",
                     "enum": ["minimal", "low", "medium", "high", "max"],
-                    "description": (
-                        "Thinking depth: minimal (0.5% of model max), low (8%), medium (33%), high (67%), "
-                        "max (100% of model max)"
-                    ),
+                    "description": COMMON_FIELD_DESCRIPTIONS["thinking_mode"],
                 },
                 "use_websearch": {
                     "type": "boolean",
-                    "description": (
-                        "Enable web search for documentation, best practices, and current information. "
-                        "Particularly useful for: brainstorming sessions, architectural design discussions, "
-                        "exploring industry best practices, working with specific frameworks/technologies, "
-                        "researching solutions to complex problems, or when current documentation and "
-                        "community insights would enhance the analysis."
-                    ),
+                    "description": COMMON_FIELD_DESCRIPTIONS["use_websearch"],
                     "default": True,
                 },
                 "continuation_id": {
                     "type": "string",
-                    "description": (
-                        "Thread continuation ID for multi-turn conversations. Can be used to continue "
-                        "conversations across different tools. Only provide this if continuing a previous "
-                        "conversation thread."
-                    ),
+                    "description": COMMON_FIELD_DESCRIPTIONS["continuation_id"],
                 },
             },
             "required": ["prompt"] + (["model"] if self.is_effective_auto_mode() else []),

@@ -125,19 +125,21 @@ cd zen-mcp-server
 
 ## Core Tools
 
-**Collaboration & Planning**
+> **Note:** Each tool comes with its own multi-step workflow, parameters, and descriptions that consume valuable context window space even when not in use. To optimize performance, some tools are disabled by default. See [Tool Configuration](#tool-configuration) below to enable them.
+
+**Collaboration & Planning** *(Enabled by default)*
 - **[`chat`](docs/tools/chat.md)** - Brainstorm ideas, get second opinions, validate approaches
 - **[`thinkdeep`](docs/tools/thinkdeep.md)** - Extended reasoning, edge case analysis, alternative perspectives
 - **[`planner`](docs/tools/planner.md)** - Break down complex projects into structured, actionable plans
 - **[`consensus`](docs/tools/consensus.md)** - Get expert opinions from multiple AI models with stance steering
 
 **Code Analysis & Quality**
-- **[`analyze`](docs/tools/analyze.md)** - Understand architecture, patterns, dependencies across entire codebases
-- **[`codereview`](docs/tools/codereview.md)** - Professional reviews with severity levels and actionable feedback
 - **[`debug`](docs/tools/debug.md)** - Systematic investigation and root cause analysis
 - **[`precommit`](docs/tools/precommit.md)** - Validate changes before committing, prevent regressions
+- **[`codereview`](docs/tools/codereview.md)** - Professional reviews with severity levels and actionable feedback
+- **[`analyze`](docs/tools/analyze.md)** *(disabled by default - [enable](#tool-configuration))* - Understand architecture, patterns, dependencies across entire codebases
 
-**Development Tools**
+**Development Tools** *(Disabled by default - [enable](#tool-configuration))*
 - **[`refactor`](docs/tools/refactor.md)** - Intelligent code refactoring with decomposition focus
 - **[`testgen`](docs/tools/testgen.md)** - Comprehensive test generation with edge cases
 - **[`secaudit`](docs/tools/secaudit.md)** - Security audits with OWASP Top 10 analysis
@@ -145,9 +147,75 @@ cd zen-mcp-server
 
 **Utilities**
 - **[`challenge`](docs/tools/challenge.md)** - Prevent "You're absolutely right!" responses with critical analysis
-- **[`tracer`](docs/tools/tracer.md)** - Static analysis prompts for call-flow mapping
+- **[`tracer`](docs/tools/tracer.md)** *(disabled by default - [enable](#tool-configuration))* - Static analysis prompts for call-flow mapping
 
-👉 **[Complete Tools Reference](docs/tools/)** with examples, parameters, and workflows
+<details>
+<summary><b id="tool-configuration">👉 Tool Configuration</b></summary>
+
+### Default Configuration
+
+To optimize context window usage, only essential tools are enabled by default:
+
+**Enabled by default:**
+- `chat`, `thinkdeep`, `planner`, `consensus` - Core collaboration tools
+- `codereview`, `precommit`, `debug` - Essential code quality tools
+- `challenge` - Critical thinking utility
+
+**Disabled by default:**
+- `analyze`, `refactor`, `testgen`, `secaudit`, `docgen`, `tracer`
+
+### Enabling Additional Tools
+
+To enable additional tools, remove them from the `DISABLED_TOOLS` list:
+
+**Option 1: Edit your .env file**
+```bash
+# Default configuration (from .env.example)
+DISABLED_TOOLS=analyze,refactor,testgen,secaudit,docgen,tracer
+
+# To enable specific tools, remove them from the list
+# Example: Enable analyze tool
+DISABLED_TOOLS=refactor,testgen,secaudit,docgen,tracer
+
+# To enable ALL tools
+DISABLED_TOOLS=
+```
+
+**Option 2: Configure in MCP settings**
+```json
+// In ~/.claude/settings.json or .mcp.json
+{
+  "mcpServers": {
+    "zen": {
+      "env": {
+        // Enable analyze by removing it from disabled list
+        "DISABLED_TOOLS": "refactor,testgen,secaudit,docgen,tracer"
+      }
+    }
+  }
+}
+```
+
+**Option 3: Enable all tools**
+```json
+// Remove or empty the DISABLED_TOOLS to enable everything
+{
+  "mcpServers": {
+    "zen": {
+      "env": {
+        "DISABLED_TOOLS": ""
+      }
+    }
+  }
+}
+```
+
+**Note:** 
+- Essential tools (`version`, `listmodels`) cannot be disabled
+- After changing tool configuration, restart your Claude session for changes to take effect
+- Each tool adds to context window usage, so only enable what you need
+
+</details>
 
 ## Key Features
 

@@ -34,84 +34,37 @@ logger = logging.getLogger(__name__)
 # Tool-specific field descriptions for precommit workflow
 PRECOMMIT_WORKFLOW_FIELD_DESCRIPTIONS = {
     "step": (
-        "Write your validation plan as a technical brief to another engineer. Use direct statements: 'I will examine git changes...' NOT 'Let me examine...'. "
-        "Step 1: State validation strategy. Later steps: Report findings with precision. "
-        "MANDATORY: Examine ALL git repos, staged/unstaged changes, understand modification scope/intent. "
-        "MANDATORY: Analyze security, performance, maintainability impacts. "
-        "MANDATORY: Use relevant_files parameter for code files. "
-        "FORBIDDEN: Large code snippets in this field - use only function/method names when needed."
+        "Validation plan. Step 1: State strategy. Later: Report findings. "
+        "MUST examine git changes, analyze impacts. Use 'relevant_files' for code. NO large snippets."
     ),
-    "step_number": (
-        "The index of the current step in the pre-commit investigation sequence, beginning at 1. Each step should "
-        "build upon or revise the previous one."
-    ),
+    "step_number": "Current step index in pre-commit sequence (starts at 1). Build upon previous steps.",
     "total_steps": (
-        "Your current estimate for how many steps will be needed to complete the pre-commit investigation. "
-        "IMPORTANT: When continuation_id is provided with external validation, "
-        "set this to no more than 3 (step 1: gather git changes, step 2: continue investigation, step 3: complete). For internal validation "
-        "continuations, set to 1 as we're not starting a new multi-step investigation."
+        "Estimated steps needed to complete validation. "
+        "IMPORTANT: For external validation, use max 3 steps. For internal validation, use 1 step. "
+        "When continuation_id is provided (continuing a previous conversation), set to 3 max for external, 1 for internal."
     ),
     "next_step_required": (
-        "Set to true if you plan to continue the investigation with another step. False means you believe the "
-        "pre-commit analysis is complete and ready for expert validation. CRITICAL: If total_steps >= 3, you MUST set "
-        "next_step_required=True for all steps before the final step. Only set to False when step_number equals total_steps. "
-        "For external continuations, set to False only on the final step to trigger expert analysis."
+        "True to continue with another step, False when validation is complete. "
+        "CRITICAL: If total_steps>=3, set to True until the final step. "
+        "When continuation_id is provided: Follow the same validation rules based on precommit_type."
     ),
     "findings": (
-        "Summarize everything discovered in this step about the changes being committed. Include analysis of git diffs, "
-        "file modifications, new functionality, potential issues identified, code quality observations, and security "
-        "considerations. Be specific and avoid vague language—document what you now know about the changes and how "
-        "they affect your assessment. IMPORTANT: Document both positive findings (good patterns, proper implementations) "
-        "and concerns (potential bugs, missing tests, security risks). In later steps, confirm or update past findings "
-        "with additional evidence."
+        "Discoveries: git diffs, modifications, issues (bugs, missing tests, security). "
+        "Document positive+concerns. Update in later steps."
     ),
-    "files_checked": (
-        "List all files (as absolute paths, do not clip or shrink file names) examined during the pre-commit "
-        "investigation so far. Include even files ruled out or found to be unchanged, as this tracks your "
-        "exploration path."
-    ),
-    "relevant_files": (
-        "Subset of files_checked (as full absolute paths) that contain changes or are directly relevant to the "
-        "commit validation. Only list those that are directly tied to the changes being committed, their dependencies, "
-        "or files that need validation. This could include modified files, related configuration, tests, or "
-        "documentation."
-    ),
-    "relevant_context": (
-        "List methods, functions, classes, or modules that are central to the changes being committed, in the format "
-        "'ClassName.methodName', 'functionName', or 'module.ClassName'. Prioritize those that are modified, added, "
-        "or significantly affected by the changes."
-    ),
-    "issues_found": (
-        "List of issues identified during the investigation. Each issue should be a dictionary with 'severity' "
-        "(critical, high, medium, low) and 'description' fields. Include potential bugs, security concerns, "
-        "performance issues, missing tests, incomplete implementations, etc."
-    ),
-    "precommit_type": (
-        "Type of pre-commit validation to perform: 'external' (default - uses external model for validation) or 'internal' "
-        "(performs validation without external model review). IMPORTANT: Always default to 'external' unless the "
-        "user explicitly requests internal-only validation or asks you not to use another model. External validation "
-        "provides additional expert review and should be the standard approach for comprehensive pre-commit validation."
-    ),
-    "backtrack_from_step": (
-        "If an earlier finding or assessment needs to be revised or discarded, specify the step number from which to "
-        "start over. Use this to acknowledge investigative dead ends and correct the course."
-    ),
-    "images": (
-        "Optional list of absolute paths to screenshots, UI mockups, or visual references that help validate the "
-        "changes. Only include if they materially assist understanding or assessment of the commit."
-    ),
-    "path": (
-        "Starting absolute path to the directory to search for git repositories (must be FULL absolute paths - "
-        "DO NOT SHORTEN). REQUIRED for step 1."
-    ),
-    "compare_to": (
-        "Optional: A git ref (branch, tag, commit hash) to compare against. Check remote branches if local does not exist."
-        "If not provided, investigates local staged and unstaged changes."
-    ),
-    "include_staged": "Analyzes staged changes for a local commit. This parameter is ignored if 'compare_to' is provided.",
-    "include_unstaged": "Analyzes unstaged (uncommitted) changes for a local commit. This parameter is ignored if 'compare_to' is provided.",
-    "focus_on": "Specific aspects to focus on (e.g., 'security implications', 'performance impact', 'test coverage').",
-    "severity_filter": "Minimum severity level to report on the changes.",
+    "files_checked": "All examined files (absolute paths), including ruled-out ones.",
+    "relevant_files": "Files with changes or relevant to validation (absolute paths). Modified files, config, tests, docs.",
+    "relevant_context": "Methods/functions central to changes: 'Class.method' or 'function'. Focus on modified/added.",
+    "issues_found": "Issues with 'severity' (critical/high/medium/low) and 'description'. Bugs, security, performance.",
+    "precommit_type": "'external' (default, expert review) or 'internal' (local only). Default external unless user specifies.",
+    "backtrack_from_step": "Step number to backtrack from if revision needed.",
+    "images": "Optional screenshots/visuals for validation (absolute paths).",
+    "path": "Starting path for git repos (FULL absolute path). REQUIRED step 1.",
+    "compare_to": "Optional git ref (branch/tag/commit) to compare. Checks remotes if needed. Without: checks staged/unstaged.",
+    "include_staged": "Analyze staged changes. Ignored if 'compare_to' provided.",
+    "include_unstaged": "Analyze unstaged changes. Ignored if 'compare_to' provided.",
+    "focus_on": "Focus aspects: security, performance, test coverage.",
+    "severity_filter": "Minimum severity to report.",
 }
 
 

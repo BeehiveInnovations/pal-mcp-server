@@ -34,9 +34,7 @@ class ListModelsTool(BaseTool):
         return "listmodels"
 
     def get_description(self) -> str:
-        return (
-            "Shows which AI model providers are configured, available model names, their aliases and capabilities."
-        )
+        return "Shows which AI model providers are configured, available model names, their aliases and capabilities."
 
     def get_input_schema(self) -> dict[str, Any]:
         """Return the JSON schema for the tool's input"""

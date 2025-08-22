@@ -24,8 +24,8 @@ class TestChallengeTool:
     def test_tool_metadata(self):
         """Test that tool metadata matches requirements"""
         assert self.tool.get_name() == "challenge"
-        assert "prevent reflexive agreement" in self.tool.get_description()
-        assert "think critically" in self.tool.get_description()
+        assert "reflexive agreement" in self.tool.get_description()
+        assert "critical thinking" in self.tool.get_description()
         assert "thoughtful evaluation" in self.tool.get_description()
         assert self.tool.get_default_temperature() == 0.2  # TEMPERATURE_ANALYTICAL
 

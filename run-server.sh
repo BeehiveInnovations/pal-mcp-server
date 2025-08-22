@@ -1546,6 +1546,76 @@ display_setup_instructions() {
     printf '%*s\n' "$((${#setup_header} + 12))" | tr ' ' '='
     echo ""
     print_success "Zen is ready to use!"
+    
+    # Display enabled/disabled tools if DISABLED_TOOLS is configured
+    if [[ -n "${DISABLED_TOOLS:-}" ]]; then
+        echo ""
+        print_info "Tool Configuration:"
+        
+        # Dynamically discover all available tools from the tools directory
+        # Excludes: __pycache__, shared modules, models.py, listmodels.py, version.py
+        local all_tools=()
+        for tool_file in tools/*.py; do
+            if [[ -f "$tool_file" ]]; then
+                local tool_name=$(basename "$tool_file" .py)
+                # Skip non-tool files
+                if [[ "$tool_name" != "models" && "$tool_name" != "listmodels" && "$tool_name" != "version" && "$tool_name" != "__init__" ]]; then
+                    all_tools+=("$tool_name")
+                fi
+            fi
+        done
+        
+        # Convert DISABLED_TOOLS to array
+        IFS=',' read -ra disabled_array <<< "$DISABLED_TOOLS"
+        
+        # Trim whitespace from disabled tools
+        local disabled_tools=()
+        for tool in "${disabled_array[@]}"; do
+            disabled_tools+=("$(echo "$tool" | xargs)")
+        done
+        
+        # Determine enabled tools
+        local enabled_tools=()
+        for tool in "${all_tools[@]}"; do
+            local is_disabled=false
+            for disabled in "${disabled_tools[@]}"; do
+                if [[ "$tool" == "$disabled" ]]; then
+                    is_disabled=true
+                    break
+                fi
+            done
+            if [[ "$is_disabled" == false ]]; then
+                enabled_tools+=("$tool")
+            fi
+        done
+        
+        # Display enabled tools
+        echo ""
+        echo -e "  ${GREEN}Enabled Tools (${#enabled_tools[@]}):${NC}"
+        local enabled_list=""
+        for tool in "${enabled_tools[@]}"; do
+            if [[ -n "$enabled_list" ]]; then
+                enabled_list+=", "
+            fi
+            enabled_list+="$tool"
+        done
+        echo "    $enabled_list"
+        
+        # Display disabled tools
+        echo ""
+        echo -e "  ${YELLOW}Disabled Tools (${#disabled_tools[@]}):${NC}"
+        local disabled_list=""
+        for tool in "${disabled_tools[@]}"; do
+            if [[ -n "$disabled_list" ]]; then
+                disabled_list+=", "
+            fi
+            disabled_list+="$tool"
+        done
+        echo "    $disabled_list"
+        
+        echo ""
+        echo "  To enable more tools, edit the DISABLED_TOOLS variable in .env"
+    fi
 }
 
 # ----------------------------------------------------------------------------

@@ -16,7 +16,7 @@ class TestSecauditTool:
         tool = SecauditTool()
 
         assert tool.get_name() == "secaudit"
-        assert "COMPREHENSIVE SECURITY AUDIT" in tool.get_description()
+        assert "security audit" in tool.get_description()
         assert tool.get_default_temperature() == 0.2  # TEMPERATURE_ANALYTICAL
         assert tool.get_model_category() == ToolModelCategory.EXTENDED_REASONING
         assert tool.requires_model() is True
@@ -312,9 +312,9 @@ class TestSecauditTool:
 
         # Verify field descriptions are comprehensive
         assert "OWASP Top 10" in fields["step"]
-        assert "security implications" in fields["step"]
-        assert "threat vectors" in fields["step"]
-        assert "application context" in fields["security_scope"]
+        assert "OWASP Top 10" in fields["step"]
+        assert "MANDATORY" in fields["step"]
+        assert "Security context" in fields["security_scope"]
         assert "threat level" in fields["threat_level"]
         assert "compliance frameworks" in fields["compliance_requirements"]
 

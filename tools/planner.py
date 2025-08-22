@@ -39,11 +39,8 @@ logger = logging.getLogger(__name__)
 # Tool-specific field descriptions matching original planner tool
 PLANNER_FIELD_DESCRIPTIONS = {
     "step": (
-        "Your current planning step. For the first step, describe the task/problem to plan and be extremely expressive "
-        "so that subsequent steps can break this down into simpler steps. "
-        "For subsequent steps, provide the actual planning step content. Can include: regular planning steps, "
-        "revisions of previous steps, questions about previous decisions, realizations about needing more analysis, "
-        "changes in approach, etc."
+        "Your current planning step content. Step 1: Describe the task/problem to plan in detail for breakdown. "
+        "Subsequent steps: Provide planning content (steps, revisions, questions, approach changes, etc.)."
     ),
     "step_number": "Current step number in the planning sequence (starts at 1)",
     "total_steps": "Current estimate of total steps needed (can be adjusted up/down as planning progresses)",

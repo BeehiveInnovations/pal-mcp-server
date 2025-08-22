@@ -35,82 +35,36 @@ logger = logging.getLogger(__name__)
 # Tool-specific field descriptions for code review workflow
 CODEREVIEW_WORKFLOW_FIELD_DESCRIPTIONS = {
     "step": (
-        "Write your review plan as a technical brief to another engineer. Use direct statements: 'I will examine code structure...' NOT 'Let me examine...'. "
-        "Step 1: State review strategy and begin forming a systematic approach after thinking carefully about what needs to be analyzed. "
-        "Later steps: Report findings with precision. "
-        "MANDATORY: Thoroughly examine code quality, security implications, performance concerns, and architectural patterns. "
-        "MANDATORY: Consider not only obvious bugs and issues but also subtle concerns like over-engineering, unnecessary complexity, "
-        "design patterns that could be simplified, areas where architecture might not scale well, missing abstractions, "
-        "and ways to reduce complexity while maintaining functionality. "
-        "MANDATORY: Use relevant_files parameter for code files. "
-        "FORBIDDEN: Large code snippets in this field - use only function/method names when needed."
+        "Review plan. Step 1: State strategy. Later: Report findings. "
+        "MUST examine quality, security, performance, architecture. Use 'relevant_files' for code. NO large snippets."
     ),
-    "step_number": (
-        "The index of the current step in the code review sequence, beginning at 1. Each step should build upon or "
-        "revise the previous one."
-    ),
+    "step_number": "Current step index in review sequence (starts at 1). Build upon previous steps.",
     "total_steps": (
-        "Your current estimate for how many steps will be needed to complete the code review. "
-        "IMPORTANT: When continuation_id is provided with external validation, set this to 2 maximum "
-        "(step 1: quick review, step 2: complete). For internal validation continuations, set to 1 as "
-        "we're not starting a new multi-step investigation."
+        "Estimated steps needed to complete the review. "
+        "IMPORTANT: For external validation, max 2 steps. For internal validation, use 1 step. "
+        "When continuation_id is provided (continuing a previous conversation), set to 2 max for external, 1 for internal."
     ),
     "next_step_required": (
-        "Set to true if you plan to continue the investigation with another step. False means you believe the "
-        "code review analysis is complete and ready for expert validation. CRITICAL: For external continuations, "
-        "set to True on step 1, then False on step 2 to trigger expert analysis. For internal continuations, "
-        "set to False to complete immediately."
+        "True to continue with another step, False when review is complete. "
+        "CRITICAL for external validation: Set to True on step 1, then False on step 2. "
+        "For internal validation: Set to False immediately. "
+        "When continuation_id is provided: Follow the same rules based on validation type."
     ),
     "findings": (
-        "Summarize everything discovered in this step about the code being reviewed. Include analysis of code quality, "
-        "security concerns, performance issues, architectural patterns, design decisions, potential bugs, code smells, "
-        "and maintainability considerations. Be specific and avoid vague language—document what you now know about "
-        "the code and how it affects your assessment. IMPORTANT: Document both positive findings (good patterns, "
-        "proper implementations, well-designed components) and concerns (potential issues, anti-patterns, security "
-        "risks, performance bottlenecks). In later steps, confirm or update past findings with additional evidence."
+        "Discoveries: quality, security, performance, architecture. "
+        "Document positive+negative. Update in later steps."
     ),
-    "files_checked": (
-        "List all files (as absolute paths, do not clip or shrink file names) examined during the code review "
-        "investigation so far. Include even files ruled out or found to be unrelated, as this tracks your "
-        "exploration path."
-    ),
-    "relevant_files": (
-        "For when this is the first step, please pass absolute file paths of relevant code to review (do not clip "
-        "file paths). When used for the final step, this contains a subset of files_checked (as full absolute paths) "
-        "that contain code directly relevant to the review or contain significant issues, patterns, or examples worth "
-        "highlighting. Only list those that are directly tied to important findings, security concerns, performance "
-        "issues, or architectural decisions. This could include core implementation files, configuration files, or "
-        "files with notable patterns."
-    ),
-    "relevant_context": (
-        "List methods, functions, classes, or modules that are central to the code review findings, in the format "
-        "'ClassName.methodName', 'functionName', or 'module.ClassName'. Prioritize those that contain issues, "
-        "demonstrate patterns, show security concerns, or represent key architectural decisions."
-    ),
-    "issues_found": (
-        "List of issues identified during the investigation. Each issue should be a dictionary with 'severity' "
-        "(critical, high, medium, low) and 'description' fields. Include security vulnerabilities, performance "
-        "bottlenecks, code quality issues, architectural concerns, maintainability problems, over-engineering, "
-        "unnecessary complexity, etc."
-    ),
-    "review_validation_type": (
-        "Type of code review validation to perform: 'external' (default - uses external model for validation) or "
-        "'internal' (performs validation without external model review). IMPORTANT: Always default to 'external' unless "
-        "the user explicitly requests internal-only validation or asks you not to use another model. External validation "
-        "provides additional expert review and should be the standard approach for comprehensive code review."
-    ),
-    "backtrack_from_step": (
-        "If an earlier finding or assessment needs to be revised or discarded, specify the step number from which to "
-        "start over. Use this to acknowledge investigative dead ends and correct the course."
-    ),
-    "images": (
-        "Optional list of absolute paths to architecture diagrams, UI mockups, design documents, or visual references "
-        "that help with code review context. Only include if they materially assist understanding or assessment."
-    ),
-    "review_type": "Type of review to perform (full, security, performance, quick)",
-    "focus_on": "Specific aspects to focus on or additional context that would help understand areas of concern",
-    "standards": "Coding standards to enforce during the review",
-    "severity_filter": "Minimum severity level to report on the issues found",
+    "files_checked": "All examined files (absolute paths), including ruled-out ones.",
+    "relevant_files": "Step 1: All files/dirs for review. Final: Subset with key findings (issues, patterns, decisions).",
+    "relevant_context": "Methods/functions central to findings: 'Class.method' or 'function'. Focus on issues/patterns.",
+    "issues_found": "Issues with 'severity' (critical/high/medium/low) and 'description'. Vulnerabilities, performance, quality.",
+    "review_validation_type": "'external' (default, expert model) or 'internal' (no expert). Default external unless user specifies.",
+    "backtrack_from_step": "Step number to backtrack from if revision needed.",
+    "images": "Optional diagrams, mockups, visuals for review context (absolute paths). Include if materially helpful.",
+    "review_type": "Review type: full, security, performance, quick.",
+    "focus_on": "Specific aspects or context for areas of concern.",
+    "standards": "Coding standards to enforce.",
+    "severity_filter": "Minimum severity to report.",
 }
 
 

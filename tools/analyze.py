@@ -35,11 +35,9 @@ logger = logging.getLogger(__name__)
 # Tool-specific field descriptions for analyze workflow
 ANALYZE_WORKFLOW_FIELD_DESCRIPTIONS = {
     "step": (
-        "What to analyze or look for in this step. In step 1, describe what you want to analyze and begin forming "
-        "an analytical approach after thinking carefully about what needs to be examined. Consider code quality, "
-        "performance implications, architectural patterns, and design decisions. Map out the codebase structure, "
-        "understand the business logic, and identify areas requiring deeper analysis. In later steps, continue "
-        "exploring with precision and adapt your understanding as you uncover more insights."
+        "The analysis plan. Step 1: State your strategy, including how you will map the codebase structure, "
+        "understand business logic, and assess code quality, performance implications, and architectural patterns. "
+        "Later steps: Report findings and adapt the approach as new insights emerge."
     ),
     "step_number": (
         "The index of the current step in the analysis sequence, beginning at 1. Each step should build upon or "
@@ -54,45 +52,29 @@ ANALYZE_WORKFLOW_FIELD_DESCRIPTIONS = {
         "analysis is complete and ready for expert validation."
     ),
     "findings": (
-        "Summarize everything discovered in this step about the code being analyzed. Include analysis of architectural "
-        "patterns, design decisions, tech stack assessment, scalability characteristics, performance implications, "
-        "maintainability factors, security posture, and strategic improvement opportunities. Be specific and avoid "
-        "vague language—document what you now know about the codebase and how it affects your assessment. "
-        "IMPORTANT: Document both strengths (good patterns, solid architecture, well-designed components) and "
-        "concerns (tech debt, scalability risks, overengineering, unnecessary complexity). In later steps, confirm "
-        "or update past findings with additional evidence."
+        "Summary of discoveries from this step, including architectural patterns, tech stack assessment, scalability characteristics, "
+        "performance implications, maintainability factors, and strategic improvement opportunities. "
+        "IMPORTANT: Document both strengths (good patterns, solid architecture) and concerns (tech debt, overengineering, unnecessary complexity). "
+        "In later steps, confirm or update past findings with additional evidence."
     ),
     "files_checked": (
-        "List all files (as absolute paths, do not clip or shrink file names) examined during the analysis "
-        "investigation so far. Include even files ruled out or found to be unrelated, as this tracks your "
-        "exploration path."
+        "List all files examined (absolute paths). Include even ruled-out files to track exploration path."
     ),
     "relevant_files": (
-        "Subset of files_checked (as full absolute paths) that contain code directly relevant to the analysis or "
-        "contain significant patterns, architectural decisions, or examples worth highlighting. Only list those that are "
-        "directly tied to important findings, architectural insights, performance characteristics, or strategic "
-        "improvement opportunities. This could include core implementation files, configuration files, or files "
-        "demonstrating key patterns."
+        "Subset of files_checked directly relevant to analysis findings (absolute paths). Include files with "
+        "significant patterns, architectural decisions, or strategic improvement opportunities."
     ),
     "relevant_context": (
-        "List methods, functions, classes, or modules that are central to the analysis findings, in the format "
-        "'ClassName.methodName', 'functionName', or 'module.ClassName'. Prioritize those that demonstrate important "
-        "patterns, represent key architectural decisions, show performance characteristics, or highlight strategic "
-        "improvement opportunities."
+        "List methods/functions central to analysis findings, in 'ClassName.methodName' or 'functionName' format. "
+        "Prioritize those demonstrating key patterns, architectural decisions, or improvement opportunities."
     ),
-    "backtrack_from_step": (
-        "If an earlier finding or assessment needs to be revised or discarded, specify the step number from which to "
-        "start over. Use this to acknowledge investigative dead ends and correct the course."
-    ),
+    "backtrack_from_step": ("If an earlier finding needs revision, specify the step number to backtrack from."),
     "images": (
-        "Optional list of absolute paths to architecture diagrams, design documents, or visual references "
-        "that help with analysis context. Only include if they materially assist understanding or assessment."
+        "Optional absolute paths to architecture diagrams or visual references that help with analysis context."
     ),
     "confidence": (
-        "Your confidence level in the current analysis findings: exploring (early investigation), "
-        "low (some insights but more needed), medium (solid understanding), high (comprehensive insights), "
-        "very_high (very comprehensive insights), almost_certain (nearly complete analysis), "
-        "certain (100% confidence - complete analysis ready for expert validation)"
+        "Your confidence in the analysis: exploring, low, medium, high, very_high, almost_certain, or certain. "
+        "'certain' indicates the analysis is complete and ready for validation."
     ),
     "analysis_type": "Type of analysis to perform (architecture, performance, security, quality, general)",
     "output_format": "How to format the output (summary, detailed, actionable)",
@@ -176,8 +158,8 @@ class AnalyzeTool(WorkflowTool):
     def get_description(self) -> str:
         return (
             "Performs comprehensive code analysis with systematic investigation and expert validation. "
-            "Use for architectural assessment, performance evaluation, maintainability review, and pattern detection. "
-            "Guides through structured analysis of code structure, patterns, and strategic planning."
+            "Use for architecture, performance, maintainability, and pattern analysis. "
+            "Guides through structured code review and strategic planning."
         )
 
     def get_system_prompt(self) -> str:

@@ -22,8 +22,8 @@ class TestPrecommitWorkflowTool:
         tool = PrecommitTool()
 
         assert tool.get_name() == "precommit"
-        assert "COMPREHENSIVE PRECOMMIT WORKFLOW" in tool.get_description()
-        assert "Step-by-step pre-commit validation" in tool.get_description()
+        assert "git changes" in tool.get_description()
+        assert "systematic analysis" in tool.get_description()
 
     def test_tool_model_category(self):
         """Test that precommit tool uses extended reasoning category"""

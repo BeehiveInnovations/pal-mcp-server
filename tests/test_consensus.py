@@ -18,7 +18,7 @@ class TestConsensusTool:
         tool = ConsensusTool()
 
         assert tool.get_name() == "consensus"
-        assert "COMPREHENSIVE CONSENSUS WORKFLOW" in tool.get_description()
+        assert "consensus" in tool.get_description()
         assert tool.get_default_temperature() == 0.2  # TEMPERATURE_ANALYTICAL
         assert tool.get_model_category() == ToolModelCategory.EXTENDED_REASONING
         assert tool.requires_model() is False  # Consensus manages its own models

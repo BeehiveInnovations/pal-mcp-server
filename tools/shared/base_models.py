@@ -21,57 +21,54 @@ logger = logging.getLogger(__name__)
 # Shared field descriptions to avoid duplication
 COMMON_FIELD_DESCRIPTIONS = {
     "model": (
-        "Model to use. See tool's input schema for available models and their capabilities. "
+        "Model to use. See tool's input schema for available models. "
         "Use 'auto' to let Claude select the best model for the task."
     ),
     "temperature": (
-        "Temperature for response (0.0 to 1.0). Lower values are more focused and deterministic, "
-        "higher values are more creative. Tool-specific defaults apply if not specified."
+        "Lower values: focused/deterministic; higher: creative. Tool-specific defaults apply if unspecified."
     ),
     "thinking_mode": (
-        "Thinking depth: minimal (0.5% of model max), low (8%), medium (33%), high (67%), "
-        "max (100% of model max). Higher modes enable deeper reasoning at the cost of speed."
+        "Thinking depth: minimal (0.5%), low (8%), medium (33%), high (67%), "
+        "max (100% of model max). Higher modes: deeper reasoning but slower."
     ),
     "use_websearch": (
-        "Enable web search for documentation and current information. Model can request Claude to perform "
-        "searches during conversation. Useful for: architecture discussions, best practices, framework docs, "
-        "solution research, or when current information would enhance analysis."
+        "Enable web search for docs and current info. Model can request Claude to perform web-search for "
+        "best practices, framework docs, solution research, latest API information."
     ),
     "continuation_id": (
-        "Thread continuation ID for multi-turn conversations. Automatically reuse the last continuation_id "
-        "when this appears to be a follow-up or related discussion (unless user explicitly provides a different ID). "
-        "When provided, the tool embeds complete conversation history as context. Your response should build upon this history "
-        "without repeating previous analysis. Focus on providing only new insights. Works across different tools."
+        "Unique thread continuation ID for multi-turn conversations. Reuse last continuation_id "
+        "when continuing discussion (unless user provides different ID) using exact unique identifer. "
+        "Embeds complete conversation history. Build upon history without repeating. "
+        "Focus on new insights. Works across different tools."
     ),
     "images": (
-        "Optional images for visual context. MUST be absolute file paths or base64 data. "
-        "Only use when user mentions images. Describe what each image contains. "
-        "Useful for: UI, diagrams, error screens, mockups, visual analysis."
+        "Optional images for visual context. MUST be absolute paths or base64. "
+        "Use when user mentions images. Describe image contents. "
     ),
-    "files": ("Optional files for context (must be FULL absolute paths to real files / folders - DO NOT SHORTEN)"),
+    "files": ("Optional files for context (FULL absolute paths to real files/folders - DO NOT SHORTEN)"),
 }
 
 # Workflow-specific field descriptions
 WORKFLOW_FIELD_DESCRIPTIONS = {
     "step": "Current work step content and findings from your overall work",
-    "step_number": "Current step number in the work sequence (starts at 1)",
-    "total_steps": "Estimated total steps needed to complete the work",
-    "next_step_required": "Whether another work step is needed after this one. When false, aim to reduce total_steps to match step_number to avoid mismatch.",
-    "findings": "Important findings, evidence and insights discovered in this step of the work",
+    "step_number": "Current step number in work sequence (starts at 1)",
+    "total_steps": "Estimated total steps needed to complete work",
+    "next_step_required": "Whether another work step is needed. When false, aim to reduce total_steps to match step_number to avoid mismatch.",
+    "findings": "Important findings, evidence and insights discovered in this step",
     "files_checked": "List of files examined during this work step",
-    "relevant_files": "Files identified as relevant to the issue/goal (must be FULL absolute paths to real files / folders - DO NOT SHORTEN)",
+    "relevant_files": "Files identified as relevant to issue/goal (FULL absolute paths to real files/folders - DO NOT SHORTEN)",
     "relevant_context": "Methods/functions identified as involved in the issue",
     "issues_found": "Issues identified with severity levels during work",
     "confidence": (
-        "Confidence level in findings: exploring (just starting), low (early investigation), "
+        "Confidence level: exploring (just starting), low (early investigation), "
         "medium (some evidence), high (strong evidence), very_high (comprehensive understanding), "
         "almost_certain (near complete confidence), certain (100% confidence locally - no external validation needed)"
     ),
-    "hypothesis": "Current theory about the issue/goal based on work",
+    "hypothesis": "Current theory about issue/goal based on work",
     "backtrack_from_step": "Step number to backtrack from if work needs revision",
     "use_assistant_model": (
-        "Whether to use assistant model for expert analysis after completing the workflow steps. "
-        "Set to False to skip expert analysis and rely solely on Claude's investigation. "
+        "Use assistant model for expert analysis after workflow steps. "
+        "False skips expert analysis, relies solely on Claude's investigation. "
         "Defaults to True for comprehensive validation."
     ),
 }
@@ -171,16 +168,16 @@ class ConsolidatedFindings(BaseModel):
     files_checked: set[str] = Field(default_factory=set, description="All files examined across all steps")
     relevant_files: set[str] = Field(
         default_factory=set,
-        description="A subset of files_checked that have been identified as relevant for the work at hand",
+        description="Subset of files_checked identified as relevant for work at hand",
     )
     relevant_context: set[str] = Field(
-        default_factory=set, description="All methods/functions identified during overall work being performed"
+        default_factory=set, description="All methods/functions identified during overall work"
     )
-    findings: list[str] = Field(default_factory=list, description="Chronological list of findings from each work step")
-    hypotheses: list[dict] = Field(default_factory=list, description="Evolution of hypotheses across work steps")
-    issues_found: list[dict] = Field(default_factory=list, description="All issues found with severity levels")
-    images: list[str] = Field(default_factory=list, description="Images collected during overall work")
-    confidence: str = Field("low", description="Latest confidence level from work steps")
+    findings: list[str] = Field(default_factory=list, description="Chronological findings from each work step")
+    hypotheses: list[dict] = Field(default_factory=list, description="Evolution of hypotheses across steps")
+    issues_found: list[dict] = Field(default_factory=list, description="All issues with severity levels")
+    images: list[str] = Field(default_factory=list, description="Images collected during work")
+    confidence: str = Field("low", description="Latest confidence level from steps")
 
 
 # Tool-specific field descriptions are now declared in each tool file

@@ -21,7 +21,7 @@ class TestListModelsTool:
     def test_tool_metadata(self, tool):
         """Test tool has correct metadata"""
         assert tool.name == "listmodels"
-        assert "LIST AVAILABLE MODELS" in tool.description
+        assert "model providers" in tool.description
         assert tool.get_request_model().__name__ == "ToolRequest"
 
     @pytest.mark.asyncio

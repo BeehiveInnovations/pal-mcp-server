@@ -35,11 +35,8 @@ logger = logging.getLogger(__name__)
 # Tool-specific field descriptions for test generation workflow
 TESTGEN_WORKFLOW_FIELD_DESCRIPTIONS = {
     "step": (
-        "What to analyze or look for in this step. In step 1, describe what you want to test and begin forming an "
-        "analytical approach after thinking carefully about what needs to be examined. Consider code structure, "
-        "business logic, critical paths, edge cases, and potential failure modes. Map out the codebase structure, "
-        "understand the functionality, and identify areas requiring test coverage. In later steps, continue exploring "
-        "with precision and adapt your understanding as you uncover more insights about testable behaviors."
+        "The test plan for this step. Step 1: State strategy for analyzing code structure, business logic, critical paths, and edge cases. "
+        "Later steps: Report findings and adapt as new test scenarios are identified."
     ),
     "step_number": (
         "The index of the current step in the test generation sequence, beginning at 1. Each step should build upon or "
@@ -54,27 +51,20 @@ TESTGEN_WORKFLOW_FIELD_DESCRIPTIONS = {
         "test generation analysis is complete and ready for expert validation."
     ),
     "findings": (
-        "Summarize everything discovered in this step about the code being tested. Include analysis of functionality, "
-        "critical paths, edge cases, boundary conditions, error handling, async behavior, state management, and "
-        "integration points. Be specific and avoid vague language—document what you now know about the code and "
-        "what test scenarios are needed. IMPORTANT: Document both the happy paths and potential failure modes. "
-        "Identify existing test patterns if examples were provided. In later steps, confirm or update past findings "
-        "with additional evidence."
+        "Summary of discoveries about the code being tested. Include analysis of functionality, critical paths, edge cases, "
+        "boundary conditions, and error handling. IMPORTANT: Document both happy paths and failure modes. "
+        "Identify existing test patterns. In later steps, confirm or update past findings."
     ),
     "files_checked": (
-        "List all files (as absolute paths, do not clip or shrink file names) examined during the test generation "
-        "investigation so far. Include even files ruled out or found to be unrelated, as this tracks your "
-        "exploration path."
+        "List all files examined (absolute paths). Include even ruled-out files to track exploration path."
     ),
     "relevant_files": (
-        "Subset of files_checked (as full absolute paths) that contain code directly needing tests or are essential "
-        "for understanding test requirements. Only list those that are directly tied to the functionality being tested. "
-        "This could include implementation files, interfaces, dependencies, or existing test examples."
+        "Subset of files_checked containing code needing tests (absolute paths). Include implementation files, "
+        "interfaces, dependencies, or existing test examples."
     ),
     "relevant_context": (
-        "List methods, functions, classes, or modules that need test coverage, in the format "
-        "'ClassName.methodName', 'functionName', or 'module.ClassName'. Prioritize critical business logic, "
-        "public APIs, complex algorithms, and error-prone code paths."
+        "List methods/functions needing test coverage, in 'ClassName.methodName' or 'functionName' format. "
+        "Prioritize critical business logic, public APIs, and error-prone code paths."
     ),
     "confidence": (
         "Indicate your current confidence in the test generation assessment. Use: 'exploring' (starting analysis), "
@@ -84,10 +74,7 @@ TESTGEN_WORKFLOW_FIELD_DESCRIPTIONS = {
         "Do NOT use 'certain' unless the test generation analysis is comprehensively complete, use 'very_high' or 'almost_certain' instead if not 100% sure. "
         "Using 'certain' means you have complete confidence locally and prevents external model validation."
     ),
-    "backtrack_from_step": (
-        "If an earlier finding or assessment needs to be revised or discarded, specify the step number from which to "
-        "start over. Use this to acknowledge investigative dead ends and correct the course."
-    ),
+    "backtrack_from_step": ("If an earlier finding needs revision, specify the step number to backtrack from."),
     "images": (
         "Optional list of absolute paths to architecture diagrams, flow charts, or visual documentation that help "
         "understand the code structure and test requirements. Only include if they materially assist test planning."

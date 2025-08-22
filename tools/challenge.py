@@ -55,7 +55,7 @@ class ChallengeTool(SimpleTool):
     def get_description(self) -> str:
         return (
             "Prevents reflexive agreement when users challenge responses by forcing critical thinking and reasoned analysis. "
-            "Automatically triggers when users question, disagree with, or challenge previous statements in ongoing conversations. "
+            "Trigger automatically when users critically question, disagree with, or appear to challenge previous statements in ongoing conversations. "
             "Promotes truth-seeking over compliance by ensuring thoughtful evaluation rather than automatic agreement."
         )
 

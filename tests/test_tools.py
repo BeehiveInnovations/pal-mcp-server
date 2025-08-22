@@ -19,7 +19,7 @@ class TestThinkDeepTool:
     def test_tool_metadata(self, tool):
         """Test tool metadata"""
         assert tool.get_name() == "thinkdeep"
-        assert "COMPREHENSIVE INVESTIGATION & REASONING" in tool.get_description()
+        assert "investigation and reasoning" in tool.get_description()
         assert tool.get_default_temperature() == 0.7
 
         schema = tool.get_input_schema()
@@ -120,7 +120,7 @@ class TestCodeReviewTool:
     def test_tool_metadata(self, tool):
         """Test tool metadata"""
         assert tool.get_name() == "codereview"
-        assert "COMPREHENSIVE CODE REVIEW" in tool.get_description()
+        assert "code review" in tool.get_description()
         assert tool.get_default_temperature() == 0.2
 
         schema = tool.get_input_schema()
@@ -213,7 +213,7 @@ class TestAnalyzeTool:
     def test_tool_metadata(self, tool):
         """Test tool metadata"""
         assert tool.get_name() == "analyze"
-        assert "COMPREHENSIVE ANALYSIS WORKFLOW" in tool.get_description()
+        assert "code analysis" in tool.get_description()
         assert tool.get_default_temperature() == 0.2
 
         schema = tool.get_input_schema()
