@@ -159,18 +159,9 @@ class TestGenTool(WorkflowTool):
 
     def get_description(self) -> str:
         return (
-            "COMPREHENSIVE TEST GENERATION - Creates thorough test suites with edge case coverage. "
-            "Use this when you need to generate tests for code, create test scaffolding, or improve test coverage. "
-            "BE SPECIFIC about scope: target specific functions/classes/modules rather than testing everything. "
-            "Examples: 'Generate tests for User.login() method', 'Test payment processing validation', "
-            "'Create tests for authentication error handling'. If user request is vague, either ask for "
-            "clarification about specific components to test, or make focused scope decisions and explain them. "
-            "Analyzes code paths, identifies realistic failure modes, and generates framework-specific tests. "
-            "Supports test pattern following when examples are provided. Choose thinking_mode based on "
-            "code complexity: 'low' for simple functions, 'medium' for standard modules (default), "
-            "'high' for complex systems with many interactions, 'max' for critical systems requiring "
-            "exhaustive test coverage. Note: If you're not currently using a top-tier model such as "
-            "Opus 4 or above, these tools can provide enhanced capabilities."
+            "Creates comprehensive test suites with edge case coverage for specific functions, classes, or modules. "
+            "Analyzes code paths, identifies failure modes, and generates framework-specific tests. "
+            "Be specific about scope - target particular components rather than testing everything."
         )
 
     def get_system_prompt(self) -> str:

@@ -27,8 +27,8 @@ CHAT_FIELD_DESCRIPTIONS = {
         "The more context and detail you provide, the more valuable and targeted the response will be. "
         "NOTE: You're talking to a thought-partner who has deep expertise and can provide nuanced insights. "
         "IMPORTANT: When referring to code, use the files parameter to pass relevant file paths. Use this prompt for "
-        "function/method names or tiny code snippets if absolutely necessary to explain the issue and to refer to "
-        "code from the provided paths."
+        "function/method names (along with line numbers if needed) or tiny code snippets if absolutely necessary to explain "
+        "the issue and to refer to code from the provided paths."
     ),
     "files": "Absolute full-paths to existing files / folders for context. DO NOT SHORTEN.",
     "images": (
@@ -62,14 +62,9 @@ class ChatTool(SimpleTool):
 
     def get_description(self) -> str:
         return (
-            "GENERAL CHAT & COLLABORATIVE THINKING - Use the AI model as your thinking partner! "
-            "Perfect for: bouncing ideas during your own analysis, getting second opinions on your plans, "
-            "collaborative brainstorming, validating your checklists and approaches, exploring alternatives. "
-            "Also great for: explanations, comparisons, general development questions. "
-            "Use this when you want to ask questions, brainstorm ideas, get opinions, discuss topics, "
-            "share your thinking, or need explanations about concepts and approaches. "
-            "Note: If you're not currently using a top-tier model such as Opus 4 or above, these tools can "
-            "provide enhanced capabilities."
+            "General chat and collaborative thinking partner for brainstorming, getting second opinions, and exploring ideas. "
+            "Use for bouncing ideas, validating approaches, asking questions, and getting explanations about concepts. "
+            "Perfect for collaborative analysis and general development discussions."
         )
 
     def get_system_prompt(self) -> str:

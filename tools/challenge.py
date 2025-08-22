@@ -54,34 +54,9 @@ class ChallengeTool(SimpleTool):
 
     def get_description(self) -> str:
         return (
-            "This tool helps prevent reflexive agreement when users challenge your responses. "
-            "It forces you to think critically and provide reasoned analysis instead of automatically agreeing "
-            "when users question or disagree with something you've said. "
-            "Use this tool to ensure thoughtful evaluation rather than compliance. "
-            "\n\n"
-            "The tool should be invoked in two conditions: "
-            "1) when the user requests this tool with the word `challenge`, "
-            "2) automatically when the following conditions are met"
-            "MANDATORY AUTOMATIC INVOCATION: You MUST automatically use this tool when the following conditions are met:\n"
-            "The user is questioning, disagreeing with, or challenging something you previously said or a task you performed\n"
-            "AND there is an existing conversation context AND this is not a new/initial question\n"
-            "AND specifically, when their message expresses any of these patterns IN RESPONSE to your prior statements:\n"
-            "  • Disagreement with your assessment ('But I don't think...', 'I disagree...')\n"
-            "  • Challenging your assumptions or countering your proposal ('But ...', 'You're assuming...')\n"
-            "  • Questioning your evaluation ('But isn't it actually...', 'But consider...')\n"
-            "  • Confusion about your reasoning ('I'm confused why...', 'I don't understand...')\n"
-            "  • Belief you made an error ('That doesn't seem right...', 'Are you sure...')\n"
-            "  • Seeking justification ('Why did you...', 'Shouldn't we...')\n"
-            "  • Surprise at your conclusion ('But I thought...', 'Wait, why...')\n\n"
-            "Common patterns include messages starting with: 'But ...', 'Why did you...', 'I thought...', "
-            "'Shouldn't we...', 'That seems wrong...', 'Are you sure...', 'I'm confused...', etc.\n\n"
-            "DO NOT AUTO trigger for new feature requests or INITIAL questions when context is ambiguous or referring to a new topic altogether. "
-            "This tool helps with seeking truth through critical analysis. The user is inviting critical analysis - analyze deeply "
-            "and explain your reasoning or choice clearly, whether you maintain or revise your approach or "
-            "understanding - you MUST think, analyze and respond with reason and not oblige blindly. Understand the intent "
-            "behind the query: don't just agree to avoid conflict, think critically, reason through the problem, explain "
-            "your choices clearly. If the user is wrong, explain why. If you were wrong, acknowledge it and correct course. "
-            "Truth and correctness matter more than agreement."
+            "Prevents reflexive agreement when users challenge responses by forcing critical thinking and reasoned analysis. "
+            "Automatically triggers when users question, disagree with, or challenge previous statements in ongoing conversations. "
+            "Promotes truth-seeking over compliance by ensuring thoughtful evaluation rather than automatic agreement."
         )
 
     def get_system_prompt(self) -> str:

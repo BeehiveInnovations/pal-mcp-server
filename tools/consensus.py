@@ -175,22 +175,9 @@ class ConsensusTool(WorkflowTool):
 
     def get_description(self) -> str:
         return (
-            "COMPREHENSIVE CONSENSUS WORKFLOW - Step-by-step multi-model consensus with structured analysis. "
-            "This tool guides you through a systematic process where you:\n\n"
-            "1. Start with step 1: provide your own neutral analysis of the proposal\n"
-            "2. The tool will then consult each specified model one by one\n"
-            "3. You'll receive each model's response in subsequent steps\n"
-            "4. Track and synthesize perspectives as they accumulate\n"
-            "5. Final step: present comprehensive consensus and recommendations\n\n"
-            "IMPORTANT: This workflow enforces sequential model consultation:\n"
-            "- Step 1 is always your independent analysis\n"
-            "- Each subsequent step processes one model response\n"
-            "- Total steps = number of models (each step includes consultation + response)\n"
-            "- Models can have stances (for/against/neutral) for structured debate\n"
-            "- Same model can be used multiple times with different stances\n"
-            "- Each model + stance combination must be unique\n\n"
-            "Perfect for: complex decisions, architectural choices, feature proposals, "
-            "technology evaluations, strategic planning."
+            "Builds multi-model consensus through systematic analysis and structured debate. "
+            "Use for complex decisions, architectural choices, feature proposals, and technology evaluations. "
+            "Consults multiple models with different stances to synthesize comprehensive recommendations."
         )
 
     def get_system_prompt(self) -> str:

@@ -133,27 +133,9 @@ class PlannerTool(WorkflowTool):
 
     def get_description(self) -> str:
         return (
-            "INTERACTIVE SEQUENTIAL PLANNER - Break down complex tasks through step-by-step planning. "
-            "This tool enables you to think sequentially, building plans incrementally with the ability "
-            "to revise, branch, and adapt as understanding deepens.\n\n"
-            "How it works:\n"
-            "- Start with step 1: describe the task/problem to plan\n"
-            "- Continue with subsequent steps, building the plan piece by piece\n"
-            "- Adjust total_steps estimate as you progress\n"
-            "- Revise previous steps when new insights emerge\n"
-            "- Branch into alternative approaches when needed\n"
-            "- Add more steps even after reaching the initial estimate\n\n"
-            "Key features:\n"
-            "- Sequential thinking with full context awareness\n"
-            "- Forced deep reflection for complex plans (≥5 steps) in early stages\n"
-            "- Branching for exploring alternative strategies\n"
-            "- Revision capabilities to update earlier decisions\n"
-            "- Dynamic step count adjustment\n\n"
-            "ENHANCED: For complex plans (≥5 steps), the first 3 steps enforce deep thinking pauses\n"
-            "to prevent surface-level planning and ensure thorough consideration of alternatives,\n"
-            "dependencies, and strategic decisions before moving to tactical details.\n\n"
-            "Perfect for: complex project planning, system design with unknowns, "
-            "migration strategies, architectural decisions, problem decomposition."
+            "Breaks down complex tasks through interactive, sequential planning with revision and branching capabilities. "
+            "Use for complex project planning, system design, migration strategies, and architectural decisions. "
+            "Builds plans incrementally with deep reflection for complex scenarios."
         )
 
     def get_system_prompt(self) -> str:

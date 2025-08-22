@@ -141,8 +141,7 @@ class VersionTool(BaseTool):
 
     def get_description(self) -> str:
         return (
-            "VERSION & CONFIGURATION - Get server version, configuration details, and list of available tools. "
-            "Useful for debugging and understanding capabilities."
+            "Get server version, configuration details, and list of available tools."
         )
 
     def get_input_schema(self) -> dict[str, Any]:

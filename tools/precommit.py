@@ -108,8 +108,8 @@ PRECOMMIT_WORKFLOW_FIELD_DESCRIPTIONS = {
         "Optional: A git ref (branch, tag, commit hash) to compare against. Check remote branches if local does not exist."
         "If not provided, investigates local staged and unstaged changes."
     ),
-    "include_staged": "Include staged changes in the investigation. Only applies if 'compare_to' is not set.",
-    "include_unstaged": "Include uncommitted (unstaged) changes in the investigation. Only applies if 'compare_to' is not set.",
+    "include_staged": "Analyzes staged changes for a local commit. This parameter is ignored if 'compare_to' is provided.",
+    "include_unstaged": "Analyzes unstaged (uncommitted) changes for a local commit. This parameter is ignored if 'compare_to' is provided.",
     "focus_on": "Specific aspects to focus on (e.g., 'security implications', 'performance impact', 'test coverage').",
     "severity_filter": "Minimum severity level to report on the changes.",
 }
@@ -196,23 +196,9 @@ class PrecommitTool(WorkflowTool):
 
     def get_description(self) -> str:
         return (
-            "COMPREHENSIVE PRECOMMIT WORKFLOW - Step-by-step pre-commit validation with expert analysis. "
-            "This tool guides you through a systematic investigation process where you:\n\n"
-            "1. Start with step 1: describe your pre-commit validation plan\n"
-            "2. STOP and investigate git changes, repository status, and file modifications\n"
-            "3. Report findings in step 2 with concrete evidence from actual changes\n"
-            "4. Continue investigating between each step\n"
-            "5. Track findings, relevant files, and issues throughout\n"
-            "6. Update assessments as understanding evolves\n"
-            "7. Once investigation is complete, receive expert analysis\n\n"
-            "IMPORTANT: This tool enforces investigation between steps:\n"
-            "- After each call, you MUST investigate before calling again\n"
-            "- Each step must include NEW evidence from git analysis\n"
-            "- No recursive calls without actual investigation work\n"
-            "- The tool will specify which step number to use next\n"
-            "- Follow the required_actions list for investigation guidance\n\n"
-            "Perfect for: comprehensive pre-commit validation, multi-repository analysis, "
-            "security review, change impact assessment, completeness verification."
+            "Validates git changes and repository state before committing with systematic analysis. "
+            "Use for multi-repository validation, security review, change impact assessment, and completeness verification. "
+            "Guides through structured investigation with expert analysis."
         )
 
     def get_system_prompt(self) -> str:

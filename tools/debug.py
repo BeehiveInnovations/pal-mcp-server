@@ -170,23 +170,9 @@ class DebugIssueTool(WorkflowTool):
 
     def get_description(self) -> str:
         return (
-            "DEBUG & ROOT CAUSE ANALYSIS - Use this tool to perform any kind of debugging, bug hunting, or issue tracking. "
-            "This tool guides you through a step-by-step investigation process where you:\n\n"
-            "1. Start with step 1: describe the issue to investigate\n"
-            "2. STOP and investigate using appropriate tools\n"
-            "3. Report findings in step 2 with concrete evidence from actual code\n"
-            "4. Continue investigating between each debug step\n"
-            "5. Track findings, relevant files, and methods throughout\n"
-            "6. Update hypotheses as understanding evolves\n"
-            "7. Once investigation is complete, receive expert analysis\n\n"
-            "IMPORTANT: This tool enforces investigation between steps:\n"
-            "- After each debug call, you MUST investigate before calling debug again\n"
-            "- Each step must include NEW evidence from code examination\n"
-            "- No recursive debug calls without actual investigation work\n"
-            "- The tool will specify which step number to use next\n"
-            "- Follow the required_actions list for investigation guidance\n\n"
-            "Perfect for: complex bugs, mysterious errors, performance issues, "
-            "race conditions, memory leaks, integration problems."
+            "Performs systematic debugging and root cause analysis for any type of issue. "
+            "Use for complex bugs, mysterious errors, performance issues, race conditions, memory leaks, and integration problems. "
+            "Guides through structured investigation with hypothesis testing and expert analysis."
         )
 
     def get_system_prompt(self) -> str:

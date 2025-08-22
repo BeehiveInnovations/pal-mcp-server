@@ -218,23 +218,9 @@ class SecauditTool(WorkflowTool):
     def get_description(self) -> str:
         """Return a description of the tool."""
         return (
-            "COMPREHENSIVE SECURITY AUDIT WORKFLOW - Step-by-step security assessment with expert analysis. "
-            "This tool guides you through a systematic investigation process where you:\n\n"
-            "1. Start with step 1: describe your security investigation plan\n"
-            "2. STOP and investigate code structure, patterns, and security issues\n"
-            "3. Report findings in step 2 with concrete evidence from actual code analysis\n"
-            "4. Continue investigating between each step\n"
-            "5. Track findings, relevant files, and security issues throughout\n"
-            "6. Update assessments as understanding evolves\n"
-            "7. Once investigation is complete, receive expert security analysis\n\n"
-            "IMPORTANT: This tool enforces investigation between steps:\n"
-            "- After each call, you MUST investigate before calling again\n"
-            "- Each step must include NEW evidence from code examination\n"
-            "- No recursive calls without actual investigation work\n"
-            "- The tool will specify which step number to use next\n"
-            "- Follow the required_actions list for investigation guidance\n\n"
-            "Perfect for: comprehensive security assessment, OWASP Top 10 analysis, compliance evaluation, "
-            "vulnerability identification, threat modeling, security architecture review."
+            "Performs comprehensive security audit with systematic vulnerability assessment. "
+            "Use for OWASP Top 10 analysis, compliance evaluation, threat modeling, and security architecture review. "
+            "Guides through structured security investigation with expert validation."
         )
 
     def get_system_prompt(self) -> str:

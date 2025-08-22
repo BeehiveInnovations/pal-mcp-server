@@ -175,23 +175,9 @@ class AnalyzeTool(WorkflowTool):
 
     def get_description(self) -> str:
         return (
-            "COMPREHENSIVE ANALYSIS WORKFLOW - Step-by-step code analysis with expert validation. "
-            "This tool guides you through a systematic investigation process where you:\n\n"
-            "1. Start with step 1: describe your analysis investigation plan\n"
-            "2. STOP and investigate code structure, patterns, and architectural decisions\n"
-            "3. Report findings in step 2 with concrete evidence from actual code analysis\n"
-            "4. Continue investigating between each step\n"
-            "5. Track findings, relevant files, and insights throughout\n"
-            "6. Update assessments as understanding evolves\n"
-            "7. Once investigation is complete, always receive expert validation\n\n"
-            "IMPORTANT: This tool enforces investigation between steps:\n"
-            "- After each call, you MUST investigate before calling again\n"
-            "- Each step must include NEW evidence from code examination\n"
-            "- No recursive calls without actual investigation work\n"
-            "- The tool will specify which step number to use next\n"
-            "- Follow the required_actions list for investigation guidance\n\n"
-            "Perfect for: comprehensive code analysis, architectural assessment, performance evaluation, "
-            "security analysis, maintainability review, pattern detection, strategic planning."
+            "Performs comprehensive code analysis with systematic investigation and expert validation. "
+            "Use for architectural assessment, performance evaluation, maintainability review, and pattern detection. "
+            "Guides through structured analysis of code structure, patterns, and strategic planning."
         )
 
     def get_system_prompt(self) -> str:
