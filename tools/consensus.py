@@ -29,6 +29,7 @@ from mcp.types import TextContent
 from config import TEMPERATURE_ANALYTICAL
 from systemprompts import CONSENSUS_PROMPT
 from tools.shared.base_models import WorkflowRequest
+from utils.model_context import ModelContext
 
 from .workflow.base import WorkflowTool
 
@@ -546,12 +547,28 @@ of the evidence, even when it strongly points in one direction.""",
             stance_prompt = model_config.get("stance_prompt")
             system_prompt = self._get_stance_enhanced_prompt(stance, stance_prompt)
 
-            # Call the model
+            # Get model context for temperature validation
+            model_context = ModelContext(
+                model_name=model_name,
+                provider=provider.get_provider_type(),
+                provider_instance=provider,
+            )
+
+            # Validate temperature against model constraints (respects supports_temperature)
+            validated_temperature, temp_warnings = self.validate_and_correct_temperature(
+                self.get_default_temperature(), model_context
+            )
+
+            # Log any temperature corrections
+            for warning in temp_warnings:
+                logger.warning(warning)
+
+            # Call the model with validated temperature
             response = provider.generate_content(
                 prompt=prompt,
                 model_name=model_name,
                 system_prompt=system_prompt,
-                temperature=0.2,  # Low temperature for consistency
+                temperature=validated_temperature,
                 thinking_mode="medium",
                 images=request.images if request.images else None,
             )
