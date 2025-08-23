@@ -231,6 +231,46 @@ class GeminiModelProvider(ModelProvider):
                 # Extract usage information if available
                 usage = self._extract_usage(response)
 
+                # Intelligently determine finish reason and safety blocks
+                finish_reason_str = "UNKNOWN"
+                is_blocked_by_safety = False
+                safety_feedback_details = None
+
+                if response.candidates:
+                    candidate = response.candidates[0]
+                    finish_reason_enum = getattr(candidate, "finish_reason", None)
+                    if finish_reason_enum:
+                        # Handle both enum objects and string values
+                        finish_reason_str = getattr(finish_reason_enum, "name", str(finish_reason_enum))
+                    else:
+                        finish_reason_str = "STOP"
+
+                    # If content is empty, check safety ratings for the definitive cause
+                    if not response.text and hasattr(candidate, "safety_ratings"):
+                        for rating in candidate.safety_ratings:
+                            if getattr(rating, "blocked", False):
+                                is_blocked_by_safety = True
+                                # Provide details for logging/debugging
+                                category_name = (
+                                    getattr(rating.category, "name", "UNKNOWN")
+                                    if hasattr(rating, "category")
+                                    else "UNKNOWN"
+                                )
+                                probability_name = (
+                                    getattr(rating.probability, "name", "UNKNOWN")
+                                    if hasattr(rating, "probability")
+                                    else "UNKNOWN"
+                                )
+                                safety_feedback_details = f"Category: {category_name}, Probability: {probability_name}"
+                                break
+
+                # Also check for prompt-level blocking (request rejected entirely)
+                elif hasattr(response, "prompt_feedback") and getattr(response.prompt_feedback, "block_reason", None):
+                    is_blocked_by_safety = True
+                    finish_reason_str = "SAFETY"  # This is a clear safety block
+                    block_reason_name = getattr(response.prompt_feedback.block_reason, "name", "UNKNOWN")
+                    safety_feedback_details = f"Prompt blocked, reason: {block_reason_name}"
+
                 return ModelResponse(
                     content=response.text,
                     usage=usage,
@@ -239,9 +279,9 @@ class GeminiModelProvider(ModelProvider):
                     provider=ProviderType.GOOGLE,
                     metadata={
                         "thinking_mode": thinking_mode if capabilities.supports_extended_thinking else None,
-                        "finish_reason": (
-                            getattr(response.candidates[0], "finish_reason", "STOP") if response.candidates else "STOP"
-                        ),
+                        "finish_reason": finish_reason_str,
+                        "is_blocked_by_safety": is_blocked_by_safety,
+                        "safety_feedback": safety_feedback_details,
                     },
                 )
 

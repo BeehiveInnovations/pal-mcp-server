@@ -457,13 +457,101 @@ class SimpleTool(BaseTool):
 
             else:
                 # Handle cases where the model couldn't generate a response
-                finish_reason = model_response.metadata.get("finish_reason", "Unknown")
-                logger.warning(f"Response blocked or incomplete for {self.get_name()}. Finish reason: {finish_reason}")
-                tool_output = ToolOutput(
-                    status="error",
-                    content=f"Response blocked or incomplete. Finish reason: {finish_reason}",
-                    content_type="text",
-                )
+                metadata = model_response.metadata or {}
+                finish_reason = metadata.get("finish_reason", "Unknown")
+
+                if metadata.get("is_blocked_by_safety"):
+                    # Specific handling for content safety blocks
+                    safety_details = metadata.get("safety_feedback") or "details not provided"
+                    logger.warning(
+                        f"Response blocked by content safety policy for {self.get_name()}. "
+                        f"Reason: {finish_reason}, Details: {safety_details}"
+                    )
+                    tool_output = ToolOutput(
+                        status="error",
+                        content="Your request was blocked by the content safety policy. "
+                        "Please try modifying your prompt.",
+                        content_type="text",
+                    )
+                else:
+                    # Handle other empty responses - could be legitimate completion or unclear blocking
+                    if finish_reason == "STOP":
+                        # Model completed normally but returned empty content - retry with clarification
+                        logger.info(
+                            f"Model completed with empty response for {self.get_name()}, retrying with clarification"
+                        )
+
+                        # Retry the same request with modified prompt asking for explicit response
+                        original_prompt = prompt
+                        retry_prompt = f"{original_prompt}\n\nIMPORTANT: Please provide a substantive response. If you cannot respond to the above request, please explain why and suggest alternatives."
+
+                        try:
+                            retry_response = provider.generate_content(
+                                prompt=retry_prompt,
+                                model_name=self._current_model_name,
+                                system_prompt=system_prompt,
+                                temperature=temperature,
+                                thinking_mode=(
+                                    thinking_mode if provider.supports_thinking_mode(self._current_model_name) else None
+                                ),
+                                images=images if images else None,
+                            )
+
+                            if retry_response.content:
+                                # Successful retry - use the retry response
+                                logger.info(f"Retry successful for {self.get_name()}")
+                                raw_text = retry_response.content
+
+                                # Update model info for the successful retry
+                                model_info = {
+                                    "provider": provider,
+                                    "model_name": self._current_model_name,
+                                    "model_response": retry_response,
+                                }
+
+                                # Parse the retry response
+                                tool_output = self._parse_response(raw_text, request, model_info)
+                                logger.info(f"✅ {self.get_name()} tool completed successfully after retry")
+                            else:
+                                # Retry also failed - inspect metadata to find out why
+                                retry_metadata = retry_response.metadata or {}
+                                if retry_metadata.get("is_blocked_by_safety"):
+                                    # The retry was blocked by safety filters
+                                    safety_details = retry_metadata.get("safety_feedback") or "details not provided"
+                                    logger.warning(
+                                        f"Retry for {self.get_name()} was blocked by content safety policy. "
+                                        f"Details: {safety_details}"
+                                    )
+                                    tool_output = ToolOutput(
+                                        status="error",
+                                        content="Your request was also blocked by the content safety policy after a retry. "
+                                        "Please try rephrasing your prompt significantly.",
+                                        content_type="text",
+                                    )
+                                else:
+                                    # Retry failed for other reasons (e.g., another STOP)
+                                    tool_output = ToolOutput(
+                                        status="error",
+                                        content="The model repeatedly returned empty responses. This may indicate content filtering or a model issue.",
+                                        content_type="text",
+                                    )
+                        except Exception as retry_error:
+                            logger.warning(f"Retry failed for {self.get_name()}: {retry_error}")
+                            tool_output = ToolOutput(
+                                status="error",
+                                content=f"Model returned empty response and retry failed: {str(retry_error)}",
+                                content_type="text",
+                            )
+                    else:
+                        # Non-STOP finish reasons are likely actual errors
+                        logger.warning(
+                            f"Response blocked or incomplete for {self.get_name()}. Finish reason: {finish_reason}"
+                        )
+                        tool_output = ToolOutput(
+                            status="error",
+                            content=f"Response blocked or incomplete. Finish reason: {finish_reason}",
+                            content_type="text",
+                        )
 
             # Return the tool output as TextContent
             return [TextContent(type="text", text=tool_output.model_dump_json())]
