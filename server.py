@@ -31,7 +31,7 @@ from typing import Any, Optional
 # Try to load environment variables from .env file if dotenv is available
 # This is optional - environment variables can still be passed directly
 try:
-    from dotenv import load_dotenv, dotenv_values
+    from dotenv import dotenv_values, load_dotenv
 
     # Load environment variables from .env file in the script's directory
     # This ensures .env is loaded regardless of the current working directory
