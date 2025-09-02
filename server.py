@@ -37,7 +37,27 @@ try:
     # This ensures .env is loaded regardless of the current working directory
     script_dir = Path(__file__).parent
     env_file = script_dir / ".env"
-    load_dotenv(dotenv_path=env_file)
+    
+    # First load only to read ZEN_MCP_FORCE_ENV_OVERRIDE, then reload with proper override setting
+    # Use a temporary environment to read just this configuration variable
+    temp_env = {}
+    if env_file.exists():
+        from dotenv import dotenv_values
+        temp_env = dotenv_values(env_file)
+    
+    # Check if we should force override based on .env file content (not system env)
+    force_override = temp_env.get('ZEN_MCP_FORCE_ENV_OVERRIDE', 'false').lower() == 'true'
+    
+    # Load .env file with appropriate override setting
+    load_dotenv(dotenv_path=env_file, override=force_override)
+    
+    # Log the configuration choice
+    logger = logging.getLogger(__name__)
+    if force_override:
+        logger.info("ZEN_MCP_FORCE_ENV_OVERRIDE enabled - .env file values will override system environment variables")
+        logger.debug("Environment override prevents conflicts between different AI tools passing cached API keys")
+    else:
+        logger.debug("ZEN_MCP_FORCE_ENV_OVERRIDE disabled - system environment variables take precedence")
 except ImportError:
     # dotenv not available - this is fine, environment variables can still be passed directly
     # This commonly happens when running via uvx or in minimal environments
