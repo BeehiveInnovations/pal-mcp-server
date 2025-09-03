@@ -528,7 +528,7 @@ of the evidence, even when it strongly points in one direction.""",
             # Get the provider for this model
             model_name = model_config["model"]
             provider = self.get_model_provider(model_name)
-            
+
             # Create model context once and reuse for both file processing and temperature validation
             model_context = ModelContext(model_name=model_name)
 
