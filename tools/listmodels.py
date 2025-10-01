@@ -138,7 +138,9 @@ class ListModelsTool(BaseTool):
                 for model_name, capabilities in provider.get_model_configurations().items():
                     if capabilities.aliases:
                         for alias in capabilities.aliases:
-                            aliases.append(f"- `{alias}` → `{model_name}`")
+                            # Skip aliases that are the same as the model name to avoid duplicates
+                            if alias != model_name:
+                                aliases.append(f"- `{alias}` → `{model_name}`")
 
                 if aliases:
                     output_lines.append("\n**Aliases**:")

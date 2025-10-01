@@ -2,6 +2,24 @@
 
 <!-- version list -->
 
+## v5.11.1 (2025-10-01)
+
+### Bug Fixes
+
+- Remove duplicate OpenAI models from listmodels output
+  ([`c29e762`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/c29e7623ace257eb45396cdf8c19e1659e29edb9))
+
+### Chores
+
+- Sync version to config.py [skip ci]
+  ([`1209064`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/12090646ee83f2368311d595d87ae947e46ddacd))
+
+### Testing
+
+- Update OpenAI provider alias tests to match new format
+  ([`d13700c`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/d13700c14c7ee3d092302837cb1726d17bab1ab8))
+
+
 ## v5.11.0 (2025-08-26)
 
 ### Chores
