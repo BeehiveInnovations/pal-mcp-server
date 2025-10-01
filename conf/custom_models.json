@@ -63,7 +63,7 @@
       "supports_function_calling": false,
       "supports_images": true,
       "max_image_size_mb": 5.0,
-      "description": "Claude Opus 4.5 - Our most capable and intelligent model yet"
+      "description": "Claude Sonnet 4.5 - High-performance model with exceptional reasoning and efficiency"
     },
     {
       "model_name": "anthropic/claude-opus-4.1",
@@ -87,7 +87,7 @@
       "supports_function_calling": false,
       "supports_images": true,
       "max_image_size_mb": 5.0,
-      "description": "Claude Sonnet 4.1 - High-performance model with exceptional reasoning and efficiency"
+      "description": "Claude Sonnet 4.1 - Last generation high-performance model with exceptional reasoning and efficiency"
     },
     {
       "model_name": "anthropic/claude-3.5-haiku",
