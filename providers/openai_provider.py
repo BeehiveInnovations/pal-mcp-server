@@ -301,19 +301,3 @@ class OpenAIModelProvider(OpenAICompatibleProvider):
             # Prefer balanced performance/cost models
             preferred = find_first(["gpt-5", "gpt-5-mini", "o4-mini", "o3-mini"])
             return preferred if preferred else allowed_models[0]
-
-    def get_model_configurations(self) -> dict[str, ModelCapabilities]:
-        """Get model configurations supported by this provider.
-
-        Returns:
-            Dict mapping model names to their ModelCapabilities
-        """
-        return self.SUPPORTED_MODELS.copy()
-
-    def get_all_model_aliases(self) -> dict[str, list[str]]:
-        """Get all model aliases supported by this provider.
-
-        Returns:
-            Dict mapping model names to their alias lists
-        """
-        return {model_name: caps.aliases for model_name, caps in self.SUPPORTED_MODELS.items()}
