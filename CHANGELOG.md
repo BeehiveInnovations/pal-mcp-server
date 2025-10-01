@@ -2,6 +2,26 @@
 
 <!-- version list -->
 
+## v5.12.0 (2025-10-01)
+
+### Bug Fixes
+
+- Removed use_websearch; this parameter was confusing Codex. It started using this to prompt the
+  external model to perform searches! web-search is enabled by Claude / Codex etc by default and the
+  external agent can ask claude to search on its behalf.
+  ([`cff6d89`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/cff6d8998f64b73265c4e31b2352462d6afe377f))
+
+### Chores
+
+- Sync version to config.py [skip ci]
+  ([`28cabe0`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/28cabe0833661b0bab56d4227781ee2da332b00c))
+
+### Features
+
+- Implement semantic cassette matching for o3 models
+  ([`70fa088`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/70fa088c32ac4e6153d5e7b30a3e32022be2f908))
+
+
 ## v5.11.2 (2025-10-01)
 
 ### Chores
