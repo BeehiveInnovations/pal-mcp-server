@@ -122,7 +122,6 @@ class TracerRequest(WorkflowRequest):
     # Exclude other non-tracing fields
     temperature: Optional[float] = Field(default=None, exclude=True)
     thinking_mode: Optional[str] = Field(default=None, exclude=True)
-    use_websearch: Optional[bool] = Field(default=None, exclude=True)
     use_assistant_model: Optional[bool] = Field(default=False, exclude=True, description="Tracing is self-contained")
 
     @field_validator("step_number")
@@ -228,7 +227,6 @@ class TracerTool(WorkflowTool):
         excluded_common_fields = [
             "temperature",  # Tracing doesn't need temperature control
             "thinking_mode",  # Tracing doesn't need thinking mode
-            "use_websearch",  # Tracing doesn't need web search
             "files",  # Tracing uses relevant_files instead
         ]
 

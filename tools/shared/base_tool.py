@@ -205,10 +205,10 @@ class BaseTool(ABC):
 
     def _should_require_model_selection(self, model_name: str) -> bool:
         """
-        Check if we should require Claude to select a model at runtime.
+        Check if we should require the CLI to select a model at runtime.
 
         This is called during request execution to determine if we need
-        to return an error asking Claude to provide a model parameter.
+        to return an error asking the CLI to provide a model parameter.
 
         Args:
             model_name: The model name from the request or DEFAULT_MODEL
@@ -237,7 +237,7 @@ class BaseTool(ABC):
 
         Only returns models from providers that have valid API keys configured.
         This fixes the namespace collision bug where models from disabled providers
-        were shown to Claude, causing routing conflicts.
+        were shown to the CLI, causing routing conflicts.
 
         Returns:
             List of model names from enabled providers only
@@ -405,7 +405,7 @@ class BaseTool(ABC):
 
                     if model_configs:
                         model_desc_parts.append("\nOpenRouter models (use these aliases):")
-                        for alias, config in model_configs:  # Show ALL models so Claude can choose
+                        for alias, config in model_configs:  # Show ALL models so the CLI can choose
                             # Format context window in human-readable form
                             context_tokens = config.context_window
                             if context_tokens >= 1_000_000:
@@ -445,7 +445,7 @@ class BaseTool(ABC):
         else:
             # Normal mode - model is optional with default
             available_models = self._get_available_models()
-            models_str = ", ".join(f"'{m}'" for m in available_models)  # Show ALL models so Claude can choose
+            models_str = ", ".join(f"'{m}'" for m in available_models)  # Show ALL models so the CLI can choose
 
             description = f"Model to use. Native models: {models_str}."
             if has_openrouter:
@@ -456,7 +456,7 @@ class BaseTool(ABC):
 
                     # Show ALL aliases from the configuration
                     if aliases:
-                        # Show all aliases so Claude knows every option available
+                        # Show all aliases so the CLI knows every option available
                         all_aliases = sorted(aliases)
                         alias_list = ", ".join(f"'{a}'" for a in all_aliases)
                         description += f" OpenRouter aliases: {alias_list}."
@@ -763,7 +763,7 @@ class BaseTool(ABC):
         This file is treated specially as the main prompt, not as an embedded file.
 
         This mechanism allows us to work around MCP's ~25K token limit by having
-        Claude save large prompts to a file, effectively using the file transfer
+        the CLI save large prompts to a file, effectively using the file transfer
         mechanism to bypass token constraints while preserving response capacity.
 
         Args:
@@ -839,7 +839,7 @@ class BaseTool(ABC):
         Check if USER INPUT text is too large for MCP transport boundary.
 
         IMPORTANT: This method should ONLY be used to validate user input that crosses
-        the Claude CLI ↔ MCP Server transport boundary. It should NOT be used to limit
+        the CLI ↔ MCP Server transport boundary. It should NOT be used to limit
         internal MCP Server operations.
 
         Args:
@@ -1051,9 +1051,9 @@ class BaseTool(ABC):
 
         base_instruction = """
 
-WEB SEARCH CAPABILITY: You can request Claude to perform web searches to enhance your analysis with current information!
+WEB SEARCH CAPABILITY: You can request the calling agent to perform web searches to enhance your analysis with current information!
 
-IMPORTANT: When you identify areas where web searches would significantly improve your response (such as checking current documentation, finding recent solutions, verifying best practices, or gathering community insights), you MUST explicitly instruct Claude to perform specific web searches and then respond back using the continuation_id from this response to continue the analysis.
+IMPORTANT: When you identify areas where web searches would significantly improve your response (such as checking current documentation, finding recent solutions, verifying best practices, or gathering community insights), you MUST explicitly instruct the agent to perform specific web searches and then respond back using the continuation_id from this response to continue the analysis.
 
 Use clear, direct language based on the value of the search:
 
@@ -1083,7 +1083,7 @@ Consider requesting searches for:
 - Security advisories and patches
 - Performance benchmarks and optimizations
 
-When recommending searches, be specific about what information you need and why it would improve your analysis. Always remember to instruct Claude to use the continuation_id from this response when providing search results."""
+When recommending searches, be specific about what information you need and why it would improve your analysis. Always remember to instruct agent to use the continuation_id from this response when providing search results."""
 
     def get_language_instruction(self) -> str:
         """
@@ -1158,10 +1158,10 @@ When recommending searches, be specific about what information you need and why 
 
     def _should_require_model_selection(self, model_name: str) -> bool:
         """
-        Check if we should require Claude to select a model at runtime.
+        Check if we should require the CLI to select a model at runtime.
 
         This is called during request execution to determine if we need
-        to return an error asking Claude to provide a model parameter.
+        to return an error asking the CLI to provide a model parameter.
 
         Args:
             model_name: The model name from the request or DEFAULT_MODEL
@@ -1189,7 +1189,7 @@ When recommending searches, be specific about what information you need and why 
 
         Only returns models from providers that have valid API keys configured.
         This fixes the namespace collision bug where models from disabled providers
-        were shown to Claude, causing routing conflicts.
+        were shown to the CLI, causing routing conflicts.
 
         Returns:
             List of model names from enabled providers only

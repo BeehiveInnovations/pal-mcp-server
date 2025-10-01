@@ -32,11 +32,6 @@ class SchemaBuilder:
             "enum": ["minimal", "low", "medium", "high", "max"],
             "description": COMMON_FIELD_DESCRIPTIONS["thinking_mode"],
         },
-        "use_websearch": {
-            "type": "boolean",
-            "description": COMMON_FIELD_DESCRIPTIONS["use_websearch"],
-            "default": True,
-        },
         "continuation_id": {
             "type": "string",
             "description": COMMON_FIELD_DESCRIPTIONS["continuation_id"],

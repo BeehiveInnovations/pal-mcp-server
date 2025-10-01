@@ -94,7 +94,6 @@ security remediation plan using planner
 - `severity_filter`: critical|high|medium|low|all (default: all)
 - `temperature`: Temperature for analytical consistency (0-1, default 0.2)
 - `thinking_mode`: minimal|low|medium|high|max (default: medium, Gemini only)
-- `use_websearch`: Enable web search for security best practices and vulnerability databases (default: true)
 - `use_assistant_model`: Whether to use expert security analysis phase (default: true)
 - `continuation_id`: Continue previous security audit discussions
 

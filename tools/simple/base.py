@@ -234,13 +234,6 @@ class SimpleTool(BaseTool):
         except AttributeError:
             return []
 
-    def get_request_use_websearch(self, request) -> bool:
-        """Get use_websearch from request. Override for custom websearch handling."""
-        try:
-            return request.use_websearch if request.use_websearch is not None else True
-        except AttributeError:
-            return True
-
     def get_request_as_dict(self, request) -> dict:
         """Convert request to dictionary. Override for custom serialization."""
         try:
@@ -787,11 +780,8 @@ class SimpleTool(BaseTool):
         content_to_validate = self.get_prompt_content_for_size_validation(user_content)
         self._validate_token_limit(content_to_validate, "Content")
 
-        # Add web search instruction if enabled
-        websearch_instruction = ""
-        use_websearch = self.get_request_use_websearch(request)
-        if use_websearch:
-            websearch_instruction = self.get_websearch_instruction(use_websearch, self.get_websearch_guidance())
+        # Add standardized web search guidance
+        websearch_instruction = self.get_websearch_instruction(True, self.get_websearch_guidance())
 
         # Combine system prompt with user content
         full_prompt = f"""{system_prompt}{websearch_instruction}

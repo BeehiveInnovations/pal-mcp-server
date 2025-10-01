@@ -116,7 +116,6 @@ class ConsensusRequest(WorkflowRequest):
     # Override inherited fields to exclude them from schema
     temperature: float | None = Field(default=None, exclude=True)
     thinking_mode: str | None = Field(default=None, exclude=True)
-    use_websearch: bool | None = Field(default=None, exclude=True)
 
     # Not used in consensus workflow
     files_checked: list[str] | None = Field(default_factory=list, exclude=True)
@@ -290,7 +289,6 @@ of the evidence, even when it strongly points in one direction.""",
             "model",  # Consensus uses 'models' field instead
             "temperature",  # Not used in consensus workflow
             "thinking_mode",  # Not used in consensus workflow
-            "use_websearch",  # Not used in consensus workflow
         ]
 
         # Build schema with proper field exclusion

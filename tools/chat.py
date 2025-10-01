@@ -23,9 +23,9 @@ from .simple.base import SimpleTool
 CHAT_FIELD_DESCRIPTIONS = {
     "prompt": (
         "Your question or idea for collaborative thinking. Provide detailed context, including your goal, what you've tried, and any specific challenges. "
-        "CRITICAL: To discuss code, provide file paths using the 'files' parameter instead of pasting large code blocks here."
+        "CRITICAL: To discuss code, use 'files' parameter instead of pasting code blocks here."
     ),
-    "files": "Absolute full-paths to existing files / folders for context. DO NOT SHORTEN.",
+    "files": "Always pass absolute full-paths (do NOT shorten) to existing files / folders containing code being discussed.",
     "images": (
         "Optional images for visual context (must be FULL absolute paths to real files / folders - DO NOT SHORTEN - OR these can be bas64 data)"
     ),
@@ -56,8 +56,8 @@ class ChatTool(SimpleTool):
 
     def get_description(self) -> str:
         return (
-            "General chat and collaborative thinking partner for brainstorming, development discussion, getting second opinions, and exploring ideas. "
-            "Use for bouncing ideas, validating approaches, asking questions, and getting explanations. "
+            "General chat and collaborative thinking partner for brainstorming, development discussion, "
+            "getting second opinions, and exploring ideas. Use for ideas, validations, questions, and thoughtful explanations."
         )
 
     def get_system_prompt(self) -> str:
@@ -115,11 +115,6 @@ class ChatTool(SimpleTool):
                     "type": "string",
                     "enum": ["minimal", "low", "medium", "high", "max"],
                     "description": COMMON_FIELD_DESCRIPTIONS["thinking_mode"],
-                },
-                "use_websearch": {
-                    "type": "boolean",
-                    "description": COMMON_FIELD_DESCRIPTIONS["use_websearch"],
-                    "default": True,
                 },
                 "continuation_id": {
                     "type": "string",

@@ -21,25 +21,17 @@ logger = logging.getLogger(__name__)
 # Shared field descriptions to avoid duplication
 COMMON_FIELD_DESCRIPTIONS = {
     "model": (
-        "Model to use. See tool's input schema for available models. "
-        "Use 'auto' to let Claude select the best model for the task."
+        "Model to use. See tool's input schema for available models if required. Use 'auto' select the best model for the task."
     ),
-    "temperature": (
-        "Lower values: focused/deterministic; higher: creative. Tool-specific defaults apply if unspecified."
-    ),
+    "temperature": ("Lower values: deterministic; higher: creative."),
     "thinking_mode": (
         "Thinking depth: minimal (0.5%), low (8%), medium (33%), high (67%), "
         "max (100% of model max). Higher modes: deeper reasoning but slower."
     ),
-    "use_websearch": (
-        "Enable web search for docs and current info. Model can request Claude to perform web-search for "
-        "best practices, framework docs, solution research, latest API information."
-    ),
     "continuation_id": (
-        "Unique thread continuation ID for multi-turn conversations. Reuse last continuation_id "
-        "when continuing discussion (unless user provides different ID) using exact unique identifer. "
-        "Embeds complete conversation history. Build upon history without repeating. "
-        "Focus on new insights. Works across different tools."
+        "Unique thread continuation ID for multi-turn conversations. Works across different tools. "
+        "ALWAYS reuse last continuation_id you were provided as-is when re-communicating with Zen MCP, "
+        "unless user provides different ID. When supplied, your complete conversation history is available, so focus on new insights."
     ),
     "images": (
         "Optional images for visual context. MUST be absolute paths or base64. "
@@ -87,9 +79,6 @@ class ToolRequest(BaseModel):
     model: Optional[str] = Field(None, description=COMMON_FIELD_DESCRIPTIONS["model"])
     temperature: Optional[float] = Field(None, ge=0.0, le=1.0, description=COMMON_FIELD_DESCRIPTIONS["temperature"])
     thinking_mode: Optional[str] = Field(None, description=COMMON_FIELD_DESCRIPTIONS["thinking_mode"])
-
-    # Features
-    use_websearch: Optional[bool] = Field(True, description=COMMON_FIELD_DESCRIPTIONS["use_websearch"])
 
     # Conversation support
     continuation_id: Optional[str] = Field(None, description=COMMON_FIELD_DESCRIPTIONS["continuation_id"])

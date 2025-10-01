@@ -125,8 +125,7 @@ class AnalyzeWorkflowRequest(WorkflowRequest):
         "detailed", description=ANALYZE_WORKFLOW_FIELD_DESCRIPTIONS["output_format"]
     )
 
-    # Keep thinking_mode and use_websearch from original analyze tool
-    # temperature is inherited from WorkflowRequest
+    # Keep thinking_mode from original analyze tool; temperature is inherited from WorkflowRequest
 
     @model_validator(mode="after")
     def validate_step_one_requirements(self):

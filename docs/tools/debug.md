@@ -75,7 +75,6 @@ This structured approach ensures Claude performs methodical groundwork before ex
 **Model Selection:**
 - `model`: auto|pro|flash|flash-2.0|flashlite|o3|o3-mini|o4-mini|gpt4.1|gpt5|gpt5-mini|gpt5-nano (default: server default)
 - `thinking_mode`: minimal|low|medium|high|max (default: medium, Gemini only)
-- `use_websearch`: Enable web search for documentation and solutions (default: true)
 - `use_assistant_model`: Whether to use expert analysis phase (default: true, set to false to use Claude only)
 
 ## Usage Examples

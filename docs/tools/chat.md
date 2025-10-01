@@ -28,7 +28,7 @@ and then debate with the other models to give me a final verdict
 - **File reference support**: `"Use gemini to explain this algorithm with context from algorithm.py"`
 - **Image support**: Include screenshots, diagrams, UI mockups for visual analysis: `"Chat with gemini about this error dialog screenshot to understand the user experience issue"`
 - **Dynamic collaboration**: Gemini can request additional files or context during the conversation if needed for a more thorough response
-- **Web search capability**: Analyzes when web searches would be helpful and recommends specific searches for Claude to perform, ensuring access to current documentation and best practices
+- **Web search awareness**: Automatically identifies when online research would help and instructs Claude to perform targeted searches using continuation IDs
 
 ## Tool Parameters
 
@@ -38,7 +38,6 @@ and then debate with the other models to give me a final verdict
 - `images`: Optional images for visual context (absolute paths)
 - `temperature`: Response creativity (0-1, default 0.5)
 - `thinking_mode`: minimal|low|medium|high|max (default: medium, Gemini only)
-- `use_websearch`: Enable web search for documentation and insights (default: true)
 - `continuation_id`: Continue previous conversations
 
 ## Usage Examples
@@ -74,7 +73,7 @@ and then debate with the other models to give me a final verdict
 - **Ask for trade-offs**: Request pros/cons for better decision-making
 - **Use conversation continuation**: Build on previous discussions with `continuation_id`
 - **Leverage visual context**: Include diagrams, mockups, or screenshots when discussing UI/UX
-- **Request web searches**: Ask for current best practices or recent developments in technologies
+- **Encourage research**: When you suspect documentation has changed, explicitly ask the assistant to confirm by requesting a web search
 
 ## When to Use Chat vs Other Tools
 

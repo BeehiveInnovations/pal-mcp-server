@@ -165,7 +165,7 @@ All tools that work with files support **both individual files and entire direct
 - `analysis_type`: architecture|performance|security|quality|general
 - `output_format`: summary|detailed|actionable
 - `thinking_mode`: minimal|low|medium|high|max (default: medium, Gemini only)
-- `use_websearch`: Enable web search for documentation and best practices - allows model to request Claude perform searches (default: true)
+- **Web search capability**: The assistant now automatically requests web searches when it needs current documentation or best practices—no parameter required
 
 ```
 "Analyze the src/ directory for architectural patterns" (auto mode picks best model)
@@ -198,7 +198,7 @@ All tools that work with files support **both individual files and entire direct
 - `runtime_info`: Environment details
 - `previous_attempts`: What you've tried
 - `thinking_mode`: minimal|low|medium|high|max (default: medium, Gemini only)
-- `use_websearch`: Enable web search for error messages and solutions - allows model to request Claude perform searches (default: true)
+- **Web search capability**: Automatically initiates searches for relevant error messages or recent fixes when needed
 
 ```
 "Debug this logic error with context from backend/" (auto mode picks best model)
@@ -213,7 +213,7 @@ All tools that work with files support **both individual files and entire direct
 - `focus_areas`: Specific aspects to focus on
 - `files`: Files or directories for context
 - `thinking_mode`: minimal|low|medium|high|max (default: max, Gemini only)
-- `use_websearch`: Enable web search for documentation and insights - allows model to request Claude perform searches (default: true)
+- **Web search capability**: Automatically calls for research when architecture references or external insights are required
 
 ```
 "Think deeper about my design with reference to src/models/" (auto mode picks best model)
@@ -444,7 +444,7 @@ Claude can then search for these specific topics and provide you with the most c
 **Web search control:**
 Web search is enabled by default, allowing models to request Claude perform searches for current documentation and solutions. If you prefer the model to work only with its training data, you can disable web search:
 ```
-"Use gemini to review this code with use_websearch false"
+"Use gemini to review this code and confirm whether any new framework changes affect the recommendation"
 ```
 
 ## System Prompts

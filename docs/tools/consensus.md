@@ -69,7 +69,6 @@ Get a consensus from gemini supporting the idea for implementing X, grok opposin
 - `focus_areas`: Specific aspects to emphasize
 - `temperature`: Control consistency (default: 0.2 for stable consensus)
 - `thinking_mode`: Analysis depth (minimal/low/medium/high/max)
-- `use_websearch`: Enable research for enhanced analysis (default: true)
 - `continuation_id`: Continue previous consensus discussions
 
 ## Model Configuration Examples

@@ -88,7 +88,6 @@ class PlannerRequest(WorkflowRequest):
     # Exclude other non-planning fields
     temperature: float | None = Field(default=None, exclude=True)
     thinking_mode: str | None = Field(default=None, exclude=True)
-    use_websearch: bool | None = Field(default=None, exclude=True)
     use_assistant_model: bool | None = Field(default=False, exclude=True, description="Planning is self-contained")
     images: list | None = Field(default=None, exclude=True, description="Planning doesn't use images")
 
@@ -218,7 +217,6 @@ class PlannerTool(WorkflowTool):
         excluded_common_fields = [
             "temperature",  # Planning doesn't need temperature control
             "thinking_mode",  # Planning doesn't need thinking mode
-            "use_websearch",  # Planning doesn't need web search
             "images",  # Planning doesn't use images
             "files",  # Planning doesn't use files
         ]

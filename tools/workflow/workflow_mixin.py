@@ -267,13 +267,6 @@ class BaseWorkflowMixin(ABC):
         except AttributeError:
             return self.get_expert_thinking_mode()
 
-    def get_request_use_websearch(self, request) -> bool:
-        """Get use_websearch from request. Override for custom websearch handling."""
-        try:
-            return request.use_websearch if request.use_websearch is not None else True
-        except AttributeError:
-            return True
-
     def get_expert_analysis_instruction(self) -> str:
         """
         Get the instruction to append after the expert context.
@@ -590,10 +583,7 @@ class BaseWorkflowMixin(ABC):
 
         # Create a simple reference note
         file_names = [os.path.basename(f) for f in request_files]
-        reference_note = (
-            f"Files referenced in this step: {', '.join(file_names)}\n"
-            f"(File content available via conversation history or can be discovered by Claude)"
-        )
+        reference_note = f"Files referenced in this step: {', '.join(file_names)}\n"
 
         self._file_reference_note = reference_note
         logger.debug(f"[WORKFLOW_FILES] {self.get_name()}: Set _file_reference_note: {self._file_reference_note}")
@@ -1514,7 +1504,6 @@ class BaseWorkflowMixin(ABC):
                 system_prompt=system_prompt,
                 temperature=validated_temperature,
                 thinking_mode=self.get_request_thinking_mode(request),
-                use_websearch=self.get_request_use_websearch(request),
                 images=list(set(self.consolidated_findings.images)) if self.consolidated_findings.images else None,
             )
 

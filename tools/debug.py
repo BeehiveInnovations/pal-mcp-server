@@ -104,7 +104,6 @@ class DebugInvestigationRequest(WorkflowRequest):
     # Override inherited fields to exclude them from schema (except model which needs to be available)
     temperature: Optional[float] = Field(default=None, exclude=True)
     thinking_mode: Optional[str] = Field(default=None, exclude=True)
-    use_websearch: Optional[bool] = Field(default=None, exclude=True)
 
 
 class DebugIssueTool(WorkflowTool):

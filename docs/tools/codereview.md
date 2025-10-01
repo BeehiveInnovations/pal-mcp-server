@@ -87,7 +87,6 @@ The above prompt will simultaneously run two separate `codereview` tools with tw
 - `severity_filter`: critical|high|medium|low|all (default: all)
 - `temperature`: Temperature for consistency (0-1, default 0.2)
 - `thinking_mode`: minimal|low|medium|high|max (default: medium, Gemini only)
-- `use_websearch`: Enable web search for best practices and documentation (default: true)
 - `use_assistant_model`: Whether to use expert analysis phase (default: true, set to false to use Claude only)
 - `continuation_id`: Continue previous review discussions
 

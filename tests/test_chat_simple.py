@@ -97,7 +97,7 @@ class TestChatTool:
     @pytest.mark.asyncio
     async def test_prompt_preparation(self):
         """Test that prompt preparation works correctly"""
-        request = ChatRequest(prompt="Test prompt", files=[], use_websearch=True)
+        request = ChatRequest(prompt="Test prompt", files=[])
 
         # Mock the system prompt and file handling
         with patch.object(self.tool, "get_system_prompt", return_value="System prompt"):
@@ -181,7 +181,6 @@ class TestChatRequestModel:
         assert hasattr(request, "model")
         assert hasattr(request, "temperature")
         assert hasattr(request, "thinking_mode")
-        assert hasattr(request, "use_websearch")
         assert hasattr(request, "continuation_id")
         assert hasattr(request, "images")  # From base model too
 

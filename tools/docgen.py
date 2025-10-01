@@ -243,7 +243,6 @@ class DocgenTool(WorkflowTool):
             "model",  # Documentation doesn't need external model selection
             "temperature",  # Documentation doesn't need temperature control
             "thinking_mode",  # Documentation doesn't need thinking mode
-            "use_websearch",  # Documentation doesn't need web search
             "images",  # Documentation doesn't use images
         ]
 
