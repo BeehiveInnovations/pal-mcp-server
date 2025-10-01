@@ -2,6 +2,31 @@
 
 <!-- version list -->
 
+## v5.15.0 (2025-10-01)
+
+### Chores
+
+- Sync version to config.py [skip ci]
+  ([`b0fe956`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/b0fe956f8a50240507e0fc911f0800634c15e9f7))
+
+### Features
+
+- Depending on the number of tools in use, this change should save ~50% of overall tokens used.
+  fixes https://github.com/BeehiveInnovations/zen-mcp-server/issues/255 but also refactored
+  individual tools to instead encourage the agent to use the listmodels tool if needed.
+  ([`d9449c7`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/d9449c7bb607caff3f0454f210ddfc36256c738a))
+
+### Performance Improvements
+
+- Tweaks to schema descriptions, aiming to reduce token usage without performance degradation
+  ([`cc8a4df`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/cc8a4dfd21b6f3dae4972a833b619e53c964693b))
+
+### Refactoring
+
+- Trimmed some prompts
+  ([`f69ff03`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/f69ff03c4d10e606a1dfed2a167f3ba2e2236ba8))
+
+
 ## v5.14.1 (2025-10-01)
 
 ### Bug Fixes
