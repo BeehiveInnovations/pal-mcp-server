@@ -2,6 +2,29 @@
 
 <!-- version list -->
 
+## v5.16.0 (2025-10-01)
+
+### Bug Fixes
+
+- Resolve logging timing and import organization issues
+  ([`d34c299`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/d34c299f02a233af4f17bdcc848219bf07799723))
+
+### Chores
+
+- Sync version to config.py [skip ci]
+  ([`b6c4bca`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/b6c4bca158e4cee1ae4abd08b7e55216ebffba2d))
+
+### Code Style
+
+- Fix ruff import sorting issue
+  ([`4493a69`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/4493a693332e0532d04ad3634de2a2f5b1249b64))
+
+### Features
+
+- Add configurable environment variable override system
+  ([`93ce698`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/93ce6987b6e7d8678ffa5ac51f5106a7a21ce67b))
+
+
 ## v5.15.0 (2025-10-01)
 
 ### Chores
