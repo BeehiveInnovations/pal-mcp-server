@@ -89,7 +89,7 @@ class TestOpenRouterModelRegistry:
         test_cases = [
             ("opus", "anthropic/claude-opus-4.1"),
             ("OPUS", "anthropic/claude-opus-4.1"),  # Case insensitive
-            ("claude", "anthropic/claude-sonnet-4.1"),
+            ("sonnet", "anthropic/claude-sonnet-4.5"),
             ("o3", "openai/o3"),
             ("deepseek", "deepseek/deepseek-r1-0528"),
             ("mistral", "mistralai/mistral-large-2411"),

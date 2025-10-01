@@ -72,22 +72,23 @@ class TestOpenRouterProvider:
 
         # Test alias resolution
         assert provider._resolve_model_name("opus") == "anthropic/claude-opus-4.1"
-        assert provider._resolve_model_name("sonnet") == "anthropic/claude-sonnet-4.1"
+        assert provider._resolve_model_name("sonnet") == "anthropic/claude-sonnet-4.5"
+        assert provider._resolve_model_name("sonnet4.1") == "anthropic/claude-sonnet-4.1"
         assert provider._resolve_model_name("o3") == "openai/o3"
         assert provider._resolve_model_name("o3-mini") == "openai/o3-mini"
         assert provider._resolve_model_name("o3mini") == "openai/o3-mini"
         assert provider._resolve_model_name("o4-mini") == "openai/o4-mini"
         assert provider._resolve_model_name("o4-mini") == "openai/o4-mini"
-        assert provider._resolve_model_name("claude") == "anthropic/claude-sonnet-4.1"
+        assert provider._resolve_model_name("haiku") == "anthropic/claude-3.5-haiku"
         assert provider._resolve_model_name("mistral") == "mistralai/mistral-large-2411"
         assert provider._resolve_model_name("deepseek") == "deepseek/deepseek-r1-0528"
         assert provider._resolve_model_name("r1") == "deepseek/deepseek-r1-0528"
 
         # Test case-insensitive
         assert provider._resolve_model_name("OPUS") == "anthropic/claude-opus-4.1"
+        assert provider._resolve_model_name("SONNET") == "anthropic/claude-sonnet-4.5"
         assert provider._resolve_model_name("O3") == "openai/o3"
         assert provider._resolve_model_name("Mistral") == "mistralai/mistral-large-2411"
-        assert provider._resolve_model_name("CLAUDE") == "anthropic/claude-sonnet-4.1"
 
         # Test direct model names (should pass through unchanged)
         assert provider._resolve_model_name("anthropic/claude-opus-4.1") == "anthropic/claude-opus-4.1"
@@ -271,7 +272,7 @@ class TestOpenRouterRegistry:
         assert len(aliases) > 0
         assert "opus" in aliases
         assert "o3" in aliases
-        assert "claude" in aliases
+        assert "sonnet" in aliases
 
     def test_registry_capabilities(self):
         """Test registry provides correct capabilities."""
@@ -300,12 +301,17 @@ class TestOpenRouterRegistry:
 
         registry = OpenRouterModelRegistry()
 
-        # All these should resolve to Claude Sonnet
-        sonnet_aliases = ["sonnet", "claude", "claude-sonnet", "claude-4.1-sonnet"]
-        for alias in sonnet_aliases:
+        # All these should resolve to Claude Sonnet 4.5
+        sonnet_45_aliases = ["sonnet", "sonnet4.5"]
+        for alias in sonnet_45_aliases:
             config = registry.resolve(alias)
             assert config is not None
-            assert config.model_name == "anthropic/claude-sonnet-4.1"
+            assert config.model_name == "anthropic/claude-sonnet-4.5"
+
+        # Test Sonnet 4.1 alias
+        config = registry.resolve("sonnet4.1")
+        assert config is not None
+        assert config.model_name == "anthropic/claude-sonnet-4.1"
 
 
 class TestOpenRouterFunctionality:
