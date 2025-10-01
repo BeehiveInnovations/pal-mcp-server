@@ -50,15 +50,15 @@ class TestSupportedModelsAliases:
         # "mini" is now an alias for gpt-5-mini, not o4-mini
         assert "mini" in provider.SUPPORTED_MODELS["gpt-5-mini"].aliases
         assert "o4mini" in provider.SUPPORTED_MODELS["o4-mini"].aliases
-        assert "o4-mini" in provider.SUPPORTED_MODELS["o4-mini"].aliases
+        # o4-mini is no longer in its own aliases (removed self-reference)
         assert "o3mini" in provider.SUPPORTED_MODELS["o3-mini"].aliases
-        assert "o3-pro" in provider.SUPPORTED_MODELS["o3-pro"].aliases
+        assert "o3pro" in provider.SUPPORTED_MODELS["o3-pro"].aliases
         assert "gpt4.1" in provider.SUPPORTED_MODELS["gpt-4.1"].aliases
 
         # Test alias resolution
         assert provider._resolve_model_name("mini") == "gpt-5-mini"  # mini -> gpt-5-mini now
         assert provider._resolve_model_name("o3mini") == "o3-mini"
-        assert provider._resolve_model_name("o3-pro") == "o3-pro"  # o3-pro is already the base model name
+        assert provider._resolve_model_name("o3pro") == "o3-pro"  # o3pro resolves to o3-pro
         assert provider._resolve_model_name("o4mini") == "o4-mini"
         assert provider._resolve_model_name("gpt4.1") == "gpt-4.1"  # gpt4.1 resolves to gpt-4.1
 

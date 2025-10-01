@@ -38,7 +38,7 @@ class OpenAIModelProvider(OpenAICompatibleProvider):
             supports_temperature=True,  # Regular models accept temperature parameter
             temperature_constraint=create_temperature_constraint("fixed"),
             description="GPT-5 (400K context, 128K output) - Advanced model with reasoning support",
-            aliases=["gpt5", "gpt-5"],
+            aliases=["gpt5"],
         ),
         "gpt-5-mini": ModelCapabilities(
             provider=ProviderType.OPENAI,
@@ -110,7 +110,7 @@ class OpenAIModelProvider(OpenAICompatibleProvider):
             supports_temperature=False,  # O3 models don't accept temperature parameter
             temperature_constraint=create_temperature_constraint("fixed"),
             description="Fast O3 variant (200K context) - Balanced performance/speed, moderate complexity",
-            aliases=["o3mini", "o3-mini"],
+            aliases=["o3mini"],
         ),
         "o3-pro": ModelCapabilities(
             provider=ProviderType.OPENAI,
@@ -128,7 +128,7 @@ class OpenAIModelProvider(OpenAICompatibleProvider):
             supports_temperature=False,  # O3 models don't accept temperature parameter
             temperature_constraint=create_temperature_constraint("fixed"),
             description="Professional-grade reasoning (200K context) - EXTREMELY EXPENSIVE: Only for the most complex problems requiring universe-scale complexity analysis OR when the user explicitly asks for this model. Use sparingly for critical architectural decisions or exceptionally complex debugging that other models cannot handle.",
-            aliases=["o3-pro"],
+            aliases=["o3pro"],
         ),
         "o4-mini": ModelCapabilities(
             provider=ProviderType.OPENAI,
@@ -146,7 +146,7 @@ class OpenAIModelProvider(OpenAICompatibleProvider):
             supports_temperature=False,  # O4 models don't accept temperature parameter
             temperature_constraint=create_temperature_constraint("fixed"),
             description="Latest reasoning model (200K context) - Optimized for shorter contexts, rapid reasoning",
-            aliases=["o4mini", "o4-mini"],
+            aliases=["o4mini"],
         ),
         "gpt-4.1": ModelCapabilities(
             provider=ProviderType.OPENAI,
@@ -164,7 +164,7 @@ class OpenAIModelProvider(OpenAICompatibleProvider):
             supports_temperature=True,  # Regular models accept temperature parameter
             temperature_constraint=create_temperature_constraint("range"),
             description="GPT-4.1 (1M context) - Advanced reasoning model with large context window",
-            aliases=["gpt4.1", "gpt-4.1"],
+            aliases=["gpt4.1"],
         ),
     }
 
