@@ -300,12 +300,10 @@ class OpenAIModelProvider(OpenAICompatibleProvider):
 
     def supports_thinking_mode(self, model_name: str) -> bool:
         """Check if the model supports extended thinking mode."""
-        # GPT-5 models support reasoning tokens (extended thinking)
-        resolved_name = self._resolve_model_name(model_name)
-        if resolved_name in ["gpt-5", "gpt-5-mini"]:
-            return True
-        # O3 models don't support extended thinking yet
-        return False
+        try:
+            return self.get_capabilities(model_name).supports_extended_thinking
+        except ValueError:
+            return False
 
     def get_preferred_model(self, category: "ToolModelCategory", allowed_models: list[str]) -> Optional[str]:
         """Get OpenAI's preferred model for a given category from allowed models.

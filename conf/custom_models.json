@@ -52,7 +52,7 @@
   "models": [
     {
       "model_name": "anthropic/claude-opus-4.1",
-      "aliases": ["opus", "claude-opus", "claude-opus-4.1", "claude-4.1-opus"],
+      "aliases": ["opus", "claude-opus"],
       "context_window": 200000,
       "max_output_tokens": 64000,
       "supports_extended_thinking": false,
@@ -64,7 +64,7 @@
     },
     {
       "model_name": "anthropic/claude-sonnet-4.1",
-      "aliases": ["sonnet", "claude-sonnet", "claude-sonnet-4.1", "claude-4.1-sonnet", "claude"],
+      "aliases": ["claude", "sonnet", "sonnet4.1", "claude-sonnet", "claude-4.1-sonnet", "claude-sonnet-4.1"],
       "context_window": 200000,
       "max_output_tokens": 64000,
       "supports_extended_thinking": false,
@@ -76,7 +76,7 @@
     },
     {
       "model_name": "anthropic/claude-3.5-haiku",
-      "aliases": ["haiku", "claude-haiku", "claude3-haiku", "claude-3-haiku"],
+      "aliases": ["haiku"],
       "context_window": 200000,
       "max_output_tokens": 64000,
       "supports_extended_thinking": false,
@@ -100,7 +100,7 @@
     },
     {
       "model_name": "google/gemini-2.5-flash",
-      "aliases": ["flash","gemini-flash", "flash-openrouter", "flash-2.5"],
+      "aliases": ["flash","gemini-flash"],
       "context_window": 1048576,
       "max_output_tokens": 65536,
       "supports_extended_thinking": false,
@@ -202,7 +202,7 @@
     },
     {
       "model_name": "openai/o3-pro",
-      "aliases": ["o3-pro", "o3pro"],
+      "aliases": ["o3pro"],
       "context_window": 200000,
       "max_output_tokens": 100000,
       "supports_extended_thinking": false,
@@ -229,8 +229,50 @@
       "description": "OpenAI's o4-mini model - optimized for shorter contexts with rapid reasoning and vision"
     },
     {
+      "model_name": "openai/gpt-5",
+      "aliases": ["gpt5"],
+      "context_window": 400000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 20.0,
+      "supports_temperature": true,
+      "temperature_constraint": "range",
+      "description": "GPT-5 (400K context, 128K output) - Advanced model with reasoning support"
+    },
+    {
+      "model_name": "openai/gpt-5-mini",
+      "aliases": ["gpt5mini"],
+      "context_window": 400000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 20.0,
+      "supports_temperature": true,
+      "temperature_constraint": "fixed",
+      "description": "GPT-5-mini (400K context, 128K output) - Efficient variant with reasoning support"
+    },
+    {
+      "model_name": "openai/gpt-5-nano",
+      "aliases": ["gpt5nano"],
+      "context_window": 400000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 20.0,
+      "supports_temperature": true,
+      "temperature_constraint": "fixed",
+      "description": "GPT-5 nano (400K context, 128K output) - Fastest, cheapest version of GPT-5 for summarization and classification tasks"
+    },
+    {
       "model_name": "llama3.2",
-      "aliases": ["local-llama", "local", "llama3.2", "ollama-llama"],
+      "aliases": ["local-llama", "ollama-llama"],
       "context_window": 128000,
       "max_output_tokens": 64000,
       "supports_extended_thinking": false,
