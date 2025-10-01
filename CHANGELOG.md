@@ -2,6 +2,27 @@
 
 <!-- version list -->
 
+## v5.13.0 (2025-10-01)
+
+### Bug Fixes
+
+- Add sonnet alias for Claude Sonnet 4.1 to match opus/haiku pattern
+  ([`dc96344`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/dc96344db043e087ee4f8bf264a79c51dc2e0b7a))
+
+- Missing "optenai/" in name
+  ([`7371ed6`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/7371ed6487b7d90a1b225a67dca2a38c1a52f2ad))
+
+### Chores
+
+- Sync version to config.py [skip ci]
+  ([`b8479fc`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/b8479fc638083d6caa4bad6205e3d3fcab830aca))
+
+### Features
+
+- Add comprehensive GPT-5 series model support
+  ([`4930824`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/493082405237e66a2f033481a5f8bf8293b0d553))
+
+
 ## v5.12.1 (2025-10-01)
 
 ### Bug Fixes
