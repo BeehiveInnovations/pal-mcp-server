@@ -2,6 +2,29 @@
 
 <!-- version list -->
 
+## v5.12.1 (2025-10-01)
+
+### Bug Fixes
+
+- Resolve consensus tool model_context parameter missing issue
+  ([`9044b63`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/9044b63809113047fe678d659e4fcd175f58e87a))
+
+### Chores
+
+- Sync version to config.py [skip ci]
+  ([`e3ebf4e`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/e3ebf4e94eba63acdc4df5a0b0493e44e3343dd1))
+
+### Code Style
+
+- Fix trailing whitespace in consensus.py
+  ([`0760b31`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/0760b31f8a6d03c4bea3fd2a94dfbbfab0ad5079))
+
+### Refactoring
+
+- Optimize ModelContext creation in consensus tool
+  ([`30a8952`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/30a8952fbccd22bebebd14eb2c8005404b79bcd6))
+
+
 ## v5.12.0 (2025-10-01)
 
 ### Bug Fixes
