@@ -87,7 +87,7 @@ class TestChatTool:
         # Description should route callers to listmodels, regardless of mode
         assert "listmodels" in schema["description"]
         if self.tool.is_effective_auto_mode():
-            assert "auto model selection" in schema["description"]
+            assert "auto mode" in schema["description"].lower()
         else:
             import config
 

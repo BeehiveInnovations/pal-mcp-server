@@ -25,10 +25,8 @@ CHAT_FIELD_DESCRIPTIONS = {
         "Your question or idea for collaborative thinking. Provide detailed context, including your goal, what you've tried, and any specific challenges. "
         "CRITICAL: To discuss code, use 'files' parameter instead of pasting code blocks here."
     ),
-    "files": "Always pass absolute full-paths (do NOT shorten) to existing files / folders containing code being discussed.",
-    "images": (
-        "Optional images for visual context (must be FULL absolute paths to real files / folders - DO NOT SHORTEN - OR these can be bas64 data)"
-    ),
+    "files": "absolute file or folder paths for code context (do NOT shorten).",
+    "images": "Optional absolute image paths or base64 for visual context when helpful.",
 }
 
 

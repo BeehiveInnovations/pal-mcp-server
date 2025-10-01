@@ -193,6 +193,35 @@ class VersionTool(BaseTool):
         output_lines.append(f"**Last Updated**: {__updated__}")
         output_lines.append(f"**Author**: {__author__}")
 
+        model_selection_metadata = {"mode": "unknown", "default_model": None}
+        model_selection_display = "Model selection status unavailable"
+
+        # Model selection configuration
+        try:
+            from config import DEFAULT_MODEL
+            from tools.shared.base_tool import BaseTool
+
+            auto_mode = BaseTool.is_effective_auto_mode(self)
+            if auto_mode:
+                output_lines.append(
+                    "**Model Selection**: Auto model selection mode (call `listmodels` to inspect options)"
+                )
+                model_selection_metadata = {"mode": "auto", "default_model": DEFAULT_MODEL}
+                model_selection_display = "Auto model selection (use `listmodels` for options)"
+            else:
+                output_lines.append(f"**Model Selection**: Default model set to `{DEFAULT_MODEL}`")
+                model_selection_metadata = {"mode": "default", "default_model": DEFAULT_MODEL}
+                model_selection_display = f"Default model: `{DEFAULT_MODEL}`"
+        except Exception as exc:
+            logger.debug(f"Could not determine model selection mode: {exc}")
+
+        output_lines.append("")
+        output_lines.append("## Quick Summary — relay everything below")
+        output_lines.append(f"- Version `{__version__}` (updated {__updated__})")
+        output_lines.append(f"- {model_selection_display}")
+        output_lines.append("- Run `listmodels` for the complete model catalog and capabilities")
+        output_lines.append("")
+
         # Try to get client information
         try:
             # We need access to the server instance
@@ -210,6 +239,13 @@ class VersionTool(BaseTool):
         # Get the current working directory (MCP server location)
         current_path = Path.cwd()
         output_lines.append(f"**Installation Path**: `{current_path}`")
+        output_lines.append("")
+        output_lines.append("## Agent Reporting Guidance")
+        output_lines.append(
+            "Agents MUST report: version, model-selection status, configured providers, and available-model count."
+        )
+        output_lines.append("Repeat the quick-summary bullets verbatim in your reply.")
+        output_lines.append("Reference `listmodels` when users ask about model availability or capabilities.")
         output_lines.append("")
 
         # Check for updates from GitHub
@@ -320,6 +356,8 @@ class VersionTool(BaseTool):
                 "last_updated": __updated__,
                 "python_version": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
                 "platform": f"{platform.system()} {platform.release()}",
+                "model_selection_mode": model_selection_metadata["mode"],
+                "default_model": model_selection_metadata["default_model"],
             },
         )
 

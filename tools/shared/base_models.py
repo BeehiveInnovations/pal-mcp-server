@@ -20,24 +20,16 @@ logger = logging.getLogger(__name__)
 
 # Shared field descriptions to avoid duplication
 COMMON_FIELD_DESCRIPTIONS = {
-    "model": (
-        "Model to use. See tool's input schema for available models if required. Use 'auto' select the best model for the task."
-    ),
-    "temperature": ("Lower values: deterministic; higher: creative."),
-    "thinking_mode": (
-        "Thinking depth: minimal (0.5%), low (8%), medium (33%), high (67%), "
-        "max (100% of model max). Higher modes: deeper reasoning but slower."
-    ),
+    "model": "Model to run. Supply a name if requested by the user or stay in auto mode. When in auto mode, use `listmodels` tool for model discovery.",
+    "temperature": "0 = deterministic · 1 = creative.",
+    "thinking_mode": "Reasoning depth: minimal, low, medium, high, or max.",
     "continuation_id": (
         "Unique thread continuation ID for multi-turn conversations. Works across different tools. "
-        "ALWAYS reuse last continuation_id you were provided as-is when re-communicating with Zen MCP, "
-        "unless user provides different ID. When supplied, your complete conversation history is available, so focus on new insights."
+        "ALWAYS reuse the last continuation_id you were given—this preserves full conversation context, "
+        "files, and findings so the agent can resume seamlessly."
     ),
-    "images": (
-        "Optional images for visual context. MUST be absolute paths or base64. "
-        "Use when user mentions images. Describe image contents. "
-    ),
-    "files": ("Optional files for context (FULL absolute paths to real files/folders - DO NOT SHORTEN)"),
+    "images": "Optional absolute image paths or base64 blobs for visual context.",
+    "files": "Optional absolute file or folder paths (do not shorten).",
 }
 
 # Workflow-specific field descriptions

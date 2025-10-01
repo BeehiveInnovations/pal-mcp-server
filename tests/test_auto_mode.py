@@ -93,7 +93,7 @@ class TestAutoMode:
             # Model field should have detailed descriptions
             model_schema = schema["properties"]["model"]
             assert "enum" not in model_schema
-            assert "auto model selection" in model_schema["description"].lower()
+            assert "auto mode" in model_schema["description"].lower()
             assert "listmodels" in model_schema["description"]
 
         finally:
@@ -289,7 +289,7 @@ class TestAutoMode:
             schema = tool.get_model_field_schema()
             assert "enum" not in schema
             assert schema["type"] == "string"
-            assert "auto model selection" in schema["description"]
+            assert "auto mode" in schema["description"].lower()
             assert "listmodels" in schema["description"]
 
             # Test normal mode
