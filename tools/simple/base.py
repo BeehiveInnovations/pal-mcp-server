@@ -714,7 +714,9 @@ class SimpleTool(BaseTool):
             # Fallback to simple success if continuation offer fails
             return ToolOutput(status="success", content=content, content_type="text")
 
-    def _record_assistant_turn(self, continuation_id: str, response_text: str, request, model_info: Optional[dict]) -> None:
+    def _record_assistant_turn(
+        self, continuation_id: str, response_text: str, request, model_info: Optional[dict]
+    ) -> None:
         """Persist an assistant response in conversation memory."""
 
         if not continuation_id:
