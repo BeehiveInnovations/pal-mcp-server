@@ -11,6 +11,21 @@ __all__ = [
     "create_temperature_constraint",
 ]
 
+# Common heuristics for determining temperature support when explicit
+# capabilities are unavailable (e.g., custom/local models).
+_TEMP_UNSUPPORTED_PATTERNS = {
+    "o1",
+    "o3",
+    "o4",  # OpenAI O-series reasoning models
+    "deepseek-reasoner",
+    "deepseek-r1",
+    "r1",  # DeepSeek reasoner variants
+}
+
+_TEMP_UNSUPPORTED_KEYWORDS = {
+    "reasoner",  # Catch additional DeepSeek-style naming patterns
+}
+
 
 class TemperatureConstraint(ABC):
     """Contract for temperature validation used by `ModelCapabilities`.
@@ -40,6 +55,65 @@ class TemperatureConstraint(ABC):
     @abstractmethod
     def get_default(self) -> float:
         """Return the default temperature for the model."""
+
+    @staticmethod
+    def infer_support(model_name: str) -> tuple[bool, str]:
+        """Heuristically determine whether a model supports temperature."""
+
+        model_lower = model_name.lower()
+
+        for pattern in _TEMP_UNSUPPORTED_PATTERNS:
+            conditions = (
+                pattern == model_lower,
+                model_lower.startswith(f"{pattern}-"),
+                model_lower.startswith(f"openai/{pattern}"),
+                model_lower.startswith(f"deepseek/{pattern}"),
+                model_lower.endswith(f"-{pattern}"),
+                f"/{pattern}" in model_lower,
+                f"-{pattern}-" in model_lower,
+            )
+            if any(conditions):
+                return False, f"detected pattern '{pattern}'"
+
+        for keyword in _TEMP_UNSUPPORTED_KEYWORDS:
+            if keyword in model_lower:
+                return False, f"detected keyword '{keyword}'"
+
+        return True, "default assumption for models without explicit metadata"
+
+    @staticmethod
+    def resolve_settings(
+        model_name: str,
+        constraint_hint: Optional[str] = None,
+    ) -> tuple[bool, "TemperatureConstraint", str]:
+        """Derive temperature support and constraint for a model.
+
+        Args:
+            model_name: Canonical model identifier or alias.
+            constraint_hint: Optional configuration hint (``"fixed"``,
+                ``"range"``, ``"discrete"``). When provided, the hint is
+                honoured directly.
+
+        Returns:
+            Tuple ``(supports_temperature, constraint, diagnosis)`` describing
+            whether temperature may be tuned, the constraint object that should
+            be attached to :class:`ModelCapabilities`, and the reasoning behind
+            the decision.
+        """
+
+        if constraint_hint:
+            constraint = create_temperature_constraint(constraint_hint)
+            supports_temperature = constraint_hint != "fixed"
+            reason = f"constraint hint '{constraint_hint}'"
+            return supports_temperature, constraint, reason
+
+        supports_temperature, reason = TemperatureConstraint.infer_support(model_name)
+        if supports_temperature:
+            constraint: TemperatureConstraint = RangeTemperatureConstraint(0.0, 2.0, 0.7)
+        else:
+            constraint = FixedTemperatureConstraint(1.0)
+
+        return supports_temperature, constraint, reason
 
 
 class FixedTemperatureConstraint(TemperatureConstraint):

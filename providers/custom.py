@@ -6,27 +6,7 @@ from typing import Optional
 
 from .openai_compatible import OpenAICompatibleProvider
 from .openrouter_registry import OpenRouterModelRegistry
-from .shared import (
-    FixedTemperatureConstraint,
-    ModelCapabilities,
-    ModelResponse,
-    ProviderType,
-    RangeTemperatureConstraint,
-)
-
-# Temperature inference patterns
-_TEMP_UNSUPPORTED_PATTERNS = [
-    "o1",
-    "o3",
-    "o4",  # OpenAI O-series models
-    "deepseek-reasoner",
-    "deepseek-r1",
-    "r1",  # DeepSeek reasoner models
-]
-
-_TEMP_UNSUPPORTED_KEYWORDS = [
-    "reasoner",  # DeepSeek reasoner variants
-]
+from .shared import ModelCapabilities, ModelResponse, ProviderType, TemperatureConstraint
 
 
 class CustomProvider(OpenAICompatibleProvider):
@@ -179,8 +159,10 @@ class CustomProvider(OpenAICompatibleProvider):
                 "Consider adding to custom_models.json for specific capabilities."
             )
 
-            # Infer temperature support from model name for better defaults
-            supports_temperature, temperature_reason = self._infer_temperature_support(resolved_name)
+            # Infer temperature behaviour for generic capability fallback
+            supports_temperature, temperature_constraint, temperature_reason = TemperatureConstraint.resolve_settings(
+                resolved_name
+            )
 
             logging.warning(
                 f"Model '{resolved_name}' not found in custom_models.json. Using generic capabilities with inferred settings. "
@@ -200,47 +182,13 @@ class CustomProvider(OpenAICompatibleProvider):
                 supports_streaming=True,
                 supports_function_calling=False,  # Conservative default
                 supports_temperature=supports_temperature,
-                temperature_constraint=(
-                    FixedTemperatureConstraint(1.0)
-                    if not supports_temperature
-                    else RangeTemperatureConstraint(0.0, 2.0, 0.7)
-                ),
+                temperature_constraint=temperature_constraint,
             )
 
             # Mark as generic for validation purposes
             capabilities._is_generic = True
 
             return capabilities
-
-    def _infer_temperature_support(self, model_name: str) -> tuple[bool, str]:
-        """Infer temperature support from model name patterns.
-
-        Returns:
-            Tuple of (supports_temperature, reason_for_decision)
-        """
-        model_lower = model_name.lower()
-
-        # Check for specific model patterns that don't support temperature
-        for pattern in _TEMP_UNSUPPORTED_PATTERNS:
-            conditions = (
-                pattern == model_lower,
-                model_lower.startswith(f"{pattern}-"),
-                model_lower.startswith(f"openai/{pattern}"),
-                model_lower.startswith(f"deepseek/{pattern}"),
-                model_lower.endswith(f"-{pattern}"),
-                f"/{pattern}" in model_lower,
-                f"-{pattern}-" in model_lower,
-            )
-            if any(conditions):
-                return False, f"detected non-temperature-supporting model pattern '{pattern}'"
-
-        # Check for specific keywords that indicate non-supporting variants
-        for keyword in _TEMP_UNSUPPORTED_KEYWORDS:
-            if keyword in model_lower:
-                return False, f"detected non-temperature-supporting keyword '{keyword}'"
-
-        # Default to supporting temperature for most models
-        return True, "default assumption for unknown custom models"
 
     def get_provider_type(self) -> ProviderType:
         """Get the provider type."""
