@@ -70,8 +70,11 @@ class ModelProvider(ABC):
         return self._finalise_capabilities(capabilities, resolved_name, model_name)
 
     def get_all_model_capabilities(self) -> dict[str, ModelCapabilities]:
-        """Return the provider's statically declared model capabilities."""
+        """Return statically declared capabilities when available."""
 
+        model_map = getattr(self, "MODEL_CAPABILITIES", None)
+        if isinstance(model_map, dict) and model_map:
+            return {k: v for k, v in model_map.items() if isinstance(v, ModelCapabilities)}
         return {}
 
     def list_models(

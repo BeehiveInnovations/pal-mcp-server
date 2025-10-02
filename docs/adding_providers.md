@@ -15,7 +15,7 @@ Each provider:
 **Option A: Full Provider (`ModelProvider`)**
 - For APIs with unique features or custom authentication
 - Complete control over API calls and response handling
-- Implement `generate_content()` and `get_provider_type()`; override `get_all_model_capabilities()` to expose your catalogue and extend `_lookup_capabilities()` / `_ensure_model_allowed()` only when you need registry lookups or custom restriction rules (override `count_tokens()` only when you have a provider-accurate tokenizer)
+- Populate `MODEL_CAPABILITIES`, implement `generate_content()` and `get_provider_type()`, and only override `get_all_model_capabilities()` / `_lookup_capabilities()` when your catalogue comes from a registry or remote source (override `count_tokens()` only when you have a provider-accurate tokenizer)
 
 **Option B: OpenAI-Compatible (`OpenAICompatibleProvider`)**
 - For APIs that follow OpenAI's chat completion format

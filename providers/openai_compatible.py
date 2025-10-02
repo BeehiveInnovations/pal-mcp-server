@@ -79,14 +79,6 @@ class OpenAICompatibleProvider(ModelProvider):
                     f"Model '{requested_name}' is not allowed by restriction policy. Allowed models: {sorted(self.allowed_models)}"
                 )
 
-    def get_all_model_capabilities(self) -> dict[str, ModelCapabilities]:
-        """Return statically declared capabilities for OpenAI-compatible providers."""
-
-        model_map = getattr(self, "MODEL_CAPABILITIES", None)
-        if isinstance(model_map, dict):
-            return {k: v for k, v in model_map.items() if isinstance(v, ModelCapabilities)}
-        return {}
-
     def _parse_allowed_models(self) -> Optional[set[str]]:
         """Parse allowed models from environment variable.
 

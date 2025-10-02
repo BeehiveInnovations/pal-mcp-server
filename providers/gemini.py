@@ -135,11 +135,6 @@ class GeminiModelProvider(ModelProvider):
     # Capability surface
     # ------------------------------------------------------------------
 
-    def get_all_model_capabilities(self) -> dict[str, ModelCapabilities]:
-        """Return statically defined Gemini capabilities."""
-
-        return dict(self.MODEL_CAPABILITIES)
-
     # ------------------------------------------------------------------
     # Client access
     # ------------------------------------------------------------------
