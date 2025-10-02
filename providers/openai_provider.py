@@ -26,6 +26,7 @@ class OpenAIModelProvider(OpenAICompatibleProvider):
             provider=ProviderType.OPENAI,
             model_name="gpt-5",
             friendly_name="OpenAI (GPT-5)",
+            intelligence_score=16,
             context_window=400_000,  # 400K tokens
             max_output_tokens=128_000,  # 128K max output tokens
             supports_extended_thinking=True,  # Supports reasoning tokens
@@ -44,6 +45,7 @@ class OpenAIModelProvider(OpenAICompatibleProvider):
             provider=ProviderType.OPENAI,
             model_name="gpt-5-mini",
             friendly_name="OpenAI (GPT-5-mini)",
+            intelligence_score=15,
             context_window=400_000,  # 400K tokens
             max_output_tokens=128_000,  # 128K max output tokens
             supports_extended_thinking=True,  # Supports reasoning tokens
@@ -62,6 +64,7 @@ class OpenAIModelProvider(OpenAICompatibleProvider):
             provider=ProviderType.OPENAI,
             model_name="gpt-5-nano",
             friendly_name="OpenAI (GPT-5 nano)",
+            intelligence_score=13,
             context_window=400_000,
             max_output_tokens=128_000,
             supports_extended_thinking=True,
@@ -80,6 +83,7 @@ class OpenAIModelProvider(OpenAICompatibleProvider):
             provider=ProviderType.OPENAI,
             model_name="o3",
             friendly_name="OpenAI (O3)",
+            intelligence_score=14,
             context_window=200_000,  # 200K tokens
             max_output_tokens=65536,  # 64K max output tokens
             supports_extended_thinking=False,
@@ -98,6 +102,7 @@ class OpenAIModelProvider(OpenAICompatibleProvider):
             provider=ProviderType.OPENAI,
             model_name="o3-mini",
             friendly_name="OpenAI (O3-mini)",
+            intelligence_score=12,
             context_window=200_000,  # 200K tokens
             max_output_tokens=65536,  # 64K max output tokens
             supports_extended_thinking=False,
@@ -116,6 +121,7 @@ class OpenAIModelProvider(OpenAICompatibleProvider):
             provider=ProviderType.OPENAI,
             model_name="o3-pro",
             friendly_name="OpenAI (O3-Pro)",
+            intelligence_score=15,
             context_window=200_000,  # 200K tokens
             max_output_tokens=65536,  # 64K max output tokens
             supports_extended_thinking=False,
@@ -134,6 +140,7 @@ class OpenAIModelProvider(OpenAICompatibleProvider):
             provider=ProviderType.OPENAI,
             model_name="o4-mini",
             friendly_name="OpenAI (O4-mini)",
+            intelligence_score=11,
             context_window=200_000,  # 200K tokens
             max_output_tokens=65536,  # 64K max output tokens
             supports_extended_thinking=False,
@@ -152,6 +159,7 @@ class OpenAIModelProvider(OpenAICompatibleProvider):
             provider=ProviderType.OPENAI,
             model_name="gpt-4.1",
             friendly_name="OpenAI (GPT 4.1)",
+            intelligence_score=13,
             context_window=1_000_000,  # 1M tokens
             max_output_tokens=32_768,
             supports_extended_thinking=False,

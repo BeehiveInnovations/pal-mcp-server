@@ -48,8 +48,9 @@ CONSENSUS_WORKFLOW_FIELD_DESCRIPTIONS = {
     ),
     "relevant_files": "Optional supporting files that help the consensus analysis. Must be absolute full, non-abbreviated paths.",
     "models": (
-        "List of models to consult. Each entry may include model, stance (for/against/neutral), and stance_prompt. "
-        "Each (model, stance) pair must be unique, e.g. [{'model':'o3','stance':'for'}, {'model':'o3','stance':'against'}]."
+        "User-specified list of models to consult (provide at least two entries). "
+        "Each entry may include model, stance (for/against/neutral), and stance_prompt. "
+        "Each (model, stance) pair must be unique, e.g. [{'model':'gpt5','stance':'for'}, {'model':'pro','stance':'against'}]."
     ),
     "current_model_index": "0-based index of the next model to consult (managed internally).",
     "model_responses": "Internal log of responses gathered so far.",
@@ -233,7 +234,11 @@ of the evidence, even when it strongly points in one direction.""",
                     },
                     "required": ["model"],
                 },
-                "description": CONSENSUS_WORKFLOW_FIELD_DESCRIPTIONS["models"],
+                "description": (
+                    "User-specified roster of models to consult (provide at least two entries). "
+                    + CONSENSUS_WORKFLOW_FIELD_DESCRIPTIONS["models"]
+                ),
+                "minItems": 2,
             },
             "current_model_index": {
                 "type": "integer",
@@ -268,17 +273,19 @@ of the evidence, even when it strongly points in one direction.""",
             "thinking_mode",  # Not used in consensus workflow
         ]
 
-        # Build schema with proper field exclusion
-        # Include model field for compatibility but don't require it
-        schema = WorkflowSchemaBuilder.build_schema(
+        requires_model = self.requires_model()
+        model_field_schema = self.get_model_field_schema() if requires_model else None
+        auto_mode = self.is_effective_auto_mode() if requires_model else False
+
+        return WorkflowSchemaBuilder.build_schema(
             tool_specific_fields=consensus_field_overrides,
-            model_field_schema=self.get_model_field_schema(),
-            auto_mode=False,  # Consensus doesn't require model at MCP boundary
+            model_field_schema=model_field_schema,
+            auto_mode=auto_mode,
             tool_name=self.get_name(),
             excluded_workflow_fields=excluded_workflow_fields,
             excluded_common_fields=excluded_common_fields,
+            require_model=requires_model,
         )
-        return schema
 
     def get_required_actions(
         self, step_number: int, confidence: str, findings: str, total_steps: int, request=None

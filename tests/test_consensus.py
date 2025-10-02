@@ -122,8 +122,8 @@ class TestConsensusTool:
         # relevant_files should be present as it's used by consensus
         assert "relevant_files" in schema["properties"]
 
-        # model field should be present for Gemini compatibility (consensus uses 'models' as well)
-        assert "model" in schema["properties"]
+        # model field should NOT be present as consensus uses 'models' field instead
+        assert "model" not in schema["properties"]
 
         # Verify workflow fields that should NOT be present
         assert "files_checked" not in schema["properties"]

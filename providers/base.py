@@ -42,6 +42,7 @@ class ModelProvider(ABC):
         """Initialize the provider with API key and optional configuration."""
         self.api_key = api_key
         self.config = kwargs
+        self._sorted_capabilities_cache: Optional[list[tuple[str, ModelCapabilities]]] = None
 
     # ------------------------------------------------------------------
     # Provider identity & capability surface
@@ -76,6 +77,27 @@ class ModelProvider(ABC):
         if isinstance(model_map, dict) and model_map:
             return {k: v for k, v in model_map.items() if isinstance(v, ModelCapabilities)}
         return {}
+
+    def get_capabilities_by_rank(self) -> list[tuple[str, ModelCapabilities]]:
+        """Return model capabilities sorted by effective capability rank."""
+
+        if self._sorted_capabilities_cache is not None:
+            return list(self._sorted_capabilities_cache)
+
+        model_configs = self.get_all_model_capabilities()
+        if not model_configs:
+            self._sorted_capabilities_cache = []
+            return []
+
+        items = list(model_configs.items())
+        items.sort(key=lambda item: (-item[1].get_effective_capability_rank(), item[0]))
+        self._sorted_capabilities_cache = items
+        return list(items)
+
+    def _invalidate_capability_cache(self) -> None:
+        """Clear cached sorted capability data (call after dynamic updates)."""
+
+        self._sorted_capabilities_cache = None
 
     def list_models(
         self,

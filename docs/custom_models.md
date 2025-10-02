@@ -60,6 +60,10 @@ The server uses `conf/custom_models.json` to map convenient aliases to both Open
 
 View the full list in [`conf/custom_models.json`](conf/custom_models.json). 
 
+To control ordering in auto mode or the `listmodels` summary, adjust the
+[`intelligence_score`](model_ranking.md) for each entry (or rely on the automatic
+heuristic described there).
+
 **Note:** While you can use any OpenRouter model by its full name, models not in the config file will use generic capabilities (32K context window, no extended thinking, etc.) which may not match the model's actual capabilities. For best results, add new models to the config file with their proper specifications.
 
 ## Quick Start

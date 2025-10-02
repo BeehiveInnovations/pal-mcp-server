@@ -283,10 +283,12 @@ DISABLED_TOOLS=
 ## Quick Links
 
 **📖 Documentation**
+- [Docs Overview](docs/index.md) - High-level map of major guides
 - [Getting Started](docs/getting-started.md) - Complete setup guide
 - [Tools Reference](docs/tools/) - All tools with examples
 - [Advanced Usage](docs/advanced-usage.md) - Power user features
 - [Configuration](docs/configuration.md) - Environment variables, restrictions
+- [Model Ranking Guide](docs/model_ranking.md) - How intelligence scores drive auto-mode suggestions
 
 **🔧 Setup & Support**
 - [WSL Setup](docs/wsl-setup.md) - Windows users

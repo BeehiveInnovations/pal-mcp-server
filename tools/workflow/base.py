@@ -139,12 +139,16 @@ class WorkflowTool(BaseTool, BaseWorkflowMixin):
         Returns:
             Complete JSON schema for the workflow tool
         """
+        requires_model = self.requires_model()
+        model_field_schema = self.get_model_field_schema() if requires_model else None
+        auto_mode = self.is_effective_auto_mode() if requires_model else False
         return WorkflowSchemaBuilder.build_schema(
             tool_specific_fields=self.get_tool_fields(),
             required_fields=self.get_required_fields(),
-            model_field_schema=self.get_model_field_schema(),
-            auto_mode=self.is_effective_auto_mode(),
+            model_field_schema=model_field_schema,
+            auto_mode=auto_mode,
             tool_name=self.get_name(),
+            require_model=requires_model,
         )
 
     def get_workflow_request_model(self):

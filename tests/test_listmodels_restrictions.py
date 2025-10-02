@@ -70,11 +70,25 @@ class TestListModelsRestrictions(unittest.TestCase):
                 config = MagicMock()
                 config.model_name = "anthropic/claude-opus-4-20240229"
                 config.context_window = 200000
+                config.get_effective_capability_rank.return_value = 90  # High rank for Opus
                 return config
             elif "sonnet" in model_name.lower():
                 config = MagicMock()
                 config.model_name = "anthropic/claude-sonnet-4-20240229"
                 config.context_window = 200000
+                config.get_effective_capability_rank.return_value = 80  # Lower rank for Sonnet
+                return config
+            elif "deepseek" in model_name.lower():
+                config = MagicMock()
+                config.model_name = "deepseek/deepseek-r1-0528:free"
+                config.context_window = 100000
+                config.get_effective_capability_rank.return_value = 70
+                return config
+            elif "qwen" in model_name.lower():
+                config = MagicMock()
+                config.model_name = "qwen/qwen3-235b-a22b-04-28:free"
+                config.context_window = 100000
+                config.get_effective_capability_rank.return_value = 60
                 return config
             return None  # No config for models without aliases
 
@@ -89,6 +103,9 @@ class TestListModelsRestrictions(unittest.TestCase):
             return None
 
         mock_get_provider.side_effect = get_provider_side_effect
+
+        # Ensure registry is cleared before test
+        ModelProviderRegistry._registry = {}
 
         # Mock available models
         mock_get_models.return_value = {
@@ -131,6 +148,9 @@ class TestListModelsRestrictions(unittest.TestCase):
         # Parse the output
         lines = result.split("\n")
 
+        # Debug: print the actual result for troubleshooting
+        # print(f"DEBUG: Full result:\n{result}")
+
         # Check that OpenRouter section exists
         openrouter_section_found = False
         openrouter_models = []
@@ -141,15 +161,18 @@ class TestListModelsRestrictions(unittest.TestCase):
                 openrouter_section_found = True
             elif "Available Models" in line and openrouter_section_found:
                 in_openrouter_section = True
-            elif in_openrouter_section and line.strip().startswith("- "):
-                # Extract model name from various line formats:
-                # - `model-name` → `full-name` (context)
-                # - `model-name`
-                line_content = line.strip()[2:]  # Remove "- "
-                if "`" in line_content:
-                    # Extract content between first pair of backticks
-                    model_name = line_content.split("`")[1]
-                    openrouter_models.append(model_name)
+            elif in_openrouter_section:
+                # Check for lines with model names in backticks
+                # Format: - `model-name` (score X)
+                if line.strip().startswith("- ") and "`" in line:
+                    # Extract model name between backticks
+                    parts = line.split("`")
+                    if len(parts) >= 2:
+                        model_name = parts[1]
+                        openrouter_models.append(model_name)
+                # Stop parsing when we hit the next section
+                elif "##" in line and in_openrouter_section:
+                    break
 
         self.assertTrue(openrouter_section_found, "OpenRouter section not found")
         self.assertEqual(

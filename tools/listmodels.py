@@ -40,8 +40,9 @@ class ListModelsTool(BaseTool):
         """Return the JSON schema for the tool's input"""
         return {
             "type": "object",
-            "properties": {"model": {"type": "string", "description": "Model to use (ignored by listmodels tool)"}},
+            "properties": {},
             "required": [],
+            "additionalProperties": False,
         }
 
     def get_annotations(self) -> Optional[dict[str, Any]]:
@@ -106,7 +107,7 @@ class ListModelsTool(BaseTool):
                 output_lines.append("\n**Models**:")
 
                 aliases = []
-                for model_name, capabilities in provider.get_all_model_capabilities().items():
+                for model_name, capabilities in provider.get_capabilities_by_rank():
                     description = capabilities.description or "No description available"
                     context_window = capabilities.context_window
 
@@ -153,33 +154,44 @@ class ListModelsTool(BaseTool):
                     available_models = provider.list_models(respect_restrictions=True)
                     registry = OpenRouterModelRegistry()
 
-                    # Group by provider for better organization
-                    providers_models = {}
-                    for model_name in available_models:  # Show ALL available models
-                        # Try to resolve to get config details
+                    # Group by provider and retain ranking information for consistent ordering
+                    providers_models: dict[str, list[tuple[int, str, Optional[Any]]]] = {}
+
+                    def _format_context(tokens: int) -> str:
+                        if not tokens:
+                            return "?"
+                        if tokens >= 1_000_000:
+                            return f"{tokens // 1_000_000}M"
+                        if tokens >= 1_000:
+                            return f"{tokens // 1_000}K"
+                        return str(tokens)
+
+                    for model_name in available_models:
                         config = registry.resolve(model_name)
-                        if config:
-                            # Extract provider from model_name
-                            provider_name = config.model_name.split("/")[0] if "/" in config.model_name else "other"
-                            if provider_name not in providers_models:
-                                providers_models[provider_name] = []
-                            providers_models[provider_name].append((model_name, config))
-                        else:
-                            # Model without config - add with basic info
-                            provider_name = model_name.split("/")[0] if "/" in model_name else "other"
-                            if provider_name not in providers_models:
-                                providers_models[provider_name] = []
-                            providers_models[provider_name].append((model_name, None))
+                        provider_name = "other"
+                        if config and "/" in config.model_name:
+                            provider_name = config.model_name.split("/")[0]
+                        elif "/" in model_name:
+                            provider_name = model_name.split("/")[0]
+
+                        providers_models.setdefault(provider_name, [])
+
+                        rank = config.get_effective_capability_rank() if config else 0
+                        providers_models[provider_name].append((rank, model_name, config))
 
                     output_lines.append("\n**Available Models**:")
                     for provider_name, models in sorted(providers_models.items()):
                         output_lines.append(f"\n*{provider_name.title()}:*")
-                        for alias, config in models:  # Show ALL models from each provider
+                        for rank, alias, config in sorted(models, key=lambda item: (-item[0], item[1])):
                             if config:
-                                context_str = f"{config.context_window // 1000}K" if config.context_window else "?"
-                                output_lines.append(f"- `{alias}` → `{config.model_name}` ({context_str} context)")
+                                context_str = _format_context(config.context_window)
+                                suffix_parts = [f"{context_str} context"]
+                                if getattr(config, "supports_extended_thinking", False):
+                                    suffix_parts.append("thinking")
+                                suffix = ", ".join(suffix_parts)
+                                output_lines.append(f"- `{alias}` → `{config.model_name}` (score {rank}, {suffix})")
                             else:
-                                output_lines.append(f"- `{alias}`")
+                                output_lines.append(f"- `{alias}` (score {rank})")
 
                     total_models = len(available_models)
                     # Show all models - no truncation message needed

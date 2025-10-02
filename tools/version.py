@@ -146,8 +146,9 @@ class VersionTool(BaseTool):
         """Return the JSON schema for the tool's input"""
         return {
             "type": "object",
-            "properties": {"model": {"type": "string", "description": "Model to use (ignored by version tool)"}},
+            "properties": {},
             "required": [],
+            "additionalProperties": False,
         }
 
     def get_annotations(self) -> Optional[dict[str, Any]]:

@@ -85,6 +85,7 @@ class OpenRouterProvider(OpenAICompatibleProvider):
                 provider=ProviderType.OPENROUTER,
                 model_name=canonical_name,
                 friendly_name=self.FRIENDLY_NAME,
+                intelligence_score=9,
                 context_window=32_768,
                 max_output_tokens=32_768,
                 supports_extended_thinking=False,

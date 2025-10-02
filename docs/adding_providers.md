@@ -10,6 +10,13 @@ Each provider:
 - Implements the minimal abstract hooks (`get_provider_type()` and `generate_content()`)
 - Gets registered automatically via environment variables
 
+### Intelligence score cheatsheet
+
+Set `intelligence_score` (1–20) when you want deterministic ordering in auto
+mode or the `listmodels` output. The runtime rank starts from this human score
+and adds smaller bonuses for context window, extended thinking, and other
+features ([details here](model_ranking.md)).
+
 ## Choose Your Implementation Path
 
 **Option A: Full Provider (`ModelProvider`)**
@@ -68,6 +75,7 @@ class ExampleModelProvider(ModelProvider):
             provider=ProviderType.EXAMPLE,
             model_name="example-large",
             friendly_name="Example Large",
+            intelligence_score=18,
             context_window=100_000,
             max_output_tokens=50_000,
             supports_extended_thinking=False,
@@ -79,6 +87,7 @@ class ExampleModelProvider(ModelProvider):
             provider=ProviderType.EXAMPLE,
             model_name="example-small",
             friendly_name="Example Small",
+            intelligence_score=14,
             context_window=32_000,
             max_output_tokens=16_000,
             temperature_constraint=RangeTemperatureConstraint(0.0, 2.0, 0.7),

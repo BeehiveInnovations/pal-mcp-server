@@ -31,7 +31,8 @@
       "supports_temperature": "Whether the model accepts temperature parameter in API calls (set to false for O3/O4 reasoning models)",
       "temperature_constraint": "Type of temperature constraint: 'fixed' (fixed value), 'range' (continuous range), 'discrete' (specific values), or omit for default range",
       "is_custom": "Set to true for models that should ONLY be used with custom API endpoints (Ollama, vLLM, etc.). False or omitted for OpenRouter/cloud models.",
-      "description": "Human-readable description of the model"
+      "description": "Human-readable description of the model",
+      "intelligence_score": "1-20 human rating used as the primary signal for auto-mode model ordering"
     },
     "example_custom_model": {
       "model_name": "my-local-model",
@@ -46,7 +47,8 @@
       "supports_temperature": true,
       "temperature_constraint": "range",
       "is_custom": true,
-      "description": "Example custom/local model for Ollama, vLLM, etc."
+      "description": "Example custom/local model for Ollama, vLLM, etc.",
+      "intelligence_score": 12
     }
   },
   "models": [
@@ -63,7 +65,8 @@
       "supports_function_calling": false,
       "supports_images": true,
       "max_image_size_mb": 5.0,
-      "description": "Claude Sonnet 4.5 - High-performance model with exceptional reasoning and efficiency"
+      "description": "Claude Sonnet 4.5 - High-performance model with exceptional reasoning and efficiency",
+      "intelligence_score": 12
     },
     {
       "model_name": "anthropic/claude-opus-4.1",
@@ -75,7 +78,8 @@
       "supports_function_calling": false,
       "supports_images": true,
       "max_image_size_mb": 5.0,
-      "description": "Claude Opus 4.1 - Our most capable and intelligent model yet"
+      "description": "Claude Opus 4.1 - Our most capable and intelligent model yet",
+      "intelligence_score": 14
     },
     {
       "model_name": "anthropic/claude-sonnet-4.1",
@@ -87,7 +91,8 @@
       "supports_function_calling": false,
       "supports_images": true,
       "max_image_size_mb": 5.0,
-      "description": "Claude Sonnet 4.1 - Last generation high-performance model with exceptional reasoning and efficiency"
+      "description": "Claude Sonnet 4.1 - Last generation high-performance model with exceptional reasoning and efficiency",
+      "intelligence_score": 10
     },
     {
       "model_name": "anthropic/claude-3.5-haiku",
@@ -99,31 +104,34 @@
       "supports_function_calling": false,
       "supports_images": true,
       "max_image_size_mb": 5.0,
-      "description": "Claude 3 Haiku - Fast and efficient with vision"
+      "description": "Claude 3 Haiku - Fast and efficient with vision",
+      "intelligence_score": 8
     },
     {
       "model_name": "google/gemini-2.5-pro",
       "aliases": ["pro","gemini-pro", "gemini", "pro-openrouter"],
       "context_window": 1048576,
       "max_output_tokens": 65536,
-      "supports_extended_thinking": false,
+      "supports_extended_thinking": true,
       "supports_json_mode": true,
-      "supports_function_calling": false,
+      "supports_function_calling": true,
       "supports_images": true,
       "max_image_size_mb": 20.0,
-      "description": "Google's Gemini 2.5 Pro via OpenRouter with vision"
+      "description": "Google's Gemini 2.5 Pro via OpenRouter with vision",
+      "intelligence_score": 18
     },
     {
       "model_name": "google/gemini-2.5-flash",
       "aliases": ["flash","gemini-flash"],
       "context_window": 1048576,
       "max_output_tokens": 65536,
-      "supports_extended_thinking": false,
+      "supports_extended_thinking": true,
       "supports_json_mode": true,
-      "supports_function_calling": false,
+      "supports_function_calling": true,
       "supports_images": true,
       "max_image_size_mb": 15.0,
-      "description": "Google's Gemini 2.5 Flash via OpenRouter with vision"
+      "description": "Google's Gemini 2.5 Flash via OpenRouter with vision",
+      "intelligence_score": 10
     },
     {
       "model_name": "mistralai/mistral-large-2411",
@@ -135,7 +143,8 @@
       "supports_function_calling": true,
       "supports_images": false,
       "max_image_size_mb": 0.0,
-      "description": "Mistral's largest model (text-only)"
+      "description": "Mistral's largest model (text-only)",
+      "intelligence_score": 11
     },
     {
       "model_name": "meta-llama/llama-3-70b",
@@ -147,7 +156,8 @@
       "supports_function_calling": false,
       "supports_images": false,
       "max_image_size_mb": 0.0,
-      "description": "Meta's Llama 3 70B model (text-only)"
+      "description": "Meta's Llama 3 70B model (text-only)",
+      "intelligence_score": 9
     },
     {
       "model_name": "deepseek/deepseek-r1-0528",
@@ -159,7 +169,8 @@
       "supports_function_calling": false,
       "supports_images": false,
       "max_image_size_mb": 0.0,
-      "description": "DeepSeek R1 with thinking mode - advanced reasoning capabilities (text-only)"
+      "description": "DeepSeek R1 with thinking mode - advanced reasoning capabilities (text-only)",
+      "intelligence_score": 15
     },
     {
       "model_name": "perplexity/llama-3-sonar-large-32k-online",
@@ -171,7 +182,8 @@
       "supports_function_calling": false,
       "supports_images": false,
       "max_image_size_mb": 0.0,
-      "description": "Perplexity's online model with web search (text-only)"
+      "description": "Perplexity's online model with web search (text-only)",
+      "intelligence_score": 9
     },
     {
       "model_name": "openai/o3",
@@ -185,7 +197,8 @@
       "max_image_size_mb": 20.0,
       "supports_temperature": false,
       "temperature_constraint": "fixed",
-      "description": "OpenAI's o3 model - well-rounded and powerful across domains with vision"
+      "description": "OpenAI's o3 model - well-rounded and powerful across domains with vision",
+      "intelligence_score": 14
     },
     {
       "model_name": "openai/o3-mini",
@@ -199,7 +212,8 @@
       "max_image_size_mb": 20.0,
       "supports_temperature": false,
       "temperature_constraint": "fixed",
-      "description": "OpenAI's o3-mini model - balanced performance and speed with vision"
+      "description": "OpenAI's o3-mini model - balanced performance and speed with vision",
+      "intelligence_score": 12
     },
     {
       "model_name": "openai/o3-mini-high",
@@ -213,7 +227,8 @@
       "max_image_size_mb": 20.0,
       "supports_temperature": false,
       "temperature_constraint": "fixed",
-      "description": "OpenAI's o3-mini with high reasoning effort - optimized for complex problems with vision"
+      "description": "OpenAI's o3-mini with high reasoning effort - optimized for complex problems with vision",
+      "intelligence_score": 13
     },
     {
       "model_name": "openai/o3-pro",
@@ -227,7 +242,8 @@
       "max_image_size_mb": 20.0,
       "supports_temperature": false,
       "temperature_constraint": "fixed",
-      "description": "OpenAI's o3-pro model - professional-grade reasoning and analysis with vision"
+      "description": "OpenAI's o3-pro model - professional-grade reasoning and analysis with vision",
+      "intelligence_score": 15
     },
     {
       "model_name": "openai/o4-mini",
@@ -241,7 +257,8 @@
       "max_image_size_mb": 20.0,
       "supports_temperature": false,
       "temperature_constraint": "fixed",
-      "description": "OpenAI's o4-mini model - optimized for shorter contexts with rapid reasoning and vision"
+      "description": "OpenAI's o4-mini model - optimized for shorter contexts with rapid reasoning and vision",
+      "intelligence_score": 11
     },
     {
       "model_name": "openai/gpt-5",
@@ -255,7 +272,8 @@
       "max_image_size_mb": 20.0,
       "supports_temperature": true,
       "temperature_constraint": "range",
-      "description": "GPT-5 (400K context, 128K output) - Advanced model with reasoning support"
+      "description": "GPT-5 (400K context, 128K output) - Advanced model with reasoning support",
+      "intelligence_score": 16
     },
     {
       "model_name": "openai/gpt-5-mini",
@@ -269,7 +287,8 @@
       "max_image_size_mb": 20.0,
       "supports_temperature": true,
       "temperature_constraint": "fixed",
-      "description": "GPT-5-mini (400K context, 128K output) - Efficient variant with reasoning support"
+      "description": "GPT-5-mini (400K context, 128K output) - Efficient variant with reasoning support",
+      "intelligence_score": 15
     },
     {
       "model_name": "openai/gpt-5-nano",
@@ -283,7 +302,8 @@
       "max_image_size_mb": 20.0,
       "supports_temperature": true,
       "temperature_constraint": "fixed",
-      "description": "GPT-5 nano (400K context, 128K output) - Fastest, cheapest version of GPT-5 for summarization and classification tasks"
+      "description": "GPT-5 nano (400K context, 128K output) - Fastest, cheapest version of GPT-5 for summarization and classification tasks",
+      "intelligence_score": 13
     },
     {
       "model_name": "llama3.2",
@@ -296,7 +316,8 @@
       "supports_images": false,
       "max_image_size_mb": 0.0,
       "is_custom": true,
-      "description": "Local Llama 3.2 model via custom endpoint (Ollama/vLLM) - 128K context window (text-only)"
+      "description": "Local Llama 3.2 model via custom endpoint (Ollama/vLLM) - 128K context window (text-only)",
+      "intelligence_score": 6
     }
   ]
 }

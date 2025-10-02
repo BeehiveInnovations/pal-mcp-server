@@ -174,6 +174,7 @@ class TestOpenRouterAutoMode:
                 mock_config = Mock()
                 mock_config.is_custom = False
                 mock_config.aliases = []  # Empty list of aliases
+                mock_config.get_effective_capability_rank = Mock(return_value=50)  # Add ranking method
                 return mock_config
             return None
 
@@ -220,6 +221,7 @@ class TestOpenRouterAutoMode:
         # Mock the resolve method to return model configs with aliases
         mock_model_config = Mock()
         mock_model_config.aliases = []  # Empty aliases for simplicity
+        mock_model_config.get_effective_capability_rank = Mock(return_value=50)  # Add ranking method
         mock_registry.resolve.return_value = mock_model_config
 
         ModelProviderRegistry.register_provider(ProviderType.OPENROUTER, OpenRouterProvider)

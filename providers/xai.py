@@ -27,6 +27,7 @@ class XAIModelProvider(OpenAICompatibleProvider):
             provider=ProviderType.XAI,
             model_name="grok-4",
             friendly_name="X.AI (Grok 4)",
+            intelligence_score=16,
             context_window=256_000,  # 256K tokens
             max_output_tokens=256_000,  # 256K tokens max output
             supports_extended_thinking=True,  # Grok-4 supports reasoning mode
@@ -45,6 +46,7 @@ class XAIModelProvider(OpenAICompatibleProvider):
             provider=ProviderType.XAI,
             model_name="grok-3",
             friendly_name="X.AI (Grok 3)",
+            intelligence_score=13,
             context_window=131_072,  # 131K tokens
             max_output_tokens=131072,
             supports_extended_thinking=False,
@@ -63,6 +65,7 @@ class XAIModelProvider(OpenAICompatibleProvider):
             provider=ProviderType.XAI,
             model_name="grok-3-fast",
             friendly_name="X.AI (Grok 3 Fast)",
+            intelligence_score=12,
             context_window=131_072,  # 131K tokens
             max_output_tokens=131072,
             supports_extended_thinking=False,
