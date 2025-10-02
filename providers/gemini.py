@@ -117,16 +117,25 @@ class GeminiModelProvider(ModelProvider):
     }
 
     def __init__(self, api_key: str, **kwargs):
-        """Initialize Gemini provider with API key."""
+        """Initialize Gemini provider with API key and optional base URL."""
         super().__init__(api_key, **kwargs)
         self._client = None
         self._token_counters = {}  # Cache for token counting
+        self._base_url = kwargs.get("base_url", None)  # Optional custom endpoint
 
     @property
     def client(self):
         """Lazy initialization of Gemini client."""
         if self._client is None:
-            self._client = genai.Client(api_key=self.api_key)
+            # Check if custom base URL is provided
+            if self._base_url:
+                # Use HttpOptions to set custom endpoint
+                http_options = types.HttpOptions(baseUrl=self._base_url)
+                logger.debug(f"Initializing Gemini client with custom endpoint: {self._base_url}")
+                self._client = genai.Client(api_key=self.api_key, http_options=http_options)
+            else:
+                # Use default Google endpoint
+                self._client = genai.Client(api_key=self.api_key)
         return self._client
 
     def get_capabilities(self, model_name: str) -> ModelCapabilities:
