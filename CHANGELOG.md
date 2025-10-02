@@ -2,6 +2,34 @@
 
 <!-- version list -->
 
+## v5.17.0 (2025-10-02)
+
+### Bug Fixes
+
+- Use types.HttpOptions from module imports instead of local import
+  ([`956e8a6`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/956e8a6927837f5c7f031a0db1dd0b0b5483c626))
+
+### Chores
+
+- Sync version to config.py [skip ci]
+  ([`0836213`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/0836213071d0037d8a6d2e64d34ab5df79b8e684))
+
+### Code Style
+
+- Apply Black formatting to use double quotes
+  ([`33ea896`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/33ea896c511764904bf2b6b22df823928f88a148))
+
+### Features
+
+- Add custom Gemini endpoint support
+  ([`462bce0`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/462bce002e2141b342260969588e69f55f8bb46a))
+
+### Refactoring
+
+- Simplify Gemini provider initialization using kwargs dict
+  ([`023940b`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/023940be3e38a7eedbc8bf8404a4a5afc50f8398))
+
+
 ## v5.16.0 (2025-10-01)
 
 ### Bug Fixes
