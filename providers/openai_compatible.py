@@ -534,16 +534,14 @@ class OpenAICompatibleProvider(ModelProvider):
         resolved_model = self._resolve_model_name(model_name)
 
         # Use the effective temperature we calculated earlier
-        if effective_temperature is not None:
+        supports_sampling = effective_temperature is not None
+
+        if supports_sampling:
             completion_params["temperature"] = effective_temperature
-            supports_temperature = True
-        else:
-            # Model doesn't support temperature
-            supports_temperature = False
 
         # Add max tokens if specified and model supports it
         # O3/O4 models that don't support temperature also don't support max_tokens
-        if max_output_tokens and supports_temperature:
+        if max_output_tokens and supports_sampling:
             completion_params["max_tokens"] = max_output_tokens
 
         # Add any additional OpenAI-specific parameters
@@ -551,7 +549,7 @@ class OpenAICompatibleProvider(ModelProvider):
         for key, value in kwargs.items():
             if key in ["top_p", "frequency_penalty", "presence_penalty", "seed", "stop", "stream"]:
                 # Reasoning models (those that don't support temperature) also don't support these parameters
-                if not supports_temperature and key in ["top_p", "frequency_penalty", "presence_penalty"]:
+                if not supports_sampling and key in ["top_p", "frequency_penalty", "presence_penalty"]:
                     continue  # Skip unsupported parameters for reasoning models
                 completion_params[key] = value
 
