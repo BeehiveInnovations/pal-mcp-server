@@ -1360,6 +1360,18 @@ async def main():
     logger.info(f"Available tools: {list(TOOLS.keys())}")
     logger.info("Server ready - waiting for tool requests...")
 
+    # Prepare dynamic instructions for the MCP client based on model mode
+    if IS_AUTO_MODE:
+        handshake_instructions = (
+            "When the user names a specific model (e.g. 'use chat with gpt5'), send that exact model in the tool call. "
+            "When no model is mentioned, first use the `listmodels` tool from zen to obtain available models to choose the best one from."
+        )
+    else:
+        handshake_instructions = (
+            "When the user names a specific model (e.g. 'use chat with gpt5'), send that exact model in the tool call. "
+            f"When no model is mentioned, default to '{DEFAULT_MODEL}'."
+        )
+
     # Run the server using stdio transport (standard input/output)
     # This allows the server to be launched by MCP clients as a subprocess
     async with stdio_server() as (read_stream, write_stream):
@@ -1369,6 +1381,7 @@ async def main():
             InitializationOptions(
                 server_name="zen",
                 server_version=__version__,
+                instructions=handshake_instructions,
                 capabilities=ServerCapabilities(
                     tools=ToolsCapability(),  # Advertise tool support capability
                     prompts=PromptsCapability(),  # Advertise prompt support capability
