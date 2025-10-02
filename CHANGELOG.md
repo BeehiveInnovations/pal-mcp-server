@@ -2,6 +2,65 @@
 
 <!-- version list -->
 
+## v5.17.1 (2025-10-02)
+
+### Bug Fixes
+
+- Baseclass should return MODEL_CAPABILITIES
+  ([`82a03ce`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/82a03ce63f28fece17bfc1d70bdb75aadec4c6bb))
+
+### Chores
+
+- Sync version to config.py [skip ci]
+  ([`7ce66bd`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/7ce66bd9508865cef64dc30936e86e37c1a306d0))
+
+### Documentation
+
+- Document custom timeout values
+  ([`218fbdf`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/218fbdf49cb90f2353f58bbaef567519dd876634))
+
+### Refactoring
+
+- Clean temperature inference
+  ([`9c11ecc`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/9c11ecc4bf37562aa08dc3ecfa70f380e0ead357))
+
+- Cleanup
+  ([`6ec2033`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/6ec2033f34c74ad139036de83a34cf6d374db77b))
+
+- Cleanup provider base class; cleanup shared responsibilities; cleanup public contract
+  ([`693b84d`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/693b84db2b87271ac809abcf02100eee7405720b))
+
+- Cleanup token counting
+  ([`7fe9fc4`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/7fe9fc49f8e3cd92be4c45a6645d5d4ab3014091))
+
+- Code cleanup
+  ([`bb138e2`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/bb138e2fb552f837b0f9f466027580e1feb26f7c))
+
+- Code cleanup
+  ([`182aa62`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/182aa627dfba6c578089f83444882cdd2635a7e3))
+
+- Moved image related code out of base provider into a separate utility
+  ([`14a35af`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/14a35afa1d25408e62b968d9846be7bffaede327))
+
+- Moved temperature method from base provider to model capabilities
+  ([`6d237d0`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/6d237d09709f757a042baf655f47eb4ddfc078ad))
+
+- Moved temperature method from base provider to model capabilities
+  ([`f461cb4`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/f461cb451953f882bbde096a9ecf0584deb1dde8))
+
+- Removed hard coded checks, use model capabilities instead
+  ([`250545e`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/250545e34f8d4f8026bfebb3171f3c2bc40f4692))
+
+- Removed hook from base class, turned into helper static method instead
+  ([`2b10adc`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/2b10adcaf2b8741f0da5de84cc3483eae742a014))
+
+- Removed method from provider, should use model capabilities instead
+  ([`a254ff2`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/a254ff2220ba00ec30f5110c69a4841419917382))
+
+- Renaming to reflect underlying type
+  ([`1dc25f6`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/1dc25f6c3d4cdbf01f041cc424e3b5235c23175b))
+
+
 ## v5.17.0 (2025-10-02)
 
 ### Bug Fixes
