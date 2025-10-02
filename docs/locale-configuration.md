@@ -53,10 +53,14 @@ def get_language_instruction(self) -> str:
     Returns:
         str: Language instruction to prepend to prompt, or empty string if no locale set
     """
-    from config import LOCALE
-    if not LOCALE or not LOCALE.strip():
+    import os
+
+    locale = os.getenv("LOCALE", "").strip()
+
+    if not locale:
         return ""
-    return f"Always respond in {LOCALE.strip()}.\n\n"
+
+    return f"Always respond in {locale}.\n\n"
 ```
 
 ### Integration in Tool Execution
@@ -80,7 +84,7 @@ system_prompt = language_instruction + base_system_prompt
    ```
 2. Restart the MCP server:
    ```bash
-   python server.py
+   ./run-server.sh
    ```
 3. Use any tool – responses will be in the specified language.
 
@@ -153,11 +157,14 @@ To customize the language instruction, modify the `get_language_instruction()` m
 
 ```python
 def get_language_instruction(self) -> str:
-    from config import LOCALE
-    if not LOCALE or not LOCALE.strip():
+    import os
+
+    locale = os.getenv("LOCALE", "").strip()
+
+    if not locale:
         return ""
     # Custom instruction
-    return f"Always respond in {LOCALE.strip()} and use a professional tone.\n\n"
+    return f"Always respond in {locale} and use a professional tone.\n\n"
 ```
 
 ### Per-Tool Customization
@@ -167,10 +174,13 @@ You can also override the method in specific tools for custom behavior:
 ```python
 class MyCustomTool(SimpleTool):
     def get_language_instruction(self) -> str:
-        from config import LOCALE
-        if LOCALE == "fr-FR":
+        import os
+
+        locale = os.getenv("LOCALE", "").strip()
+
+        if locale == "fr-FR":
             return "Respond in French with precise technical vocabulary.\n\n"
-        elif LOCALE == "zh-CN":
+        elif locale == "zh-CN":
             return "请用中文回答，使用专业术语。\n\n"
         else:
             return super().get_language_instruction()

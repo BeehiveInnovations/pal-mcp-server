@@ -452,9 +452,9 @@ Web search is enabled by default, allowing models to request Claude perform sear
 The server uses carefully crafted system prompts to give each tool specialized expertise:
 
 ### Prompt Architecture
-- **Centralized Prompts**: All system prompts are defined in `prompts/tool_prompts.py`
+- **Centralized Prompts**: Each tool's system prompt lives in `systemprompts/` (for example, `systemprompts/chat_prompt.py`)
 - **Tool Integration**: Each tool inherits from `BaseTool` and implements `get_system_prompt()`
-- **Prompt Flow**: `User Request → Tool Selection → System Prompt + Context → Gemini Response`
+- **Prompt Flow**: `User Request → Tool Selection → System Prompt + Context → Model Response`
 
 ### Specialized Expertise
 Each tool has a unique system prompt that defines its role and approach:
@@ -465,6 +465,6 @@ Each tool has a unique system prompt that defines its role and approach:
 
 ### Customization
 To modify tool behavior, you can:
-1. Edit prompts in `prompts/tool_prompts.py` for global changes
+1. Edit the prompt file in `systemprompts/` (and export it via `systemprompts/__init__.py`) for global changes
 2. Override `get_system_prompt()` in a tool class for tool-specific changes
 3. Use the `temperature` parameter to adjust response style (0.2 for focused, 0.7 for creative)

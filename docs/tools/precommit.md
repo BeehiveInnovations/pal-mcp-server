@@ -94,8 +94,8 @@ Then it shared the changes and relevant code with Gemini 2.5 Pro - the following
 
   🚨 [HIGH PRIORITY] Critical Issue Found
 
-  Inconsistent Provider Handling in tools/base.py
-  - Location: tools/base.py line ~1833 in _create_continuation_offer_response method
+  Inconsistent Provider Handling in tools/shared/base_tool.py
+  - Location: tools/shared/base_tool.py inside _create_continuation_offer_response
   - Problem: The defensive provider handling pattern was applied in 2 locations but missed a 3rd location
   - Impact: Risk of AttributeError: 'str' object has no attribute 'get_provider_type' in continuation scenarios
   - Fix Required: Apply the same defensive pattern to the missed location
