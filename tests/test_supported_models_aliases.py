@@ -1,4 +1,4 @@
-"""Test the SUPPORTED_MODELS aliases structure across all providers."""
+"""Test the MODEL_CAPABILITIES aliases structure across all providers."""
 
 from providers.dial import DIALModelProvider
 from providers.gemini import GeminiModelProvider
@@ -7,24 +7,24 @@ from providers.xai import XAIModelProvider
 
 
 class TestSupportedModelsAliases:
-    """Test that all providers have correctly structured SUPPORTED_MODELS with aliases."""
+    """Test that all providers have correctly structured MODEL_CAPABILITIES with aliases."""
 
     def test_gemini_provider_aliases(self):
         """Test Gemini provider's alias structure."""
         provider = GeminiModelProvider("test-key")
 
         # Check that all models have ModelCapabilities with aliases
-        for model_name, config in provider.SUPPORTED_MODELS.items():
+        for model_name, config in provider.MODEL_CAPABILITIES.items():
             assert hasattr(config, "aliases"), f"{model_name} must have aliases attribute"
             assert isinstance(config.aliases, list), f"{model_name} aliases must be a list"
 
         # Test specific aliases
-        assert "flash" in provider.SUPPORTED_MODELS["gemini-2.5-flash"].aliases
-        assert "pro" in provider.SUPPORTED_MODELS["gemini-2.5-pro"].aliases
-        assert "flash-2.0" in provider.SUPPORTED_MODELS["gemini-2.0-flash"].aliases
-        assert "flash2" in provider.SUPPORTED_MODELS["gemini-2.0-flash"].aliases
-        assert "flashlite" in provider.SUPPORTED_MODELS["gemini-2.0-flash-lite"].aliases
-        assert "flash-lite" in provider.SUPPORTED_MODELS["gemini-2.0-flash-lite"].aliases
+        assert "flash" in provider.MODEL_CAPABILITIES["gemini-2.5-flash"].aliases
+        assert "pro" in provider.MODEL_CAPABILITIES["gemini-2.5-pro"].aliases
+        assert "flash-2.0" in provider.MODEL_CAPABILITIES["gemini-2.0-flash"].aliases
+        assert "flash2" in provider.MODEL_CAPABILITIES["gemini-2.0-flash"].aliases
+        assert "flashlite" in provider.MODEL_CAPABILITIES["gemini-2.0-flash-lite"].aliases
+        assert "flash-lite" in provider.MODEL_CAPABILITIES["gemini-2.0-flash-lite"].aliases
 
         # Test alias resolution
         assert provider._resolve_model_name("flash") == "gemini-2.5-flash"
@@ -42,18 +42,18 @@ class TestSupportedModelsAliases:
         provider = OpenAIModelProvider("test-key")
 
         # Check that all models have ModelCapabilities with aliases
-        for model_name, config in provider.SUPPORTED_MODELS.items():
+        for model_name, config in provider.MODEL_CAPABILITIES.items():
             assert hasattr(config, "aliases"), f"{model_name} must have aliases attribute"
             assert isinstance(config.aliases, list), f"{model_name} aliases must be a list"
 
         # Test specific aliases
         # "mini" is now an alias for gpt-5-mini, not o4-mini
-        assert "mini" in provider.SUPPORTED_MODELS["gpt-5-mini"].aliases
-        assert "o4mini" in provider.SUPPORTED_MODELS["o4-mini"].aliases
+        assert "mini" in provider.MODEL_CAPABILITIES["gpt-5-mini"].aliases
+        assert "o4mini" in provider.MODEL_CAPABILITIES["o4-mini"].aliases
         # o4-mini is no longer in its own aliases (removed self-reference)
-        assert "o3mini" in provider.SUPPORTED_MODELS["o3-mini"].aliases
-        assert "o3pro" in provider.SUPPORTED_MODELS["o3-pro"].aliases
-        assert "gpt4.1" in provider.SUPPORTED_MODELS["gpt-4.1"].aliases
+        assert "o3mini" in provider.MODEL_CAPABILITIES["o3-mini"].aliases
+        assert "o3pro" in provider.MODEL_CAPABILITIES["o3-pro"].aliases
+        assert "gpt4.1" in provider.MODEL_CAPABILITIES["gpt-4.1"].aliases
 
         # Test alias resolution
         assert provider._resolve_model_name("mini") == "gpt-5-mini"  # mini -> gpt-5-mini now
@@ -71,16 +71,16 @@ class TestSupportedModelsAliases:
         provider = XAIModelProvider("test-key")
 
         # Check that all models have ModelCapabilities with aliases
-        for model_name, config in provider.SUPPORTED_MODELS.items():
+        for model_name, config in provider.MODEL_CAPABILITIES.items():
             assert hasattr(config, "aliases"), f"{model_name} must have aliases attribute"
             assert isinstance(config.aliases, list), f"{model_name} aliases must be a list"
 
         # Test specific aliases
-        assert "grok" in provider.SUPPORTED_MODELS["grok-4"].aliases
-        assert "grok4" in provider.SUPPORTED_MODELS["grok-4"].aliases
-        assert "grok3" in provider.SUPPORTED_MODELS["grok-3"].aliases
-        assert "grok3fast" in provider.SUPPORTED_MODELS["grok-3-fast"].aliases
-        assert "grokfast" in provider.SUPPORTED_MODELS["grok-3-fast"].aliases
+        assert "grok" in provider.MODEL_CAPABILITIES["grok-4"].aliases
+        assert "grok4" in provider.MODEL_CAPABILITIES["grok-4"].aliases
+        assert "grok3" in provider.MODEL_CAPABILITIES["grok-3"].aliases
+        assert "grok3fast" in provider.MODEL_CAPABILITIES["grok-3-fast"].aliases
+        assert "grokfast" in provider.MODEL_CAPABILITIES["grok-3-fast"].aliases
 
         # Test alias resolution
         assert provider._resolve_model_name("grok") == "grok-4"
@@ -98,16 +98,16 @@ class TestSupportedModelsAliases:
         provider = DIALModelProvider("test-key")
 
         # Check that all models have ModelCapabilities with aliases
-        for model_name, config in provider.SUPPORTED_MODELS.items():
+        for model_name, config in provider.MODEL_CAPABILITIES.items():
             assert hasattr(config, "aliases"), f"{model_name} must have aliases attribute"
             assert isinstance(config.aliases, list), f"{model_name} aliases must be a list"
 
         # Test specific aliases
-        assert "o3" in provider.SUPPORTED_MODELS["o3-2025-04-16"].aliases
-        assert "o4-mini" in provider.SUPPORTED_MODELS["o4-mini-2025-04-16"].aliases
-        assert "sonnet-4.1" in provider.SUPPORTED_MODELS["anthropic.claude-sonnet-4.1-20250805-v1:0"].aliases
-        assert "opus-4.1" in provider.SUPPORTED_MODELS["anthropic.claude-opus-4.1-20250805-v1:0"].aliases
-        assert "gemini-2.5-pro" in provider.SUPPORTED_MODELS["gemini-2.5-pro-preview-05-06"].aliases
+        assert "o3" in provider.MODEL_CAPABILITIES["o3-2025-04-16"].aliases
+        assert "o4-mini" in provider.MODEL_CAPABILITIES["o4-mini-2025-04-16"].aliases
+        assert "sonnet-4.1" in provider.MODEL_CAPABILITIES["anthropic.claude-sonnet-4.1-20250805-v1:0"].aliases
+        assert "opus-4.1" in provider.MODEL_CAPABILITIES["anthropic.claude-opus-4.1-20250805-v1:0"].aliases
+        assert "gemini-2.5-pro" in provider.MODEL_CAPABILITIES["gemini-2.5-pro-preview-05-06"].aliases
 
         # Test alias resolution
         assert provider._resolve_model_name("o3") == "o3-2025-04-16"
@@ -183,12 +183,12 @@ class TestSupportedModelsAliases:
         ]
 
         for provider in providers:
-            for model_name, config in provider.SUPPORTED_MODELS.items():
+            for model_name, config in provider.MODEL_CAPABILITIES.items():
                 # All values must be ModelCapabilities objects, not strings or dicts
                 from providers.shared import ModelCapabilities
 
                 assert isinstance(config, ModelCapabilities), (
-                    f"{provider.__class__.__name__}.SUPPORTED_MODELS['{model_name}'] "
+                    f"{provider.__class__.__name__}.MODEL_CAPABILITIES['{model_name}'] "
                     f"must be a ModelCapabilities object, not {type(config).__name__}"
                 )
 

@@ -282,11 +282,9 @@ class ModelProviderRegistry:
             # Use list_models to get all supported models (handles both regular and custom providers)
             supported_models = provider.list_models(respect_restrictions=False)
         except (NotImplementedError, AttributeError):
-            # Fallback to SUPPORTED_MODELS if list_models not implemented
-            try:
-                supported_models = list(provider.SUPPORTED_MODELS.keys())
-            except AttributeError:
-                supported_models = []
+            # Fallback to provider-declared capability maps if list_models not implemented
+            model_map = getattr(provider, "MODEL_CAPABILITIES", None)
+            supported_models = list(model_map.keys()) if isinstance(model_map, dict) else []
 
         # Filter by restrictions
         for model_name in supported_models:

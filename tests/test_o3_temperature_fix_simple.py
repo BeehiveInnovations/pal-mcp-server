@@ -205,7 +205,7 @@ class TestO3TemperatureParameterFixSimple:
                 ), f"Model {model} capabilities should have supports_temperature field"
                 assert capabilities.supports_temperature is True, f"Model {model} should have supports_temperature=True"
             except ValueError:
-                # Skip if model not in SUPPORTED_MODELS (that's okay for this test)
+                # Skip if model not in MODEL_CAPABILITIES (that's okay for this test)
                 pass
 
     @patch("utils.model_restrictions.get_restriction_service")

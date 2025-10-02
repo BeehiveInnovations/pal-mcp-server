@@ -176,7 +176,7 @@ class TestBuggyBehaviorPrevention:
 
         # Create a mock provider that simulates the old behavior
         old_style_provider = MagicMock()
-        old_style_provider.SUPPORTED_MODELS = {
+        old_style_provider.MODEL_CAPABILITIES = {
             "mini": "o4-mini",
             "o3mini": "o3-mini",
             "o4-mini": {"context_window": 200000},

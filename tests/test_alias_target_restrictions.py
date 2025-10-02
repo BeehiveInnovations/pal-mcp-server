@@ -165,7 +165,7 @@ class TestAliasTargetRestrictions:
         openai_all_known = openai_provider.list_all_known_models()
 
         # Verify that for each alias, its target is also included
-        for model_name, config in openai_provider.SUPPORTED_MODELS.items():
+        for model_name, config in openai_provider.MODEL_CAPABILITIES.items():
             assert model_name.lower() in openai_all_known
             if isinstance(config, str):  # This is an alias
                 # The target should also be in the known models
@@ -178,7 +178,7 @@ class TestAliasTargetRestrictions:
         gemini_all_known = gemini_provider.list_all_known_models()
 
         # Verify that for each alias, its target is also included
-        for model_name, config in gemini_provider.SUPPORTED_MODELS.items():
+        for model_name, config in gemini_provider.MODEL_CAPABILITIES.items():
             assert model_name.lower() in gemini_all_known
             if isinstance(config, str):  # This is an alias
                 # The target should also be in the known models

@@ -137,7 +137,7 @@ class TestModelRestrictionService:
 
             # Create mock provider with known models
             mock_provider = MagicMock()
-            mock_provider.SUPPORTED_MODELS = {
+            mock_provider.MODEL_CAPABILITIES = {
                 "o3": {"context_window": 200000},
                 "o3-mini": {"context_window": 200000},
                 "o4-mini": {"context_window": 200000},
@@ -441,7 +441,7 @@ class TestRegistryIntegration:
 
         # Mock providers
         mock_openai = MagicMock()
-        mock_openai.SUPPORTED_MODELS = {
+        mock_openai.MODEL_CAPABILITIES = {
             "o3": {"context_window": 200000},
             "o3-mini": {"context_window": 200000},
         }
@@ -452,7 +452,7 @@ class TestRegistryIntegration:
 
             restriction_service = get_restriction_service() if respect_restrictions else None
             models = []
-            for model_name, config in mock_openai.SUPPORTED_MODELS.items():
+            for model_name, config in mock_openai.MODEL_CAPABILITIES.items():
                 if isinstance(config, str):
                     target_model = config
                     if restriction_service and not restriction_service.is_allowed(ProviderType.OPENAI, target_model):
@@ -468,7 +468,7 @@ class TestRegistryIntegration:
         mock_openai.list_all_known_models.return_value = ["o3", "o3-mini"]
 
         mock_gemini = MagicMock()
-        mock_gemini.SUPPORTED_MODELS = {
+        mock_gemini.MODEL_CAPABILITIES = {
             "gemini-2.5-pro": {"context_window": 1048576},
             "gemini-2.5-flash": {"context_window": 1048576},
         }
@@ -479,7 +479,7 @@ class TestRegistryIntegration:
 
             restriction_service = get_restriction_service() if respect_restrictions else None
             models = []
-            for model_name, config in mock_gemini.SUPPORTED_MODELS.items():
+            for model_name, config in mock_gemini.MODEL_CAPABILITIES.items():
                 if isinstance(config, str):
                     target_model = config
                     if restriction_service and not restriction_service.is_allowed(ProviderType.GOOGLE, target_model):
@@ -608,7 +608,7 @@ class TestAutoModeWithRestrictions:
 
         # Mock providers
         mock_openai = MagicMock()
-        mock_openai.SUPPORTED_MODELS = {
+        mock_openai.MODEL_CAPABILITIES = {
             "o3": {"context_window": 200000},
             "o3-mini": {"context_window": 200000},
             "o4-mini": {"context_window": 200000},
@@ -620,7 +620,7 @@ class TestAutoModeWithRestrictions:
 
             restriction_service = get_restriction_service() if respect_restrictions else None
             models = []
-            for model_name, config in mock_openai.SUPPORTED_MODELS.items():
+            for model_name, config in mock_openai.MODEL_CAPABILITIES.items():
                 if isinstance(config, str):
                     target_model = config
                     if restriction_service and not restriction_service.is_allowed(ProviderType.OPENAI, target_model):

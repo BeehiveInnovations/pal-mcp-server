@@ -28,7 +28,7 @@ class TestOldBehaviorSimulation:
         """
         # Create a mock provider that simulates the OLD BROKEN BEHAVIOR
         old_broken_provider = MagicMock()
-        old_broken_provider.SUPPORTED_MODELS = {
+        old_broken_provider.MODEL_CAPABILITIES = {
             "mini": "o4-mini",  # alias -> target
             "o3mini": "o3-mini",  # alias -> target
             "o4-mini": {"context_window": 200000},
@@ -73,7 +73,7 @@ class TestOldBehaviorSimulation:
         """
         # Create mock provider with NEW FIXED BEHAVIOR
         new_fixed_provider = MagicMock()
-        new_fixed_provider.SUPPORTED_MODELS = {
+        new_fixed_provider.MODEL_CAPABILITIES = {
             "mini": "o4-mini",
             "o3mini": "o3-mini",
             "o4-mini": {"context_window": 200000},
@@ -203,14 +203,14 @@ class TestOldBehaviorSimulation:
         for provider in providers:
             all_known = provider.list_all_known_models()
 
-            # Check that for every alias in SUPPORTED_MODELS, its target is also included
-            for model_name, config in provider.SUPPORTED_MODELS.items():
-                # Model name itself should be in the list
+            # Check that every model and its aliases appear in the comprehensive list
+            for model_name, config in provider.MODEL_CAPABILITIES.items():
                 assert model_name.lower() in all_known, f"{provider.__class__.__name__}: Missing model {model_name}"
 
-                # If it's an alias (config is a string), target should also be in list
-                if isinstance(config, str):
-                    target_model = config
+                for alias in getattr(config, "aliases", []):
                     assert (
-                        target_model.lower() in all_known
-                    ), f"{provider.__class__.__name__}: Missing target {target_model} for alias {model_name}"
+                        alias.lower() in all_known
+                    ), f"{provider.__class__.__name__}: Missing alias {alias} for model {model_name}"
+                    assert (
+                        provider._resolve_model_name(alias) == model_name
+                    ), f"{provider.__class__.__name__}: Alias {alias} should resolve to {model_name}"

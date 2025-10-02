@@ -26,7 +26,7 @@ class OpenAIModelProvider(OpenAICompatibleProvider):
     """
 
     # Model configurations using ModelCapabilities objects
-    SUPPORTED_MODELS = {
+    MODEL_CAPABILITIES = {
         "gpt-5": ModelCapabilities(
             provider=ProviderType.OPENAI,
             model_name="gpt-5",
@@ -181,21 +181,21 @@ class OpenAIModelProvider(OpenAICompatibleProvider):
 
     def get_capabilities(self, model_name: str) -> ModelCapabilities:
         """Get capabilities for a specific OpenAI model."""
-        # First check if it's a key in SUPPORTED_MODELS
-        if model_name in self.SUPPORTED_MODELS:
+        # First check if it's a key in MODEL_CAPABILITIES
+        if model_name in self.MODEL_CAPABILITIES:
             self._check_model_restrictions(model_name, model_name)
-            return self.SUPPORTED_MODELS[model_name]
+            return self.MODEL_CAPABILITIES[model_name]
 
         # Try resolving as alias
         resolved_name = self._resolve_model_name(model_name)
 
         # Check if resolved name is a key
-        if resolved_name in self.SUPPORTED_MODELS:
+        if resolved_name in self.MODEL_CAPABILITIES:
             self._check_model_restrictions(resolved_name, model_name)
-            return self.SUPPORTED_MODELS[resolved_name]
+            return self.MODEL_CAPABILITIES[resolved_name]
 
         # Finally check if resolved name matches any API model name
-        for key, capabilities in self.SUPPORTED_MODELS.items():
+        for key, capabilities in self.MODEL_CAPABILITIES.items():
             if resolved_name == capabilities.model_name:
                 self._check_model_restrictions(key, model_name)
                 return capabilities
@@ -248,7 +248,7 @@ class OpenAIModelProvider(OpenAICompatibleProvider):
         model_to_check = None
         is_custom_model = False
 
-        if resolved_name in self.SUPPORTED_MODELS:
+        if resolved_name in self.MODEL_CAPABILITIES:
             model_to_check = resolved_name
         else:
             # If not a built-in model, check the custom models registry.

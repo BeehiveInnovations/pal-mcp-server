@@ -256,18 +256,18 @@ class TestXAIProvider:
         assert capabilities.friendly_name == "X.AI (Grok 3)"
 
     def test_supported_models_structure(self):
-        """Test that SUPPORTED_MODELS has the correct structure."""
+        """Test that MODEL_CAPABILITIES has the correct structure."""
         provider = XAIModelProvider("test-key")
 
         # Check that all expected base models are present
-        assert "grok-4" in provider.SUPPORTED_MODELS
-        assert "grok-3" in provider.SUPPORTED_MODELS
-        assert "grok-3-fast" in provider.SUPPORTED_MODELS
+        assert "grok-4" in provider.MODEL_CAPABILITIES
+        assert "grok-3" in provider.MODEL_CAPABILITIES
+        assert "grok-3-fast" in provider.MODEL_CAPABILITIES
 
         # Check model configs have required fields
         from providers.shared import ModelCapabilities
 
-        grok4_config = provider.SUPPORTED_MODELS["grok-4"]
+        grok4_config = provider.MODEL_CAPABILITIES["grok-4"]
         assert isinstance(grok4_config, ModelCapabilities)
         assert hasattr(grok4_config, "context_window")
         assert hasattr(grok4_config, "supports_extended_thinking")
@@ -280,18 +280,18 @@ class TestXAIProvider:
         assert "grok-4" in grok4_config.aliases
         assert "grok4" in grok4_config.aliases
 
-        grok3_config = provider.SUPPORTED_MODELS["grok-3"]
+        grok3_config = provider.MODEL_CAPABILITIES["grok-3"]
         assert grok3_config.context_window == 131_072
         assert grok3_config.supports_extended_thinking is False
         # Check aliases are correctly structured
         assert "grok3" in grok3_config.aliases  # grok3 resolves to grok-3
 
         # Check grok-4 aliases
-        grok4_config = provider.SUPPORTED_MODELS["grok-4"]
+        grok4_config = provider.MODEL_CAPABILITIES["grok-4"]
         assert "grok" in grok4_config.aliases  # grok resolves to grok-4
         assert "grok4" in grok4_config.aliases
 
-        grok3fast_config = provider.SUPPORTED_MODELS["grok-3-fast"]
+        grok3fast_config = provider.MODEL_CAPABILITIES["grok-3-fast"]
         assert "grok3fast" in grok3fast_config.aliases
         assert "grokfast" in grok3fast_config.aliases
 

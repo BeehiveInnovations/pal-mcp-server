@@ -28,7 +28,7 @@ class ModelProvider(ABC):
     """
 
     # All concrete providers must define their supported models
-    SUPPORTED_MODELS: dict[str, Any] = {}
+    MODEL_CAPABILITIES: dict[str, Any] = {}
 
     # Default maximum image size in MB
     DEFAULT_MAX_IMAGE_SIZE_MB = 20.0
@@ -147,9 +147,9 @@ class ModelProvider(ABC):
         Returns:
             Dictionary mapping model names to their ModelCapabilities objects
         """
-        # Return SUPPORTED_MODELS if it exists (must contain ModelCapabilities objects)
-        if hasattr(self, "SUPPORTED_MODELS"):
-            return {k: v for k, v in self.SUPPORTED_MODELS.items() if isinstance(v, ModelCapabilities)}
+        model_map = getattr(self, "MODEL_CAPABILITIES", None)
+        if isinstance(model_map, dict) and model_map:
+            return {k: v for k, v in model_map.items() if isinstance(v, ModelCapabilities)}
         return {}
 
     def _resolve_model_name(self, model_name: str) -> str:

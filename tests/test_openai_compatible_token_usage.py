@@ -15,7 +15,7 @@ class TestOpenAICompatibleTokenUsage(unittest.TestCase):
         # Create a concrete implementation for testing
         class TestProvider(OpenAICompatibleProvider):
             FRIENDLY_NAME = "Test"
-            SUPPORTED_MODELS = {"test-model": {"context_window": 4096}}
+            MODEL_CAPABILITIES = {"test-model": {"context_window": 4096}}
 
             def get_capabilities(self, model_name):
                 return Mock()

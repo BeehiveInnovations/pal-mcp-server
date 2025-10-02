@@ -27,7 +27,7 @@ class XAIModelProvider(OpenAICompatibleProvider):
     FRIENDLY_NAME = "X.AI"
 
     # Model configurations using ModelCapabilities objects
-    SUPPORTED_MODELS = {
+    MODEL_CAPABILITIES = {
         "grok-4": ModelCapabilities(
             provider=ProviderType.XAI,
             model_name="grok-4",
@@ -95,7 +95,7 @@ class XAIModelProvider(OpenAICompatibleProvider):
         # Resolve shorthand
         resolved_name = self._resolve_model_name(model_name)
 
-        if resolved_name not in self.SUPPORTED_MODELS:
+        if resolved_name not in self.MODEL_CAPABILITIES:
             raise ValueError(f"Unsupported X.AI model: {model_name}")
 
         # Check if model is allowed by restrictions
@@ -105,8 +105,8 @@ class XAIModelProvider(OpenAICompatibleProvider):
         if not restriction_service.is_allowed(ProviderType.XAI, resolved_name, model_name):
             raise ValueError(f"X.AI model '{model_name}' is not allowed by restriction policy.")
 
-        # Return the ModelCapabilities object directly from SUPPORTED_MODELS
-        return self.SUPPORTED_MODELS[resolved_name]
+        # Return the ModelCapabilities object directly from MODEL_CAPABILITIES
+        return self.MODEL_CAPABILITIES[resolved_name]
 
     def get_provider_type(self) -> ProviderType:
         """Get the provider type."""
@@ -117,7 +117,7 @@ class XAIModelProvider(OpenAICompatibleProvider):
         resolved_name = self._resolve_model_name(model_name)
 
         # First check if model is supported
-        if resolved_name not in self.SUPPORTED_MODELS:
+        if resolved_name not in self.MODEL_CAPABILITIES:
             return False
 
         # Then check if model is allowed by restrictions
@@ -156,7 +156,7 @@ class XAIModelProvider(OpenAICompatibleProvider):
     def supports_thinking_mode(self, model_name: str) -> bool:
         """Check if the model supports extended thinking mode."""
         resolved_name = self._resolve_model_name(model_name)
-        capabilities = self.SUPPORTED_MODELS.get(resolved_name)
+        capabilities = self.MODEL_CAPABILITIES.get(resolved_name)
         if capabilities:
             return capabilities.supports_extended_thinking
         return False

@@ -31,7 +31,7 @@ class GeminiModelProvider(ModelProvider):
     """
 
     # Model configurations using ModelCapabilities objects
-    SUPPORTED_MODELS = {
+    MODEL_CAPABILITIES = {
         "gemini-2.5-pro": ModelCapabilities(
             provider=ProviderType.GOOGLE,
             model_name="gemini-2.5-pro",
@@ -154,7 +154,7 @@ class GeminiModelProvider(ModelProvider):
         # Resolve shorthand
         resolved_name = self._resolve_model_name(model_name)
 
-        if resolved_name not in self.SUPPORTED_MODELS:
+        if resolved_name not in self.MODEL_CAPABILITIES:
             raise ValueError(f"Unsupported Gemini model: {model_name}")
 
         # Check if model is allowed by restrictions
@@ -166,8 +166,8 @@ class GeminiModelProvider(ModelProvider):
         if not restriction_service.is_allowed(ProviderType.GOOGLE, resolved_name, model_name):
             raise ValueError(f"Gemini model '{resolved_name}' is not allowed by restriction policy.")
 
-        # Return the ModelCapabilities object directly from SUPPORTED_MODELS
-        return self.SUPPORTED_MODELS[resolved_name]
+        # Return the ModelCapabilities object directly from MODEL_CAPABILITIES
+        return self.MODEL_CAPABILITIES[resolved_name]
 
     def generate_content(
         self,
@@ -227,7 +227,7 @@ class GeminiModelProvider(ModelProvider):
         # Add thinking configuration for models that support it
         if capabilities.supports_extended_thinking and thinking_mode in self.THINKING_BUDGETS:
             # Get model's max thinking tokens and calculate actual budget
-            model_config = self.SUPPORTED_MODELS.get(resolved_name)
+            model_config = self.MODEL_CAPABILITIES.get(resolved_name)
             if model_config and model_config.max_thinking_tokens > 0:
                 max_thinking_tokens = model_config.max_thinking_tokens
                 actual_thinking_budget = int(max_thinking_tokens * self.THINKING_BUDGETS[thinking_mode])
@@ -382,7 +382,7 @@ class GeminiModelProvider(ModelProvider):
         resolved_name = self._resolve_model_name(model_name)
 
         # First check if model is supported
-        if resolved_name not in self.SUPPORTED_MODELS:
+        if resolved_name not in self.MODEL_CAPABILITIES:
             return False
 
         # Then check if model is allowed by restrictions
@@ -405,7 +405,7 @@ class GeminiModelProvider(ModelProvider):
     def get_thinking_budget(self, model_name: str, thinking_mode: str) -> int:
         """Get actual thinking token budget for a model and thinking mode."""
         resolved_name = self._resolve_model_name(model_name)
-        model_config = self.SUPPORTED_MODELS.get(resolved_name)
+        model_config = self.MODEL_CAPABILITIES.get(resolved_name)
 
         if not model_config or not model_config.supports_extended_thinking:
             return 0
@@ -584,7 +584,7 @@ class GeminiModelProvider(ModelProvider):
             pro_thinking = [
                 m
                 for m in allowed_models
-                if "pro" in m and m in self.SUPPORTED_MODELS and self.SUPPORTED_MODELS[m].supports_extended_thinking
+                if "pro" in m and m in self.MODEL_CAPABILITIES and self.MODEL_CAPABILITIES[m].supports_extended_thinking
             ]
             if pro_thinking:
                 return find_best(pro_thinking)
@@ -593,7 +593,7 @@ class GeminiModelProvider(ModelProvider):
             any_thinking = [
                 m
                 for m in allowed_models
-                if m in self.SUPPORTED_MODELS and self.SUPPORTED_MODELS[m].supports_extended_thinking
+                if m in self.MODEL_CAPABILITIES and self.MODEL_CAPABILITIES[m].supports_extended_thinking
             ]
             if any_thinking:
                 return find_best(any_thinking)

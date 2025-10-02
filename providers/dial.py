@@ -33,7 +33,7 @@ class DIALModelProvider(OpenAICompatibleProvider):
     RETRY_DELAYS = [1, 3, 5, 8]  # seconds
 
     # Model configurations using ModelCapabilities objects
-    SUPPORTED_MODELS = {
+    MODEL_CAPABILITIES = {
         "o3-2025-04-16": ModelCapabilities(
             provider=ProviderType.DIAL,
             model_name="o3-2025-04-16",
@@ -280,7 +280,7 @@ class DIALModelProvider(OpenAICompatibleProvider):
         """
         resolved_name = self._resolve_model_name(model_name)
 
-        if resolved_name not in self.SUPPORTED_MODELS:
+        if resolved_name not in self.MODEL_CAPABILITIES:
             raise ValueError(f"Unsupported DIAL model: {model_name}")
 
         # Check restrictions
@@ -290,8 +290,8 @@ class DIALModelProvider(OpenAICompatibleProvider):
         if not restriction_service.is_allowed(ProviderType.DIAL, resolved_name, model_name):
             raise ValueError(f"Model '{model_name}' is not allowed by restriction policy.")
 
-        # Return the ModelCapabilities object directly from SUPPORTED_MODELS
-        return self.SUPPORTED_MODELS[resolved_name]
+        # Return the ModelCapabilities object directly from MODEL_CAPABILITIES
+        return self.MODEL_CAPABILITIES[resolved_name]
 
     def get_provider_type(self) -> ProviderType:
         """Get the provider type."""
@@ -308,7 +308,7 @@ class DIALModelProvider(OpenAICompatibleProvider):
         """
         resolved_name = self._resolve_model_name(model_name)
 
-        if resolved_name not in self.SUPPORTED_MODELS:
+        if resolved_name not in self.MODEL_CAPABILITIES:
             return False
 
         # Check against base class allowed_models if configured

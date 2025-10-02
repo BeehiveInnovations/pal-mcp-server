@@ -53,7 +53,7 @@ class TestAutoMode:
         for provider_type in enabled_provider_types:
             provider = ModelProviderRegistry.get_provider(provider_type)
             if provider:
-                for model_name, config in provider.SUPPORTED_MODELS.items():
+                for model_name, config in provider.MODEL_CAPABILITIES.items():
                     # Skip alias entries (string values)
                     if isinstance(config, str):
                         continue
