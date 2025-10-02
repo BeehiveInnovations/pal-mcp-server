@@ -2,6 +2,20 @@
 
 <!-- version list -->
 
+## v5.18.0 (2025-10-02)
+
+### Chores
+
+- Sync version to config.py [skip ci]
+  ([`e78fe35`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/e78fe35a1b64cc0ed89664440ef7c7b94495d7dc))
+
+### Features
+
+- Added `intelligence_score` to the model capabilities schema; a 1-20 number that can be specified
+  to influence the sort order of models presented to the CLI in `auto selection` mode
+  ([`6cab9e5`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/6cab9e56fc5373da5c11d4545bcb85371d4803a4))
+
+
 ## v5.17.4 (2025-10-02)
 
 ### Chores
