@@ -1,137 +1,152 @@
 # Adding Tools to Zen MCP Server
 
-This guide explains how to add new tools to the Zen MCP Server. Tools enable Claude to interact with AI models for specialized tasks like code analysis, debugging, and collaborative thinking.
+Zen MCP tools are Python classes that inherit from the shared infrastructure in `tools/shared/base_tool.py`.
+Every tool must provide a request model (Pydantic), a system prompt, and the methods the base class marks as
+abstract. The quickest path to a working tool is to copy an existing implementation that matches your use case
+(`tools/chat.py` for simple request/response tools, `tools/consensus.py` or `tools/codereview.py` for workflows).
+This document captures the minimal steps required to add a new tool without drifting from the current codebase.
 
-## Tool Types
+## 1. Pick the Tool Architecture
 
-Zen supports two tool architectures:
+Zen supports two architectures, implemented in `tools/simple/base.py` and `tools/workflow/base.py`.
 
-### Simple Tools
-- **Pattern**: Single request → AI response → formatted output
-- **Use cases**: Chat, quick analysis, straightforward tasks
-- **Benefits**: Clean, lightweight, easy to implement
-- **Base class**: `SimpleTool` (`tools/simple/base.py`)
+- **SimpleTool** (`SimpleTool`): single MCP call – request comes in, you build one prompt, call the model, return.
+  The base class handles schema generation, conversation threading, file loading, temperature bounds, retries,
+  and response formatting hooks.
+- **WorkflowTool** (`WorkflowTool`): multi-step workflows driven by `BaseWorkflowMixin`. The tool accumulates
+  findings across steps, forces Claude to pause between investigations, and optionally calls an expert model at
+  the end. Use this whenever you need structured multi-step work (debug, code review, consensus, etc.).
 
-### Multi-step Workflow Tools  
-- **Pattern**: Step-by-step investigation with Claude pausing between steps to investigate
-- **Use cases**: Complex analysis, debugging, code review, security audits
-- **Benefits**: Systematic investigation, expert analysis integration, better results for complex tasks
-- **Base class**: `WorkflowTool` (`tools/workflow/base.py`)
+If you are unsure, compare `tools/chat.py` (SimpleTool) and `tools/consensus.py` (WorkflowTool) to see the patterns.
 
-**Recommendation**: Use workflow tools for most complex analysis tasks as they produce significantly better results by forcing systematic investigation.
+## 2. Common Responsibilities
 
-## Implementation Guide
+Regardless of architecture, subclasses of `BaseTool` must provide:
 
-### Simple Tool Example
+- `get_name()`: unique string identifier used in the MCP registry.
+- `get_description()`: concise, action-oriented summary for clients.
+- `get_system_prompt()`: import your prompt from `systemprompts/` and return it.
+- `get_input_schema()`: leverage the schema builders (`SchemaBuilder` or `WorkflowSchemaBuilder`) or override to
+  match an existing contract exactly.
+- `get_request_model()`: return the Pydantic model used to validate the incoming arguments.
+- `async prepare_prompt(...)`: assemble the content sent to the model. You can reuse helpers like
+  `prepare_chat_style_prompt` or `build_standard_prompt`.
+
+The base class already handles model selection (`ToolModelCategory`), conversation memory, token budgeting, safety
+failures, retries, and serialization. Override hooks like `get_default_temperature`, `get_model_category`, or
+`format_response` only when you need behaviour different from the defaults.
+
+## 3. Implementing a Simple Tool
+
+1. **Define a request model** that inherits from `tools.shared.base_models.ToolRequest` to describe the fields and
+   validation rules for your tool.
+2. **Implement the tool class** by inheriting from `SimpleTool` and overriding the required methods. Most tools can
+   rely on `SchemaBuilder` and the shared field constants already exposed on `SimpleTool`.
 
 ```python
-from tools.simple.base import SimpleTool
-from tools.shared.base_models import ToolRequest
 from pydantic import Field
+from systemprompts import CHAT_PROMPT
+from tools.shared.base_models import ToolRequest
+from tools.simple.base import SimpleTool
+
+class ChatRequest(ToolRequest):
+    prompt: str = Field(..., description="Your question or idea.")
+    files: list[str] | None = Field(default_factory=list)
 
 class ChatTool(SimpleTool):
-    def get_name(self) -> str:
+    def get_name(self) -> str:  # required by BaseTool
         return "chat"
-    
+
     def get_description(self) -> str:
-        return "GENERAL CHAT & COLLABORATIVE THINKING..."
-    
-    def get_tool_fields(self) -> dict:
-        return {
-            "prompt": {
-                "type": "string", 
-                "description": "Your question or idea..."
-            },
-            "files": SimpleTool.FILES_FIELD  # Reuse common field
-        }
-    
+        return "General chat and collaborative thinking partner."
+
+    def get_system_prompt(self) -> str:
+        return CHAT_PROMPT
+
+    def get_request_model(self):
+        return ChatRequest
+
+    def get_tool_fields(self) -> dict[str, dict[str, object]]:
+        return {"prompt": {"type": "string", "description": "Your question."}, "files": SimpleTool.FILES_FIELD}
+
     def get_required_fields(self) -> list[str]:
         return ["prompt"]
-    
-    async def prepare_prompt(self, request) -> str:
+
+    async def prepare_prompt(self, request: ChatRequest) -> str:
         return self.prepare_chat_style_prompt(request)
 ```
 
-### Workflow Tool Example
+Only implement `get_input_schema()` manually if you must preserve an existing schema contract (see
+`tools/chat.py` for an example). Otherwise `SimpleTool.get_input_schema()` merges your field definitions with the
+common parameters (temperature, model, continuation_id, etc.).
 
-```python  
-from tools.workflow.base import WorkflowTool
+## 4. Implementing a Workflow Tool
 
-class DebugTool(WorkflowTool):
-    def get_name(self) -> str:
-        return "debug"
-    
-    def get_description(self) -> str:
-        return "DEBUG & ROOT CAUSE ANALYSIS - Step-by-step investigation..."
-    
-    def get_required_actions(self, step_number, confidence, findings, total_steps):
-        if step_number == 1:
-            return ["Search for code related to issue", "Examine relevant files"]
-        return ["Trace execution flow", "Verify hypothesis with code evidence"]
-    
-    def should_call_expert_analysis(self, consolidated_findings):
-        return len(consolidated_findings.relevant_files) > 0
-    
-    def prepare_expert_analysis_context(self, consolidated_findings):
-        return f"Investigation findings: {consolidated_findings.findings}"
-```
+Workflow tools extend `WorkflowTool`, which mixes in `BaseWorkflowMixin` for step tracking and expert analysis.
 
-## Key Implementation Points
-
-### Simple Tools
-- Inherit from `SimpleTool` 
-- Implement: `get_name()`, `get_description()`, `get_tool_fields()`, `prepare_prompt()`
-- Override: `get_required_fields()`, `format_response()` (optional)
-
-### Workflow Tools  
-- Inherit from `WorkflowTool`
-- Implement: `get_name()`, `get_description()`, `get_required_actions()`, `should_call_expert_analysis()`, `prepare_expert_analysis_context()`
-- Override: `get_tool_fields()` (optional)
-
-### Registration
-1. Create system prompt in `systemprompts/`
-2. Import in `server.py` 
-3. Add to `TOOLS` dictionary
-
-## Testing Your Tool
-
-### Simulator Tests (Recommended)
-The most important validation is adding your tool to the simulator test suite:
+1. **Create a request model** that inherits from `tools.shared.base_models.WorkflowRequest` (or a subclass) and add
+   any tool-specific fields or validators. Examples: `CodeReviewRequest`, `ConsensusRequest`.
+2. **Override the workflow hooks** to steer the investigation. At minimum you must implement
+   `get_required_actions(...)`; override `should_call_expert_analysis(...)` and
+   `prepare_expert_analysis_context(...)` when the expert model call should happen conditionally.
+3. **Expose the schema** either by returning `WorkflowSchemaBuilder.build_schema(...)` (the default implementation on
+   `WorkflowTool` already does this) or by overriding `get_input_schema()` if you need custom descriptions/enums.
 
 ```python
-# Add to communication_simulator_test.py
-def test_your_tool_validation(self):
-    """Test your new tool with real API calls"""
-    response = self.call_tool("your_tool", {
-        "prompt": "Test the tool functionality",
-        "model": "flash"
-    })
-    
-    # Validate response structure and content
-    self.assertIn("status", response)
-    self.assertEqual(response["status"], "success")
+from pydantic import Field
+from systemprompts import CONSENSUS_PROMPT
+from tools.shared.base_models import WorkflowRequest
+from tools.workflow.base import WorkflowTool
+
+class ConsensusRequest(WorkflowRequest):
+    models: list[dict] = Field(..., description="Models to consult (with optional stance).")
+
+class ConsensusTool(WorkflowTool):
+    def get_name(self) -> str:
+        return "consensus"
+
+    def get_description(self) -> str:
+        return "Multi-model consensus workflow with expert synthesis."
+
+    def get_system_prompt(self) -> str:
+        return CONSENSUS_PROMPT
+
+    def get_workflow_request_model(self):
+        return ConsensusRequest
+
+    def get_required_actions(self, step_number: int, confidence: str, findings: str, total_steps: int, request=None) -> list[str]:
+        if step_number == 1:
+            return ["Write the shared proposal all models will evaluate."]
+        return ["Summarize the latest model response before moving on."]
+
+    def should_call_expert_analysis(self, consolidated_findings, request=None) -> bool:
+        return not (request and request.next_step_required)
+
+    def prepare_expert_analysis_context(self, consolidated_findings) -> str:
+        return "\n".join(consolidated_findings.findings)
 ```
 
-**Why simulator tests matter:**
-- Test actual MCP communication with Claude
-- Validate real AI model interactions  
-- Catch integration issues unit tests miss
-- Ensure proper conversation threading
-- Verify file handling and deduplication
+`WorkflowTool` already records work history, merges findings, and handles continuation IDs. Use helpers such as
+`get_standard_required_actions` when you want default guidance, and override `requires_expert_analysis()` if the tool
+never calls out to the assistant model.
 
-### Running Tests
-```bash
-# Test your specific tool
-python communication_simulator_test.py --individual your_tool_validation
+## 5. Register the Tool
 
-# Quick comprehensive test
-python communication_simulator_test.py --quick
-```
+1. **Create or reuse a system prompt** in `systemprompts/your_tool_prompt.py` and export it from
+   `systemprompts/__init__.py`.
+2. **Expose the tool class** from `tools/__init__.py` so that `server.py` can import it.
+3. **Add an instance to the `TOOLS` dictionary** in `server.py`. This makes the tool callable via MCP.
+4. **(Optional) Add a prompt template** to `PROMPT_TEMPLATES` in `server.py` if you want clients to show a canned
+   launch command.
+5. Confirm that `DISABLED_TOOLS` environment variable handling covers the new tool if you need to toggle it.
 
-## Examples to Study
+## 6. Validate the Tool
 
-- **Simple Tool**: `tools/chat.py` - Clean request/response pattern
-- **Workflow Tool**: `tools/debug.py` - Multi-step investigation with expert analysis
+- Run unit tests that cover any new request/response logic: `python -m pytest tests/ -v -m "not integration"`.
+- Add a simulator scenario in `simulator_tests/communication_simulator_test.py` to exercise the tool end-to-end and
+  run it with `python communication_simulator_test.py --individual <case>` or `--quick` for the fast smoke suite.
+- If the tool interacts with external providers or multiple models, consider integration coverage via
+  `./run_integration_tests.sh --with-simulator`.
 
-**Recommendation**: Start with existing tools as templates and explore the base classes to understand available hooks and methods.
-
+Following the steps above keeps new tools aligned with the existing infrastructure and avoids drift between the
+documentation and the actual base classes.
