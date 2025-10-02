@@ -15,7 +15,7 @@ Each provider:
 **Option A: Full Provider (`ModelProvider`)**
 - For APIs with unique features or custom authentication
 - Complete control over API calls and response handling
-- Required methods: `generate_content()`, `count_tokens()`, `get_capabilities()`, `validate_model_name()`, `get_provider_type()`
+- Required methods: `generate_content()`, `get_capabilities()`, `validate_model_name()`, `get_provider_type()` (override `count_tokens()` only when you have a provider-accurate tokenizer)
 
 **Option B: OpenAI-Compatible (`OpenAICompatibleProvider`)**
 - For APIs that follow OpenAI's chat completion format
@@ -120,10 +120,6 @@ class ExampleModelProvider(ModelProvider):
             friendly_name="Example",
             provider=ProviderType.EXAMPLE,
         )
-    
-    def count_tokens(self, text: str, model_name: str) -> int:
-        return len(text) // 4  # Simple estimation
-    
     def get_provider_type(self) -> ProviderType:
         return ProviderType.EXAMPLE
     
@@ -131,6 +127,11 @@ class ExampleModelProvider(ModelProvider):
         resolved_name = self._resolve_model_name(model_name)
         return resolved_name in self.MODEL_CAPABILITIES
 ```
+
+`ModelProvider.count_tokens()` uses a simple 4-characters-per-token estimate so
+providers work out of the box. Override the method only when you can call into
+the provider's real tokenizer (for example, the OpenAI-compatible base class
+already integrates `tiktoken`).
 
 #### Option B: OpenAI-Compatible Provider (Simplified)
 

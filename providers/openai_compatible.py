@@ -622,50 +622,6 @@ class OpenAICompatibleProvider(ModelProvider):
         logging.error(error_msg)
         raise RuntimeError(error_msg) from last_exception
 
-    def count_tokens(self, text: str, model_name: str) -> int:
-        """Count tokens for the given text.
-
-        Uses a layered approach:
-        1. Try provider-specific token counting endpoint
-        2. Try tiktoken for known model families
-        3. Fall back to character-based estimation
-
-        Args:
-            text: Text to count tokens for
-            model_name: Model name for tokenizer selection
-
-        Returns:
-            Estimated token count
-        """
-        # 1. Check if provider has a remote token counting endpoint
-        if hasattr(self, "count_tokens_remote"):
-            try:
-                return self.count_tokens_remote(text, model_name)
-            except Exception as e:
-                logging.debug(f"Remote token counting failed: {e}")
-
-        # 2. Try tiktoken for known models
-        try:
-            import tiktoken
-
-            # Try to get encoding for the specific model
-            try:
-                encoding = tiktoken.encoding_for_model(model_name)
-            except KeyError:
-                encoding = tiktoken.get_encoding("cl100k_base")
-
-            return len(encoding.encode(text))
-
-        except (ImportError, Exception) as e:
-            logging.debug(f"Tiktoken not available or failed: {e}")
-
-        # 3. Fall back to character-based estimation
-        logging.warning(
-            f"No specific tokenizer available for '{model_name}'. "
-            "Using character-based estimation (~4 chars per token)."
-        )
-        return len(text) // 4
-
     def validate_parameters(self, model_name: str, temperature: float, **kwargs) -> None:
         """Validate model parameters.
 
@@ -711,6 +667,26 @@ class OpenAICompatibleProvider(ModelProvider):
             usage["total_tokens"] = getattr(response.usage, "total_tokens", 0) or 0
 
         return usage
+
+    def count_tokens(self, text: str, model_name: str) -> int:
+        """Count tokens using OpenAI-compatible tokenizer tables when available."""
+
+        resolved_model = self._resolve_model_name(model_name)
+
+        try:
+            import tiktoken
+
+            try:
+                encoding = tiktoken.encoding_for_model(resolved_model)
+            except KeyError:
+                encoding = tiktoken.get_encoding("cl100k_base")
+
+            return len(encoding.encode(text))
+
+        except (ImportError, Exception) as exc:
+            logging.debug("tiktoken unavailable for %s: %s", resolved_model, exc)
+
+        return super().count_tokens(text, model_name)
 
     @abstractmethod
     def get_capabilities(self, model_name: str) -> ModelCapabilities:

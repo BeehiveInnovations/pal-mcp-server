@@ -361,15 +361,6 @@ class GeminiModelProvider(ModelProvider):
         error_msg = f"Gemini API error for model {resolved_name} after {actual_attempts} attempt{'s' if actual_attempts > 1 else ''}: {str(last_exception)}"
         raise RuntimeError(error_msg) from last_exception
 
-    def count_tokens(self, text: str, model_name: str) -> int:
-        """Count tokens for the given text using Gemini's tokenizer."""
-        self._resolve_model_name(model_name)
-
-        # For now, use a simple estimation
-        # TODO: Use actual Gemini tokenizer when available in SDK
-        # Rough estimation: ~4 characters per token for English text
-        return len(text) // 4
-
     def get_provider_type(self) -> ProviderType:
         """Get the provider type."""
         return ProviderType.GOOGLE

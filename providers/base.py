@@ -73,10 +73,24 @@ class ModelProvider(ABC):
         """
         pass
 
-    @abstractmethod
     def count_tokens(self, text: str, model_name: str) -> int:
-        """Count tokens for the given text using the specified model's tokenizer."""
-        pass
+        """Estimate token usage for a piece of text.
+
+        Providers can rely on this shared implementation or override it when
+        they expose a more accurate tokenizer. This default uses a simple
+        character-based heuristic so it works even without provider-specific
+        tooling.
+        """
+
+        resolved_model = self._resolve_model_name(model_name)
+
+        if not text:
+            return 0
+
+        # Rough estimation: ~4 characters per token for English text
+        estimated = max(1, len(text) // 4)
+        logger.debug("Estimating %s tokens for model %s via character heuristic", estimated, resolved_model)
+        return estimated
 
     @abstractmethod
     def get_provider_type(self) -> ProviderType:
