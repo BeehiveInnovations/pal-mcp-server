@@ -83,43 +83,6 @@ class ModelProvider(ABC):
         """Validate if the model name is supported by this provider."""
         pass
 
-    def get_effective_temperature(self, model_name: str, requested_temperature: float) -> Optional[float]:
-        """Get the effective temperature to use for a model given a requested temperature.
-
-        This method handles:
-        - Models that don't support temperature (returns None)
-        - Fixed temperature models (returns the fixed value)
-        - Clamping to min/max range for models with constraints
-
-        Args:
-            model_name: The model to get temperature for
-            requested_temperature: The temperature requested by the user/tool
-
-        Returns:
-            The effective temperature to use, or None if temperature shouldn't be passed
-        """
-        try:
-            capabilities = self.get_capabilities(model_name)
-
-            # Check if model supports temperature at all
-            if not capabilities.supports_temperature:
-                return None
-
-            # Use temperature constraint to get corrected value
-            corrected_temp = capabilities.temperature_constraint.get_corrected_value(requested_temperature)
-
-            if corrected_temp != requested_temperature:
-                logger.debug(
-                    f"Adjusting temperature from {requested_temperature} to {corrected_temp} for model {model_name}"
-                )
-
-            return corrected_temp
-
-        except Exception as e:
-            logger.debug(f"Could not determine effective temperature for {model_name}: {e}")
-            # If we can't get capabilities, return the requested temperature
-            return requested_temperature
-
     def validate_parameters(self, model_name: str, temperature: float, **kwargs) -> None:
         """Validate model parameters against capabilities.
 

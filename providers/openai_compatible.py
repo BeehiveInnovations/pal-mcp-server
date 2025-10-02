@@ -469,8 +469,22 @@ class OpenAICompatibleProvider(ModelProvider):
         if not self.validate_model_name(model_name):
             raise ValueError(f"Model '{model_name}' not in allowed models list. Allowed models: {self.allowed_models}")
 
-        # Get effective temperature for this model
-        effective_temperature = self.get_effective_temperature(model_name, temperature)
+        capabilities: Optional[ModelCapabilities]
+        try:
+            capabilities = self.get_capabilities(model_name)
+        except Exception as exc:
+            logging.debug(f"Falling back to generic capabilities for {model_name}: {exc}")
+            capabilities = None
+
+        # Get effective temperature for this model from capabilities when available
+        if capabilities:
+            effective_temperature = capabilities.get_effective_temperature(temperature)
+            if effective_temperature is not None and effective_temperature != temperature:
+                logging.debug(
+                    f"Adjusting temperature from {temperature} to {effective_temperature} for model {model_name}"
+                )
+        else:
+            effective_temperature = temperature
 
         # Only validate if temperature is not None (meaning the model supports it)
         if effective_temperature is not None:
@@ -481,13 +495,6 @@ class OpenAICompatibleProvider(ModelProvider):
         messages = []
         if system_prompt:
             messages.append({"role": "system", "content": system_prompt})
-
-        # Resolve capabilities once for vision/temperature checks
-        try:
-            capabilities = self.get_capabilities(model_name)
-        except Exception as exc:
-            logging.debug(f"Falling back to generic capabilities for {model_name}: {exc}")
-            capabilities = None
 
         # Prepare user message with text and potentially images
         user_content = []
