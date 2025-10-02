@@ -778,7 +778,11 @@ class SimpleTool(BaseTool):
         Returns:
             Complete formatted prompt ready for the AI model
         """
-        # Add context files if provided
+        # Check size limits against raw user input before enriching with internal context
+        content_to_validate = self.get_prompt_content_for_size_validation(user_content)
+        self._validate_token_limit(content_to_validate, "Content")
+
+        # Add context files if provided (does not affect MCP boundary enforcement)
         files = self.get_request_files(request)
         if files:
             file_content, processed_files = self._prepare_file_content_for_prompt(
@@ -790,10 +794,6 @@ class SimpleTool(BaseTool):
             self._actually_processed_files = processed_files
             if file_content:
                 user_content = f"{user_content}\n\n=== {file_context_title} ===\n{file_content}\n=== END CONTEXT ===="
-
-        # Check token limits - only validate original user prompt, not conversation history
-        content_to_validate = self.get_prompt_content_for_size_validation(user_content)
-        self._validate_token_limit(content_to_validate, "Content")
 
         # Add standardized web search guidance
         websearch_instruction = self.get_websearch_instruction(self.get_websearch_guidance())

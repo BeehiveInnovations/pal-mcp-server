@@ -369,6 +369,57 @@ class TestLargePromptHandling:
             assert output["status"] in ["success", "continuation_available"]
 
     @pytest.mark.asyncio
+    async def test_large_file_context_does_not_trigger_mcp_prompt_limit(self, tmp_path):
+        """Large context files should not be blocked by MCP prompt limit enforcement."""
+        from tests.mock_helpers import create_mock_provider
+        from utils.model_context import TokenAllocation
+
+        tool = ChatTool()
+
+        # Create a file significantly larger than MCP_PROMPT_SIZE_LIMIT characters
+        large_content = "A" * (MCP_PROMPT_SIZE_LIMIT * 5)
+        large_file = tmp_path / "huge_context.txt"
+        large_file.write_text(large_content)
+
+        mock_provider = create_mock_provider(model_name="flash")
+        mock_provider.generate_content.return_value.content = "Processed large file context"
+
+        class DummyModelContext:
+            def __init__(self, provider):
+                self.model_name = "flash"
+                self._provider = provider
+                self.capabilities = provider.get_capabilities("flash")
+
+            @property
+            def provider(self):
+                return self._provider
+
+            def calculate_token_allocation(self):
+                return TokenAllocation(
+                    total_tokens=1_048_576,
+                    content_tokens=838_861,
+                    response_tokens=209_715,
+                    file_tokens=335_544,
+                    history_tokens=335_544,
+                )
+
+        dummy_context = DummyModelContext(mock_provider)
+
+        with patch.object(tool, "get_model_provider", return_value=mock_provider):
+            result = await tool.execute(
+                {
+                    "prompt": "Summarize the design decisions",
+                    "files": [str(large_file)],
+                    "model": "flash",
+                    "_model_context": dummy_context,
+                }
+            )
+
+        output = json.loads(result[0].text)
+        assert output["status"] in ["success", "continuation_available"]
+        assert "Processed large file context" in output["content"]
+
+    @pytest.mark.asyncio
     async def test_mcp_boundary_with_large_internal_context(self):
         """
         Critical test: Ensure MCP_PROMPT_SIZE_LIMIT only applies to user input (MCP boundary),

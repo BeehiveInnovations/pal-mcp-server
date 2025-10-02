@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
 from config import MCP_PROMPT_SIZE_LIMIT
 from providers import ModelProvider, ModelProviderRegistry
-from utils import check_token_limit
+from utils import estimate_tokens
 from utils.conversation_memory import (
     ConversationTurn,
     get_conversation_file_list,
@@ -647,22 +647,38 @@ class BaseTool(ABC):
 
     def _validate_token_limit(self, content: str, content_type: str = "Content") -> None:
         """
-        Validate that content doesn't exceed the MCP prompt size limit.
+        Validate that user-provided content doesn't exceed the MCP prompt size limit.
+
+        This enforcement is strictly for text crossing the MCP transport boundary
+        (i.e., user input). Internal prompt construction may exceed this size and is
+        governed by model-specific token limits.
 
         Args:
-            content: The content to validate
+            content: The user-originated content to validate
             content_type: Description of the content type for error messages
 
         Raises:
-            ValueError: If content exceeds size limit
+            ValueError: If content exceeds the character size limit
         """
-        is_valid, token_count = check_token_limit(content, MCP_PROMPT_SIZE_LIMIT)
-        if not is_valid:
-            error_msg = f"~{token_count:,} tokens. Maximum is {MCP_PROMPT_SIZE_LIMIT:,} tokens."
+        if not content:
+            logger.debug(f"{self.name} tool {content_type.lower()} validation skipped (no content)")
+            return
+
+        char_count = len(content)
+        if char_count > MCP_PROMPT_SIZE_LIMIT:
+            token_estimate = estimate_tokens(content)
+            error_msg = (
+                f"{char_count:,} characters (~{token_estimate:,} tokens). "
+                f"Maximum is {MCP_PROMPT_SIZE_LIMIT:,} characters."
+            )
             logger.error(f"{self.name} tool {content_type.lower()} validation failed: {error_msg}")
             raise ValueError(f"{content_type} too large: {error_msg}")
 
-        logger.debug(f"{self.name} tool {content_type.lower()} token validation passed: {token_count:,} tokens")
+        token_estimate = estimate_tokens(content)
+        logger.debug(
+            f"{self.name} tool {content_type.lower()} validation passed: "
+            f"{char_count:,} characters (~{token_estimate:,} tokens)"
+        )
 
     def get_model_provider(self, model_name: str) -> ModelProvider:
         """
