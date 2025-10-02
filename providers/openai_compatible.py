@@ -482,12 +482,19 @@ class OpenAICompatibleProvider(ModelProvider):
         if system_prompt:
             messages.append({"role": "system", "content": system_prompt})
 
+        # Resolve capabilities once for vision/temperature checks
+        try:
+            capabilities = self.get_capabilities(model_name)
+        except Exception as exc:
+            logging.debug(f"Falling back to generic capabilities for {model_name}: {exc}")
+            capabilities = None
+
         # Prepare user message with text and potentially images
         user_content = []
         user_content.append({"type": "text", "text": prompt})
 
         # Add images if provided and model supports vision
-        if images and self._supports_vision(model_name):
+        if images and capabilities and capabilities.supports_images:
             for image_path in images:
                 try:
                     image_content = self._process_image(image_path)
@@ -497,7 +504,7 @@ class OpenAICompatibleProvider(ModelProvider):
                     logging.warning(f"Failed to process image {image_path}: {e}")
                     # Continue with other images and text
                     continue
-        elif images and not self._supports_vision(model_name):
+        elif images and (not capabilities or not capabilities.supports_images):
             logging.warning(f"Model {model_name} does not support images, ignoring {len(images)} image(s)")
 
         # Add user message
@@ -726,31 +733,6 @@ class OpenAICompatibleProvider(ModelProvider):
         Default is False for OpenAI-compatible providers.
         """
         return False
-
-    def _supports_vision(self, model_name: str) -> bool:
-        """Check if the model supports vision (image processing).
-
-        Default implementation for OpenAI-compatible providers.
-        Subclasses should override with specific model support.
-        """
-        # Common vision-capable models - only include models that actually support images
-        vision_models = {
-            "gpt-5",
-            "gpt-5-mini",
-            "gpt-4o",
-            "gpt-4o-mini",
-            "gpt-4-turbo",
-            "gpt-4-vision-preview",
-            "gpt-4.1-2025-04-14",
-            "o3",
-            "o3-mini",
-            "o3-pro",
-            "o4-mini",
-            # Note: Claude models would be handled by a separate provider
-        }
-        supports = model_name.lower() in vision_models
-        logging.debug(f"Model '{model_name}' vision support: {supports}")
-        return supports
 
     def _is_error_retryable(self, error: Exception) -> bool:
         """Determine if an error should be retried based on structured error codes.

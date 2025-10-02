@@ -181,9 +181,10 @@ class GeminiModelProvider(ModelProvider):
         **kwargs,
     ) -> ModelResponse:
         """Generate content using Gemini model."""
-        # Validate parameters
+        # Validate parameters and fetch capabilities
         resolved_name = self._resolve_model_name(model_name)
         self.validate_parameters(model_name, temperature)
+        capabilities = self.get_capabilities(model_name)
 
         # Prepare content parts (text and potentially images)
         parts = []
@@ -197,7 +198,7 @@ class GeminiModelProvider(ModelProvider):
         parts.append({"text": full_prompt})
 
         # Add images if provided and model supports vision
-        if images and self._supports_vision(resolved_name):
+        if images and capabilities.supports_images:
             for image_path in images:
                 try:
                     image_part = self._process_image(image_path)
@@ -207,7 +208,7 @@ class GeminiModelProvider(ModelProvider):
                     logger.warning(f"Failed to process image {image_path}: {e}")
                     # Continue with other images and text
                     continue
-        elif images and not self._supports_vision(resolved_name):
+        elif images and not capabilities.supports_images:
             logger.warning(f"Model {resolved_name} does not support images, ignoring {len(images)} image(s)")
 
         # Create contents structure
@@ -224,7 +225,6 @@ class GeminiModelProvider(ModelProvider):
             generation_config.max_output_tokens = max_output_tokens
 
         # Add thinking configuration for models that support it
-        capabilities = self.get_capabilities(model_name)
         if capabilities.supports_extended_thinking and thinking_mode in self.THINKING_BUDGETS:
             # Get model's max thinking tokens and calculate actual budget
             model_config = self.SUPPORTED_MODELS.get(resolved_name)
@@ -456,18 +456,6 @@ class GeminiModelProvider(ModelProvider):
             pass
 
         return usage
-
-    def _supports_vision(self, model_name: str) -> bool:
-        """Check if the model supports vision (image processing)."""
-        # Gemini 2.5 models support vision
-        vision_models = {
-            "gemini-2.5-flash",
-            "gemini-2.5-pro",
-            "gemini-2.0-flash",
-            "gemini-1.5-pro",
-            "gemini-1.5-flash",
-        }
-        return model_name in vision_models
 
     def _is_error_retryable(self, error: Exception) -> bool:
         """Determine if an error should be retried based on structured error codes.

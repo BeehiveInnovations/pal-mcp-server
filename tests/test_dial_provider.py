@@ -140,17 +140,16 @@ class TestDIALProvider:
     @patch.dict(os.environ, {"DIAL_ALLOWED_MODELS": ""}, clear=False)
     @patch("utils.model_restrictions._restriction_service", None)
     def test_supports_vision(self):
-        """Test vision support detection."""
+        """Test vision support detection through model capabilities."""
         provider = DIALModelProvider("test-key")
 
-        # Test models with vision support
-        assert provider._supports_vision("o3-2025-04-16") is True
-        assert provider._supports_vision("o3") is True  # Via resolution
-        assert provider._supports_vision("anthropic.claude-opus-4.1-20250805-v1:0") is True
-        assert provider._supports_vision("gemini-2.5-pro-preview-05-06") is True
+        assert provider.get_capabilities("o3-2025-04-16").supports_images is True
+        assert provider.get_capabilities("o3").supports_images is True  # Via resolution
+        assert provider.get_capabilities("anthropic.claude-opus-4.1-20250805-v1:0").supports_images is True
+        assert provider.get_capabilities("gemini-2.5-pro-preview-05-06").supports_images is True
 
-        # Test unknown model (falls back to parent implementation)
-        assert provider._supports_vision("unknown-model") is False
+        with pytest.raises(ValueError):
+            provider.get_capabilities("unknown-model")
 
     @patch("openai.OpenAI")  # Mock the OpenAI class directly from openai module
     def test_generate_content_with_alias(self, mock_openai_class):
