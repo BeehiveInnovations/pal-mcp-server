@@ -65,7 +65,7 @@ async def test_chat_auto_mode_with_openai(monkeypatch):
         arguments = {
             "prompt": "Use chat with gpt5 and ask how far the moon is from earth.",
             "model": "gpt-5",
-            "temperature": 0.2,
+            "temperature": 1.0,
         }
 
         result = await chat_tool.execute(arguments)
