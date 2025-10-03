@@ -2,6 +2,49 @@
 
 <!-- version list -->
 
+## v5.18.3 (2025-10-03)
+
+### Bug Fixes
+
+- External model name now recorded properly in responses
+  ([`d55130a`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/d55130a430401e106cd86f3e830b3d756472b7ff))
+
+### Chores
+
+- Sync version to config.py [skip ci]
+  ([`5714e20`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/5714e2016405f7607b44d78f85081c7ccee706e5))
+
+### Documentation
+
+- Updated docs
+  ([`b4e5090`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/b4e50901ba60c88137a29d00ecf99718582856d3))
+
+### Refactoring
+
+- Generic name for the CLI agent
+  ([`e9b6947`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/e9b69476cd922c12931d62ccc3be9082bbbf6014))
+
+- Generic name for the CLI agent
+  ([`7a6fa0e`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/7a6fa0e77a8c4a682dc11c9bbb16bdaf86d9edf4))
+
+- Generic name for the CLI agent
+  ([`b692da2`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/b692da2a82facce7455b8f2ec0108e1db84c07c3))
+
+- Generic name for the CLI agent
+  ([`f76ebbf`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/f76ebbf280cc78ffcfe17cb4590aeaa231db8aa1))
+
+- Generic name for the CLI agent
+  ([`c05913a`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/c05913a09e53e195b9a108647c09c061ced19d17))
+
+- Generic name for the CLI agent
+  ([`0dfaa63`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/0dfaa6312ed95ac3d1ae0032334ae1286871b15e))
+
+### Testing
+
+- Fixed integration tests, removed magicmock
+  ([`87ccb6b`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/87ccb6b25ba32a3cb9c4cc64fc0e96294f492c04))
+
+
 ## v5.18.2 (2025-10-02)
 
 ### Bug Fixes
