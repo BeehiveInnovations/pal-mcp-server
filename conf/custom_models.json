@@ -342,7 +342,7 @@
       "max_image_size_mb": 0.0,
       "is_custom": false,
       "description": "GPT-5-Codex is a specialized version of GPT-5 optimized for software engineering and coding workflows",
-      "intelligence_score": 15
+      "intelligence_score": 17
     },
     {
       "model_name": "openai/gpt-5-mini",
