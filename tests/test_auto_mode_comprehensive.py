@@ -93,7 +93,7 @@ class TestAutoModeComprehensive:
                     "OPENROUTER_API_KEY": None,
                 },
                 {
-                    "EXTENDED_REASONING": "o3",  # O3 for deep reasoning
+                    "EXTENDED_REASONING": "gpt-5-codex",  # GPT-5-Codex prioritized for coding tasks
                     "FAST_RESPONSE": "gpt-5",  # Prefer gpt-5 for speed
                     "BALANCED": "gpt-5",  # Prefer gpt-5 for balanced
                 },

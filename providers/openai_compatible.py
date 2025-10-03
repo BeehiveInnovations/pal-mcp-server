@@ -571,9 +571,10 @@ class OpenAICompatibleProvider(ModelProvider):
                     continue  # Skip unsupported parameters for reasoning models
                 completion_params[key] = value
 
-        # Check if this is o3-pro and needs the responses endpoint
-        if resolved_model == "o3-pro":
-            # This model requires the /v1/responses endpoint
+        # Check if this model needs the Responses API endpoint
+        # Both o3-pro and gpt-5-codex use the new Responses API
+        if resolved_model in ["o3-pro", "gpt-5-codex"]:
+            # These models require the /v1/responses endpoint for stateful context
             # If it fails, we should not fall back to chat/completions
             return self._generate_with_responses_endpoint(
                 model_name=resolved_model,

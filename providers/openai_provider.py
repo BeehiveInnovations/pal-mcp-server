@@ -174,6 +174,25 @@ class OpenAIModelProvider(OpenAICompatibleProvider):
             description="GPT-4.1 (1M context) - Advanced reasoning model with large context window",
             aliases=["gpt4.1"],
         ),
+        "gpt-5-codex": ModelCapabilities(
+            provider=ProviderType.OPENAI,
+            model_name="gpt-5-codex",
+            friendly_name="OpenAI (GPT-5 Codex)",
+            intelligence_score=17,  # Higher than GPT-5 for coding tasks
+            context_window=400_000,  # 400K tokens (same as GPT-5)
+            max_output_tokens=128_000,  # 128K output tokens
+            supports_extended_thinking=True,  # Responses API supports reasoning tokens
+            supports_system_prompts=True,
+            supports_streaming=True,
+            supports_function_calling=True,  # Enhanced for agentic software engineering
+            supports_json_mode=True,
+            supports_images=True,  # Screenshots, wireframes, diagrams
+            max_image_size_mb=20.0,  # 20MB per OpenAI docs
+            supports_temperature=True,
+            temperature_constraint=TemperatureConstraint.create("range"),
+            description="GPT-5 Codex (400K context) - Uses Responses API for 40-80% cost savings. Specialized for coding, refactoring, and software architecture. 3% better performance on SWE-bench.",
+            aliases=["gpt5-codex", "codex", "gpt-5-code", "gpt5-code"],
+        ),
     }
 
     def __init__(self, api_key: str, **kwargs):
@@ -290,15 +309,18 @@ class OpenAIModelProvider(OpenAICompatibleProvider):
 
         if category == ToolModelCategory.EXTENDED_REASONING:
             # Prefer models with extended thinking support
-            preferred = find_first(["o3", "o3-pro", "gpt-5"])
+            # GPT-5-Codex first for coding tasks (uses Responses API with 40-80% cost savings)
+            preferred = find_first(["gpt-5-codex", "o3", "o3-pro", "gpt-5"])
             return preferred if preferred else allowed_models[0]
 
         elif category == ToolModelCategory.FAST_RESPONSE:
             # Prefer fast, cost-efficient models
-            preferred = find_first(["gpt-5", "gpt-5-mini", "o4-mini", "o3-mini"])
+            # GPT-5 models for speed, GPT-5-Codex after (premium pricing but cached)
+            preferred = find_first(["gpt-5", "gpt-5-mini", "gpt-5-codex", "o4-mini", "o3-mini"])
             return preferred if preferred else allowed_models[0]
 
         else:  # BALANCED or default
             # Prefer balanced performance/cost models
-            preferred = find_first(["gpt-5", "gpt-5-mini", "o4-mini", "o3-mini"])
+            # Include GPT-5-Codex for coding workflows
+            preferred = find_first(["gpt-5", "gpt-5-codex", "gpt-5-mini", "o4-mini", "o3-mini"])
             return preferred if preferred else allowed_models[0]
