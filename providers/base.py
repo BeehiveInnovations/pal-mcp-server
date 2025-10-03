@@ -181,6 +181,10 @@ class ModelProvider(ABC):
         """
 
         error_str = str(error).lower()
+
+        if "429" in error_str or "rate limit" in error_str:
+            return False
+
         retryable_indicators = [
             "timeout",
             "connection",
@@ -193,8 +197,6 @@ class ModelProvider(ABC):
             "tls",
             "handshake",
             "network",
-            "rate limit",
-            "429",
             "500",
             "502",
             "503",
