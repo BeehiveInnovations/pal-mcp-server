@@ -361,23 +361,6 @@ class GeminiModelProvider(ModelProvider):
         """Get the provider type."""
         return ProviderType.GOOGLE
 
-    def get_thinking_budget(self, model_name: str, thinking_mode: str) -> int:
-        """Get actual thinking token budget for a model and thinking mode."""
-        resolved_name = self._resolve_model_name(model_name)
-        model_config = self.MODEL_CAPABILITIES.get(resolved_name)
-
-        if not model_config or not model_config.supports_extended_thinking:
-            return 0
-
-        if thinking_mode not in self.THINKING_BUDGETS:
-            return 0
-
-        max_thinking_tokens = model_config.max_thinking_tokens
-        if max_thinking_tokens == 0:
-            return 0
-
-        return int(max_thinking_tokens * self.THINKING_BUDGETS[thinking_mode])
-
     def _extract_usage(self, response) -> dict[str, int]:
         """Extract token usage from Gemini response."""
         usage = {}
