@@ -107,8 +107,8 @@ class TestChatTool:
                             prompt = await self.tool.prepare_prompt(request)
 
                             assert "Test prompt" in prompt
-                            assert "System prompt" in prompt
-                            assert "USER REQUEST" in prompt
+                            assert prompt.startswith("=== USER REQUEST ===")
+                            assert "System prompt" not in prompt
 
     def test_response_formatting(self):
         """Test that response formatting works correctly"""

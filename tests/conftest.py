@@ -15,7 +15,6 @@ parent_dir = Path(__file__).resolve().parent.parent
 if str(parent_dir) not in sys.path:
     sys.path.insert(0, str(parent_dir))
 
-
 # Set default model to a specific value for tests to avoid auto mode
 # This prevents all tests from failing due to missing model parameter
 os.environ["DEFAULT_MODEL"] = "gemini-2.5-flash"
@@ -33,9 +32,9 @@ if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 # Register providers for all tests
-from providers import ModelProviderRegistry  # noqa: E402
 from providers.gemini import GeminiModelProvider  # noqa: E402
 from providers.openai_provider import OpenAIModelProvider  # noqa: E402
+from providers.registry import ModelProviderRegistry  # noqa: E402
 from providers.shared import ProviderType  # noqa: E402
 from providers.xai import XAIModelProvider  # noqa: E402
 
@@ -133,42 +132,6 @@ def mock_provider_availability(request, monkeypatch):
             return CustomProvider(api_key=api_key or "", base_url=base_url)
 
         ModelProviderRegistry.register_provider(ProviderType.CUSTOM, custom_provider_factory)
-
-    from unittest.mock import MagicMock
-
-    original_get_provider = ModelProviderRegistry.get_provider_for_model
-
-    def mock_get_provider_for_model(model_name):
-        # If it's a test looking for unavailable models, return None
-        if model_name in ["unavailable-model", "gpt-5-turbo", "o3"]:
-            return None
-        # For common test models, return a mock provider
-        if model_name in ["gemini-2.5-flash", "gemini-2.5-pro", "pro", "flash", "local-llama"]:
-            # Try to use the real provider first if it exists
-            real_provider = original_get_provider(model_name)
-            if real_provider:
-                return real_provider
-
-            # Otherwise create a mock
-            provider = MagicMock()
-            # Set up the model capabilities mock with actual values
-            capabilities = MagicMock()
-            if model_name == "local-llama":
-                capabilities.context_window = 128000  # 128K tokens for local-llama
-                capabilities.supports_extended_thinking = False
-                capabilities.input_cost_per_1k = 0.0  # Free local model
-                capabilities.output_cost_per_1k = 0.0  # Free local model
-            else:
-                capabilities.context_window = 1000000  # 1M tokens for Gemini models
-                capabilities.supports_extended_thinking = False
-                capabilities.input_cost_per_1k = 0.075
-                capabilities.output_cost_per_1k = 0.3
-            provider.get_model_capabilities.return_value = capabilities
-            return provider
-        # Otherwise use the original logic
-        return original_get_provider(model_name)
-
-    monkeypatch.setattr(ModelProviderRegistry, "get_provider_for_model", mock_get_provider_for_model)
 
     # Also mock is_effective_auto_mode for all BaseTool instances to return False
     # unless we're specifically testing auto mode behavior

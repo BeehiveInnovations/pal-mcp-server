@@ -6,8 +6,11 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from providers.gemini import GeminiModelProvider
+from providers.openai_provider import OpenAIModelProvider
 from providers.registry import ModelProviderRegistry
 from providers.shared import ProviderType
+from providers.xai import XAIModelProvider
 from tools.analyze import AnalyzeTool
 from tools.chat import ChatTool
 from tools.debug import DebugIssueTool
@@ -60,10 +63,6 @@ class TestAutoModeComprehensive:
         ModelProviderRegistry._instance = None
 
         # Re-register providers for subsequent tests (like conftest.py does)
-        from providers.gemini import GeminiModelProvider
-        from providers.openai_provider import OpenAIModelProvider
-        from providers.xai import XAIModelProvider
-
         ModelProviderRegistry.register_provider(ProviderType.GOOGLE, GeminiModelProvider)
         ModelProviderRegistry.register_provider(ProviderType.OPENAI, OpenAIModelProvider)
         ModelProviderRegistry.register_provider(ProviderType.XAI, XAIModelProvider)
@@ -163,10 +162,7 @@ class TestAutoModeComprehensive:
             importlib.reload(config)
 
             # Register providers based on configuration
-            from providers.gemini import GeminiModelProvider
-            from providers.openai_provider import OpenAIModelProvider
             from providers.openrouter import OpenRouterProvider
-            from providers.xai import XAIModelProvider
 
             if provider_config.get("GEMINI_API_KEY"):
                 ModelProviderRegistry.register_provider(ProviderType.GOOGLE, GeminiModelProvider)
@@ -229,8 +225,6 @@ class TestAutoModeComprehensive:
             importlib.reload(config)
 
             # Register only Gemini provider
-            from providers.gemini import GeminiModelProvider
-
             ModelProviderRegistry.register_provider(ProviderType.GOOGLE, GeminiModelProvider)
 
             # Mock provider to capture what model is requested
@@ -281,8 +275,6 @@ class TestAutoModeComprehensive:
             importlib.reload(config)
 
             # Register only Gemini provider
-            from providers.gemini import GeminiModelProvider
-
             ModelProviderRegistry.register_provider(ProviderType.GOOGLE, GeminiModelProvider)
 
             tool = AnalyzeTool()
@@ -339,10 +331,6 @@ class TestAutoModeComprehensive:
             importlib.reload(config)
 
             # Register all native providers
-            from providers.gemini import GeminiModelProvider
-            from providers.openai_provider import OpenAIModelProvider
-            from providers.xai import XAIModelProvider
-
             ModelProviderRegistry.register_provider(ProviderType.GOOGLE, GeminiModelProvider)
             ModelProviderRegistry.register_provider(ProviderType.OPENAI, OpenAIModelProvider)
             ModelProviderRegistry.register_provider(ProviderType.XAI, XAIModelProvider)
@@ -392,8 +380,6 @@ class TestAutoModeComprehensive:
             importlib.reload(config)
 
             # Register only Gemini provider
-            from providers.gemini import GeminiModelProvider
-
             ModelProviderRegistry.register_provider(ProviderType.GOOGLE, GeminiModelProvider)
 
             # Test with ChatTool (FAST_RESPONSE category)
@@ -453,9 +439,6 @@ class TestAutoModeComprehensive:
             utils.model_restrictions._restriction_service = None
 
             # Register providers
-            from providers.gemini import GeminiModelProvider
-            from providers.openai_provider import OpenAIModelProvider
-
             ModelProviderRegistry.register_provider(ProviderType.GOOGLE, GeminiModelProvider)
             ModelProviderRegistry.register_provider(ProviderType.OPENAI, OpenAIModelProvider)
 
@@ -550,8 +533,6 @@ class TestAutoModeComprehensive:
             importlib.reload(config)
 
             # Register Gemini provider
-            from providers.gemini import GeminiModelProvider
-
             ModelProviderRegistry.register_provider(ProviderType.GOOGLE, GeminiModelProvider)
 
             # Mock the actual provider to simulate successful execution
