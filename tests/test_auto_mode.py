@@ -106,19 +106,35 @@ class TestAutoMode:
 
     def test_tool_schema_in_normal_mode(self):
         """Test that tool schemas don't require model in normal mode"""
-        # This test uses the default from conftest.py which sets non-auto mode
-        # The conftest.py mock_provider_availability fixture ensures the model is available
-        tool = ChatTool()
-        schema = tool.get_input_schema()
+        # Save original
+        original = os.environ.get("DEFAULT_MODEL", "")
 
-        # Model should not be required when default model is configured
-        assert "model" not in schema["required"]
+        try:
+            # Set to a specific model (not auto mode)
+            os.environ["DEFAULT_MODEL"] = "gemini-2.5-flash"
+            import config
 
-        # Model field should have simpler description
-        model_schema = schema["properties"]["model"]
-        assert "enum" not in model_schema
-        assert "listmodels" in model_schema["description"]
-        assert "default model" in model_schema["description"].lower()
+            importlib.reload(config)
+
+            tool = ChatTool()
+            schema = tool.get_input_schema()
+
+            # Model should not be required when default model is configured
+            assert "model" not in schema["required"]
+
+            # Model field should have simpler description
+            model_schema = schema["properties"]["model"]
+            assert "enum" not in model_schema
+            assert "listmodels" in model_schema["description"]
+            assert "default model" in model_schema["description"].lower()
+
+        finally:
+            # Restore
+            if original:
+                os.environ["DEFAULT_MODEL"] = original
+            else:
+                os.environ.pop("DEFAULT_MODEL", None)
+            importlib.reload(config)
 
     @pytest.mark.asyncio
     async def test_auto_mode_requires_model_parameter(self):

@@ -73,6 +73,8 @@ class CustomProvider(OpenAICompatibleProvider):
 
         logging.info(f"Initializing Custom provider with endpoint: {base_url}")
 
+        self._alias_cache: dict[str, str] = {}
+
         super().__init__(api_key, base_url=base_url, **kwargs)
 
         # Initialize model registry (shared with OpenRouter for consistent aliases)
@@ -120,11 +122,18 @@ class CustomProvider(OpenAICompatibleProvider):
     def _resolve_model_name(self, model_name: str) -> str:
         """Resolve registry aliases and strip version tags for local models."""
 
+        cache_key = model_name.lower()
+        if cache_key in self._alias_cache:
+            return self._alias_cache[cache_key]
+
         config = self._registry.resolve(model_name)
         if config:
             if config.model_name != model_name:
-                logging.info(f"Resolved model alias '{model_name}' to '{config.model_name}'")
-            return config.model_name
+                logging.debug("Resolved model alias '%s' to '%s'", model_name, config.model_name)
+            resolved = config.model_name
+            self._alias_cache[cache_key] = resolved
+            self._alias_cache.setdefault(resolved.lower(), resolved)
+            return resolved
 
         if ":" in model_name:
             base_model = model_name.split(":")[0]
@@ -132,11 +141,16 @@ class CustomProvider(OpenAICompatibleProvider):
 
             base_config = self._registry.resolve(base_model)
             if base_config:
-                logging.info(f"Resolved base model '{base_model}' to '{base_config.model_name}'")
-                return base_config.model_name
+                logging.debug("Resolved base model '%s' to '%s'", base_model, base_config.model_name)
+                resolved = base_config.model_name
+                self._alias_cache[cache_key] = resolved
+                self._alias_cache.setdefault(resolved.lower(), resolved)
+                return resolved
+            self._alias_cache[cache_key] = base_model
             return base_model
 
         logging.debug(f"Model '{model_name}' not found in registry, using as-is")
+        self._alias_cache[cache_key] = model_name
         return model_name
 
     def get_all_model_capabilities(self) -> dict[str, ModelCapabilities]:

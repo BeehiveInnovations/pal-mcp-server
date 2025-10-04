@@ -3,6 +3,7 @@ Tests for dynamic context request and collaboration features
 """
 
 import json
+import os
 from unittest.mock import Mock, patch
 
 import pytest
@@ -157,95 +158,120 @@ class TestDynamicContextRequests:
     @patch("tools.shared.base_tool.BaseTool.get_model_provider")
     async def test_clarification_with_suggested_action(self, mock_get_provider, analyze_tool):
         """Test clarification request with suggested next action"""
-        clarification_json = json.dumps(
-            {
-                "status": "files_required_to_continue",
-                "mandatory_instructions": "I need to see the database configuration to analyze the connection error",
-                "files_needed": ["config/database.yml", "src/db.py"],
-                "suggested_next_action": {
-                    "tool": "analyze",
-                    "args": {
-                        "prompt": "Analyze database connection timeout issue",
-                        "relevant_files": [
-                            "/config/database.yml",
-                            "/src/db.py",
-                            "/logs/error.log",
-                        ],
+        import importlib
+
+        from providers.registry import ModelProviderRegistry
+
+        # Ensure deterministic model configuration for this test regardless of previous suites
+        ModelProviderRegistry.reset_for_testing()
+
+        original_default = os.environ.get("DEFAULT_MODEL")
+
+        try:
+            os.environ["DEFAULT_MODEL"] = "gemini-2.5-flash"
+            import config
+
+            importlib.reload(config)
+
+            clarification_json = json.dumps(
+                {
+                    "status": "files_required_to_continue",
+                    "mandatory_instructions": "I need to see the database configuration to analyze the connection error",
+                    "files_needed": ["config/database.yml", "src/db.py"],
+                    "suggested_next_action": {
+                        "tool": "analyze",
+                        "args": {
+                            "prompt": "Analyze database connection timeout issue",
+                            "relevant_files": [
+                                "/config/database.yml",
+                                "/src/db.py",
+                                "/logs/error.log",
+                            ],
+                        },
                     },
                 },
-            },
-            ensure_ascii=False,
-        )
+                ensure_ascii=False,
+            )
 
-        mock_provider = create_mock_provider()
-        mock_provider.get_provider_type.return_value = Mock(value="google")
-        mock_provider.generate_content.return_value = Mock(
-            content=clarification_json, usage={}, model_name="gemini-2.5-flash", metadata={}
-        )
-        mock_get_provider.return_value = mock_provider
+            mock_provider = create_mock_provider()
+            mock_provider.get_provider_type.return_value = Mock(value="google")
+            mock_provider.generate_content.return_value = Mock(
+                content=clarification_json, usage={}, model_name="gemini-2.5-flash", metadata={}
+            )
+            mock_get_provider.return_value = mock_provider
 
-        result = await analyze_tool.execute(
-            {
-                "step": "Analyze database connection timeout issue",
-                "step_number": 1,
-                "total_steps": 1,
-                "next_step_required": False,
-                "findings": "Initial database timeout analysis",
-                "relevant_files": ["/absolute/logs/error.log"],
-            }
-        )
+            result = await analyze_tool.execute(
+                {
+                    "step": "Analyze database connection timeout issue",
+                    "step_number": 1,
+                    "total_steps": 1,
+                    "next_step_required": False,
+                    "findings": "Initial database timeout analysis",
+                    "relevant_files": ["/absolute/logs/error.log"],
+                }
+            )
 
-        assert len(result) == 1
+            assert len(result) == 1
 
-        response_data = json.loads(result[0].text)
+            response_data = json.loads(result[0].text)
 
-        # Workflow tools should either promote clarification status or handle it in expert analysis
-        if response_data["status"] == "files_required_to_continue":
-            # Clarification was properly promoted to main status
-            # Check if mandatory_instructions is at top level or in content
-            if "mandatory_instructions" in response_data:
-                assert "database configuration" in response_data["mandatory_instructions"]
-                assert "files_needed" in response_data
-                assert "config/database.yml" in response_data["files_needed"]
-                assert "src/db.py" in response_data["files_needed"]
-            elif "content" in response_data:
-                # Parse content JSON for workflow tools
-                try:
-                    content_json = json.loads(response_data["content"])
-                    assert "mandatory_instructions" in content_json
+            # Workflow tools should either promote clarification status or handle it in expert analysis
+            if response_data["status"] == "files_required_to_continue":
+                # Clarification was properly promoted to main status
+                # Check if mandatory_instructions is at top level or in content
+                if "mandatory_instructions" in response_data:
+                    assert "database configuration" in response_data["mandatory_instructions"]
+                    assert "files_needed" in response_data
+                    assert "config/database.yml" in response_data["files_needed"]
+                    assert "src/db.py" in response_data["files_needed"]
+                elif "content" in response_data:
+                    # Parse content JSON for workflow tools
+                    try:
+                        content_json = json.loads(response_data["content"])
+                        assert "mandatory_instructions" in content_json
+                        assert (
+                            "database configuration" in content_json["mandatory_instructions"]
+                            or "database" in content_json["mandatory_instructions"]
+                        )
+                        assert "files_needed" in content_json
+                        files_needed_str = str(content_json["files_needed"])
+                        assert (
+                            "config/database.yml" in files_needed_str
+                            or "config" in files_needed_str
+                            or "database" in files_needed_str
+                        )
+                    except json.JSONDecodeError:
+                        # Content is not JSON, check if it contains required text
+                        content = response_data["content"]
+                        assert "database configuration" in content or "config" in content
+            elif response_data["status"] == "calling_expert_analysis":
+                # Clarification may be handled in expert analysis section
+                if "expert_analysis" in response_data:
+                    expert_analysis = response_data["expert_analysis"]
+                    expert_content = str(expert_analysis)
                     assert (
-                        "database configuration" in content_json["mandatory_instructions"]
-                        or "database" in content_json["mandatory_instructions"]
+                        "database configuration" in expert_content
+                        or "config/database.yml" in expert_content
+                        or "files_required_to_continue" in expert_content
                     )
-                    assert "files_needed" in content_json
-                    files_needed_str = str(content_json["files_needed"])
-                    assert (
-                        "config/database.yml" in files_needed_str
-                        or "config" in files_needed_str
-                        or "database" in files_needed_str
-                    )
-                except json.JSONDecodeError:
-                    # Content is not JSON, check if it contains required text
-                    content = response_data["content"]
-                    assert "database configuration" in content or "config" in content
-        elif response_data["status"] == "calling_expert_analysis":
-            # Clarification may be handled in expert analysis section
-            if "expert_analysis" in response_data:
-                expert_analysis = response_data["expert_analysis"]
-                expert_content = str(expert_analysis)
-                assert (
-                    "database configuration" in expert_content
-                    or "config/database.yml" in expert_content
-                    or "files_required_to_continue" in expert_content
-                )
-        else:
-            # Some other status - ensure it's a valid workflow response
-            assert "step_number" in response_data
+            else:
+                # Some other status - ensure it's a valid workflow response
+                assert "step_number" in response_data
 
-        # Check for suggested next action
-        if "suggested_next_action" in response_data:
-            action = response_data["suggested_next_action"]
-            assert action["tool"] == "analyze"
+            # Check for suggested next action
+            if "suggested_next_action" in response_data:
+                action = response_data["suggested_next_action"]
+                assert action["tool"] == "analyze"
+        finally:
+            if original_default is not None:
+                os.environ["DEFAULT_MODEL"] = original_default
+            else:
+                os.environ.pop("DEFAULT_MODEL", None)
+
+            import config
+
+            importlib.reload(config)
+            ModelProviderRegistry.reset_for_testing()
 
     def test_tool_output_model_serialization(self):
         """Test ToolOutput model serialization"""

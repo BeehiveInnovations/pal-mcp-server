@@ -293,13 +293,7 @@ class TestOpenRouterAliasRestrictions:
             # o3 -> openai/o3
             # gpt4.1 -> should not exist (expected to be filtered out)
 
-            expected_models = {
-                "openai/o3-mini",
-                "google/gemini-2.5-pro",
-                "google/gemini-2.5-flash",
-                "openai/o4-mini",
-                "openai/o3",
-            }
+            expected_models = {"o3-mini", "pro", "flash", "o4-mini", "o3"}
 
             available_model_names = set(available_models.keys())
 
@@ -355,9 +349,11 @@ class TestOpenRouterAliasRestrictions:
             available_models = ModelProviderRegistry.get_available_models(respect_restrictions=True)
 
             expected_models = {
-                "openai/o3-mini",  # from alias
+                "o3-mini",  # alias
+                "openai/o3-mini",  # canonical
                 "anthropic/claude-opus-4.1",  # full name
-                "google/gemini-2.5-flash",  # from alias
+                "flash",  # alias
+                "google/gemini-2.5-flash",  # canonical
             }
 
             available_model_names = set(available_models.keys())

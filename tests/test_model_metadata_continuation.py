@@ -121,38 +121,59 @@ class TestModelMetadataContinuation:
     @pytest.mark.asyncio
     async def test_no_previous_assistant_turn_defaults(self):
         """Test behavior when there's no previous assistant turn."""
-        thread_id = create_thread("chat", {"prompt": "test"})
+        # Save and set DEFAULT_MODEL for test
+        import importlib
+        import os
 
-        # Only add user turns
-        add_turn(thread_id, "user", "First question")
-        add_turn(thread_id, "user", "Second question")
+        original_default = os.environ.get("DEFAULT_MODEL", "")
+        os.environ["DEFAULT_MODEL"] = "auto"
+        import config
+        import utils.model_context
 
-        arguments = {"continuation_id": thread_id}
+        importlib.reload(config)
+        importlib.reload(utils.model_context)
 
-        # Mock dependencies
-        with patch("utils.model_context.ModelContext.calculate_token_allocation") as mock_calc:
-            mock_calc.return_value = MagicMock(
-                total_tokens=200000,
-                content_tokens=160000,
-                response_tokens=40000,
-                file_tokens=64000,
-                history_tokens=64000,
-            )
+        try:
+            thread_id = create_thread("chat", {"prompt": "test"})
 
-            with patch("utils.conversation_memory.build_conversation_history") as mock_build:
-                mock_build.return_value = ("=== CONVERSATION HISTORY ===\n", 1000)
+            # Only add user turns
+            add_turn(thread_id, "user", "First question")
+            add_turn(thread_id, "user", "Second question")
 
-                # Call the actual function
-                enhanced_args = await reconstruct_thread_context(arguments)
+            arguments = {"continuation_id": thread_id}
 
-                # Should not have set a model
-                assert enhanced_args.get("model") is None
+            # Mock dependencies
+            with patch("utils.model_context.ModelContext.calculate_token_allocation") as mock_calc:
+                mock_calc.return_value = MagicMock(
+                    total_tokens=200000,
+                    content_tokens=160000,
+                    response_tokens=40000,
+                    file_tokens=64000,
+                    history_tokens=64000,
+                )
 
-                # ModelContext should use DEFAULT_MODEL
-                model_context = ModelContext.from_arguments(enhanced_args)
-                from config import DEFAULT_MODEL
+                with patch("utils.conversation_memory.build_conversation_history") as mock_build:
+                    mock_build.return_value = ("=== CONVERSATION HISTORY ===\n", 1000)
 
-                assert model_context.model_name == DEFAULT_MODEL
+                    # Call the actual function
+                    enhanced_args = await reconstruct_thread_context(arguments)
+
+                    # Should not have set a model
+                    assert enhanced_args.get("model") is None
+
+                    # ModelContext should use DEFAULT_MODEL
+                    model_context = ModelContext.from_arguments(enhanced_args)
+                    from config import DEFAULT_MODEL
+
+                    assert model_context.model_name == DEFAULT_MODEL
+        finally:
+            # Restore original value
+            if original_default:
+                os.environ["DEFAULT_MODEL"] = original_default
+            else:
+                os.environ.pop("DEFAULT_MODEL", None)
+            importlib.reload(config)
+            importlib.reload(utils.model_context)
 
     @pytest.mark.asyncio
     async def test_explicit_model_overrides_previous_turn(self):

@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 
 from providers.base import ModelProvider
 from providers.registry import ModelProviderRegistry
-from providers.shared import ProviderType
+from providers.shared import ModelCapabilities, ProviderType
 from tools.listmodels import ListModelsTool
 
 
@@ -23,10 +23,63 @@ class TestListModelsRestrictions(unittest.TestCase):
         self.mock_openrouter = MagicMock(spec=ModelProvider)
         self.mock_openrouter.provider_type = ProviderType.OPENROUTER
 
+        def make_capabilities(
+            canonical: str, friendly: str, *, aliases=None, context: int = 200_000
+        ) -> ModelCapabilities:
+            return ModelCapabilities(
+                provider=ProviderType.OPENROUTER,
+                model_name=canonical,
+                friendly_name=friendly,
+                intelligence_score=20,
+                description=friendly,
+                aliases=aliases or [],
+                context_window=context,
+                max_output_tokens=context,
+                supports_extended_thinking=True,
+            )
+
+        opus_caps = make_capabilities(
+            "anthropic/claude-opus-4-20240229",
+            "Claude Opus",
+            aliases=["opus"],
+        )
+        sonnet_caps = make_capabilities(
+            "anthropic/claude-sonnet-4-20240229",
+            "Claude Sonnet",
+            aliases=["sonnet"],
+        )
+        deepseek_caps = make_capabilities(
+            "deepseek/deepseek-r1-0528:free",
+            "DeepSeek R1",
+            aliases=[],
+        )
+        qwen_caps = make_capabilities(
+            "qwen/qwen3-235b-a22b-04-28:free",
+            "Qwen3",
+            aliases=[],
+        )
+
+        self._openrouter_caps_map = {
+            "anthropic/claude-opus-4": opus_caps,
+            "opus": opus_caps,
+            "anthropic/claude-opus-4-20240229": opus_caps,
+            "anthropic/claude-sonnet-4": sonnet_caps,
+            "sonnet": sonnet_caps,
+            "anthropic/claude-sonnet-4-20240229": sonnet_caps,
+            "deepseek/deepseek-r1-0528:free": deepseek_caps,
+            "qwen/qwen3-235b-a22b-04-28:free": qwen_caps,
+        }
+
+        self.mock_openrouter.get_capabilities.side_effect = self._openrouter_caps_map.__getitem__
+        self.mock_openrouter.get_capabilities_by_rank.return_value = []
+        self.mock_openrouter.list_models.return_value = []
+
         # Create mock Gemini provider for comparison
         self.mock_gemini = MagicMock(spec=ModelProvider)
         self.mock_gemini.provider_type = ProviderType.GOOGLE
         self.mock_gemini.list_models.return_value = ["gemini-2.5-flash", "gemini-2.5-pro"]
+        self.mock_gemini.get_capabilities_by_rank.return_value = []
+        self.mock_gemini.get_capabilities_by_rank.return_value = []
 
     def tearDown(self):
         """Clean up after tests."""
@@ -159,7 +212,7 @@ class TestListModelsRestrictions(unittest.TestCase):
         for line in lines:
             if "OpenRouter" in line and "✅" in line:
                 openrouter_section_found = True
-            elif "Available Models" in line and openrouter_section_found:
+            elif ("Models (policy restricted)" in line or "Available Models" in line) and openrouter_section_found:
                 in_openrouter_section = True
             elif in_openrouter_section:
                 # Check for lines with model names in backticks
@@ -179,11 +232,11 @@ class TestListModelsRestrictions(unittest.TestCase):
             len(openrouter_models), 4, f"Expected 4 models, got {len(openrouter_models)}: {openrouter_models}"
         )
 
-        # Verify list_models was called with respect_restrictions=True
-        self.mock_openrouter.list_models.assert_called_with(respect_restrictions=True)
+        # Verify we did not fall back to unrestricted listing
+        self.mock_openrouter.list_models.assert_not_called()
 
         # Check for restriction note
-        self.assertIn("Restricted to models matching:", result)
+        self.assertIn("OpenRouter models restricted by", result)
 
     @patch.dict(os.environ, {"OPENROUTER_API_KEY": "test-key", "GEMINI_API_KEY": "gemini-test-key"}, clear=True)
     @patch("providers.openrouter_registry.OpenRouterModelRegistry")

@@ -492,15 +492,25 @@ def configure_providers():
 
     # Register providers in priority order:
     # 1. Native APIs first (most direct and efficient)
+    registered_providers = []
+
     if has_native_apis:
         if gemini_key and gemini_key != "your_gemini_api_key_here":
             ModelProviderRegistry.register_provider(ProviderType.GOOGLE, GeminiModelProvider)
+            registered_providers.append(ProviderType.GOOGLE.value)
+            logger.debug(f"Registered provider: {ProviderType.GOOGLE.value}")
         if openai_key and openai_key != "your_openai_api_key_here":
             ModelProviderRegistry.register_provider(ProviderType.OPENAI, OpenAIModelProvider)
+            registered_providers.append(ProviderType.OPENAI.value)
+            logger.debug(f"Registered provider: {ProviderType.OPENAI.value}")
         if xai_key and xai_key != "your_xai_api_key_here":
             ModelProviderRegistry.register_provider(ProviderType.XAI, XAIModelProvider)
+            registered_providers.append(ProviderType.XAI.value)
+            logger.debug(f"Registered provider: {ProviderType.XAI.value}")
         if dial_key and dial_key != "your_dial_api_key_here":
             ModelProviderRegistry.register_provider(ProviderType.DIAL, DIALModelProvider)
+            registered_providers.append(ProviderType.DIAL.value)
+            logger.debug(f"Registered provider: {ProviderType.DIAL.value}")
 
     # 2. Custom provider second (for local/private models)
     if has_custom:
@@ -511,10 +521,18 @@ def configure_providers():
             return CustomProvider(api_key=api_key or "", base_url=base_url)  # Use provided API key or empty string
 
         ModelProviderRegistry.register_provider(ProviderType.CUSTOM, custom_provider_factory)
+        registered_providers.append(ProviderType.CUSTOM.value)
+        logger.debug(f"Registered provider: {ProviderType.CUSTOM.value}")
 
     # 3. OpenRouter last (catch-all for everything else)
     if has_openrouter:
         ModelProviderRegistry.register_provider(ProviderType.OPENROUTER, OpenRouterProvider)
+        registered_providers.append(ProviderType.OPENROUTER.value)
+        logger.debug(f"Registered provider: {ProviderType.OPENROUTER.value}")
+
+    # Log all registered providers
+    if registered_providers:
+        logger.info(f"Registered providers: {', '.join(registered_providers)}")
 
     # Require at least one valid provider
     if not valid_providers:

@@ -1,5 +1,9 @@
 # Repository Guidelines
 
+See `requirements.txt` and `requirements-dev.txt`
+
+Also read CLAUDE.md and CLAUDE.local.md if available.
+
 ## Project Structure & Module Organization
 Zen MCP Server centers on `server.py`, which exposes MCP entrypoints and coordinates multi-model workflows. 
 Feature-specific tools live in `tools/`, provider integrations in `providers/`, and shared helpers in `utils/`. 
@@ -13,6 +17,13 @@ Authoritative documentation and samples live in `docs/`, and runtime diagnostics
 - `./code_quality_checks.sh` – run Ruff autofix, Black, isort, and the default pytest suite.
 - `python communication_simulator_test.py --quick` – smoke-test orchestration across tools and providers.
 - `./run_integration_tests.sh [--with-simulator]` – exercise provider-dependent flows against remote or Ollama models.
+
+For example, this is how we run an individual / all tests:
+
+```
+.zen_venv/bin/activate && pytest tests/test_auto_mode_model_listing.py -q
+.zen_venv/bin/activate && pytest -q
+```
 
 ## Coding Style & Naming Conventions
 Target Python 3.9+ with Black and isort using a 120-character line limit; Ruff enforces pycodestyle, pyflakes, bugbear, comprehension, and pyupgrade rules. Prefer explicit type hints, snake_case modules, and imperative commit-time docstrings. Extend workflows by defining hook or abstract methods instead of checking `hasattr()`/`getattr()`—inheritance-backed contracts keep behavior discoverable and testable.

@@ -63,26 +63,29 @@ class TestAliasTargetRestrictions:
         assert provider.validate_model_name("o4mini")
 
     @patch.dict(os.environ, {"OPENAI_ALLOWED_MODELS": "mini"})  # Allow alias only
-    def test_restriction_policy_allows_only_alias_when_alias_specified(self):
-        """Test that restriction policy allows only the alias when just alias is specified.
-
-        If you restrict to 'mini' (which is an alias for gpt-5-mini),
-        only the alias should work, not other models.
-        This is the correct restrictive behavior.
-        """
-        # Clear cached restriction service
+    def test_restriction_policy_alias_allows_canonical(self):
+        """Alias-only allowlists should permit both the alias and its canonical target."""
         import utils.model_restrictions
 
         utils.model_restrictions._restriction_service = None
 
         provider = OpenAIModelProvider(api_key="test-key")
 
-        # Only the alias should be allowed
         assert provider.validate_model_name("mini")
-        # Direct target for this alias should NOT be allowed (mini -> gpt-5-mini)
-        assert not provider.validate_model_name("gpt-5-mini")
-        # Other models should NOT be allowed
+        assert provider.validate_model_name("gpt-5-mini")
         assert not provider.validate_model_name("o4-mini")
+
+    @patch.dict(os.environ, {"OPENAI_ALLOWED_MODELS": "gpt5"})
+    def test_restriction_policy_alias_allows_short_name(self):
+        """Common aliases like 'gpt5' should allow their canonical forms."""
+        import utils.model_restrictions
+
+        utils.model_restrictions._restriction_service = None
+
+        provider = OpenAIModelProvider(api_key="test-key")
+
+        assert provider.validate_model_name("gpt5")
+        assert provider.validate_model_name("gpt-5")
 
     @patch.dict(os.environ, {"GOOGLE_ALLOWED_MODELS": "gemini-2.5-flash"})  # Allow target
     def test_gemini_restriction_policy_allows_alias_when_target_allowed(self):
@@ -99,19 +102,16 @@ class TestAliasTargetRestrictions:
         assert provider.validate_model_name("flash")
 
     @patch.dict(os.environ, {"GOOGLE_ALLOWED_MODELS": "flash"})  # Allow alias only
-    def test_gemini_restriction_policy_allows_only_alias_when_alias_specified(self):
-        """Test Gemini restriction policy allows only alias when just alias is specified."""
-        # Clear cached restriction service
+    def test_gemini_restriction_policy_alias_allows_canonical(self):
+        """Gemini alias allowlists should permit canonical forms."""
         import utils.model_restrictions
 
         utils.model_restrictions._restriction_service = None
 
         provider = GeminiModelProvider(api_key="test-key")
 
-        # Only the alias should be allowed
         assert provider.validate_model_name("flash")
-        # Direct target should NOT be allowed
-        assert not provider.validate_model_name("gemini-2.5-flash")
+        assert provider.validate_model_name("gemini-2.5-flash")
 
     def test_restriction_service_validation_includes_all_targets(self):
         """Test that restriction service validation knows about all aliases and targets."""
@@ -152,6 +152,30 @@ class TestAliasTargetRestrictions:
         assert provider.validate_model_name("gpt-5-mini")  # target
         assert provider.validate_model_name("o4-mini")  # target
         assert provider.validate_model_name("o4mini")  # alias for o4-mini
+
+    @patch.dict(os.environ, {"OPENAI_ALLOWED_MODELS": "gpt5"}, clear=True)
+    def test_service_alias_allows_canonical_openai(self):
+        """ModelRestrictionService should permit canonical names resolved from aliases."""
+        import utils.model_restrictions
+
+        utils.model_restrictions._restriction_service = None
+        provider = OpenAIModelProvider(api_key="test-key")
+        service = ModelRestrictionService()
+
+        assert service.is_allowed(ProviderType.OPENAI, "gpt-5")
+        assert provider.validate_model_name("gpt-5")
+
+    @patch.dict(os.environ, {"GOOGLE_ALLOWED_MODELS": "flash"}, clear=True)
+    def test_service_alias_allows_canonical_gemini(self):
+        """Gemini alias allowlists should permit canonical forms."""
+        import utils.model_restrictions
+
+        utils.model_restrictions._restriction_service = None
+        provider = GeminiModelProvider(api_key="test-key")
+        service = ModelRestrictionService()
+
+        assert service.is_allowed(ProviderType.GOOGLE, "gemini-2.5-flash")
+        assert provider.validate_model_name("gemini-2.5-flash")
 
     def test_alias_target_policy_regression_prevention(self):
         """Regression test to ensure aliases and targets are both validated properly.
