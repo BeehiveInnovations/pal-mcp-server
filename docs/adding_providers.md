@@ -8,7 +8,7 @@ Each provider:
 - Inherits from `ModelProvider` (base class) or `OpenAICompatibleProvider` (for OpenAI-compatible APIs)
 - Defines supported models using `ModelCapabilities` objects
 - Implements the minimal abstract hooks (`get_provider_type()` and `generate_content()`)
-- Gets registered automatically via environment variables
+- Gets wired into `configure_providers()` so environment variables control activation
 
 ### Intelligence score cheatsheet
 
@@ -29,7 +29,7 @@ features ([details here](model_ranking.md)).
 - Supply `MODEL_CAPABILITIES`, override `get_provider_type()`, and optionally adjust configuration (the base class handles alias resolution, validation, and request wiring)
 - Inherits all API handling automatically
 
-⚠️ **Important**: If using aliases (like `"gpt"` → `"gpt-4"`), override `generate_content()` to resolve them before API calls.
+⚠️ **Important**: If you implement a custom `generate_content()`, call `_resolve_model_name()` before invoking the SDK so aliases (e.g. `"gpt"` → `"gpt-4"`) resolve correctly. The shared implementations already do this for you.
 
 ## Step-by-Step Guide
 
@@ -222,6 +222,9 @@ EXAMPLE_API_KEY=your_api_key_here
 
 # Optional: Disable specific tools
 DISABLED_TOOLS=debug,tracer
+
+# Optional (OpenAI-compatible providers): Restrict accessible models
+EXAMPLE_ALLOWED_MODELS=example-model-large,example-model-small
 ```
 
 **Note**: The `description` field in `ModelCapabilities` helps Claude choose the best model in auto mode.
