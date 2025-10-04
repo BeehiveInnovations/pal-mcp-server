@@ -1409,6 +1409,7 @@ function Invoke-McpClientConfiguration {
     if (!$UseDocker) {
         Test-ClaudeCliIntegration $PythonPath $ServerPath
         Test-GeminiCliIntegration (Split-Path $ServerPath -Parent)
+        Test-QwenCliIntegration $PythonPath $ServerPath
     }
 }
 
@@ -1522,6 +1523,208 @@ if exist ".zen_venv\Scripts\python.exe" (
     }
   }
 }
+
+function Show-QwenManualConfig {
+    param(
+        [string]$PythonPath,
+        [string]$ServerPath,
+        [string]$ScriptDir,
+        [string]$ConfigPath,
+        [System.Collections.IDictionary]$EnvironmentMap
+    )
+
+    Write-Host "Manual config location: $ConfigPath" -ForegroundColor Yellow
+    Write-Host "Add or update this entry:" -ForegroundColor Yellow
+
+    if ($EnvironmentMap -and $EnvironmentMap.Count -gt 0) {
+        $pairs = $EnvironmentMap.GetEnumerator() | ForEach-Object {
+            $escaped = ($_.Value -replace '\\', '\\\\' -replace '"', '\\"')
+            '        "{0}": "{1}"' -f $_.Key, $escaped
+        }
+
+        Write-Host "{" -ForegroundColor Yellow
+        Write-Host "  \"mcpServers\": {" -ForegroundColor Yellow
+        Write-Host "    \"zen\": {" -ForegroundColor Yellow
+        Write-Host "      \"command\": \"$PythonPath\"," -ForegroundColor Yellow
+        Write-Host "      \"args\": [\"$ServerPath\"]," -ForegroundColor Yellow
+        Write-Host "      \"cwd\": \"$ScriptDir\"," -ForegroundColor Yellow
+        Write-Host "      \"env\": {" -ForegroundColor Yellow
+        Write-Host ($pairs -join "`n") -ForegroundColor Yellow
+        Write-Host "      }" -ForegroundColor Yellow
+        Write-Host "    }" -ForegroundColor Yellow
+        Write-Host "  }" -ForegroundColor Yellow
+        Write-Host "}" -ForegroundColor Yellow
+    } else {
+        Write-Host "{" -ForegroundColor Yellow
+        Write-Host "  \"mcpServers\": {" -ForegroundColor Yellow
+        Write-Host "    \"zen\": {" -ForegroundColor Yellow
+        Write-Host "      \"command\": \"$PythonPath\"," -ForegroundColor Yellow
+        Write-Host "      \"args\": [\"$ServerPath\"]," -ForegroundColor Yellow
+        Write-Host "      \"cwd\": \"$ScriptDir\"" -ForegroundColor Yellow
+        Write-Host "    }" -ForegroundColor Yellow
+        Write-Host "  }" -ForegroundColor Yellow
+        Write-Host "}" -ForegroundColor Yellow
+    }
+}
+
+function Test-QwenCliIntegration {
+    param([string]$PythonPath, [string]$ServerPath)
+
+    if (!(Test-Command "qwen")) {
+        return
+    }
+
+    Write-Info "Qwen CLI detected - checking configuration..."
+
+    $configPath = Join-Path $env:USERPROFILE ".qwen\settings.json"
+    $configDir = Split-Path $configPath -Parent
+    $scriptDir = Split-Path $ServerPath -Parent
+
+    $configStatus = "missing"
+    $config = @{}
+
+    if (Test-Path $configPath) {
+        try {
+            Add-Type -AssemblyName System.Web.Extensions -ErrorAction SilentlyContinue
+            $serializer = New-Object System.Web.Script.Serialization.JavaScriptSerializer
+            $serializer.MaxJsonLength = 67108864
+            $rawJson = Get-Content $configPath -Raw
+            $config = $serializer.DeserializeObject($rawJson)
+            if (-not ($config -is [System.Collections.IDictionary])) {
+                $config = @{}
+            }
+
+            if ($config.ContainsKey('mcpServers') -and $config['mcpServers'] -is [System.Collections.IDictionary]) {
+                $servers = $config['mcpServers']
+                if ($servers.Contains('zen') -and $servers['zen'] -is [System.Collections.IDictionary]) {
+                    $zenConfig = $servers['zen']
+                    $commandMatches = ($zenConfig['command'] -eq $PythonPath)
+
+                    $argsValue = $zenConfig['args']
+                    $argsList = @()
+                    if ($argsValue -is [System.Collections.IEnumerable] -and $argsValue -isnot [string]) {
+                        $argsList = @($argsValue)
+                    } elseif ($null -ne $argsValue) {
+                        $argsList = @($argsValue)
+                    }
+                    $argsMatches = ($argsList.Count -eq 1 -and $argsList[0] -eq $ServerPath)
+
+                    $cwdValue = $null
+                    if ($zenConfig.Contains('cwd')) {
+                        $cwdValue = $zenConfig['cwd']
+                    }
+                    $cwdMatches = ([string]::IsNullOrEmpty($cwdValue) -or $cwdValue -eq $scriptDir)
+
+                    if ($commandMatches -and $argsMatches -and $cwdMatches) {
+                        Write-Success "Qwen CLI already configured for zen server"
+                        return
+                    }
+
+                    $configStatus = "mismatch"
+                    Write-Warning "Existing Qwen CLI configuration differs from the current setup."
+                }
+            }
+        } catch {
+            $configStatus = "invalid"
+            Write-Warning "Unable to parse Qwen CLI settings at $configPath ($_)."
+            $config = @{}
+        }
+    }
+
+    $envMap = [ordered]@{}
+    if (Test-Path ".env") {
+        foreach ($line in Get-Content ".env") {
+            $trimmed = $line.Trim()
+            if ([string]::IsNullOrWhiteSpace($trimmed) -or $trimmed.StartsWith('#')) {
+                continue
+            }
+
+            if ($line -match '^\s*([^=]+)=(.*)$') {
+                $key = $matches[1].Trim()
+                $value = $matches[2]
+                $value = ($value -replace '\s+#.*$', '').Trim()
+                if ($value.StartsWith('"') -and $value.EndsWith('"')) {
+                    $value = $value.Substring(1, $value.Length - 2)
+                }
+                if ([string]::IsNullOrWhiteSpace($value)) {
+                    $value = [Environment]::GetEnvironmentVariable($key, "Process")
+                }
+                if (![string]::IsNullOrWhiteSpace($value) -and $value -notmatch '^your_.*_here$') {
+                    $envMap[$key] = $value
+                }
+            }
+        }
+    }
+
+    $extraKeys = @(
+        "GEMINI_API_KEY","OPENAI_API_KEY","XAI_API_KEY","DIAL_API_KEY","OPENROUTER_API_KEY",
+        "AZURE_OPENAI_API_KEY","AZURE_OPENAI_ENDPOINT","AZURE_OPENAI_API_VERSION","AZURE_OPENAI_ALLOWED_MODELS","AZURE_MODELS_CONFIG_PATH",
+        "CUSTOM_API_URL","CUSTOM_API_KEY","CUSTOM_MODEL_NAME","DEFAULT_MODEL","GOOGLE_ALLOWED_MODELS",
+        "OPENAI_ALLOWED_MODELS","OPENROUTER_ALLOWED_MODELS","XAI_ALLOWED_MODELS","DEFAULT_THINKING_MODE_THINKDEEP",
+        "DISABLED_TOOLS","CONVERSATION_TIMEOUT_HOURS","MAX_CONVERSATION_TURNS","LOG_LEVEL","ZEN_MCP_FORCE_ENV_OVERRIDE"
+    )
+
+    foreach ($key in $extraKeys) {
+        if (-not $envMap.Contains($key)) {
+            $value = [Environment]::GetEnvironmentVariable($key, "Process")
+            if (![string]::IsNullOrWhiteSpace($value) -and $value -notmatch '^your_.*_here$') {
+                $envMap[$key] = $value
+            }
+        }
+    }
+
+    $prompt = "Configure Zen for Qwen CLI? (y/N)"
+    if ($configStatus -eq "mismatch" -or $configStatus -eq "invalid") {
+        $prompt = "Update Qwen CLI zen configuration? (y/N)"
+    }
+
+    $response = Read-Host $prompt
+    if ($response -ne 'y' -and $response -ne 'Y') {
+        Write-Info "Skipping Qwen CLI integration"
+        Show-QwenManualConfig $PythonPath $ServerPath $scriptDir $configPath $envMap
+        return
+    }
+
+    if (!(Test-Path $configDir)) {
+        New-Item -ItemType Directory -Path $configDir -Force | Out-Null
+    }
+
+    if (Test-Path $configPath -and $configStatus -ne "missing") {
+        Manage-ConfigBackups $configPath | Out-Null
+    }
+
+    try {
+        if (-not ($config -is [System.Collections.IDictionary])) {
+            $config = @{}
+        }
+
+        if (-not $config.ContainsKey('mcpServers') -or $config['mcpServers'] -isnot [System.Collections.IDictionary]) {
+            $config['mcpServers'] = @{}
+        }
+
+        $zenConfig = [ordered]@{
+            command = $PythonPath
+            args    = @($ServerPath)
+            cwd     = $scriptDir
+        }
+
+        if ($envMap.Count -gt 0) {
+            $zenConfig['env'] = $envMap
+        }
+
+        $config['mcpServers']['zen'] = $zenConfig
+
+        $json = ($config | ConvertTo-Json -Depth 20)
+        Set-Content -Path $configPath -Value $json -Encoding UTF8
+
+        Write-Success "Successfully configured Qwen CLI"
+        Write-Host "  Config: $configPath" -ForegroundColor Gray
+        Write-Host "  Restart Qwen CLI to use Zen MCP Server" -ForegroundColor Gray
+    } catch {
+        Write-Error "Failed to update Qwen CLI configuration: $_"
+        Show-QwenManualConfig $PythonPath $ServerPath $scriptDir $configPath $envMap
+    }
+}
 "@ -ForegroundColor Yellow
     }
 }
@@ -1606,6 +1809,7 @@ function Show-ConfigInstructions {
     Write-Host "✓ Windsurf" -ForegroundColor White
     Write-Host "✓ Trae" -ForegroundColor White
     Write-Host "✓ Gemini CLI" -ForegroundColor White
+    Write-Host "✓ Qwen CLI" -ForegroundColor White
     Write-Host ""
     Write-Host "The script automatically detects and configures compatible clients." -ForegroundColor Gray
     Write-Host "Restart your MCP clients after configuration to use the Zen MCP Server." -ForegroundColor Yellow

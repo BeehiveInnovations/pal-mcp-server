@@ -3,7 +3,7 @@
 [zen_web.webm](https://github.com/user-attachments/assets/851e3911-7f06-47c0-a4ab-a2601236697c)
 
 <div align="center">
-  <b>🤖 <a href="https://www.anthropic.com/claude-code">Claude Code</a> OR <a href="https://github.com/google-gemini/gemini-cli">Gemini CLI</a> OR <a href="https://github.com/openai/codex">Codex CLI</a> + [Gemini / OpenAI / Azure / Grok / OpenRouter / DIAL / Ollama / Anthropic / Any Model] = Your Ultimate AI Development Team</b>
+  <b>🤖 <a href="https://www.anthropic.com/claude-code">Claude Code</a> OR <a href="https://github.com/google-gemini/gemini-cli">Gemini CLI</a> OR <a href="https://github.com/openai/codex">Codex CLI</a> OR <a href="https://qwenlm.github.io/qwen-code-docs/">Qwen Code CLI</a> + [Gemini / OpenAI / Azure / Grok / OpenRouter / DIAL / Ollama / Anthropic / Any Model] = Your Ultimate AI Development Team</b>
 </div>
 
 <br/>
@@ -119,7 +119,7 @@ git clone https://github.com/BeehiveInnovations/zen-mcp-server.git
 cd zen-mcp-server
 
 # Handles everything: setup, config, API keys from system environment. 
-# Auto-configures Claude Desktop, Claude Code, Gemini CLI, Codex CLI
+# Auto-configures Claude Desktop, Claude Code, Gemini CLI, Codex CLI, Qwen CLI
 # Enable / disable additional settings in .env
 ./run-server.sh  
 ```
@@ -144,6 +144,30 @@ cd zen-mcp-server
 }
 ```
 
+**For Qwen Code CLI:**
+Edit `~/.qwen/settings.json` and register Zen as an MCP server:
+
+```json
+{
+  "mcpServers": {
+    "zen": {
+      "command": "bash",
+      "args": [
+        "-c",
+        "for p in $(which uvx 2>/dev/null) $HOME/.local/bin/uvx /opt/homebrew/bin/uvx /usr/local/bin/uvx uvx; do [ -x \"$p\" ] && exec \"$p\" --from git+https://github.com/BeehiveInnovations/zen-mcp-server.git zen-mcp-server; done; echo 'uvx not found' >&2; exit 1"
+      ],
+      "cwd": "/path/to/zen-mcp-server",
+      "env": {
+        "PATH": "/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin:~/.local/bin",
+        "GEMINI_API_KEY": "your_api_key_here"
+      }
+    }
+  }
+}
+```
+
+Update the `env` block with the API keys you use (Gemini, OpenAI, OpenRouter, etc.).
+
 **3. Start Using!**
 ```
 "Use zen to analyze this code for security issues with gemini pro"
@@ -151,7 +175,7 @@ cd zen-mcp-server
 "Plan the migration strategy with zen, get consensus from multiple models"
 ```
 
-👉 **[Complete Setup Guide](docs/getting-started.md)** with detailed installation, configuration for Gemini / Codex, and troubleshooting  
+👉 **[Complete Setup Guide](docs/getting-started.md)** with detailed installation, configuration for Gemini / Codex / Qwen, and troubleshooting  
 👉 **[Cursor & VS Code Setup](docs/getting-started.md#ide-clients)** for IDE integration instructions
 
 ## Provider Configuration

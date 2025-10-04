@@ -1779,6 +1779,247 @@ EOF
     fi
 }
 
+# Print manual Qwen CLI configuration guidance
+print_qwen_manual_instructions() {
+    local python_cmd="$1"
+    local server_path="$2"
+    local script_dir="$3"
+    local config_path="$4"
+    local env_lines="$5"
+
+    local env_array=()
+    if [[ -n "$env_lines" ]]; then
+        while IFS= read -r line; do
+            [[ -z "$line" ]] && continue
+            env_array+=("$line")
+        done <<< "$env_lines"
+    fi
+
+    echo "Manual config location: $config_path"
+    echo "Add or update this entry:"
+
+    local env_block=""
+    if [[ ${#env_array[@]} -gt 0 ]]; then
+        env_block=$'      "env": {\n'
+        local first=true
+        for env_entry in "${env_array[@]}"; do
+            local key="${env_entry%%=*}"
+            local value="${env_entry#*=}"
+            value=${value//\\/\\\\}
+            value=${value//"/\\"}
+            if [[ "$first" == true ]]; then
+                first=false
+                env_block+="        \"$key\": \"$value\""
+            else
+                env_block+=$',\n        '
+                env_block+="\"$key\": \"$value\""
+            fi
+        done
+        env_block+=$'\n      }'
+    fi
+
+    if [[ -n "$env_block" ]]; then
+        cat << EOF
+{
+  "mcpServers": {
+    "zen": {
+      "command": "$python_cmd",
+      "args": ["$server_path"],
+      "cwd": "$script_dir",
+$env_block
+    }
+  }
+}
+EOF
+    else
+        cat << EOF
+{
+  "mcpServers": {
+    "zen": {
+      "command": "$python_cmd",
+      "args": ["$server_path"],
+      "cwd": "$script_dir"
+    }
+  }
+}
+EOF
+    fi
+}
+
+# Check and update Qwen Code CLI configuration
+check_qwen_cli_integration() {
+    local python_cmd="$1"
+    local server_path="$2"
+
+    if ! command -v qwen &> /dev/null; then
+        return 0
+    fi
+
+    local qwen_config="$HOME/.qwen/settings.json"
+    local script_dir
+    script_dir=$(dirname "$server_path")
+
+    local env_vars
+    env_vars=$(parse_env_variables)
+    local env_array=()
+    if [[ -n "$env_vars" ]]; then
+        while IFS= read -r line; do
+            if [[ -n "$line" && "$line" =~ ^([^=]+)=(.*)$ ]]; then
+                env_array+=("${BASH_REMATCH[1]}=${BASH_REMATCH[2]}")
+            fi
+        done <<< "$env_vars"
+    fi
+
+    local env_lines=""
+    if [[ ${#env_array[@]} -gt 0 ]]; then
+        env_lines=$(printf '%s\n' "${env_array[@]}")
+    fi
+
+    local config_status=3
+    if [[ -f "$qwen_config" ]]; then
+        if python3 - "$qwen_config" "$python_cmd" "$server_path" "$script_dir" <<'PYCONF'
+import json
+import sys
+
+config_path, expected_cmd, expected_arg, expected_cwd = sys.argv[1:5]
+try:
+    with open(config_path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+except FileNotFoundError:
+    sys.exit(1)
+except Exception:
+    sys.exit(5)
+
+servers = data.get('mcpServers')
+if not isinstance(servers, dict):
+    sys.exit(3)
+
+config = servers.get('zen')
+if not isinstance(config, dict):
+    sys.exit(3)
+
+cmd = config.get('command')
+args = config.get('args') or []
+cwd = config.get('cwd')
+
+cwd_matches = cwd in (None, "", expected_cwd)
+if cmd == expected_cmd and len(args) == 1 and args[0] == expected_arg and cwd_matches:
+    sys.exit(0)
+
+sys.exit(4)
+PYCONF
+        then
+            config_status=0
+        else
+            config_status=$?
+            if [[ $config_status -eq 1 ]]; then
+                config_status=3
+            fi
+        fi
+    fi
+
+    if [[ $config_status -eq 0 ]]; then
+        return 0
+    fi
+
+    echo ""
+
+    if [[ $config_status -eq 4 ]]; then
+        print_warning "Found existing Qwen CLI zen configuration with different settings."
+    elif [[ $config_status -eq 5 ]]; then
+        print_warning "Unable to parse Qwen CLI settings; replacing with a fresh entry may help."
+    fi
+
+    local prompt="Configure Zen for Qwen CLI? (Y/n): "
+    if [[ $config_status -eq 4 || $config_status -eq 5 ]]; then
+        prompt="Update Qwen CLI zen configuration? (Y/n): "
+    fi
+
+    read -p "$prompt" -n 1 -r
+    echo ""
+    if [[ $REPLY =~ ^[Nn]$ ]]; then
+        print_info "Skipping Qwen CLI integration"
+        print_qwen_manual_instructions "$python_cmd" "$server_path" "$script_dir" "$qwen_config" "$env_lines"
+        return 0
+    fi
+
+    mkdir -p "$(dirname "$qwen_config")" 2>/dev/null || true
+    if [[ -f "$qwen_config" && $config_status -ne 3 ]]; then
+        cp "$qwen_config" "${qwen_config}.backup_$(date +%Y%m%d_%H%M%S)" 2>/dev/null || true
+    fi
+
+    local update_output
+    local update_status=0
+    update_output=$(ZEN_QWEN_ENV="$env_lines" ZEN_QWEN_CMD="$python_cmd" ZEN_QWEN_ARG="$server_path" ZEN_QWEN_CWD="$script_dir" python3 - "$qwen_config" <<'PYUPDATE'
+import json
+import os
+import pathlib
+import sys
+
+config_path = pathlib.Path(sys.argv[1])
+cmd = os.environ['ZEN_QWEN_CMD']
+arg = os.environ['ZEN_QWEN_ARG']
+cwd = os.environ['ZEN_QWEN_CWD']
+env_lines = os.environ.get('ZEN_QWEN_ENV', '').splitlines()
+
+env_map = {}
+for line in env_lines:
+    if not line.strip():
+        continue
+    if '=' in line:
+        key, value = line.split('=', 1)
+        env_map[key] = value
+
+if config_path.exists():
+    try:
+        with config_path.open('r', encoding='utf-8') as f:
+            data = json.load(f)
+    except Exception:
+        data = {}
+else:
+    data = {}
+
+if not isinstance(data, dict):
+    data = {}
+
+servers = data.get('mcpServers')
+if not isinstance(servers, dict):
+    servers = {}
+    data['mcpServers'] = servers
+
+zen_config = {
+    'command': cmd,
+    'args': [arg],
+    'cwd': cwd,
+}
+
+if env_map:
+    zen_config['env'] = env_map
+
+servers['zen'] = zen_config
+
+config_path.parent.mkdir(parents=True, exist_ok=True)
+tmp_path = config_path.with_suffix(config_path.suffix + '.tmp')
+with tmp_path.open('w', encoding='utf-8') as f:
+    json.dump(data, f, indent=2)
+    f.write('\n')
+tmp_path.replace(config_path)
+PYUPDATE
+    ) || update_status=$?
+
+    if [[ $update_status -eq 0 ]]; then
+        print_success "Successfully configured Qwen CLI"
+        echo "  Config: $qwen_config"
+        echo "  Restart Qwen CLI to use Zen MCP Server"
+    else
+        print_error "Failed to update Qwen CLI config"
+        if [[ -n "$update_output" ]]; then
+            echo "$update_output"
+        fi
+        print_qwen_manual_instructions "$python_cmd" "$server_path" "$script_dir" "$qwen_config" "$env_lines"
+    fi
+}
+
 # Display configuration instructions
 display_config_instructions() {
     local python_cmd="$1"
@@ -1792,7 +2033,7 @@ display_config_instructions() {
     echo "===== $config_header ====="
     printf '%*s\n' "$((${#config_header} + 12))" | tr ' ' '='
     echo ""
-    echo "To use Zen MCP Server with your Claude clients:"
+    echo "To use Zen MCP Server with your CLI clients:"
     echo ""
 
     print_info "1. For Claude Code (CLI):"
@@ -1833,19 +2074,34 @@ display_config_instructions() {
         done <<< "$env_vars"
     fi
     
-    cat << EOF
+    if [[ -n "$example_env" ]]; then
+        cat << EOF
    {
      "mcpServers": {
        "zen": {
          "command": "$python_cmd",
-         "args": ["$server_path"]$(if [[ -n "$example_env" ]]; then echo ","; fi)$(if [[ -n "$example_env" ]]; then echo "
-         \"env\": {
+         "args": ["$server_path"],
+         "cwd": "$script_dir",
+         "env": {
 $(echo -e "$example_env")
-         }"; fi)
+         }
        }
      }
    }
 EOF
+    else
+        cat << EOF
+   {
+     "mcpServers": {
+       "zen": {
+         "command": "$python_cmd",
+         "args": ["$server_path"],
+         "cwd": "$script_dir"
+       }
+     }
+   }
+EOF
+    fi
 
     # Show platform-specific config location
     local config_path=$(get_claude_config_path)
@@ -1871,6 +2127,39 @@ EOF
      }
    }
 EOF
+    echo ""
+
+    print_info "For Qwen Code CLI:"
+    echo "   Add this configuration to ~/.qwen/settings.json:"
+    echo ""
+    if [[ -n "$example_env" ]]; then
+        cat << EOF
+   {
+     "mcpServers": {
+       "zen": {
+         "command": "$python_cmd",
+         "args": ["$server_path"],
+         "cwd": "$script_dir",
+         "env": {
+$(echo -e "$example_env")
+         }
+       }
+     }
+   }
+EOF
+    else
+        cat << EOF
+   {
+     "mcpServers": {
+       "zen": {
+         "command": "$python_cmd",
+         "args": ["$server_path"],
+         "cwd": "$script_dir"
+       }
+     }
+   }
+EOF
+    fi
     echo ""
 
     print_info "For Codex CLI:"
@@ -2131,12 +2420,15 @@ main() {
     # Step 11: Check Codex CLI integration
     check_codex_cli_integration
 
-    # Step 12: Display log information
+    # Step 12: Check Qwen CLI integration
+    check_qwen_cli_integration "$python_cmd" "$server_path"
+
+    # Step 13: Display log information
     echo ""
     echo "Logs will be written to: $script_dir/$LOG_DIR/$LOG_FILE"
     echo ""
 
-    # Step 13: Handle command line arguments
+    # Step 14: Handle command line arguments
     if [[ "$arg" == "-f" ]] || [[ "$arg" == "--follow" ]]; then
         follow_logs
     else
