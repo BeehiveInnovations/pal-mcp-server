@@ -4,6 +4,7 @@ Test cases for uvx support and environment handling.
 
 import os
 import sys
+import tempfile
 from pathlib import Path
 from unittest import mock
 
@@ -30,12 +31,21 @@ class TestUvxEnvironmentHandling:
 
             import utils.env as env_config
 
-            importlib.reload(env_config)
-            import server  # noqa: F401
+            with tempfile.NamedTemporaryFile("w", delete=False) as tmp_env:
+                temp_env_path = Path(tmp_env.name)
+                tmp_env.write("ZEN_MCP_FORCE_ENV_OVERRIDE=false\n")
 
-            assert mock_load.call_count >= 1
-            _, kwargs = mock_load.call_args
-            assert "dotenv_path" in kwargs
+            try:
+                importlib.reload(env_config)
+                env_config._ENV_PATH = temp_env_path
+                env_config.reload_env()
+                import server  # noqa: F401
+
+                assert mock_load.call_count >= 1
+                _, kwargs = mock_load.call_args
+                assert "dotenv_path" in kwargs
+            finally:
+                temp_env_path.unlink(missing_ok=True)
 
     def test_dotenv_import_failure_graceful_handling(self):
         """Test that ImportError for dotenv is handled gracefully (uvx scenario)."""
