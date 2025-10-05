@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v7.1.0 (2025-10-05)
+
+### Chores
+
+- Sync version to config.py [skip ci]
+  ([`d54bfdd`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/d54bfdd49797d076ec9cade44c56292a8089c744))
+
+### Features
+
+- Support for codex as external CLI
+  ([`561e4aa`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/561e4aaaa8a89eb89c03985b9e7720cc98ef666c))
+
+
 ## v7.0.2 (2025-10-05)
 
 ### Chores
