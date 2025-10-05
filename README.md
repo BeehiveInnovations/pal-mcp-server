@@ -1,38 +1,52 @@
 # Zen MCP: Many Workflows. One Context.
 
-[zen_web.webm](https://github.com/user-attachments/assets/851e3911-7f06-47c0-a4ab-a2601236697c)
-
----
-
-### Now with **`clink`** – Connect Your CLIs Together
-
-Need Gemini (or another CLI agent) to join the conversation directly? The new [`clink`](docs/tools/clink.md) tool lets you **connect one CLI to another** ([gemini](https://github.com/google-gemini/gemini-cli) supported for now) so they can **plan, review, debate, and collaborate** inside the same context.  
-Point `clink` at a CLI like Gemini with role presets (e.g., `planner`, `codereviewer`, `default`) and that agent will handle **web searches, file inspection, and documentation lookups** as a first-class participant in your workflow.
-
----
-
 <div align="center">
+
+[zen_web.webm](https://github.com/user-attachments/assets/851e3911-7f06-47c0-a4ab-a2601236697c)
 
 ### Your CLI + Multiple Models = Your AI Dev Team
 
-**Use the 🤖 CLI you love:**  
+**Use the 🤖 CLI you love:**
 [Claude Code](https://www.anthropic.com/claude-code) · [Gemini CLI](https://github.com/google-gemini/gemini-cli) · [Codex CLI](https://github.com/openai/codex) · [Qwen Code CLI](https://qwenlm.github.io/qwen-code-docs/) · _and more_
 
-**With multiple models:**  
+**With multiple models:**
 Gemini · OpenAI · Anthropic · Grok · Azure · Ollama · OpenRouter · DIAL · On-Device Model
 
 </div>
 
-<br/>
+---
 
-**Why rely on one AI model when you can use them all?**
+## 🆕 Now with CLI-to-CLI Bridge
 
-A Model Context Protocol server that supercharges tools like [Claude Code](https://www.anthropic.com/claude-code), [Codex CLI](https://developers.openai.com/codex/cli), and IDE clients such 
-as [Cursor](https://cursor.com) or the [Claude Dev VS Code extension](https://marketplace.visualstudio.com/items?itemName=Anthropic.claude-vscode). **Zen MCP connects your favorite AI tool 
+The new **[`clink`](docs/tools/clink.md)** tool connects external AI CLIs directly into your workflow:
+
+- **Connect [Gemini CLI](https://github.com/google-gemini/gemini-cli)** (more CLIs coming soon) to collaborate alongside your primary AI
+- **Create Role presets** - `planner`, `codereviewer`, `default` for specialized tasks
+- **Full CLI capabilities** - Web search, file inspection, latest documentation lookups
+- **Seamless continuity** - Gemini participates as a first-class member with full conversation context
+
+```bash
+# Use consensus to decide on a feature, then hand off to Gemini for implementation
+"Use consensus to decide: dark mode or offline support next"
+"Continue with clink - implement the recommended feature"
+# Gemini receives the full debate context and starts coding immediately
+```
+
+**[Learn more about clink](docs/tools/clink.md)**
+
+---
+
+## Why Zen MCP?
+
+**Why rely on one AI model when you can orchestrate them all?**
+
+A Model Context Protocol server that supercharges tools like [Claude Code](https://www.anthropic.com/claude-code), [Codex CLI](https://developers.openai.com/codex/cli), and IDE clients such
+as [Cursor](https://cursor.com) or the [Claude Dev VS Code extension](https://marketplace.visualstudio.com/items?itemName=Anthropic.claude-vscode). **Zen MCP connects your favorite AI tool
 to multiple AI models** for enhanced code analysis, problem-solving, and collaborative development.
 
-**True AI collaboration with conversation continuity** - Zen supports **conversation threading** so your 
-CLI can **discuss ideas with multiple AI models, exchange reasoning, get second opinions, and even run collaborative debates between models** to help you reach deeper insights and better solutions. 
+### True AI Collaboration with Conversation Continuity
+
+Zen supports **conversation threading** so your CLI can **discuss ideas with multiple AI models, exchange reasoning, get second opinions, and even run collaborative debates between models** to help you reach deeper insights and better solutions.
 
 Your CLI always stays in control but gets perspectives from the best AI for each subtask. Context carries forward seamlessly across tools and models, enabling complex workflows like: code reviews with multiple models → automated planning → implementation → pre-commit validation.
 
