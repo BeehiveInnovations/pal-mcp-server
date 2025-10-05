@@ -18,7 +18,7 @@ Gemini · OpenAI · Anthropic · Grok · Azure · Ollama · OpenRouter · DIAL �
 
 ## 🆕 Now with CLI-to-CLI Bridge
 
-The new **[`clink`](docs/tools/clink.md)** tool connects external AI CLIs directly into your workflow:
+The new **[`clink`](docs/tools/clink.md)** (CLI + Link) tool connects external AI CLIs directly into your workflow:
 
 - **Connect [Gemini CLI](https://github.com/google-gemini/gemini-cli)** (more CLIs coming soon) to collaborate alongside your primary AI
 - **Create Role presets** - `planner`, `codereviewer`, `default` for specialized tasks
@@ -32,7 +32,7 @@ The new **[`clink`](docs/tools/clink.md)** tool connects external AI CLIs direct
 # Gemini receives the full debate context and starts coding immediately
 ```
 
-**[Learn more about clink](docs/tools/clink.md)**
+👉 **[Learn more about clink](docs/tools/clink.md)**
 
 ---
 
