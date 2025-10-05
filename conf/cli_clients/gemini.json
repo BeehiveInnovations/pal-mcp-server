@@ -1,0 +1,20 @@
+{
+  "name": "gemini",
+  "command": "gemini",
+  "additional_args": ["--telemetry", "false"],
+  "env": {},
+  "roles": {
+    "default": {
+      "prompt_path": "systemprompts/clink/gemini_default.txt",
+      "role_args": []
+    },
+    "planner": {
+      "prompt_path": "systemprompts/clink/gemini_planner.txt",
+      "role_args": ["--experimental-acp"]
+    },
+    "codereviewer": {
+      "prompt_path": "systemprompts/clink/gemini_codereviewer.txt",
+      "role_args": []
+    }
+  }
+}

@@ -51,6 +51,7 @@ from tools import (  # noqa: E402
     AnalyzeTool,
     ChallengeTool,
     ChatTool,
+    CLinkTool,
     CodeReviewTool,
     ConsensusTool,
     DebugIssueTool,
@@ -257,6 +258,7 @@ def filter_disabled_tools(all_tools: dict[str, Any]) -> dict[str, Any]:
 # Tools are instantiated once and reused across requests (stateless design)
 TOOLS = {
     "chat": ChatTool(),  # Interactive development chat and brainstorming
+    "clink": CLinkTool(),  # Bridge requests to configured AI CLIs
     "thinkdeep": ThinkDeepTool(),  # Step-by-step deep thinking workflow with expert analysis
     "planner": PlannerTool(),  # Interactive sequential planner using workflow architecture
     "consensus": ConsensusTool(),  # Step-by-step consensus workflow with multi-model analysis
@@ -281,6 +283,11 @@ PROMPT_TEMPLATES = {
         "name": "chat",
         "description": "Chat and brainstorm ideas",
         "template": "Chat with {model} about this",
+    },
+    "clink": {
+        "name": "clink",
+        "description": "Forward a request to a configured AI CLI (e.g., Gemini)",
+        "template": "Use clink with cli_name=<cli> to run this prompt",
     },
     "thinkdeep": {
         "name": "thinkdeeper",

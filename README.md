@@ -2,6 +2,15 @@
 
 [zen_web.webm](https://github.com/user-attachments/assets/851e3911-7f06-47c0-a4ab-a2601236697c)
 
+---
+
+### Now with **`clink`** – Connect Your CLIs Together
+
+Need Gemini (or another CLI agent) to join the conversation directly? The new [`clink`](docs/tools/clink.md) tool lets you **connect one CLI to another** ([gemini](https://github.com/google-gemini/gemini-cli) supported for now) so they can **plan, review, debate, and collaborate** inside the same context.  
+Point `clink` at a CLI like Gemini with role presets (e.g., `planner`, `codereviewer`, `default`) and that agent will handle **web searches, file inspection, and documentation lookups** as a first-class participant in your workflow.
+
+---
+
 <div align="center">
 
 ### Your CLI + Multiple Models = Your AI Dev Team
@@ -157,6 +166,7 @@ cd zen-mcp-server
 "Use zen to analyze this code for security issues with gemini pro"
 "Debug this error with o3 and then get flash to suggest optimizations"
 "Plan the migration strategy with zen, get consensus from multiple models"
+"clink with cli_name=\"gemini\" role=\"planner\" to draft a phased rollout plan"
 ```
 
 👉 **[Complete Setup Guide](docs/getting-started.md)** with detailed installation, configuration for Gemini / Codex / Qwen, and troubleshooting  
@@ -171,6 +181,7 @@ Zen activates any provider that has credentials in your `.env`. See `.env.exampl
 > **Note:** Each tool comes with its own multi-step workflow, parameters, and descriptions that consume valuable context window space even when not in use. To optimize performance, some tools are disabled by default. See [Tool Configuration](#tool-configuration) below to enable them.
 
 **Collaboration & Planning** *(Enabled by default)*
+- **[`clink`](docs/tools/clink.md)** - Bridge requests to external AI CLIs (Gemini planner, codereviewer, etc.)
 - **[`chat`](docs/tools/chat.md)** - Brainstorm ideas, get second opinions, validate approaches
 - **[`thinkdeep`](docs/tools/thinkdeep.md)** - Extended reasoning, edge case analysis, alternative perspectives
 - **[`planner`](docs/tools/planner.md)** - Break down complex projects into structured, actionable plans
