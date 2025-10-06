@@ -3,6 +3,7 @@ Tool implementations for Zen MCP Server
 """
 
 from .analyze import AnalyzeTool
+from .apilookup import LookupTool
 from .challenge import ChallengeTool
 from .chat import ChatTool
 from .clink import CLinkTool
@@ -26,6 +27,7 @@ __all__ = [
     "DebugIssueTool",
     "DocgenTool",
     "AnalyzeTool",
+    "LookupTool",
     "ChatTool",
     "CLinkTool",
     "ConsensusTool",

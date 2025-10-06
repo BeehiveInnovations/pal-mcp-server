@@ -49,6 +49,7 @@ from config import (  # noqa: E402
 )
 from tools import (  # noqa: E402
     AnalyzeTool,
+    LookupTool,
     ChallengeTool,
     ChatTool,
     CLinkTool,
@@ -272,6 +273,7 @@ TOOLS = {
     "tracer": TracerTool(),  # Static call path prediction and control flow analysis
     "testgen": TestGenTool(),  # Step-by-step test generation workflow with expert validation
     "challenge": ChallengeTool(),  # Critical challenge prompt wrapper to avoid automatic agreement
+    "apilookup": LookupTool(),  # Quick web/API lookup instructions
     "listmodels": ListModelsTool(),  # List all available AI models by provider
     "version": VersionTool(),  # Display server version and system information
 }
@@ -353,6 +355,11 @@ PROMPT_TEMPLATES = {
         "name": "challenge",
         "description": "Challenge a statement critically without automatic agreement",
         "template": "Challenge this statement critically",
+    },
+    "apilookup": {
+        "name": "apilookup",
+        "description": "Look up the latest API or SDK information",
+        "template": "Lookup latest API docs for {model}",
     },
     "listmodels": {
         "name": "listmodels",

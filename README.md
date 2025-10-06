@@ -220,6 +220,7 @@ Zen activates any provider that has credentials in your `.env`. See `.env.exampl
 - **[`docgen`](docs/tools/docgen.md)** - Generate documentation with complexity analysis
 
 **Utilities**
+- **[`apilookup`](docs/tools/apilookup.md)** - Forces current-year API/SDK documentation lookups, prevents outdated training data responses
 - **[`challenge`](docs/tools/challenge.md)** - Prevent "You're absolutely right!" responses with critical analysis
 - **[`tracer`](docs/tools/tracer.md)** *(disabled by default - [enable](#tool-configuration))* - Static analysis prompts for call-flow mapping
 
@@ -233,6 +234,7 @@ To optimize context window usage, only essential tools are enabled by default:
 **Enabled by default:**
 - `chat`, `thinkdeep`, `planner`, `consensus` - Core collaboration tools
 - `codereview`, `precommit`, `debug` - Essential code quality tools
+- `apilookup` - Rapid API/SDK information lookup
 - `challenge` - Critical thinking utility
 
 **Disabled by default:**
