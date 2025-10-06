@@ -2,6 +2,28 @@
 
 <!-- version list -->
 
+## v7.5.0 (2025-10-06)
+
+### Chores
+
+- Sync version to config.py [skip ci]
+  ([`71e7cd5`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/71e7cd55b1f4955a6d718fddc0de419414d133b6))
+
+### Documentation
+
+- Video
+  ([`775e4d5`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/775e4d50b826858095c5f2a61a07fc01c4a00816))
+
+- Videos
+  ([`bb2066c`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/bb2066c909f6581ba40fc5ddef3870954ae553ab))
+
+### Features
+
+- Support for GPT-5-Pro highest reasoning model
+  https://github.com/BeehiveInnovations/zen-mcp-server/issues/275
+  ([`a65485a`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/a65485a1e52fc79739000426295a27d096f4c9d8))
+
+
 ## v7.4.0 (2025-10-06)
 
 ### Chores
