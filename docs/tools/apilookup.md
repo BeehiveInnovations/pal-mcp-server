@@ -15,6 +15,12 @@ AI: [Searches based on training data knowledge cutoff]
 Result: You get outdated APIs for iOS 18, not the iOS 26 effect you're after
 ```
 
+<div align="center">
+    
+ [API without Zen](https://github.com/user-attachments/assets/01a79dc9-ad16-4264-9ce1-76a56c3580ee)
+ 
+</div>
+
 ### With Zen (Using apilookup)
 ```
 User: "use apilookup how do I add glass look to a button in swift?"
@@ -27,6 +33,12 @@ AI: Step 1 - Search: "what is the latest iOS version 2025"
 
 Result: You get the correct, current APIs that work with today's iOS version
 ```
+
+<div align="center">
+
+[API with Zen](https://github.com/user-attachments/assets/5c847326-4b66-41f7-8f30-f380453dce22)
+
+</div>
 
 ## Key Features
 
