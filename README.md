@@ -220,7 +220,7 @@ Zen activates any provider that has credentials in your `.env`. See `.env.exampl
 - **[`docgen`](docs/tools/docgen.md)** - Generate documentation with complexity analysis
 
 **Utilities**
-- **[`apilookup`](docs/tools/apilookup.md)** - Forces current-year API/SDK documentation lookups, prevents outdated training data responses
+- **[`apilookup`](docs/tools/apilookup.md)** - Forces current-year API/SDK documentation lookups in a sub-process (saves tokens within the current context window), prevents outdated training data responses
 - **[`challenge`](docs/tools/challenge.md)** - Prevent "You're absolutely right!" responses with critical analysis
 - **[`tracer`](docs/tools/tracer.md)** *(disabled by default - [enable](#tool-configuration))* - Static analysis prompts for call-flow mapping
 
