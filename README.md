@@ -21,6 +21,7 @@ Gemini · OpenAI · Anthropic · Grok · Azure · Ollama · OpenRouter · DIAL �
 The new **[`clink`](docs/tools/clink.md)** (CLI + Link) tool connects external AI CLIs directly into your workflow:
 
 - **Connect external CLIs** like [Gemini CLI](https://github.com/google-gemini/gemini-cli) and [Codex CLI](https://github.com/openai/codex) directly into your workflow
+- **Codex sub-agents** - Use clink to launch a codex sub-agent from within Codex without wasting tokens on the entire code-review output, for instance, and only get back the final review. 
 - **Create Role presets** - `planner`, `codereviewer`, `default` for specialized tasks
 - **Full CLI capabilities** - Web search, file inspection, latest documentation lookups
 - **Seamless continuity** - Gemini participates as a first-class member with full conversation context
