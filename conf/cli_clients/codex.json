@@ -8,11 +8,11 @@
   "env": {},
   "roles": {
     "default": {
-      "prompt_path": "systemprompts/clink/codex_default.txt",
+      "prompt_path": "systemprompts/clink/default.txt",
       "role_args": []
     },
     "planner": {
-      "prompt_path": "systemprompts/clink/codex_planner.txt",
+      "prompt_path": "systemprompts/clink/default_planner.txt",
       "role_args": []
     },
     "codereviewer": {

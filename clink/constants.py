@@ -30,13 +30,13 @@ INTERNAL_DEFAULTS: dict[str, CLIInternalDefaults] = {
     "gemini": CLIInternalDefaults(
         parser="gemini_json",
         additional_args=["-o", "json"],
-        default_role_prompt="systemprompts/clink/gemini_default.txt",
+        default_role_prompt="systemprompts/clink/default.txt",
         runner="gemini",
     ),
     "codex": CLIInternalDefaults(
         parser="codex_jsonl",
         additional_args=["exec"],
-        default_role_prompt="systemprompts/clink/codex_default.txt",
+        default_role_prompt="systemprompts/clink/default.txt",
         runner="codex",
     ),
 }
