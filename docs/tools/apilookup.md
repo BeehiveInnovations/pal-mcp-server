@@ -12,7 +12,7 @@ User: "How do I add glass look to a button in Swift?"
 AI: [Searches based on training data knowledge cutoff]
     "SwiftUI glass morphism frosted glass effect button iOS 18 2025"
 
-Result: You get outdated APIs for iOS 18, now the iOS 26 effect you're after
+Result: You get outdated APIs for iOS 18, not the iOS 26 effect you're after
 ```
 
 ### With Zen (Using apilookup)
