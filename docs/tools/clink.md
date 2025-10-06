@@ -1,20 +1,39 @@
 # Clink Tool - CLI-to-CLI Bridge
 
-**Bring other AI CLIs into your workflow – Gemini, Codex (with more coming) – without context switching**
+**Spawn AI subagents, connect external CLIs, orchestrate isolated contexts – all without leaving your session**
 
-The `clink` tool lets you leverage external AI CLIs (like Gemini CLI, etc.) directly within your current conversation. Instead of switching between terminal windows or losing context, you can ask Gemini to plan a complex migration, review code with specialized prompts, or answer questions - all while staying in your primary Claude Code workflow.
+The `clink` tool transforms your CLI into a multi-agent orchestrator. Launch isolated Codex instances from _within_ Codex, delegate to Gemini's 1M context, or run specialized Claude agents—all while preserving conversation continuity. Instead of context-switching or token bloat, spawn fresh subagents that handle complex tasks in isolation and return only the results you need.
 
 > **CAUTION**: Clink launches real CLI agents with their safety prompts disabled (`--yolo`, `--dangerously-skip-permissions`, `--dangerously-bypass-approvals-and-sandbox`) so they can edit files and run tools autonomously via MCP. If that’s more access than you want, remove those flags—the CLI can still open/read files and report findings, it just won’t auto-apply edits. You can also tighten role prompts or system prompts with stop-words/guardrails, or disable clink entirely. Otherwise, keep the shipped presets confined to workspaces you fully trust.
 
 ## Why Use Clink (CLI + Link)?
 
-**Scenario 1**: You're working in Claude Code and want Gemini's 1M context window to analyze a massive codebase, or you need Gemini's latest web search to validate documentation.
+### Codex-within-Codex: The Ultimate Context Management
 
-**Without clink**: Open a new terminal, run `gemini`, lose your conversation context, manually copy/paste findings back.
+**The Problem**: You're deep in a Codex session debugging authentication. Now you need a comprehensive security audit, but that'll consume 50K tokens of context you can't spare.
 
-**With clink**: Just say `"clink with gemini to review this entire codebase for architectural issues"` - Gemini launches separately, processes request and returns results, and the conversation continues seamlessly.
+**The Solution**: Spawn a fresh Codex subagent in an isolated context:
+```bash
+clink with codex codereviewer to audit auth/ for OWASP Top 10 vulnerabilities
+```
 
-**Scenario 2**: Use [`consensus`](consensus.md) to debate which feature to implement next with multiple models, then seamlessly hand off to Gemini for implementation.
+The subagent:
+- Launches in a **pristine context** with full token budget
+- Performs deep analysis using its own MCP tools and web search
+- Returns **only the final security report** (not intermediate steps)
+- Your main session stays **laser-focused** on debugging
+
+---
+
+### Cross-CLI Orchestration
+
+**Scenario 1**: You're in Codex and need Gemini's 1M context window to analyze a massive legacy codebase.
+
+**Without clink**: Open new terminal → run `gemini` → lose conversation context → manually copy/paste findings → context mismatch hell.
+
+**With clink**: `"clink with gemini to map dependencies across this 500-file monorepo"` – Gemini processes, returns insights, conversation flows seamlessly.
+
+**Scenario 2**: Use [`consensus`](consensus.md) to debate features with multiple models, then hand off to Gemini for implementation.
 
 ```
 "Use consensus with pro and gpt5 to decide whether to add dark mode or offline support next"

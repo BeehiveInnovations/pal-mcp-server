@@ -21,16 +21,21 @@ Gemini · OpenAI · Anthropic · Grok · Azure · Ollama · OpenRouter · DIAL �
 The new **[`clink`](docs/tools/clink.md)** (CLI + Link) tool connects external AI CLIs directly into your workflow:
 
 - **Connect external CLIs** like [Gemini CLI](https://github.com/google-gemini/gemini-cli) and [Codex CLI](https://github.com/openai/codex) directly into your workflow
-- **Codex sub-agents** - Use clink to launch a codex sub-agent from within Codex without wasting tokens on the entire code-review output, for instance, and only get back the final review. 
-- **Create Role presets** - `planner`, `codereviewer`, `default` for specialized tasks
-- **Full CLI capabilities** - Web search, file inspection, latest documentation lookups
-- **Seamless continuity** - Gemini participates as a first-class member with full conversation context
+- **Codex Subagents** - Launch isolated Codex instances from _within_ Codex itself! Offload heavy tasks (code reviews, bug hunting) to fresh contexts while your main session's context window remains unpolluted. Each subagent returns only final results.
+- **Context Isolation** - Run separate investigations without polluting your primary workspace
+- **Role Specialization** - Spawn `planner`, `codereviewer`, or custom role agents with specialized system prompts
+- **Full CLI Capabilities** - Web search, file inspection, MCP tool access, latest documentation lookups
+- **Seamless Continuity** - Sub-CLIs participate as first-class members with full conversation context between tools
 
 ```bash
-# Use consensus to decide on a feature, then hand off to Gemini for implementation
-"Use consensus to decide: dark mode or offline support next"
-"Continue with clink - implement the recommended feature"
-# Gemini receives the full debate context and starts coding immediately
+# Codex spawns Codex subagent for isolated code review in fresh context
+clink with codex codereviewer to audit auth module for security issues
+# Subagent reviews in isolation, returns final report without cluttering your context as codex reads each file and walks the directory structure
+
+# Consensus from different AI models → Implementation handoff with full context preservation between tools
+Use consensus with gpt-5 and gemini-pro to decide: dark mode or offline support next
+Continue with clink gemini - implement the recommended feature
+# Gemini receives full debate context and starts coding immediately
 ```
 
 👉 **[Learn more about clink](docs/tools/clink.md)**
