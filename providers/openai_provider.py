@@ -31,7 +31,7 @@ class OpenAIModelProvider(OpenAICompatibleProvider):
             max_output_tokens=128_000,  # 128K max output tokens
             supports_extended_thinking=True,  # Supports reasoning tokens
             supports_system_prompts=True,
-            supports_streaming=True,
+            supports_streaming=False,
             supports_function_calling=True,
             supports_json_mode=True,
             supports_images=True,  # GPT-5 supports vision
@@ -40,6 +40,27 @@ class OpenAIModelProvider(OpenAICompatibleProvider):
             temperature_constraint=TemperatureConstraint.create("fixed"),
             description="GPT-5 (400K context, 128K output) - Advanced model with reasoning support",
             aliases=["gpt5"],
+        ),
+        "gpt-5-pro": ModelCapabilities(
+            provider=ProviderType.OPENAI,
+            model_name="gpt-5-pro",
+            friendly_name="OpenAI (GPT-5 Pro)",
+            intelligence_score=18,
+            use_openai_response_api=True,
+            context_window=400_000,
+            max_output_tokens=272_000,
+            supports_extended_thinking=True,
+            supports_system_prompts=True,
+            supports_streaming=False,
+            supports_function_calling=True,
+            supports_json_mode=True,
+            supports_images=True,
+            max_image_size_mb=20.0,
+            supports_temperature=True,
+            temperature_constraint=TemperatureConstraint.create("fixed"),
+            default_reasoning_effort="high",
+            description="GPT-5 Pro (400K context, 272K output) - Advanced model with reasoning support",
+            aliases=["gpt5pro"],
         ),
         "gpt-5-mini": ModelCapabilities(
             provider=ProviderType.OPENAI,
@@ -50,7 +71,7 @@ class OpenAIModelProvider(OpenAICompatibleProvider):
             max_output_tokens=128_000,  # 128K max output tokens
             supports_extended_thinking=True,  # Supports reasoning tokens
             supports_system_prompts=True,
-            supports_streaming=True,
+            supports_streaming=False,
             supports_function_calling=True,
             supports_json_mode=True,
             supports_images=True,  # GPT-5-mini supports vision
@@ -284,7 +305,7 @@ class OpenAIModelProvider(OpenAICompatibleProvider):
         if category == ToolModelCategory.EXTENDED_REASONING:
             # Prefer models with extended thinking support
             # GPT-5-Codex first for coding tasks
-            preferred = find_first(["gpt-5-codex", "o3", "o3-pro", "gpt-5"])
+            preferred = find_first(["gpt-5-codex", "gpt-5-pro", "o3", "o3-pro", "gpt-5"])
             return preferred if preferred else allowed_models[0]
 
         elif category == ToolModelCategory.FAST_RESPONSE:
@@ -296,5 +317,5 @@ class OpenAIModelProvider(OpenAICompatibleProvider):
         else:  # BALANCED or default
             # Prefer balanced performance/cost models
             # Include GPT-5-Codex for coding workflows
-            preferred = find_first(["gpt-5", "gpt-5-codex", "gpt-5-mini", "o4-mini", "o3-mini"])
+            preferred = find_first(["gpt-5", "gpt-5-codex", "gpt-5-pro", "gpt-5-mini", "o4-mini", "o3-mini"])
             return preferred if preferred else allowed_models[0]

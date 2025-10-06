@@ -391,9 +391,10 @@ class OpenAICompatibleProvider(ModelProvider):
         messages: list,
         temperature: float,
         max_output_tokens: Optional[int] = None,
+        capabilities: Optional[ModelCapabilities] = None,
         **kwargs,
     ) -> ModelResponse:
-        """Generate content using the /v1/responses endpoint for o3-pro via OpenAI library."""
+        """Generate content using the /v1/responses endpoint for reasoning models."""
         # Convert messages to the correct format for responses endpoint
         input_messages = []
 
@@ -412,10 +413,14 @@ class OpenAICompatibleProvider(ModelProvider):
 
         # Prepare completion parameters for responses endpoint
         # Based on OpenAI documentation, use nested reasoning object for responses endpoint
+        effort = "medium"
+        if capabilities and capabilities.default_reasoning_effort:
+            effort = capabilities.default_reasoning_effort
+
         completion_params = {
             "model": model_name,
             "input": input_messages,
-            "reasoning": {"effort": "medium"},  # Use nested object for responses endpoint
+            "reasoning": {"effort": effort},
             "store": True,
         }
 
@@ -475,11 +480,11 @@ class OpenAICompatibleProvider(ModelProvider):
                 operation=_attempt,
                 max_attempts=max_retries,
                 delays=retry_delays,
-                log_prefix="o3-pro responses endpoint",
+                log_prefix="responses endpoint",
             )
         except Exception as exc:
             attempts = max(attempt_counter["value"], 1)
-            error_msg = f"o3-pro responses endpoint error after {attempts} attempt{'s' if attempts > 1 else ''}: {exc}"
+            error_msg = f"responses endpoint error after {attempts} attempt{'s' if attempts > 1 else ''}: {exc}"
             logging.error(error_msg)
             raise RuntimeError(error_msg) from exc
 
@@ -614,6 +619,7 @@ class OpenAICompatibleProvider(ModelProvider):
                 messages=messages,
                 temperature=temperature,
                 max_output_tokens=max_output_tokens,
+                capabilities=capabilities,
                 **kwargs,
             )
 

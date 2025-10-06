@@ -49,7 +49,6 @@ from config import (  # noqa: E402
 )
 from tools import (  # noqa: E402
     AnalyzeTool,
-    LookupTool,
     ChallengeTool,
     ChatTool,
     CLinkTool,
@@ -58,6 +57,7 @@ from tools import (  # noqa: E402
     DebugIssueTool,
     DocgenTool,
     ListModelsTool,
+    LookupTool,
     PlannerTool,
     PrecommitTool,
     RefactorTool,

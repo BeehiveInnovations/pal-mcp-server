@@ -126,7 +126,7 @@ class TestOpenAIProvider:
         assert capabilities.provider == ProviderType.OPENAI
         assert capabilities.supports_extended_thinking is True
         assert capabilities.supports_system_prompts is True
-        assert capabilities.supports_streaming is True
+        assert capabilities.supports_streaming is False
         assert capabilities.supports_function_calling is True
         assert capabilities.supports_temperature is True
 
@@ -142,7 +142,7 @@ class TestOpenAIProvider:
         assert capabilities.provider == ProviderType.OPENAI
         assert capabilities.supports_extended_thinking is True
         assert capabilities.supports_system_prompts is True
-        assert capabilities.supports_streaming is True
+        assert capabilities.supports_streaming is False
         assert capabilities.supports_function_calling is True
         assert capabilities.supports_temperature is True
 

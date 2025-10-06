@@ -40,7 +40,7 @@ SEARCH STRATEGY (MAXIMUM 2-4 SEARCHES TOTAL FOR THIS MISSION - THEN STOP):
 - IMPORTANT: Begin by determining today's date and current year
 - MANDATORY FOR OS-TIED APIS/SDKs: If the request involves iOS, macOS, Windows, Linux, Android, watchOS, tvOS, or any OS-specific framework/API:
   * FIRST perform a web search to determine "what is the latest [OS name] version [current year]"
-  * If the search is around a specific tool or an IDE, confirm the latest version "latest version [tool name]" 
+  * If the search is around a specific tool or an IDE, confirm the latest version "latest version [tool name]"
   * DO NOT rely on your training data or knowledge cutoff for OS versions - you MUST search for current information
   * ONLY AFTER confirming the current OS version, search for APIs/SDKs/frameworks for that specific version
   * Example workflow: Search "latest iOS version [current year]" → Find current version → Then search "[current iOS version] SwiftUI glass effect button [current year]"
@@ -87,7 +87,7 @@ class LookupTool(SimpleTool):
     def requires_model(self) -> bool:
         return False
 
-    def get_model_category(self) -> "ToolModelCategory":
+    def get_model_category(self) -> ToolModelCategory:
         from tools.models import ToolModelCategory
 
         return ToolModelCategory.FAST_RESPONSE
