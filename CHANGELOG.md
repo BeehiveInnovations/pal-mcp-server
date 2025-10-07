@@ -2,6 +2,42 @@
 
 <!-- version list -->
 
+## v7.8.0 (2025-10-07)
+
+### Chores
+
+- Sync version to config.py [skip ci]
+  ([`3e5fa96`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/3e5fa96c981bbd7b844a9887a518ffe266b78e9b))
+
+### Documentation
+
+- Consensus video
+  ([`2352684`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/23526841922a73c68094e5205e19af04a1f6c8cc))
+
+- Formatting
+  ([`7d7c74b`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/7d7c74b5a38b7d1adf132b8e28034017df7aa852))
+
+- Link to videos from main page
+  ([`e8ef193`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/e8ef193daba393b55a3beaaba49721bb9182378a))
+
+- Update README.md
+  ([`7b13543`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/7b13543824fc0af729daf753ecdddba9ee7d9f1e))
+
+### Features
+
+- All native providers now read from catalog files like OpenRouter / Custom configs. Allows for
+  greater control over the capabilities
+  ([`2a706d5`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/2a706d5720c0bf97b71c3e0fc95c15f78015bedf))
+
+- Provider cleanup
+  ([`9268dda`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/9268ddad2a07306351765b47098134512739f49f))
+
+### Refactoring
+
+- New base class for model registry / loading
+  ([`02d13da`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/02d13da897016d7491b4a10a1195983385d66654))
+
+
 ## v7.7.0 (2025-10-07)
 
 ### Chores
