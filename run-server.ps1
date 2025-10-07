@@ -36,7 +36,7 @@
 
 .PARAMETER Force
     Forces recreation of the Python virtual environment.
-
+    
 .PARAMETER VerboseOutput
     Enables more detailed output (currently unused).
 
@@ -697,7 +697,7 @@ function Install-Dependencies {
                 $proc = Start-Process -FilePath $uv -ArgumentList $arguments -NoNewWindow -Wait -PassThru
 
                 if ($proc.ExitCode -ne 0) { 
-                    throw "uv failed with exit code $($proc.ExitCode)" 
+                    throw "uv failed to install $file with exit code $($proc.ExitCode)" 
                 }
 
             }
