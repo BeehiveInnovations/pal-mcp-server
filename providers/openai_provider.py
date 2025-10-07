@@ -39,7 +39,7 @@ class OpenAIModelProvider(OpenAICompatibleProvider):
             supports_temperature=True,  # Regular models accept temperature parameter
             temperature_constraint=TemperatureConstraint.create("fixed"),
             description="GPT-5 (400K context, 128K output) - Advanced model with reasoning support",
-            aliases=["gpt5"],
+            aliases=["gpt5", "gpt-5"],
         ),
         "gpt-5-pro": ModelCapabilities(
             provider=ProviderType.OPENAI,
@@ -60,7 +60,7 @@ class OpenAIModelProvider(OpenAICompatibleProvider):
             temperature_constraint=TemperatureConstraint.create("fixed"),
             default_reasoning_effort="high",
             description="GPT-5 Pro (400K context, 272K output) - Advanced model with reasoning support",
-            aliases=["gpt5pro"],
+            aliases=["gpt5pro", "gpt5-pro"],
         ),
         "gpt-5-mini": ModelCapabilities(
             provider=ProviderType.OPENAI,
