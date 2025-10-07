@@ -302,6 +302,57 @@ CUSTOM_API_KEY=                              # Empty for Ollama
 CUSTOM_MODEL_NAME=llama3.2                   # Default model name
 ```
 
+## Prevent Client Timeouts
+
+Some MCP clients default to short timeouts and can disconnect from Zen during long tool runs. Configure each client to wait at least five minutes (300 000 ms) before giving up.
+
+### Claude Code & Claude Desktop
+
+Claude reads MCP-related environment variables either from your shell or from `~/.claude/settings.json`. Add (or update) the `env` block so both startup and tool execution use a 5-minute limit:
+
+```json
+{
+  "env": {
+    "MCP_TIMEOUT": "300000",
+    "MCP_TOOL_TIMEOUT": "300000"
+  }
+}
+```
+
+You can scope this block at the top level of `settings.json` (applies to every session) or under a specific `mcpServers.<name>.env` entry if you only want it for Zen. The values are in milliseconds. Note: Claude’s SSE transport still enforces an internal ceiling of roughly five minutes; long-running HTTP/SSE servers may need retries until Anthropic ships their fix.
+
+### Codex CLI
+
+Codex exposes per-server timeouts in `~/.codex/config.toml`. Add (or bump) these keys under `[[mcp_servers.<name>]]`:
+
+```toml
+[mcp_servers.zen]
+command = "..."
+args = ["..."]
+startup_timeout_sec = 300    # default is 10 seconds
+tool_timeout_sec = 300       # default is 60 seconds
+```
+
+`startup_timeout_sec` covers the initial handshake/list tools step, while `tool_timeout_sec` governs each tool call. Increase either beyond 300 if your workflow routinely exceeds five minutes.
+
+### Gemini CLI
+
+Gemini uses a single `timeout` field per server inside `~/.gemini/settings.json`. Set it to at least five minutes (values are milliseconds):
+
+```json
+{
+  "mcpServers": {
+    "zen": {
+      "command": "uvx",
+      "args": ["zen-mcp-server"],
+      "timeout": 300000
+    }
+  }
+}
+```
+
+Versions 0.2.1 and newer currently ignore values above ~60 seconds for some transports due to a known regression; if you still see premature disconnects we recommend breaking work into smaller calls or watching the Gemini CLI release notes for the fix.
+
 **Important notes:**
 - ⭐ **No restart needed** - Changes take effect immediately 
 - ⭐ If multiple APIs configured, native APIs take priority over OpenRouter
