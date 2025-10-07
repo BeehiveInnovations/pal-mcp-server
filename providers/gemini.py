@@ -15,12 +15,13 @@ from utils.image_utils import validate_image
 
 from .base import ModelProvider
 from .gemini_registry import GeminiModelRegistry
+from .registry_provider_mixin import RegistryBackedProviderMixin
 from .shared import ModelCapabilities, ModelResponse, ProviderType
 
 logger = logging.getLogger(__name__)
 
 
-class GeminiModelProvider(ModelProvider):
+class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
     """First-party Gemini integration built on the official Google SDK.
 
     The provider advertises detailed thinking-mode budgets, handles optional
@@ -28,8 +29,8 @@ class GeminiModelProvider(ModelProvider):
     request to the Gemini APIs.
     """
 
+    REGISTRY_CLASS = GeminiModelRegistry
     MODEL_CAPABILITIES: dict[str, ModelCapabilities] = {}
-    _registry: Optional[GeminiModelRegistry] = None
 
     # Thinking mode configurations - percentages of model's max_thinking_tokens
     # These percentages work across all models that support thinking
@@ -58,43 +59,6 @@ class GeminiModelProvider(ModelProvider):
         self._base_url = kwargs.get("base_url", None)  # Optional custom endpoint
         self._timeout_override = self._resolve_http_timeout()
         self._invalidate_capability_cache()
-
-    # ------------------------------------------------------------------
-    # Registry access
-    # ------------------------------------------------------------------
-
-    @classmethod
-    def _ensure_registry(cls, *, force_reload: bool = False) -> None:
-        """Load capability registry into MODEL_CAPABILITIES."""
-
-        if cls._registry is not None and not force_reload:
-            return
-
-        try:
-            registry = GeminiModelRegistry()
-        except Exception as exc:  # pragma: no cover - defensive logging
-            logger.warning("Unable to load Gemini model registry: %s", exc)
-            cls._registry = None
-            cls.MODEL_CAPABILITIES = {}
-            return
-
-        cls._registry = registry
-        cls.MODEL_CAPABILITIES = dict(registry.model_map)
-
-    @classmethod
-    def reload_registry(cls) -> None:
-        """Force registry reload (primarily for tests)."""
-
-        cls._ensure_registry(force_reload=True)
-
-    def get_all_model_capabilities(self) -> dict[str, ModelCapabilities]:
-        self._ensure_registry()
-        return super().get_all_model_capabilities()
-
-    def get_model_registry(self) -> Optional[dict[str, ModelCapabilities]]:
-        if self._registry is None:
-            return None
-        return dict(self._registry.model_map)
 
     # ------------------------------------------------------------------
     # Capability surface
