@@ -9,7 +9,6 @@ from .openai_compatible import OpenAICompatibleProvider
 from .openrouter_registry import OpenRouterModelRegistry
 from .shared import ModelCapabilities, ProviderType
 
-
 class CustomProvider(OpenAICompatibleProvider):
     """Adapter for self-hosted or local OpenAI-compatible endpoints.
 
