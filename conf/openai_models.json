@@ -156,7 +156,7 @@
         "o3pro"
       ],
       "intelligence_score": 15,
-      "description": "Professional-grade reasoning (200K context)",
+      "description": "Professional-grade reasoning with advanced capabilities (200K context)",
       "context_window": 200000,
       "max_output_tokens": 65536,
       "supports_extended_thinking": false,
