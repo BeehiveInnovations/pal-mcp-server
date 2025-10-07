@@ -2,6 +2,24 @@
 
 <!-- version list -->
 
+## v7.8.1 (2025-10-07)
+
+### Bug Fixes
+
+- Updated model description to fix test
+  ([`04f7ce5`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/04f7ce5b03804564263f53a765931edba9c320cd))
+
+### Chores
+
+- Sync version to config.py [skip ci]
+  ([`c27e81d`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/c27e81d6d2f22978816f798a161a869d1ab5f025))
+
+### Refactoring
+
+- Moved registries into a separate module and code cleanup
+  ([`7c36b92`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/7c36b9255a13007a10af4fadefc21aadfce482b0))
+
+
 ## v7.8.0 (2025-10-07)
 
 ### Chores
