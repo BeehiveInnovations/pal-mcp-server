@@ -11,14 +11,20 @@ The `chat` tool is your collaborative thinking partner for development conversat
 ## Example Prompt
 
 ```
-Chat with zen and pick the best model for this job. I need to pick between Redis and Memcached for session storage 
-and I need an expert opinion for the project I'm working on. Get a good idea of what the project does, pick one of the two options
-and then debate with the other models to give me a final verdict
+I need to pick between Redis and Memcached for session storage and I need an expert opinion for the project
+I'm working on. Take a look at the code and get an idea of what this project does, pick one of the two options
+and then chat with gemini pro and continue discussing pros and cons to come to a final conclusion. I need a one
+word verdict in the end.
 ```
+<div style="center">
+  
+  [Chat Redis or Memcached_web.webm](https://github.com/user-attachments/assets/41076cfe-dd49-4dfc-82f5-d7461b34705d)
+  
+</div>
 
 **Another Example**:
 
-* We ask Claude code to pick one, then `chat` with `gemini` to make a final decision
+* We ask Claude code to pick one of two frameworks, then `chat` with `gemini` to make a final decision
 * Gemini responds, confirming choice. We use `continuation` to ask another question using the same conversation thread
 * Gemini responds with explanation. We use continuation again, using `/zen:continue (MCP)` command the second time
 
