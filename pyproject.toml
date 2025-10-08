@@ -1,6 +1,6 @@
 [project]
 name = "zen-mcp-server"
-version = "8.0.1"
+version = "8.0.2"
 description = "AI-powered MCP server with multiple model providers"
 requires-python = ">=3.9"
 dependencies = [

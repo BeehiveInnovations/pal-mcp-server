@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v8.0.2 (2025-10-08)
+
+### Bug Fixes
+
+- Restore run-server quote trimming regex
+  ([`1de4542`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/1de454224c105891137134e2a25c2ee4f00dba45))
+
+### Chores
+
+- Sync version to config.py [skip ci]
+  ([`728fb43`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/728fb439b929c9dc37646b24537ae043208fda7d))
+
+
 ## v8.0.1 (2025-10-08)
 
 ### Bug Fixes
