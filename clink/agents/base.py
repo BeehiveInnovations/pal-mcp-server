@@ -6,6 +6,7 @@ import asyncio
 import logging
 import os
 import shlex
+import shutil
 import tempfile
 import time
 from collections.abc import Sequence
@@ -65,6 +66,17 @@ class BaseCLIAgent:
         # The runner simply executes the configured CLI command for the selected role.
         command = self._build_command(role=role)
         env = self._build_environment()
+
+        # Resolve executable path for cross-platform compatibility (especially Windows)
+        executable_name = command[0]
+        resolved_executable = shutil.which(executable_name)
+        if resolved_executable is None:
+            raise CLIAgentError(
+                f"Executable '{executable_name}' not found in PATH for CLI '{self.client.name}'. "
+                f"Ensure the command is installed and accessible."
+            )
+        command[0] = resolved_executable
+
         sanitized_command = list(command)
 
         cwd = str(self.client.working_dir) if self.client.working_dir else None
