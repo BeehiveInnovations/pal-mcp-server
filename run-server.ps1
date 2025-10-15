@@ -1489,18 +1489,18 @@ function Test-ClaudeCliIntegration {
     Write-Info "Claude CLI detected - checking configuration..."
     
     try {
-        $claudeConfig = claude config list 2>$null
+        $claudeConfig = claude mcp list 2>$null
         if ($claudeConfig -match "zen") {
             Write-Success "Claude CLI already configured for zen server"
         }
         else {
             Write-Info "To add zen server to Claude CLI, run:"
-            Write-Host "  claude config add-server zen $PythonPath $ServerPath" -ForegroundColor Cyan
+            Write-Host "  claude mcp add -s user zen $PythonPath $ServerPath" -ForegroundColor Cyan
         }
     }
     catch {
         Write-Info "To configure Claude CLI manually, run:"
-        Write-Host "  claude config add-server zen $PythonPath $ServerPath" -ForegroundColor Cyan
+        Write-Host "  claude mcp add -s user zen $PythonPath $ServerPath" -ForegroundColor Cyan
     }
 }
 
