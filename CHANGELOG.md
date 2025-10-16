@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v9.0.3 (2025-10-16)
+
+### Bug Fixes
+
+- Remove duplicate -o json flag in gemini CLI config
+  ([`3b2eff5`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/3b2eff58ac0e2388045a7442c63f56ce259b54ba))
+
+### Chores
+
+- Sync version to config.py [skip ci]
+  ([`b205d71`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/b205d7159b674ce47ebc11af7255d1e3556fff93))
+
+
 ## v9.0.2 (2025-10-15)
 
 ### Bug Fixes
