@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 
 from config import TEMPERATURE_ANALYTICAL
 from tools.shared.base_models import ToolRequest
+from tools.shared.exceptions import ToolExecutionError
 
 from .simple.base import SimpleTool
 
@@ -138,6 +139,8 @@ class ChallengeTool(SimpleTool):
 
             return [TextContent(type="text", text=json.dumps(response_data, indent=2, ensure_ascii=False))]
 
+        except ToolExecutionError:
+            raise
         except Exception as e:
             import logging
 
@@ -150,7 +153,7 @@ class ChallengeTool(SimpleTool):
                 "content": f"Failed to create challenge prompt: {str(e)}",
             }
 
-            return [TextContent(type="text", text=json.dumps(error_data, ensure_ascii=False))]
+            raise ToolExecutionError(json.dumps(error_data, ensure_ascii=False)) from e
 
     def _wrap_prompt_for_challenge(self, prompt: str) -> str:
         """

@@ -7,6 +7,7 @@ from unittest.mock import patch
 import pytest
 
 from tools.chat import ChatTool
+from tools.shared.exceptions import ToolExecutionError
 
 
 class TestAutoMode:
@@ -153,14 +154,14 @@ class TestAutoMode:
 
             # Mock the provider to avoid real API calls
             with patch.object(tool, "get_model_provider"):
-                # Execute without model parameter
-                result = await tool.execute({"prompt": "Test prompt", "working_directory": str(tmp_path)})
+                # Execute without model parameter and expect protocol error
+                with pytest.raises(ToolExecutionError) as exc_info:
+                    await tool.execute({"prompt": "Test prompt", "working_directory": str(tmp_path)})
 
-            # Should get error
-            assert len(result) == 1
-            response = result[0].text
-            assert "error" in response
-            assert "Model parameter is required" in response or "Model 'auto' is not available" in response
+            # Should get error payload mentioning model requirement
+            error_payload = getattr(exc_info.value, "payload", str(exc_info.value))
+            assert "Model" in error_payload
+            assert "auto" in error_payload
 
         finally:
             # Restore

@@ -15,6 +15,7 @@ from tools.analyze import AnalyzeTool
 from tools.chat import ChatTool
 from tools.debug import DebugIssueTool
 from tools.models import ToolModelCategory
+from tools.shared.exceptions import ToolExecutionError
 from tools.thinkdeep import ThinkDeepTool
 
 
@@ -227,30 +228,15 @@ class TestAutoModeComprehensive:
             # Register only Gemini provider
             ModelProviderRegistry.register_provider(ProviderType.GOOGLE, GeminiModelProvider)
 
-            # Mock provider to capture what model is requested
-            mock_provider = MagicMock()
-            mock_provider.generate_content.return_value = MagicMock(
-                content="test response", model_name="test-model", usage={"input_tokens": 10, "output_tokens": 5}
-            )
+            # Test ChatTool (FAST_RESPONSE) - auto mode should suggest flash variant
+            chat_tool = ChatTool()
+            chat_message = chat_tool._build_auto_mode_required_message()
+            assert "flash" in chat_message
 
-            with patch.object(ModelProviderRegistry, "get_provider_for_model", return_value=mock_provider):
-                workdir = tmp_path / "chat_artifacts"
-                workdir.mkdir(parents=True, exist_ok=True)
-                # Test ChatTool (FAST_RESPONSE) - should prefer flash
-                chat_tool = ChatTool()
-                await chat_tool.execute(
-                    {"prompt": "test", "model": "auto", "working_directory": str(workdir)}
-                )  # This should trigger auto selection
-
-                # In auto mode, the tool should get an error requiring model selection
-                # but the suggested model should be flash
-
-                # Reset mock for next test
-                ModelProviderRegistry.get_provider_for_model.reset_mock()
-
-                # Test DebugIssueTool (EXTENDED_REASONING) - should prefer pro
-                debug_tool = DebugIssueTool()
-                await debug_tool.execute({"prompt": "test error", "model": "auto"})
+            # Test DebugIssueTool (EXTENDED_REASONING) - auto mode should suggest pro variant
+            debug_tool = DebugIssueTool()
+            debug_message = debug_tool._build_auto_mode_required_message()
+            assert "pro" in debug_message
 
     def test_auto_mode_schema_includes_all_available_models(self):
         """Test that auto mode schema includes all available models for user convenience."""
@@ -390,30 +376,25 @@ class TestAutoModeComprehensive:
             chat_tool = ChatTool()
             workdir = tmp_path / "chat_artifacts"
             workdir.mkdir(parents=True, exist_ok=True)
-            result = await chat_tool.execute(
-                {
-                    "prompt": "test",
-                    "working_directory": str(workdir),
-                    # Note: no model parameter provided in auto mode
-                }
-            )
+            with pytest.raises(ToolExecutionError) as exc_info:
+                await chat_tool.execute(
+                    {
+                        "prompt": "test",
+                        "working_directory": str(workdir),
+                        # Note: no model parameter provided in auto mode
+                    }
+                )
 
-            # Should get error requiring model selection
-            assert len(result) == 1
-            response_text = result[0].text
-
-            # Parse JSON response to check error
+            # Should get error requiring model selection with fallback suggestion
             import json
 
-            response_data = json.loads(response_text)
+            response_data = json.loads(exc_info.value.payload)
 
             assert response_data["status"] == "error"
             assert (
-                "Model parameter is required" in response_data["content"]
-                or "Model 'auto' is not available" in response_data["content"]
+                "Model parameter is required" in response_data["content"] or "Model 'auto'" in response_data["content"]
             )
-            # Note: With the new SimpleTool-based Chat tool, the error format is simpler
-            # and doesn't include category-specific suggestions like the original tool did
+            assert "flash" in response_data["content"]
 
     def test_model_availability_with_restrictions(self):
         """Test that auto mode respects model restrictions when selecting fallback models."""

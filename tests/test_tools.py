@@ -9,6 +9,7 @@ import tempfile
 import pytest
 
 from tools import AnalyzeTool, ChatTool, CodeReviewTool, ThinkDeepTool
+from tools.shared.exceptions import ToolExecutionError
 
 
 class TestThinkDeepTool:
@@ -324,19 +325,19 @@ class TestAbsolutePathValidation:
     async def test_thinkdeep_tool_relative_path_rejected(self):
         """Test that thinkdeep tool rejects relative paths"""
         tool = ThinkDeepTool()
-        result = await tool.execute(
-            {
-                "step": "My analysis",
-                "step_number": 1,
-                "total_steps": 1,
-                "next_step_required": False,
-                "findings": "Initial analysis",
-                "files_checked": ["./local/file.py"],
-            }
-        )
+        with pytest.raises(ToolExecutionError) as exc_info:
+            await tool.execute(
+                {
+                    "step": "My analysis",
+                    "step_number": 1,
+                    "total_steps": 1,
+                    "next_step_required": False,
+                    "findings": "Initial analysis",
+                    "files_checked": ["./local/file.py"],
+                }
+            )
 
-        assert len(result) == 1
-        response = json.loads(result[0].text)
+        response = json.loads(exc_info.value.payload)
         assert response["status"] == "error"
         assert "must be FULL absolute paths" in response["content"]
         assert "./local/file.py" in response["content"]
@@ -347,18 +348,18 @@ class TestAbsolutePathValidation:
         tool = ChatTool()
         temp_dir = tempfile.mkdtemp()
         try:
-            result = await tool.execute(
-                {
-                    "prompt": "Explain this code",
-                    "files": ["code.py"],  # relative path without ./
-                    "working_directory": temp_dir,
-                }
-            )
+            with pytest.raises(ToolExecutionError) as exc_info:
+                await tool.execute(
+                    {
+                        "prompt": "Explain this code",
+                        "files": ["code.py"],  # relative path without ./
+                        "working_directory": temp_dir,
+                    }
+                )
         finally:
             shutil.rmtree(temp_dir, ignore_errors=True)
 
-        assert len(result) == 1
-        response = json.loads(result[0].text)
+        response = json.loads(exc_info.value.payload)
         assert response["status"] == "error"
         assert "must be FULL absolute paths" in response["content"]
         assert "code.py" in response["content"]

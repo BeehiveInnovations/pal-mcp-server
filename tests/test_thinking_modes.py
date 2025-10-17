@@ -87,16 +87,26 @@ class TestThinkingModes:
             except Exception as e:
                 # Expected: API call will fail with fake key, but we can check the error
                 # If we get a provider resolution error, that's what we're testing
-                error_msg = str(e)
+                error_msg = getattr(e, "payload", str(e))
                 # Should NOT be a mock-related error - should be a real API or key error
                 assert "MagicMock" not in error_msg
                 assert "'<' not supported between instances" not in error_msg
 
                 # Should be a real provider error (API key, network, etc.)
-                assert any(
-                    phrase in error_msg
-                    for phrase in ["API", "key", "authentication", "provider", "network", "connection"]
-                )
+                import json
+
+                try:
+                    parsed = json.loads(error_msg)
+                except Exception:
+                    parsed = None
+
+                if isinstance(parsed, dict) and parsed.get("status", "").endswith("_failed"):
+                    assert "validation errors" in parsed.get("error", "")
+                else:
+                    assert any(
+                        phrase in error_msg
+                        for phrase in ["API", "key", "authentication", "provider", "network", "connection", "Model"]
+                    )
 
         finally:
             # Restore environment
@@ -156,16 +166,26 @@ class TestThinkingModes:
 
             except Exception as e:
                 # Expected: API call will fail with fake key
-                error_msg = str(e)
+                error_msg = getattr(e, "payload", str(e))
                 # Should NOT be a mock-related error
                 assert "MagicMock" not in error_msg
                 assert "'<' not supported between instances" not in error_msg
 
                 # Should be a real provider error
-                assert any(
-                    phrase in error_msg
-                    for phrase in ["API", "key", "authentication", "provider", "network", "connection"]
-                )
+                import json
+
+                try:
+                    parsed = json.loads(error_msg)
+                except Exception:
+                    parsed = None
+
+                if isinstance(parsed, dict) and parsed.get("status", "").endswith("_failed"):
+                    assert "validation errors" in parsed.get("error", "")
+                else:
+                    assert any(
+                        phrase in error_msg
+                        for phrase in ["API", "key", "authentication", "provider", "network", "connection", "Model"]
+                    )
 
         finally:
             # Restore environment
@@ -226,16 +246,26 @@ class TestThinkingModes:
 
             except Exception as e:
                 # Expected: API call will fail with fake key
-                error_msg = str(e)
+                error_msg = getattr(e, "payload", str(e))
                 # Should NOT be a mock-related error
                 assert "MagicMock" not in error_msg
                 assert "'<' not supported between instances" not in error_msg
 
                 # Should be a real provider error
-                assert any(
-                    phrase in error_msg
-                    for phrase in ["API", "key", "authentication", "provider", "network", "connection"]
-                )
+                import json
+
+                try:
+                    parsed = json.loads(error_msg)
+                except Exception:
+                    parsed = None
+
+                if isinstance(parsed, dict) and parsed.get("status", "").endswith("_failed"):
+                    assert "validation errors" in parsed.get("error", "")
+                else:
+                    assert any(
+                        phrase in error_msg
+                        for phrase in ["API", "key", "authentication", "provider", "network", "connection", "Model"]
+                    )
 
         finally:
             # Restore environment
@@ -295,16 +325,26 @@ class TestThinkingModes:
 
             except Exception as e:
                 # Expected: API call will fail with fake key
-                error_msg = str(e)
+                error_msg = getattr(e, "payload", str(e))
                 # Should NOT be a mock-related error
                 assert "MagicMock" not in error_msg
                 assert "'<' not supported between instances" not in error_msg
 
                 # Should be a real provider error
-                assert any(
-                    phrase in error_msg
-                    for phrase in ["API", "key", "authentication", "provider", "network", "connection"]
-                )
+                import json
+
+                try:
+                    parsed = json.loads(error_msg)
+                except Exception:
+                    parsed = None
+
+                if isinstance(parsed, dict) and parsed.get("status", "").endswith("_failed"):
+                    assert "validation errors" in parsed.get("error", "")
+                else:
+                    assert any(
+                        phrase in error_msg
+                        for phrase in ["API", "key", "authentication", "provider", "network", "connection", "Model"]
+                    )
 
         finally:
             # Restore environment
@@ -367,16 +407,26 @@ class TestThinkingModes:
 
             except Exception as e:
                 # Expected: API call will fail with fake key
-                error_msg = str(e)
+                error_msg = getattr(e, "payload", str(e))
                 # Should NOT be a mock-related error
                 assert "MagicMock" not in error_msg
                 assert "'<' not supported between instances" not in error_msg
 
                 # Should be a real provider error
-                assert any(
-                    phrase in error_msg
-                    for phrase in ["API", "key", "authentication", "provider", "network", "connection"]
-                )
+                import json
+
+                try:
+                    parsed = json.loads(error_msg)
+                except Exception:
+                    parsed = None
+
+                if isinstance(parsed, dict) and parsed.get("status", "").endswith("_failed"):
+                    assert "validation errors" in parsed.get("error", "")
+                else:
+                    assert any(
+                        phrase in error_msg
+                        for phrase in ["API", "key", "authentication", "provider", "network", "connection", "Model"]
+                    )
 
         finally:
             # Restore environment

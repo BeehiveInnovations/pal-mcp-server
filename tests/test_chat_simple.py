@@ -5,11 +5,14 @@ This module contains unit tests to ensure that the Chat tool
 (now using SimpleTool architecture) maintains proper functionality.
 """
 
+import json
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
 
 from tools.chat import ChatRequest, ChatTool
+from tools.shared.exceptions import ToolExecutionError
 
 
 class TestChatTool:
@@ -125,6 +128,30 @@ class TestChatTool:
         assert "AGENT'S TURN:" in formatted
         assert "Evaluate this perspective" in formatted
 
+    def test_format_response_multiple_generated_code_blocks(self, tmp_path):
+        """All generated-code blocks should be combined and saved to zen_generated.code."""
+        tool = ChatTool()
+        tool._model_context = SimpleNamespace(capabilities=SimpleNamespace(allow_code_generation=True))
+
+        response = (
+            "Intro text\n"
+            "<GENERATED-CODE>print('hello')</GENERATED-CODE>\n"
+            "Other text\n"
+            "<GENERATED-CODE>print('world')</GENERATED-CODE>"
+        )
+
+        request = ChatRequest(prompt="Test", working_directory=str(tmp_path))
+
+        formatted = tool.format_response(response, request)
+
+        saved_path = tmp_path / "zen_generated.code"
+        saved_content = saved_path.read_text(encoding="utf-8")
+
+        assert "print('hello')" in saved_content
+        assert "print('world')" in saved_content
+        assert saved_content.count("<GENERATED-CODE>") == 2
+        assert str(saved_path) in formatted
+
     def test_tool_name(self):
         """Test tool name is correct"""
         assert self.tool.get_name() == "chat"
@@ -163,9 +190,37 @@ class TestChatRequestModel:
         # Field descriptions should exist and be descriptive
         assert len(CHAT_FIELD_DESCRIPTIONS["prompt"]) > 50
         assert "context" in CHAT_FIELD_DESCRIPTIONS["prompt"]
-        assert "full-paths" in CHAT_FIELD_DESCRIPTIONS["files"] or "absolute" in CHAT_FIELD_DESCRIPTIONS["files"]
+        files_desc = CHAT_FIELD_DESCRIPTIONS["files"].lower()
+        assert "absolute" in files_desc
         assert "visual context" in CHAT_FIELD_DESCRIPTIONS["images"]
         assert "directory" in CHAT_FIELD_DESCRIPTIONS["working_directory"].lower()
+
+    def test_working_directory_description_matches_behavior(self):
+        """Working directory description should reflect automatic creation."""
+        from tools.chat import CHAT_FIELD_DESCRIPTIONS
+
+        description = CHAT_FIELD_DESCRIPTIONS["working_directory"].lower()
+        assert "must already exist" in description
+
+    @pytest.mark.asyncio
+    async def test_working_directory_must_exist(self, tmp_path):
+        """Chat tool should reject non-existent working directories."""
+        tool = ChatTool()
+        missing_dir = tmp_path / "nonexistent_subdir"
+
+        with pytest.raises(ToolExecutionError) as exc_info:
+            await tool.execute(
+                {
+                    "prompt": "test",
+                    "files": [],
+                    "images": [],
+                    "working_directory": str(missing_dir),
+                }
+            )
+
+        payload = json.loads(exc_info.value.payload)
+        assert payload["status"] == "error"
+        assert "existing directory" in payload["content"].lower()
 
     def test_default_values(self):
         """Test that default values work correctly"""

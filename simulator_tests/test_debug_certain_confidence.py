@@ -12,6 +12,8 @@ Tests the debug tool's 'certain' confidence feature in a realistic simulation:
 import json
 from typing import Optional
 
+from tools.shared.exceptions import ToolExecutionError
+
 from .conversation_base_test import ConversationBaseTest
 
 
@@ -482,7 +484,12 @@ This happens every time a user tries to log in. The error occurs in the password
             loop = self._get_event_loop()
 
             # Call the tool's execute method
-            result = loop.run_until_complete(tool.execute(params))
+            try:
+                result = loop.run_until_complete(tool.execute(params))
+            except ToolExecutionError as exc:
+                response_text = exc.payload
+                continuation_id = self._extract_debug_continuation_id(response_text)
+                return response_text, continuation_id
 
             if not result or len(result) == 0:
                 self.logger.error(f"Tool '{tool_name}' returned empty result")

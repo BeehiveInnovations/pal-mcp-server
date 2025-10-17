@@ -13,6 +13,7 @@ import pytest
 from providers.registry import ModelProviderRegistry
 from providers.shared import ProviderType
 from tools.debug import DebugIssueTool
+from tools.shared.exceptions import ToolExecutionError
 
 
 class TestWorkflowMetadata:
@@ -167,12 +168,10 @@ class TestWorkflowMetadata:
             # Execute the workflow tool - should fail gracefully
             import asyncio
 
-            result = asyncio.run(debug_tool.execute(arguments))
+            with pytest.raises(ToolExecutionError) as exc_info:
+                asyncio.run(debug_tool.execute(arguments))
 
-            # Parse the JSON response
-            assert len(result) == 1
-            response_text = result[0].text
-            response_data = json.loads(response_text)
+            response_data = json.loads(exc_info.value.payload)
 
             # Verify it's an error response with metadata
             assert "status" in response_data

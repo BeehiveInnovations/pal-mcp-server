@@ -17,6 +17,7 @@ from typing import Any, Optional
 
 from tools.shared.base_models import ToolRequest
 from tools.shared.base_tool import BaseTool
+from tools.shared.exceptions import ToolExecutionError
 from tools.shared.schema_builders import SchemaBuilder
 
 
@@ -269,7 +270,6 @@ class SimpleTool(BaseTool):
 
         This method replicates the proven execution pattern while using SimpleTool hooks.
         """
-        import json
         import logging
 
         from mcp.types import TextContent
@@ -298,7 +298,8 @@ class SimpleTool(BaseTool):
                     content=path_error,
                     content_type="text",
                 )
-                return [TextContent(type="text", text=error_output.model_dump_json())]
+                logger.error("Path validation failed for %s: %s", self.get_name(), path_error)
+                raise ToolExecutionError(error_output.model_dump_json())
 
             # Handle model resolution like old base.py
             model_name = self.get_request_model_name(request)
@@ -389,7 +390,15 @@ class SimpleTool(BaseTool):
                     images, model_context=self._model_context, continuation_id=continuation_id
                 )
                 if image_validation_error:
-                    return [TextContent(type="text", text=json.dumps(image_validation_error, ensure_ascii=False))]
+                    error_output = ToolOutput(
+                        status=image_validation_error.get("status", "error"),
+                        content=image_validation_error.get("content"),
+                        content_type=image_validation_error.get("content_type", "text"),
+                        metadata=image_validation_error.get("metadata"),
+                    )
+                    payload = error_output.model_dump_json()
+                    logger.error("Image validation failed for %s: %s", self.get_name(), payload)
+                    raise ToolExecutionError(payload)
 
             # Get and validate temperature against model constraints
             temperature, temp_warnings = self.get_validated_temperature(request, self._model_context)
@@ -552,15 +561,21 @@ class SimpleTool(BaseTool):
                             content_type="text",
                         )
 
-            # Return the tool output as TextContent
-            return [TextContent(type="text", text=tool_output.model_dump_json())]
+            # Return the tool output as TextContent, marking protocol errors appropriately
+            payload = tool_output.model_dump_json()
+            if tool_output.status == "error":
+                logger.error("%s reported error status - raising ToolExecutionError", self.get_name())
+                raise ToolExecutionError(payload)
+            return [TextContent(type="text", text=payload)]
 
+        except ToolExecutionError:
+            raise
         except Exception as e:
             # Special handling for MCP size check errors
             if str(e).startswith("MCP_SIZE_CHECK:"):
                 # Extract the JSON content after the prefix
                 json_content = str(e)[len("MCP_SIZE_CHECK:") :]
-                return [TextContent(type="text", text=json_content)]
+                raise ToolExecutionError(json_content)
 
             logger.error(f"Error in {self.get_name()}: {str(e)}")
             error_output = ToolOutput(
@@ -568,7 +583,7 @@ class SimpleTool(BaseTool):
                 content=f"Error in {self.get_name()}: {str(e)}",
                 content_type="text",
             )
-            return [TextContent(type="text", text=error_output.model_dump_json())]
+            raise ToolExecutionError(error_output.model_dump_json()) from e
 
     def _parse_response(self, raw_text: str, request, model_info: Optional[dict] = None):
         """

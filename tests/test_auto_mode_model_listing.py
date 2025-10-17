@@ -14,6 +14,7 @@ from providers.openrouter import OpenRouterProvider
 from providers.registry import ModelProviderRegistry
 from providers.shared import ProviderType
 from providers.xai import XAIModelProvider
+from tools.shared.exceptions import ToolExecutionError
 
 
 def _extract_available_models(message: str) -> list[str]:
@@ -123,18 +124,18 @@ def test_error_listing_respects_env_restrictions(monkeypatch, reset_registry):
     model_restrictions._restriction_service = None
     server.configure_providers()
 
-    result = asyncio.run(
-        server.handle_call_tool(
-            "chat",
-            {
-                "model": "gpt5mini",
-                "prompt": "Tell me about your strengths",
-            },
+    with pytest.raises(ToolExecutionError) as exc_info:
+        asyncio.run(
+            server.handle_call_tool(
+                "chat",
+                {
+                    "model": "gpt5mini",
+                    "prompt": "Tell me about your strengths",
+                },
+            )
         )
-    )
 
-    assert len(result) == 1
-    payload = json.loads(result[0].text)
+    payload = json.loads(exc_info.value.payload)
     assert payload["status"] == "error"
 
     available_models = _extract_available_models(payload["content"])
@@ -208,18 +209,18 @@ def test_error_listing_without_restrictions_shows_full_catalog(monkeypatch, rese
     model_restrictions._restriction_service = None
     server.configure_providers()
 
-    result = asyncio.run(
-        server.handle_call_tool(
-            "chat",
-            {
-                "model": "dummymodel",
-                "prompt": "Hi there",
-            },
+    with pytest.raises(ToolExecutionError) as exc_info:
+        asyncio.run(
+            server.handle_call_tool(
+                "chat",
+                {
+                    "model": "dummymodel",
+                    "prompt": "Hi there",
+                },
+            )
         )
-    )
 
-    assert len(result) == 1
-    payload = json.loads(result[0].text)
+    payload = json.loads(exc_info.value.payload)
     assert payload["status"] == "error"
 
     available_models = _extract_available_models(payload["content"])

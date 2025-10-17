@@ -8,6 +8,7 @@ import pytest
 
 from tools.models import ToolModelCategory
 from tools.planner import PlannerRequest, PlannerTool
+from tools.shared.exceptions import ToolExecutionError
 
 
 class TestPlannerTool:
@@ -340,16 +341,12 @@ class TestPlannerTool:
             # Missing required fields: step_number, total_steps, next_step_required
         }
 
-        result = await tool.execute(arguments)
+        with pytest.raises(ToolExecutionError) as exc_info:
+            await tool.execute(arguments)
 
-        # Should return error response
-        assert len(result) == 1
-        response_text = result[0].text
-
-        # Parse the JSON response
         import json
 
-        parsed_response = json.loads(response_text)
+        parsed_response = json.loads(exc_info.value.payload)
 
         assert parsed_response["status"] == "planner_failed"
         assert "error" in parsed_response

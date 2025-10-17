@@ -68,6 +68,7 @@ from tools import (  # noqa: E402
     VersionTool,
 )
 from tools.models import ToolOutput  # noqa: E402
+from tools.shared.exceptions import ToolExecutionError  # noqa: E402
 from utils.env import env_override_enabled, get_env  # noqa: E402
 
 # Configure logging for server operations
@@ -837,7 +838,7 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[TextCon
                 content_type="text",
                 metadata={"tool_name": name, "requested_model": model_name},
             )
-            return [TextContent(type="text", text=error_output.model_dump_json())]
+            raise ToolExecutionError(error_output.model_dump_json())
 
         # Create model context with resolved model and option
         model_context = ModelContext(model_name, model_option)
@@ -856,7 +857,7 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[TextCon
             file_size_check = check_total_file_size(arguments["files"], model_name)
             if file_size_check:
                 logger.warning(f"File size check failed for {name} with model {model_name}")
-                return [TextContent(type="text", text=ToolOutput(**file_size_check).model_dump_json())]
+                raise ToolExecutionError(ToolOutput(**file_size_check).model_dump_json())
 
         # Execute tool with pre-resolved model context
         result = await tool.execute(arguments)

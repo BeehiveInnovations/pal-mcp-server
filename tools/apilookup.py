@@ -28,8 +28,9 @@ LOOKUP_PROMPT = """
 MANDATORY: You MUST perform this research in a SEPARATE SUB-TASK using your web search tool.
 
 CRITICAL RULES - READ CAREFULLY:
-- NEVER call `apilookup` / `zen.apilookup` or any other zen tool again for this mission. Launch your environment's dedicated web search capability
-  (for example `websearch`, `web_search`, or another native web-search tool such as the one you use to perform a web search online) to gather sources.
+- Launch your environment's dedicated web search capability (for example `websearch`, `web_search`, or another native
+web-search tool such as the one you use to perform a web search online) to gather sources - do NOT call this `apilookup` tool again
+during the same lookup, this is ONLY an orchestration tool to guide you and has NO web search capability of its own.
 - ALWAYS run the search from a separate sub-task/sub-process so the research happens outside this tool invocation.
 - If the environment does not expose a web search tool, immediately report that limitation instead of invoking `apilookup` again.
 

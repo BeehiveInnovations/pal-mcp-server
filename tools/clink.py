@@ -17,6 +17,7 @@ from clink.models import ResolvedCLIClient, ResolvedCLIRole
 from config import TEMPERATURE_BALANCED
 from tools.models import ToolModelCategory, ToolOutput
 from tools.shared.base_models import COMMON_FIELD_DESCRIPTIONS
+from tools.shared.exceptions import ToolExecutionError
 from tools.simple.base import SchemaBuilder, SimpleTool
 
 logger = logging.getLogger(__name__)
@@ -166,21 +167,21 @@ class CLinkTool(SimpleTool):
 
         path_error = self._validate_file_paths(request)
         if path_error:
-            return [self._error_response(path_error)]
+            self._raise_tool_error(path_error)
 
         selected_cli = request.cli_name or self._default_cli_name
         if not selected_cli:
-            return [self._error_response("No CLI clients are configured for clink.")]
+            self._raise_tool_error("No CLI clients are configured for clink.")
 
         try:
             client_config = self._registry.get_client(selected_cli)
         except KeyError as exc:
-            return [self._error_response(str(exc))]
+            self._raise_tool_error(str(exc))
 
         try:
             role_config = client_config.get_role(request.role)
         except KeyError as exc:
-            return [self._error_response(str(exc))]
+            self._raise_tool_error(str(exc))
 
         files = self.get_request_files(request)
         images = self.get_request_images(request)
@@ -200,7 +201,7 @@ class CLinkTool(SimpleTool):
             )
         except Exception as exc:
             logger.exception("Failed to prepare clink prompt")
-            return [self._error_response(f"Failed to prepare prompt: {exc}")]
+            self._raise_tool_error(f"Failed to prepare prompt: {exc}")
 
         agent = create_agent(client_config)
         try:
@@ -213,13 +214,10 @@ class CLinkTool(SimpleTool):
             )
         except CLIAgentError as exc:
             metadata = self._build_error_metadata(client_config, exc)
-            error_output = ToolOutput(
-                status="error",
-                content=f"CLI '{client_config.name}' execution failed: {exc}",
-                content_type="text",
+            self._raise_tool_error(
+                f"CLI '{client_config.name}' execution failed: {exc}",
                 metadata=metadata,
             )
-            return [TextContent(type="text", text=error_output.model_dump_json())]
 
         metadata = self._build_success_metadata(client_config, role_config, result)
         metadata = self._prune_metadata(metadata, client_config, reason="normal")
@@ -436,9 +434,9 @@ class CLinkTool(SimpleTool):
             metadata["stderr"] = exc.stderr.strip()
         return metadata
 
-    def _error_response(self, message: str) -> TextContent:
-        error_output = ToolOutput(status="error", content=message, content_type="text")
-        return TextContent(type="text", text=error_output.model_dump_json())
+    def _raise_tool_error(self, message: str, metadata: dict[str, Any] | None = None) -> None:
+        error_output = ToolOutput(status="error", content=message, content_type="text", metadata=metadata)
+        raise ToolExecutionError(error_output.model_dump_json())
 
     def _agent_capabilities_guidance(self) -> str:
         return (

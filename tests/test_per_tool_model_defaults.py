@@ -18,6 +18,7 @@ from tools.debug import DebugIssueTool
 from tools.models import ToolModelCategory
 from tools.precommit import PrecommitTool
 from tools.shared.base_tool import BaseTool
+from tools.shared.exceptions import ToolExecutionError
 from tools.thinkdeep import ThinkDeepTool
 
 
@@ -294,15 +295,12 @@ class TestAutoModeErrorMessages:
                         tool = ChatTool()
                         temp_dir = tempfile.mkdtemp()
                         try:
-                            result = await tool.execute(
-                                {"prompt": "test", "model": "auto", "working_directory": temp_dir}
-                            )
+                            with pytest.raises(ToolExecutionError) as exc_info:
+                                await tool.execute({"prompt": "test", "model": "auto", "working_directory": temp_dir})
                         finally:
                             shutil.rmtree(temp_dir, ignore_errors=True)
 
-                        assert len(result) == 1
-                        # The SimpleTool will wrap the error message
-                        error_output = json.loads(result[0].text)
+                        error_output = json.loads(exc_info.value.payload)
                         assert error_output["status"] == "error"
                         assert "Model 'auto' is not available" in error_output["content"]
 
@@ -412,7 +410,6 @@ class TestRuntimeModelSelection:
                     }
                 )
 
-                # Should require model selection even though DEFAULT_MODEL is valid
                 assert len(result) == 1
                 assert "Model 'auto' is not available" in result[0].text
 
@@ -428,16 +425,15 @@ class TestRuntimeModelSelection:
                     tool = ChatTool()
                     temp_dir = tempfile.mkdtemp()
                     try:
-                        result = await tool.execute(
-                            {"prompt": "test", "model": "gpt-5-turbo", "working_directory": temp_dir}
-                        )
+                        with pytest.raises(ToolExecutionError) as exc_info:
+                            await tool.execute(
+                                {"prompt": "test", "model": "gpt-5-turbo", "working_directory": temp_dir}
+                            )
                     finally:
                         shutil.rmtree(temp_dir, ignore_errors=True)
 
                     # Should require model selection
-                    assert len(result) == 1
-                    # When a specific model is requested but not available, error message is different
-                    error_output = json.loads(result[0].text)
+                    error_output = json.loads(exc_info.value.payload)
                     assert error_output["status"] == "error"
                     assert "gpt-5-turbo" in error_output["content"]
                     assert "is not available" in error_output["content"]

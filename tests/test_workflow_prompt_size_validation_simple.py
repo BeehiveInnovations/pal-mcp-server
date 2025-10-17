@@ -12,6 +12,7 @@ import pytest
 
 from config import MCP_PROMPT_SIZE_LIMIT
 from tools.debug import DebugIssueTool
+from tools.shared.exceptions import ToolExecutionError
 
 
 def build_debug_arguments(**overrides) -> dict[str, object]:
@@ -60,16 +61,10 @@ async def test_workflow_tool_rejects_oversized_step_with_guidance() -> None:
     tool = DebugIssueTool()
     arguments = build_debug_arguments(step=oversized_step)
 
-    responses = await tool.execute(arguments)
-    assert len(responses) == 1
+    with pytest.raises(ToolExecutionError) as exc_info:
+        await tool.execute(arguments)
 
-    payload = json.loads(responses[0].text)
-    assert payload["status"] == "debug_failed"
-    assert "error" in payload
-
-    # Extract the serialized ToolOutput from the MCP_SIZE_CHECK marker
-    error_details = payload["error"].split("MCP_SIZE_CHECK:", 1)[1]
-    output_payload = json.loads(error_details)
+    output_payload = json.loads(exc_info.value.payload)
 
     assert output_payload["status"] == "resend_prompt"
     assert output_payload["metadata"]["prompt_size"] > MCP_PROMPT_SIZE_LIMIT

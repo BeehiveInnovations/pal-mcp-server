@@ -8,7 +8,6 @@ Tests the complete image support pipeline:
 - Cross-tool image context preservation
 """
 
-import json
 import os
 import tempfile
 import uuid
@@ -18,6 +17,7 @@ import pytest
 
 from tools.chat import ChatTool
 from tools.debug import DebugIssueTool
+from tools.shared.exceptions import ToolExecutionError
 from utils.conversation_memory import (
     ConversationTurn,
     ThreadContext,
@@ -276,31 +276,28 @@ class TestImageSupportIntegration:
             tool = ChatTool()
 
             # Test with real provider resolution
-            try:
-                result = await tool.execute(
-                    {"prompt": "What do you see in this image?", "images": [temp_image_path], "model": "gpt-4o"}
-                )
+            with tempfile.TemporaryDirectory() as working_directory:
+                with pytest.raises(ToolExecutionError) as exc_info:
+                    await tool.execute(
+                        {
+                            "prompt": "What do you see in this image?",
+                            "images": [temp_image_path],
+                            "model": "gpt-4o",
+                            "working_directory": working_directory,
+                        }
+                    )
 
-                # If we get here, check the response format
-                assert len(result) == 1
-                # Should be a valid JSON response
-                output = json.loads(result[0].text)
-                assert "status" in output
-                # Test passed - provider accepted images parameter
+            error_msg = exc_info.value.payload if hasattr(exc_info.value, "payload") else str(exc_info.value)
 
-            except Exception as e:
-                # Expected: API call will fail with fake key
-                error_msg = str(e)
-                # Should NOT be a mock-related error
-                assert "MagicMock" not in error_msg
-                assert "'<' not supported between instances" not in error_msg
+            # Should NOT be a mock-related error
+            assert "MagicMock" not in error_msg
+            assert "'<' not supported between instances" not in error_msg
 
-                # Should be a real provider error (API key or network)
-                assert any(
-                    phrase in error_msg
-                    for phrase in ["API", "key", "authentication", "provider", "network", "connection", "401", "403"]
-                )
-                # Test passed - provider processed images parameter before failing on auth
+            # Should be a real provider error (API key or network)
+            assert any(
+                phrase in error_msg
+                for phrase in ["API", "key", "authentication", "provider", "network", "connection", "401", "403"]
+            )
 
         finally:
             # Clean up temp file

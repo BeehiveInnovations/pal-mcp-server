@@ -12,6 +12,7 @@ from unittest.mock import patch
 import pytest
 
 from tools.challenge import ChallengeRequest, ChallengeTool
+from tools.shared.exceptions import ToolExecutionError
 
 
 class TestChallengeTool:
@@ -110,10 +111,10 @@ class TestChallengeTool:
         """Test error handling in execute method"""
         # Test with invalid arguments (non-dict)
         with patch.object(self.tool, "get_request_model", side_effect=Exception("Test error")):
-            result = await self.tool.execute({"prompt": "test"})
+            with pytest.raises(ToolExecutionError) as exc_info:
+                await self.tool.execute({"prompt": "test"})
 
-        assert len(result) == 1
-        response_data = json.loads(result[0].text)
+        response_data = json.loads(exc_info.value.payload)
         assert response_data["status"] == "error"
         assert "Test error" in response_data["error"]
 
