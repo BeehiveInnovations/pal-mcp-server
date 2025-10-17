@@ -258,44 +258,58 @@ class TestLargePromptHandling:
         tool = ChatTool()
         other_file = "/some/other/file.py"
 
-        with patch.object(tool, "get_model_provider") as mock_get_provider:
+        with (
+            patch("utils.model_context.ModelContext") as mock_model_context_cls,
+            patch.object(tool, "handle_prompt_file") as mock_handle_prompt,
+            patch.object(tool, "_prepare_file_content_for_prompt") as mock_prepare_files,
+        ):
             mock_provider = MagicMock()
             mock_provider.get_provider_type.return_value = MagicMock(value="google")
-            mock_provider.get_capabilities.return_value = MagicMock(supports_extended_thinking=False)
             mock_provider.generate_content.return_value = MagicMock(
                 content="Success",
                 usage={"input_tokens": 10, "output_tokens": 20, "total_tokens": 30},
                 model_name="gemini-2.5-flash",
                 metadata={"finish_reason": "STOP"},
             )
-            mock_get_provider.return_value = mock_provider
 
-            # Mock handle_prompt_file to verify prompt.txt is handled
-            with patch.object(tool, "handle_prompt_file") as mock_handle_prompt:
-                # Return the prompt content and updated files list (without prompt.txt)
-                mock_handle_prompt.return_value = ("Large prompt content from file", [other_file])
+            from utils.model_context import TokenAllocation
 
-                # Mock the centralized file preparation method
-                with patch.object(tool, "_prepare_file_content_for_prompt") as mock_prepare_files:
-                    mock_prepare_files.return_value = ("File content", [other_file])
+            mock_model_context = MagicMock()
+            mock_model_context.model_name = "gemini-2.5-flash"
+            mock_model_context.provider = mock_provider
+            mock_model_context.capabilities = MagicMock(supports_extended_thinking=False)
+            mock_model_context.calculate_token_allocation.return_value = TokenAllocation(
+                total_tokens=1_000_000,
+                content_tokens=800_000,
+                response_tokens=200_000,
+                file_tokens=320_000,
+                history_tokens=320_000,
+            )
+            mock_model_context_cls.return_value = mock_model_context
 
-                    # Use a small prompt to avoid triggering size limit
-                    await tool.execute(
-                        {
-                            "prompt": "Test prompt",
-                            "files": [temp_prompt_file, other_file],
-                            "working_directory": os.path.dirname(temp_prompt_file),
-                        }
-                    )
+            # Return the prompt content and updated files list (without prompt.txt)
+            mock_handle_prompt.return_value = ("Large prompt content from file", [other_file])
 
-                    # Verify handle_prompt_file was called with the original files list
-                    mock_handle_prompt.assert_called_once_with([temp_prompt_file, other_file])
+            # Mock the centralized file preparation method
+            mock_prepare_files.return_value = ("File content", [other_file])
 
-                    # Verify _prepare_file_content_for_prompt was called with the updated files list (without prompt.txt)
-                    mock_prepare_files.assert_called_once()
-                    files_arg = mock_prepare_files.call_args[0][0]
-                    assert len(files_arg) == 1
-                    assert files_arg[0] == other_file
+            # Use a small prompt to avoid triggering size limit
+            await tool.execute(
+                {
+                    "prompt": "Test prompt",
+                    "files": [temp_prompt_file, other_file],
+                    "working_directory": os.path.dirname(temp_prompt_file),
+                }
+            )
+
+            # Verify handle_prompt_file was called with the original files list
+            mock_handle_prompt.assert_called_once_with([temp_prompt_file, other_file])
+
+            # Verify _prepare_file_content_for_prompt was called with the updated files list (without prompt.txt)
+            mock_prepare_files.assert_called_once()
+            files_arg = mock_prepare_files.call_args[0][0]
+            assert len(files_arg) == 1
+            assert files_arg[0] == other_file
 
         temp_dir = os.path.dirname(temp_prompt_file)
         shutil.rmtree(temp_dir)
