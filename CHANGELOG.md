@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v9.0.4 (2025-10-17)
+
+### Chores
+
+- Sync version to config.py [skip ci]
+  ([`8c6f653`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/8c6f6532d843f7f1b283ce9b6472e5ba991efe16))
+
+
 ## v9.0.3 (2025-10-16)
 
 ### Bug Fixes
