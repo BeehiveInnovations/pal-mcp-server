@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v9.1.0 (2025-10-17)
+
+### Chores
+
+- Sync version to config.py [skip ci]
+  ([`3ee0c8f`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/3ee0c8f555cb51b975700290919c2a8e2ada8cc4))
+
+### Features
+
+- Enhance review prompts to emphasize static analysis
+  ([`36e66e2`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/36e66e2e9a44a73a466545d4d3477ecb2cb3e669))
+
+
 ## v9.0.4 (2025-10-17)
 
 ### Chores
