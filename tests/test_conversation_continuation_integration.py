@@ -13,7 +13,11 @@ def test_first_response_persisted_in_conversation_history(tmp_path):
     storage._store.clear()  # type: ignore[attr-defined]
 
     tool = ChatTool()
-    request = ChatRequest(prompt="First question?", model="local-llama", working_directory=str(tmp_path))
+    request = ChatRequest(
+        prompt="First question?",
+        model="local-llama",
+        working_directory_absolute_path=str(tmp_path),
+    )
     response_text = "Here is the initial answer."
 
     # Mimic the first tool invocation (no continuation_id supplied)

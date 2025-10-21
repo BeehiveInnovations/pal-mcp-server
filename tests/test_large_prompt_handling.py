@@ -60,7 +60,7 @@ class TestLargePromptHandling:
         temp_dir = tempfile.mkdtemp()
         try:
             with pytest.raises(ToolExecutionError) as exc_info:
-                await tool.execute({"prompt": large_prompt, "working_directory": temp_dir})
+                await tool.execute({"prompt": large_prompt, "working_directory_absolute_path": temp_dir})
         finally:
             shutil.rmtree(temp_dir, ignore_errors=True)
 
@@ -83,7 +83,7 @@ class TestLargePromptHandling:
         try:
             try:
                 result = await tool.execute(
-                    {"prompt": normal_prompt, "model": "gemini-2.5-flash", "working_directory": temp_dir}
+                    {"prompt": normal_prompt, "model": "gemini-2.5-flash", "working_directory_absolute_path": temp_dir}
                 )
             except ToolExecutionError as exc:
                 output = json.loads(exc.payload if hasattr(exc, "payload") else str(exc))
@@ -114,9 +114,9 @@ class TestLargePromptHandling:
                 result = await tool.execute(
                     {
                         "prompt": "",
-                        "files": [temp_prompt_file],
+                        "absolute_file_paths": [temp_prompt_file],
                         "model": "gemini-2.5-flash",
-                        "working_directory": temp_dir,
+                        "working_directory_absolute_path": temp_dir,
                     }
                 )
             except ToolExecutionError as exc:
@@ -297,8 +297,8 @@ class TestLargePromptHandling:
             await tool.execute(
                 {
                     "prompt": "Test prompt",
-                    "files": [temp_prompt_file, other_file],
-                    "working_directory": os.path.dirname(temp_prompt_file),
+                    "absolute_file_paths": [temp_prompt_file, other_file],
+                    "working_directory_absolute_path": os.path.dirname(temp_prompt_file),
                 }
             )
 
@@ -337,7 +337,7 @@ class TestLargePromptHandling:
             temp_dir = tempfile.mkdtemp()
             try:
                 try:
-                    result = await tool.execute({"prompt": exact_prompt, "working_directory": temp_dir})
+                    result = await tool.execute({"prompt": exact_prompt, "working_directory_absolute_path": temp_dir})
                 except ToolExecutionError as exc:
                     output = json.loads(exc.payload if hasattr(exc, "payload") else str(exc))
                 else:
@@ -355,7 +355,7 @@ class TestLargePromptHandling:
         temp_dir = tempfile.mkdtemp()
         try:
             try:
-                result = await tool.execute({"prompt": over_prompt, "working_directory": temp_dir})
+                result = await tool.execute({"prompt": over_prompt, "working_directory_absolute_path": temp_dir})
             except ToolExecutionError as exc:
                 output = json.loads(exc.payload if hasattr(exc, "payload") else str(exc))
             else:
@@ -384,7 +384,7 @@ class TestLargePromptHandling:
             temp_dir = tempfile.mkdtemp()
             try:
                 try:
-                    result = await tool.execute({"prompt": "", "working_directory": temp_dir})
+                    result = await tool.execute({"prompt": "", "working_directory_absolute_path": temp_dir})
                 except ToolExecutionError as exc:
                     output = json.loads(exc.payload if hasattr(exc, "payload") else str(exc))
                 else:
@@ -428,7 +428,9 @@ class TestLargePromptHandling:
             temp_dir = tempfile.mkdtemp()
             try:
                 try:
-                    result = await tool.execute({"prompt": "", "files": [bad_file], "working_directory": temp_dir})
+                    result = await tool.execute(
+                        {"prompt": "", "absolute_file_paths": [bad_file], "working_directory_absolute_path": temp_dir}
+                    )
                 except ToolExecutionError as exc:
                     output = json.loads(exc.payload if hasattr(exc, "payload") else str(exc))
                 else:
@@ -477,9 +479,9 @@ class TestLargePromptHandling:
             result = await tool.execute(
                 {
                     "prompt": "Summarize the design decisions",
-                    "files": [str(large_file)],
+                    "absolute_file_paths": [str(large_file)],
                     "model": "flash",
-                    "working_directory": str(tmp_path),
+                    "working_directory_absolute_path": str(tmp_path),
                     "_model_context": dummy_context,
                 }
             )
@@ -540,7 +542,7 @@ class TestLargePromptHandling:
                 tool.prepare_prompt = mock_prepare_prompt
 
                 result = await tool.execute(
-                    {"prompt": small_user_prompt, "model": "flash", "working_directory": temp_dir}
+                    {"prompt": small_user_prompt, "model": "flash", "working_directory_absolute_path": temp_dir}
                 )
                 output = json.loads(result[0].text)
 
@@ -572,7 +574,7 @@ class TestLargePromptHandling:
         try:
             try:
                 result = await tool.execute(
-                    {"prompt": large_user_input, "model": "flash", "working_directory": temp_dir}
+                    {"prompt": large_user_input, "model": "flash", "working_directory_absolute_path": temp_dir}
                 )
             except ToolExecutionError as exc:
                 output = json.loads(exc.payload if hasattr(exc, "payload") else str(exc))
@@ -590,7 +592,7 @@ class TestLargePromptHandling:
                     {
                         "prompt": small_user_input,
                         "model": "gemini-2.5-flash",
-                        "working_directory": temp_dir,
+                        "working_directory_absolute_path": temp_dir,
                     }
                 )
             except ToolExecutionError as exc:
@@ -663,7 +665,7 @@ class TestLargePromptHandling:
                 "prompt": f"{huge_conversation_history}\n\n=== CURRENT REQUEST ===\n{small_continuation_prompt}",
                 "model": "flash",
                 "continuation_id": "test_thread_123",
-                "working_directory": temp_dir,
+                "working_directory_absolute_path": temp_dir,
             }
 
             # Mock the conversation history embedding to simulate server.py behavior

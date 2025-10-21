@@ -121,7 +121,7 @@ async def test_chat_cross_model_continuation(monkeypatch, tmp_path):
             "prompt": "Pick a number between 1 and 10 and respond with JUST that number.",
             "model": "gemini-2.5-flash",
             "temperature": 0.2,
-            "working_directory": working_directory,
+            "working_directory_absolute_path": working_directory,
         }
 
         step1_result = await chat_tool.execute(step1_args)
@@ -186,7 +186,7 @@ async def test_chat_cross_model_continuation(monkeypatch, tmp_path):
             "model": "gpt-5",
             "continuation_id": continuation_id,
             "temperature": 0.2,
-            "working_directory": working_directory,
+            "working_directory_absolute_path": working_directory,
         }
 
         step2_result = await chat_tool.execute(step2_args)

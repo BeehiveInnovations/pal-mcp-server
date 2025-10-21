@@ -84,7 +84,7 @@ def hash_pwd(pwd):
             self.logger.info("  Step 1: chat tool - Initial codebase exploration")
             chat_params = {
                 "prompt": "List security issues in auth.py",
-                "files": [auth_file],
+                "absolute_file_paths": [auth_file],
                 "thinking_mode": "low",
                 "model": "flash",
             }
@@ -126,7 +126,7 @@ def hash_pwd(pwd):
             chat_continue_params = {
                 "continuation_id": current_continuation_id,
                 "prompt": "Check config.json too",
-                "files": [auth_file, config_file_path],  # Old + new file
+                "absolute_file_paths": [auth_file, config_file_path],  # Old + new file
                 "thinking_mode": "low",
                 "model": "flash",
             }

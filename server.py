@@ -852,9 +852,10 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[TextCon
 
         # EARLY FILE SIZE VALIDATION AT MCP BOUNDARY
         # Check file sizes before tool execution using resolved model
-        if "files" in arguments and arguments["files"]:
-            logger.debug(f"Checking file sizes for {len(arguments['files'])} files with model {model_name}")
-            file_size_check = check_total_file_size(arguments["files"], model_name)
+        argument_files = arguments.get("absolute_file_paths")
+        if argument_files:
+            logger.debug(f"Checking file sizes for {len(argument_files)} files with model {model_name}")
+            file_size_check = check_total_file_size(argument_files, model_name)
             if file_size_check:
                 logger.warning(f"File size check failed for {name} with model {model_name}")
                 raise ToolExecutionError(ToolOutput(**file_size_check).model_dump_json())
@@ -1074,7 +1075,7 @@ async def reconstruct_thread_context(arguments: dict[str, Any]) -> dict[str, Any
     user_prompt = arguments.get("prompt", "")
     if user_prompt:
         # Capture files referenced in this turn
-        user_files = arguments.get("files", [])
+        user_files = arguments.get("absolute_file_paths") or []
         logger.debug(f"[CONVERSATION_DEBUG] Adding user turn to thread {continuation_id}")
         from utils.token_utils import estimate_tokens
 
@@ -1268,9 +1269,10 @@ async def reconstruct_thread_context(arguments: dict[str, Any]) -> dict[str, Any
     logger.info(f"Reconstructed context for thread {continuation_id} (turn {len(context.turns)})")
     logger.debug(f"[CONVERSATION_DEBUG] Final enhanced arguments keys: {list(enhanced_arguments.keys())}")
 
-    # Debug log files in the enhanced arguments for file tracking
-    if "files" in enhanced_arguments:
-        logger.debug(f"[CONVERSATION_DEBUG] Final files in enhanced arguments: {enhanced_arguments['files']}")
+    if "absolute_file_paths" in enhanced_arguments:
+        logger.debug(
+            f"[CONVERSATION_DEBUG] Final files in enhanced arguments: {enhanced_arguments['absolute_file_paths']}"
+        )
 
     # Log to activity file for monitoring
     try:

@@ -98,7 +98,7 @@ class TestO3ProOutputTextFix:
                 "prompt": "What is 2 + 2?",
                 "model": "o3-pro",
                 "temperature": 1.0,
-                "working_directory": workdir,
+                "working_directory_absolute_path": workdir,
             }
 
             return await chat_tool.execute(arguments)

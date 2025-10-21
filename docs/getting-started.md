@@ -141,6 +141,7 @@ Edit `~/.codex/config.toml`:
 [mcp_servers.zen]
 command = "bash"
 args = ["-c", "for p in $(which uvx 2>/dev/null) $HOME/.local/bin/uvx /opt/homebrew/bin/uvx /usr/local/bin/uvx uvx; do [ -x \\\"$p\\\" ] && exec \\\"$p\\\" --from git+https://github.com/BeehiveInnovations/zen-mcp-server.git zen-mcp-server; done; echo 'uvx not found' >&2; exit 1"]
+tool_timeout_sec = 1200  # 20 minutes; added automatically by the setup script so upstream providers can respond
 
 [mcp_servers.zen.env]
 PATH = "/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/bin"
@@ -304,7 +305,7 @@ CUSTOM_MODEL_NAME=llama3.2                   # Default model name
 
 ## Prevent Client Timeouts
 
-Some MCP clients default to short timeouts and can disconnect from Zen during long tool runs. Configure each client to wait at least five minutes (300 000 ms) before giving up.
+Some MCP clients default to short timeouts and can disconnect from Zen during long tool runs. Configure each client with a generous ceiling (we recommend at least five minutes); the Zen setup script now writes a 20-minute tool timeout for Codex so upstream providers contacted by the server have time to respond.
 
 ### Claude Code & Claude Desktop
 
@@ -330,10 +331,10 @@ Codex exposes per-server timeouts in `~/.codex/config.toml`. Add (or bump) these
 command = "..."
 args = ["..."]
 startup_timeout_sec = 300    # default is 10 seconds
-tool_timeout_sec = 300       # default is 60 seconds
+tool_timeout_sec = 1200      # default is 60 seconds; setup script pre-populates 20 minutes so upstream providers can respond
 ```
 
-`startup_timeout_sec` covers the initial handshake/list tools step, while `tool_timeout_sec` governs each tool call. Increase either beyond 300 if your workflow routinely exceeds five minutes.
+`startup_timeout_sec` covers the initial handshake/list tools step, while `tool_timeout_sec` governs each tool call. Raise the latter if the providers your MCP server invokes routinely need more than 20 minutes.
 
 ### Gemini CLI
 

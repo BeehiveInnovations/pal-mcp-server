@@ -81,7 +81,7 @@ protocol View {
                 "chat",
                 {
                     "prompt": initial_prompt,
-                    "files": [test_file_path],
+                    "absolute_file_paths": [test_file_path],
                     "model": "flash",
                 },
             )

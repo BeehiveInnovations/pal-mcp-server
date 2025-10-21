@@ -178,7 +178,7 @@ if __name__ == "__main__":
                 "chat",
                 {
                     "prompt": "Please analyze this math functions file and explain what it does.",
-                    "files": [file1_path],
+                    "absolute_file_paths": [file1_path],
                     "model": "flash",
                     "temperature": 0.7,
                 },
@@ -248,7 +248,7 @@ if __name__ == "__main__":
                 "chat",
                 {
                     "prompt": "Now compare the math functions with this calculator class. How do they differ in approach?",
-                    "files": [file1_path, file2_path],
+                    "absolute_file_paths": [file1_path, file2_path],
                     "continuation_id": continuation_id2,  # Continue the conversation from step 2
                     "model": "flash",
                     "temperature": 0.7,

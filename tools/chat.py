@@ -27,15 +27,14 @@ from .simple.base import SimpleTool
 # Field descriptions matching the original Chat tool exactly
 CHAT_FIELD_DESCRIPTIONS = {
     "prompt": (
-        "Your question or idea for collaborative thinking. Provide detailed context, including your goal, what you've tried, and any specific challenges. "
+        "Your question or idea for collaborative thinking to be sent to the external model. Provide detailed context, "
+        "including your goal, what you've tried, and any specific challenges. "
         "WARNING: Large inline code must NOT be shared in prompt. Provide full-path to files on disk as separate parameter."
     ),
-    "files": (
-        "Absolute file or folder paths for code context. Required whenever you reference source code—supply the FULL absolute path (do not shorten)."
-    ),
+    "absolute_file_paths": ("Full, absolute file paths to relevant code in order to share with external model"),
     "images": "Image paths (absolute) or base64 strings for optional visual context.",
-    "working_directory": (
-        "Absolute directory path where generated code artifacts are stored. The directory must already exist."
+    "working_directory_absolute_path": (
+        "Absolute path to an existing directory where generated code artifacts can be saved."
     ),
 }
 
@@ -44,9 +43,15 @@ class ChatRequest(ToolRequest):
     """Request model for Chat tool"""
 
     prompt: str = Field(..., description=CHAT_FIELD_DESCRIPTIONS["prompt"])
-    files: Optional[list[str]] = Field(default_factory=list, description=CHAT_FIELD_DESCRIPTIONS["files"])
+    absolute_file_paths: Optional[list[str]] = Field(
+        default_factory=list,
+        description=CHAT_FIELD_DESCRIPTIONS["absolute_file_paths"],
+    )
     images: Optional[list[str]] = Field(default_factory=list, description=CHAT_FIELD_DESCRIPTIONS["images"])
-    working_directory: str = Field(..., description=CHAT_FIELD_DESCRIPTIONS["working_directory"])
+    working_directory_absolute_path: str = Field(
+        ...,
+        description=CHAT_FIELD_DESCRIPTIONS["working_directory_absolute_path"],
+    )
 
 
 class ChatTool(SimpleTool):
@@ -105,7 +110,7 @@ class ChatTool(SimpleTool):
     def get_input_schema(self) -> dict[str, Any]:
         """Generate input schema matching the original Chat tool expectations."""
 
-        required_fields = ["prompt", "working_directory"]
+        required_fields = ["prompt", "working_directory_absolute_path"]
         if self.is_effective_auto_mode():
             required_fields.append("model")
 
@@ -116,19 +121,19 @@ class ChatTool(SimpleTool):
                     "type": "string",
                     "description": CHAT_FIELD_DESCRIPTIONS["prompt"],
                 },
-                "files": {
+                "absolute_file_paths": {
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": CHAT_FIELD_DESCRIPTIONS["files"],
+                    "description": CHAT_FIELD_DESCRIPTIONS["absolute_file_paths"],
                 },
                 "images": {
                     "type": "array",
                     "items": {"type": "string"},
                     "description": CHAT_FIELD_DESCRIPTIONS["images"],
                 },
-                "working_directory": {
+                "working_directory_absolute_path": {
                     "type": "string",
-                    "description": CHAT_FIELD_DESCRIPTIONS["working_directory"],
+                    "description": CHAT_FIELD_DESCRIPTIONS["working_directory_absolute_path"],
                 },
                 "model": self.get_model_field_schema(),
                 "temperature": {
@@ -161,21 +166,25 @@ class ChatTool(SimpleTool):
                 "type": "string",
                 "description": CHAT_FIELD_DESCRIPTIONS["prompt"],
             },
-            "files": {
+            "absolute_file_paths": {
                 "type": "array",
                 "items": {"type": "string"},
-                "description": CHAT_FIELD_DESCRIPTIONS["files"],
+                "description": CHAT_FIELD_DESCRIPTIONS["absolute_file_paths"],
             },
             "images": {
                 "type": "array",
                 "items": {"type": "string"},
                 "description": CHAT_FIELD_DESCRIPTIONS["images"],
             },
+            "working_directory_absolute_path": {
+                "type": "string",
+                "description": CHAT_FIELD_DESCRIPTIONS["working_directory_absolute_path"],
+            },
         }
 
     def get_required_fields(self) -> list[str]:
         """Required fields for ChatSimple tool"""
-        return ["prompt", "working_directory"]
+        return ["prompt", "working_directory_absolute_path"]
 
     # === Hook Method Implementations ===
 
@@ -209,17 +218,18 @@ class ChatTool(SimpleTool):
         if error:
             return error
 
-        working_directory = getattr(request, "working_directory", None)
+        working_directory = request.working_directory_absolute_path
         if working_directory:
             expanded = os.path.expanduser(working_directory)
             if not os.path.isabs(expanded):
                 return (
-                    "Error: 'working_directory' must be an absolute path (you may use '~' which will be expanded). "
+                    "Error: 'working_directory_absolute_path' must be an absolute path (you may use '~' which will be expanded). "
                     f"Received: {working_directory}"
                 )
             if not os.path.isdir(expanded):
                 return (
-                    "Error: 'working_directory' must reference an existing directory. " f"Received: {working_directory}"
+                    "Error: 'working_directory_absolute_path' must reference an existing directory. "
+                    f"Received: {working_directory}"
                 )
         return None
 
@@ -235,12 +245,13 @@ class ChatTool(SimpleTool):
             block, remainder, _ = self._extract_generated_code_block(response)
             if block:
                 sanitized_text = remainder.strip()
+                target_directory = request.working_directory_absolute_path
                 try:
-                    artifact_path = self._persist_generated_code_block(block, request.working_directory)
+                    artifact_path = self._persist_generated_code_block(block, target_directory)
                 except Exception as exc:  # pragma: no cover - rare filesystem failures
                     logger.error("Failed to persist generated code block: %s", exc, exc_info=True)
                     warning = (
-                        f"WARNING: Unable to write zen_generated.code inside '{request.working_directory}'. "
+                        f"WARNING: Unable to write zen_generated.code inside '{target_directory}'. "
                         "Check the path permissions and re-run. The generated code block is included below for manual handling."
                     )
 
@@ -326,7 +337,7 @@ class ChatTool(SimpleTool):
         expanded = os.path.expanduser(working_directory)
         target_dir = Path(expanded).resolve()
         if not target_dir.is_dir():
-            raise FileNotFoundError(f"Working directory '{working_directory}' does not exist")
+            raise FileNotFoundError(f"Absolute working directory path '{working_directory}' does not exist")
 
         target_file = target_dir / "zen_generated.code"
         if target_file.exists():

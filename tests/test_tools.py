@@ -352,8 +352,8 @@ class TestAbsolutePathValidation:
                 await tool.execute(
                     {
                         "prompt": "Explain this code",
-                        "files": ["code.py"],  # relative path without ./
-                        "working_directory": temp_dir,
+                        "absolute_file_paths": ["code.py"],  # relative path without ./
+                        "working_directory_absolute_path": temp_dir,
                     }
                 )
         finally:

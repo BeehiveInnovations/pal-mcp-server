@@ -37,7 +37,7 @@ async def test_clink_tool_execute(monkeypatch):
         "prompt": "Summarize the project",
         "cli_name": "gemini",
         "role": "default",
-        "files": [],
+        "absolute_file_paths": [],
         "images": [],
     }
 
@@ -85,7 +85,7 @@ async def test_clink_tool_defaults_to_first_cli(monkeypatch):
 
     arguments = {
         "prompt": "Hello",
-        "files": [],
+        "absolute_file_paths": [],
         "images": [],
     }
 
@@ -124,7 +124,7 @@ async def test_clink_tool_truncates_large_output(monkeypatch):
     arguments = {
         "prompt": "Summarize",
         "cli_name": tool._default_cli_name,
-        "files": [],
+        "absolute_file_paths": [],
         "images": [],
     }
 
@@ -165,7 +165,7 @@ async def test_clink_tool_truncates_without_summary(monkeypatch):
     arguments = {
         "prompt": "Summarize",
         "cli_name": tool._default_cli_name,
-        "files": [],
+        "absolute_file_paths": [],
         "images": [],
     }
 

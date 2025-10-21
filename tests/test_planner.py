@@ -61,7 +61,7 @@ class TestPlannerTool:
         # Check that workflow-based planner includes model field and excludes some fields
         assert "model" in schema["properties"]  # Workflow tools include model field
         assert "images" not in schema["properties"]  # Excluded for planning
-        assert "files" not in schema["properties"]  # Excluded for planning
+        assert "absolute_file_paths" not in schema["properties"]  # Excluded for planning
         assert "temperature" not in schema["properties"]
         assert "thinking_mode" not in schema["properties"]
 

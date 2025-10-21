@@ -156,7 +156,7 @@ class TestAutoMode:
             with patch.object(tool, "get_model_provider"):
                 # Execute without model parameter and expect protocol error
                 with pytest.raises(ToolExecutionError) as exc_info:
-                    await tool.execute({"prompt": "Test prompt", "working_directory": str(tmp_path)})
+                    await tool.execute({"prompt": "Test prompt", "working_directory_absolute_path": str(tmp_path)})
 
             # Should get error payload mentioning model requirement
             error_payload = getattr(exc_info.value, "payload", str(exc_info.value))
@@ -208,7 +208,7 @@ class TestAutoMode:
             try:
                 result = await tool.execute(
                     {
-                        "files": ["/tmp/test.py"],
+                        "absolute_file_paths": ["/tmp/test.py"],
                         "prompt": "Analyze this",
                         "model": "nonexistent-model-xyz",  # This model definitely doesn't exist
                     }

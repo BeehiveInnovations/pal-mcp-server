@@ -32,7 +32,7 @@ class TestConversationMemory:
         mock_client = Mock()
         mock_storage.return_value = mock_client
 
-        thread_id = create_thread("chat", {"prompt": "Hello", "files": ["/test.py"]})
+        thread_id = create_thread("chat", {"prompt": "Hello", "absolute_file_paths": ["/test.py"]})
 
         assert thread_id is not None
         assert len(thread_id) == 36  # UUID4 length
@@ -509,7 +509,7 @@ class TestConversationFlow:
         mock_storage.return_value = mock_client
 
         # Start conversation with files using a simple tool
-        thread_id = create_thread("chat", {"prompt": "Analyze this codebase", "files": ["/project/src/"]})
+        thread_id = create_thread("chat", {"prompt": "Analyze this codebase", "absolute_file_paths": ["/project/src/"]})
 
         # Turn 1: Claude provides context with multiple files
         initial_context = ThreadContext(
@@ -518,7 +518,10 @@ class TestConversationFlow:
             last_updated_at="2023-01-01T00:00:00Z",
             tool_name="chat",
             turns=[],
-            initial_context={"prompt": "Analyze this codebase", "files": ["/project/src/"]},
+            initial_context={
+                "prompt": "Analyze this codebase",
+                "absolute_file_paths": ["/project/src/"],
+            },
         )
         mock_client.get.return_value = initial_context.model_dump_json()
 

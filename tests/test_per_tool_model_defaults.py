@@ -296,7 +296,9 @@ class TestAutoModeErrorMessages:
                         temp_dir = tempfile.mkdtemp()
                         try:
                             with pytest.raises(ToolExecutionError) as exc_info:
-                                await tool.execute({"prompt": "test", "model": "auto", "working_directory": temp_dir})
+                                await tool.execute(
+                                    {"prompt": "test", "model": "auto", "working_directory_absolute_path": temp_dir}
+                                )
                         finally:
                             shutil.rmtree(temp_dir, ignore_errors=True)
 
@@ -427,7 +429,7 @@ class TestRuntimeModelSelection:
                     try:
                         with pytest.raises(ToolExecutionError) as exc_info:
                             await tool.execute(
-                                {"prompt": "test", "model": "gpt-5-turbo", "working_directory": temp_dir}
+                                {"prompt": "test", "model": "gpt-5-turbo", "working_directory_absolute_path": temp_dir}
                             )
                     finally:
                         shutil.rmtree(temp_dir, ignore_errors=True)
@@ -527,7 +529,7 @@ class TestUnavailableModelFallback:
                         tool = ChatTool()
                         temp_dir = tempfile.mkdtemp()
                         try:
-                            result = await tool.execute({"prompt": "test", "working_directory": temp_dir})
+                            result = await tool.execute({"prompt": "test", "working_directory_absolute_path": temp_dir})
                         finally:
                             shutil.rmtree(temp_dir, ignore_errors=True)
 

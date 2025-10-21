@@ -63,7 +63,7 @@ def helper_function():
         try:
             yield {
                 "directory": str(temp_dir),
-                "files": files,
+                "absolute_file_paths": files,
                 "swift_files": files[:-1],  # All but the Python file
                 "python_file": str(python_file),
             }
@@ -84,14 +84,14 @@ def helper_function():
         mock_get_provider.return_value = mock_provider
 
         directory = temp_directory_with_files["directory"]
-        expected_files = temp_directory_with_files["files"]
+        expected_files = temp_directory_with_files["absolute_file_paths"]
 
         # Create a request with the directory (not individual files)
         request_args = {
             "prompt": "Analyze this codebase structure",
-            "files": [directory],  # Directory path, not individual files
+            "absolute_file_paths": [directory],  # Directory path, not individual files
             "model": "flash",
-            "working_directory": directory,
+            "working_directory_absolute_path": directory,
         }
 
         # Execute the tool
@@ -148,10 +148,10 @@ def helper_function():
         mock_get_provider.return_value = mock_provider
 
         directory = temp_directory_with_files["directory"]
-        expected_files = temp_directory_with_files["files"]
+        expected_files = temp_directory_with_files["absolute_file_paths"]
 
         # Step 1: Create a conversation thread manually with the expanded files
-        thread_id = create_thread("chat", {"prompt": "Initial analysis", "files": [directory]})
+        thread_id = create_thread("chat", {"prompt": "Initial analysis", "absolute_file_paths": [directory]})
 
         # Add a turn with the expanded files (simulating what the fix should do)
         success = add_turn(
@@ -166,10 +166,10 @@ def helper_function():
         # Step 2: Continue the conversation with the same directory
         continuation_args = {
             "prompt": "Now focus on the Swift files specifically",
-            "files": [directory],  # Same directory again
+            "absolute_file_paths": [directory],  # Same directory again
             "model": "flash",
             "continuation_id": thread_id,
-            "working_directory": directory,
+            "working_directory_absolute_path": directory,
         }
 
         # Mock to capture file filtering behavior
@@ -217,10 +217,10 @@ def helper_function():
         mock_storage.return_value = mock_client
 
         directory = temp_directory_with_files["directory"]
-        expected_files = temp_directory_with_files["files"]
+        expected_files = temp_directory_with_files["absolute_file_paths"]
 
         # Create a thread with expanded files
-        thread_id = create_thread("chat", {"prompt": "Initial analysis", "files": [directory]})
+        thread_id = create_thread("chat", {"prompt": "Initial analysis", "absolute_file_paths": [directory]})
 
         # Add a turn with expanded files
         success = add_turn(
@@ -261,7 +261,7 @@ def helper_function():
         python_file = temp_directory_with_files["python_file"]
 
         # Create a thread with some expanded files
-        thread_id = create_thread("chat", {"prompt": "Initial analysis", "files": [directory]})
+        thread_id = create_thread("chat", {"prompt": "Initial analysis", "absolute_file_paths": [directory]})
 
         # Add a turn with only some of the files (simulate partial embedding)
         swift_files = temp_directory_with_files["swift_files"]
@@ -294,14 +294,14 @@ def helper_function():
         mock_get_provider.return_value = mock_provider
 
         directory = temp_directory_with_files["directory"]
-        expected_files = temp_directory_with_files["files"]
+        expected_files = temp_directory_with_files["absolute_file_paths"]
 
         # Execute the tool
         request_args = {
             "prompt": "Analyze this code",
-            "files": [directory],
+            "absolute_file_paths": [directory],
             "model": "flash",
-            "working_directory": directory,
+            "working_directory_absolute_path": directory,
         }
 
         result = await tool.execute(request_args)

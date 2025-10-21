@@ -253,7 +253,7 @@ class ConfigurationManager:
                     "findings": "Initial examination reveals a payment processing class with potential security and performance concerns.",
                     "files_checked": [self.payment_file],
                     "relevant_files": [self.payment_file],
-                    "files": [self.payment_file],  # Required for step 1
+                    "absolute_file_paths": [self.payment_file],  # Required for step 1
                     "review_type": "full",
                     "severity_filter": "all",
                 },
@@ -353,7 +353,7 @@ class ConfigurationManager:
                     "findings": "Initial analysis shows complex configuration class",
                     "files_checked": [self.config_file],
                     "relevant_files": [self.config_file],
-                    "files": [self.config_file],
+                    "absolute_file_paths": [self.config_file],
                     "review_type": "full",
                 },
             )
@@ -445,7 +445,7 @@ class ConfigurationManager:
                         "findings": "Found multiple security and performance issues",
                         "files_checked": [self.payment_file],
                         "relevant_files": [self.payment_file],
-                        "files": [self.payment_file],
+                        "absolute_file_paths": [self.payment_file],
                         "relevant_context": ["PaymentProcessor.process_payment"],
                     },
                 )
@@ -561,7 +561,7 @@ class ConfigurationManager:
                     "findings": "Complete review identified all critical security issues, performance problems, and code quality concerns. All issues are documented with clear severity levels and specific recommendations.",
                     "files_checked": [self.payment_file],
                     "relevant_files": [self.payment_file],
-                    "files": [self.payment_file],
+                    "absolute_file_paths": [self.payment_file],
                     "relevant_context": ["PaymentProcessor.process_payment"],
                     "issues_found": [
                         {"severity": "critical", "description": "Hardcoded API key security vulnerability"},
@@ -662,7 +662,7 @@ def validate_credit_card(card_number):
                     "findings": "Initial analysis of utility and validation functions",
                     "files_checked": [utils_file, validator_file],
                     "relevant_files": [utils_file],  # This should be referenced, not embedded
-                    "files": [utils_file, validator_file],  # Required for step 1
+                    "absolute_file_paths": [utils_file, validator_file],  # Required for step 1
                     "relevant_context": ["calculate_discount"],
                     "confidence": "low",
                     "model": "flash",
@@ -770,7 +770,7 @@ def validate_credit_card(card_number):
                     "findings": "Initial review of payment processor and configuration management modules",
                     "files_checked": files_to_review,
                     "relevant_files": [self.payment_file],
-                    "files": files_to_review,
+                    "absolute_file_paths": files_to_review,
                     "relevant_context": [],
                     "confidence": "low",
                     "review_type": "security",

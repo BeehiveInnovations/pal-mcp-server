@@ -218,7 +218,7 @@ class PlannerTool(WorkflowTool):
             "temperature",  # Planning doesn't need temperature control
             "thinking_mode",  # Planning doesn't need thinking mode
             "images",  # Planning doesn't use images
-            "files",  # Planning doesn't use files
+            "absolute_file_paths",  # Planning doesn't use file attachments
         ]
 
         # Build schema with proper field exclusion (following consensus pattern)

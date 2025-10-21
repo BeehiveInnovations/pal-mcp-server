@@ -283,7 +283,7 @@ class TestImageSupportIntegration:
                             "prompt": "What do you see in this image?",
                             "images": [temp_image_path],
                             "model": "gpt-4o",
-                            "working_directory": working_directory,
+                            "working_directory_absolute_path": working_directory,
                         }
                     )
 

@@ -380,7 +380,7 @@ class TestAutoModeComprehensive:
                 await chat_tool.execute(
                     {
                         "prompt": "test",
-                        "working_directory": str(workdir),
+                        "working_directory_absolute_path": str(workdir),
                         # Note: no model parameter provided in auto mode
                     }
                 )
@@ -538,7 +538,7 @@ class TestAutoModeComprehensive:
                 workdir = tmp_path / "chat_artifacts"
                 workdir.mkdir(parents=True, exist_ok=True)
                 result = await chat_tool.execute(
-                    {"prompt": "test", "model": "flash", "working_directory": str(workdir)}
+                    {"prompt": "test", "model": "flash", "working_directory_absolute_path": str(workdir)}
                 )  # Use alias in auto mode
 
                 # Should succeed with proper model resolution

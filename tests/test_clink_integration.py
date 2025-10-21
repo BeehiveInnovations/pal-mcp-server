@@ -24,7 +24,7 @@ async def test_clink_gemini_single_digit_sum():
             "prompt": prompt,
             "cli_name": "gemini",
             "role": "default",
-            "files": [],
+            "absolute_file_paths": [],
             "images": [],
         }
     )
@@ -56,7 +56,7 @@ async def test_clink_claude_single_digit_sum():
             "prompt": prompt,
             "cli_name": "claude",
             "role": "default",
-            "files": [],
+            "absolute_file_paths": [],
             "images": [],
         }
     )

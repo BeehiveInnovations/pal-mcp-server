@@ -70,7 +70,7 @@ async def test_conversation_history_field_mapping():
                 arguments = {
                     "continuation_id": "test-thread-123",
                     "prompt": test_case["original_value"],
-                    "files": ["/test/file2.py"],
+                    "absolute_file_paths": ["/test/file2.py"],
                     "model": "flash",  # Use test model to avoid provider errors
                 }
 

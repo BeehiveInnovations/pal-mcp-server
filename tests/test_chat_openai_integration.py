@@ -68,7 +68,7 @@ async def test_chat_auto_mode_with_openai(monkeypatch, tmp_path):
             "prompt": "Use chat with gpt5 and ask how far the moon is from earth.",
             "model": "gpt-5",
             "temperature": 1.0,
-            "working_directory": working_directory,
+            "working_directory_absolute_path": working_directory,
         }
 
         result = await chat_tool.execute(arguments)
@@ -135,7 +135,7 @@ async def test_chat_openai_continuation(monkeypatch, tmp_path):
             "prompt": "In one word, which sells better: iOS app or macOS app?",
             "model": "gpt-5",
             "temperature": 1.0,
-            "working_directory": working_directory,
+            "working_directory_absolute_path": working_directory,
         }
         first_result = await chat_tool.execute(first_args)
 
@@ -156,7 +156,7 @@ async def test_chat_openai_continuation(monkeypatch, tmp_path):
             "model": "gpt-5",
             "continuation_id": continuation_id,
             "temperature": 1.0,
-            "working_directory": working_directory,
+            "working_directory_absolute_path": working_directory,
         }
 
         second_result = await chat_tool.execute(second_args)

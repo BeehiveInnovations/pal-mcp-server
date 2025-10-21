@@ -79,7 +79,7 @@ async def test_chat_codegen_saves_file(monkeypatch, tmp_path):
             {
                 "prompt": prompt,
                 "model": "gemini-2.5-pro",
-                "working_directory": str(working_dir),
+                "working_directory_absolute_path": str(working_dir),
             }
         )
 

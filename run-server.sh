@@ -1726,6 +1726,7 @@ check_codex_cli_integration() {
         echo "[mcp_servers.zen]"
         echo "command = \"bash\""
         echo "args = [\"-c\", \"for p in \$(which uvx 2>/dev/null) \$HOME/.local/bin/uvx /opt/homebrew/bin/uvx /usr/local/bin/uvx uvx; do [ -x \\\"\$p\\\" ] && exec \\\"\$p\\\" --from git+https://github.com/BeehiveInnovations/zen-mcp-server.git zen-mcp-server; done; echo 'uvx not found' >&2; exit 1\"]"
+        echo "tool_timeout_sec = 1200"
         echo ""
         echo "[mcp_servers.zen.env]"
         echo "PATH = \"/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin:\$HOME/.local/bin:\$HOME/.cargo/bin:\$HOME/bin\""
@@ -1808,10 +1809,11 @@ PY
         
         # Generate example with actual environment variables for error case
         env_vars=$(parse_env_variables)
-        cat << EOF
+cat << EOF
 [mcp_servers.zen]
 command = "sh"
 args = ["-c", "exec \$(which uvx 2>/dev/null || echo uvx) --from git+https://github.com/BeehiveInnovations/zen-mcp-server.git zen-mcp-server"]
+tool_timeout_sec = 1200
 
 [mcp_servers.zen.env]
 PATH = "/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin:\$HOME/.local/bin:\$HOME/.cargo/bin:\$HOME/bin"

@@ -74,7 +74,7 @@ class TestThinkingModes:
             try:
                 result = await tool.execute(
                     {
-                        "files": ["/absolute/path/test.py"],
+                        "absolute_file_paths": ["/absolute/path/test.py"],
                         "prompt": "What is this?",
                         "model": "o3-mini",
                         "thinking_mode": "minimal",
@@ -155,7 +155,7 @@ class TestThinkingModes:
             try:
                 result = await tool.execute(
                     {
-                        "files": ["/absolute/path/test.py"],
+                        "absolute_file_paths": ["/absolute/path/test.py"],
                         "thinking_mode": "low",
                         "prompt": "Test code review for validation purposes",
                         "model": "o3-mini",
@@ -314,7 +314,7 @@ class TestThinkingModes:
             try:
                 result = await tool.execute(
                     {
-                        "files": ["/absolute/path/complex.py"],
+                        "absolute_file_paths": ["/absolute/path/complex.py"],
                         "prompt": "Analyze architecture",
                         "thinking_mode": "high",
                         "model": "o3-mini",

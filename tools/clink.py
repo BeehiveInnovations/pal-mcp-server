@@ -38,9 +38,9 @@ class CLinkRequest(BaseModel):
         default=None,
         description="Optional role preset defined in the CLI configuration (defaults to 'default').",
     )
-    files: list[str] = Field(
+    absolute_file_paths: list[str] = Field(
         default_factory=list,
-        description=COMMON_FIELD_DESCRIPTIONS["files"],
+        description=COMMON_FIELD_DESCRIPTIONS["absolute_file_paths"],
     )
     images: list[str] = Field(
         default_factory=list,
@@ -140,7 +140,7 @@ class CLinkTool(SimpleTool):
                 "enum": self._all_roles or ["default"],
                 "description": role_description,
             },
-            "files": SchemaBuilder.SIMPLE_FIELD_SCHEMAS["files"],
+            "absolute_file_paths": SchemaBuilder.SIMPLE_FIELD_SCHEMAS["absolute_file_paths"],
             "images": SchemaBuilder.COMMON_FIELD_SCHEMAS["images"],
             "continuation_id": SchemaBuilder.COMMON_FIELD_SCHEMAS["continuation_id"],
         }
@@ -183,7 +183,7 @@ class CLinkTool(SimpleTool):
         except KeyError as exc:
             self._raise_tool_error(str(exc))
 
-        files = self.get_request_files(request)
+        absolute_file_paths = self.get_request_files(request)
         images = self.get_request_images(request)
         continuation_id = self.get_request_continuation_id(request)
 
@@ -209,7 +209,7 @@ class CLinkTool(SimpleTool):
                 role=role_config,
                 prompt=prompt_text,
                 system_prompt=system_prompt_text if system_prompt_text.strip() else None,
-                files=files,
+                files=absolute_file_paths,
                 images=images,
             )
         except CLIAgentError as exc:

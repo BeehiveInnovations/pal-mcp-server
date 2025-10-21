@@ -66,7 +66,7 @@ class CrossToolContinuationTest(ConversationBaseTest):
                 "chat",
                 {
                     "prompt": "Please use low thinking mode. Look at this Python code and tell me what you think about it",
-                    "files": [self.test_files["python"]],
+                    "absolute_file_paths": [self.test_files["python"]],
                     "model": "flash",
                 },
             )
@@ -198,7 +198,7 @@ class CrossToolContinuationTest(ConversationBaseTest):
                 "chat",
                 {
                     "prompt": "Please use low thinking mode. Analyze both the Python code and configuration file",
-                    "files": [self.test_files["python"], self.test_files["config"]],
+                    "absolute_file_paths": [self.test_files["python"], self.test_files["config"]],
                     "model": "flash",
                 },
             )

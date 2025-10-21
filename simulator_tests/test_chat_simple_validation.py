@@ -159,7 +159,7 @@ class ChatSimpleValidationTest(ConversationBaseTest):
                 "chat",
                 {
                     "prompt": "Please use low thinking mode. Analyze this Python code and tell me what the Calculator class does",
-                    "files": [self.test_files["python"]],
+                    "absolute_file_paths": [self.test_files["python"]],
                     "model": "flash",
                     "thinking_mode": "low",
                 },
@@ -174,7 +174,7 @@ class ChatSimpleValidationTest(ConversationBaseTest):
                 "chat",
                 {
                     "prompt": "Please use low thinking mode. What methods does the Calculator class have?",
-                    "files": [self.test_files["python"]],  # Same file
+                    "absolute_file_paths": [self.test_files["python"]],  # Same file
                     "continuation_id": continuation_id,
                     "model": "flash",
                     "thinking_mode": "low",
@@ -450,7 +450,7 @@ class ChatSimpleValidationTest(ConversationBaseTest):
                 "chat",
                 {
                     "prompt": "Please use low thinking mode. Here are some files for you to analyze",
-                    "files": [self.test_files["python"], self.test_files["config"]],
+                    "absolute_file_paths": [self.test_files["python"], self.test_files["config"]],
                     "model": "flash",
                     "thinking_mode": "low",
                 },

@@ -56,7 +56,7 @@ class TestConsensusConversation(ConversationBaseTest):
                 "chat",
                 {
                     "prompt": "Please use low thinking mode. I'm working on a web application and need advice on authentication. Can you look at this code?",
-                    "files": [self.test_files["python"]],
+                    "absolute_file_paths": [self.test_files["python"]],
                     "model": "flash",
                 },
             )

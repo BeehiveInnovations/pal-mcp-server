@@ -41,34 +41,34 @@ class TestChatTool:
 
         # Required fields
         assert "prompt" in schema["required"]
-        assert "working_directory" in schema["required"]
+        assert "working_directory_absolute_path" in schema["required"]
 
         # Properties
         properties = schema["properties"]
         assert "prompt" in properties
-        assert "files" in properties
+        assert "absolute_file_paths" in properties
         assert "images" in properties
-        assert "working_directory" in properties
+        assert "working_directory_absolute_path" in properties
 
     def test_request_model_validation(self):
         """Test that the request model validates correctly"""
         # Test valid request
         request_data = {
             "prompt": "Test prompt",
-            "files": ["test.txt"],
+            "absolute_file_paths": ["test.txt"],
             "images": ["test.png"],
             "model": "anthropic/claude-opus-4.1",
             "temperature": 0.7,
-            "working_directory": "/tmp",  # Dummy absolute path
+            "working_directory_absolute_path": "/tmp",  # Dummy absolute path
         }
 
         request = ChatRequest(**request_data)
         assert request.prompt == "Test prompt"
-        assert request.files == ["test.txt"]
+        assert request.absolute_file_paths == ["test.txt"]
         assert request.images == ["test.png"]
         assert request.model == "anthropic/claude-opus-4.1"
         assert request.temperature == 0.7
-        assert request.working_directory == "/tmp"
+        assert request.working_directory_absolute_path == "/tmp"
 
     def test_required_fields(self):
         """Test that required fields are enforced"""
@@ -76,7 +76,7 @@ class TestChatTool:
         from pydantic import ValidationError
 
         with pytest.raises(ValidationError):
-            ChatRequest(model="anthropic/claude-opus-4.1", working_directory="/tmp")
+            ChatRequest(model="anthropic/claude-opus-4.1", working_directory_absolute_path="/tmp")
 
     def test_model_availability(self):
         """Test that model availability works"""
@@ -103,7 +103,11 @@ class TestChatTool:
     @pytest.mark.asyncio
     async def test_prompt_preparation(self):
         """Test that prompt preparation works correctly"""
-        request = ChatRequest(prompt="Test prompt", files=[], working_directory="/tmp")
+        request = ChatRequest(
+            prompt="Test prompt",
+            absolute_file_paths=[],
+            working_directory_absolute_path="/tmp",
+        )
 
         # Mock the system prompt and file handling
         with patch.object(self.tool, "get_system_prompt", return_value="System prompt"):
@@ -120,7 +124,7 @@ class TestChatTool:
     def test_response_formatting(self):
         """Test that response formatting works correctly"""
         response = "Test response content"
-        request = ChatRequest(prompt="Test", working_directory="/tmp")
+        request = ChatRequest(prompt="Test", working_directory_absolute_path="/tmp")
 
         formatted = self.tool.format_response(response, request)
 
@@ -140,7 +144,7 @@ class TestChatTool:
             "<GENERATED-CODE>print('world')</GENERATED-CODE>"
         )
 
-        request = ChatRequest(prompt="Test", working_directory=str(tmp_path))
+        request = ChatRequest(prompt="Test", working_directory_absolute_path=str(tmp_path))
 
         formatted = tool.format_response(response, request)
 
@@ -164,7 +168,7 @@ class TestChatTool:
             "Closing thoughts after code."
         )
 
-        request = ChatRequest(prompt="Test", working_directory=str(tmp_path))
+        request = ChatRequest(prompt="Test", working_directory_absolute_path=str(tmp_path))
 
         formatted = tool.format_response(response, request)
 
@@ -183,7 +187,7 @@ class TestChatTool:
 
         response = "Intro text\n<GENERATED-CODE>print('oops')\nStill ongoing"
 
-        request = ChatRequest(prompt="Test", working_directory=str(tmp_path))
+        request = ChatRequest(prompt="Test", working_directory_absolute_path=str(tmp_path))
 
         formatted = tool.format_response(response, request)
 
@@ -198,7 +202,7 @@ class TestChatTool:
 
         response = "Intro text\n</GENERATED-CODE> just text"
 
-        request = ChatRequest(prompt="Test", working_directory=str(tmp_path))
+        request = ChatRequest(prompt="Test", working_directory_absolute_path=str(tmp_path))
 
         formatted = tool.format_response(response, request)
 
@@ -218,7 +222,7 @@ class TestChatTool:
             "Further analysis and guidance after the generated snippet.\n"
         )
 
-        request = ChatRequest(prompt="Test", working_directory=str(tmp_path))
+        request = ChatRequest(prompt="Test", working_directory_absolute_path=str(tmp_path))
 
         formatted = tool.format_response(response, request)
 
@@ -247,12 +251,12 @@ class TestChatTool:
         # Test that the tool fields are defined correctly
         tool_fields = self.tool.get_tool_fields()
         assert "prompt" in tool_fields
-        assert "files" in tool_fields
+        assert "absolute_file_paths" in tool_fields
         assert "images" in tool_fields
 
         required_fields = self.tool.get_required_fields()
         assert "prompt" in required_fields
-        assert "working_directory" in required_fields
+        assert "working_directory_absolute_path" in required_fields
 
 
 class TestChatRequestModel:
@@ -265,20 +269,20 @@ class TestChatRequestModel:
         # Field descriptions should exist and be descriptive
         assert len(CHAT_FIELD_DESCRIPTIONS["prompt"]) > 50
         assert "context" in CHAT_FIELD_DESCRIPTIONS["prompt"]
-        files_desc = CHAT_FIELD_DESCRIPTIONS["files"].lower()
+        files_desc = CHAT_FIELD_DESCRIPTIONS["absolute_file_paths"].lower()
         assert "absolute" in files_desc
         assert "visual context" in CHAT_FIELD_DESCRIPTIONS["images"]
-        assert "directory" in CHAT_FIELD_DESCRIPTIONS["working_directory"].lower()
+        assert "directory" in CHAT_FIELD_DESCRIPTIONS["working_directory_absolute_path"].lower()
 
-    def test_working_directory_description_matches_behavior(self):
-        """Working directory description should reflect automatic creation."""
+    def test_working_directory_absolute_path_description_matches_behavior(self):
+        """Absolute working directory description should reflect existing-directory requirement."""
         from tools.chat import CHAT_FIELD_DESCRIPTIONS
 
-        description = CHAT_FIELD_DESCRIPTIONS["working_directory"].lower()
-        assert "must already exist" in description
+        description = CHAT_FIELD_DESCRIPTIONS["working_directory_absolute_path"].lower()
+        assert "existing directory" in description
 
     @pytest.mark.asyncio
-    async def test_working_directory_must_exist(self, tmp_path):
+    async def test_working_directory_absolute_path_must_exist(self, tmp_path):
         """Chat tool should reject non-existent working directories."""
         tool = ChatTool()
         missing_dir = tmp_path / "nonexistent_subdir"
@@ -287,9 +291,9 @@ class TestChatRequestModel:
             await tool.execute(
                 {
                     "prompt": "test",
-                    "files": [],
+                    "absolute_file_paths": [],
                     "images": [],
-                    "working_directory": str(missing_dir),
+                    "working_directory_absolute_path": str(missing_dir),
                 }
             )
 
@@ -299,17 +303,17 @@ class TestChatRequestModel:
 
     def test_default_values(self):
         """Test that default values work correctly"""
-        request = ChatRequest(prompt="Test", working_directory="/tmp")
+        request = ChatRequest(prompt="Test", working_directory_absolute_path="/tmp")
 
         assert request.prompt == "Test"
-        assert request.files == []  # Should default to empty list
+        assert request.absolute_file_paths == []  # Should default to empty list
         assert request.images == []  # Should default to empty list
 
     def test_inheritance(self):
         """Test that ChatRequest properly inherits from ToolRequest"""
         from tools.shared.base_models import ToolRequest
 
-        request = ChatRequest(prompt="Test", working_directory="/tmp")
+        request = ChatRequest(prompt="Test", working_directory_absolute_path="/tmp")
         assert isinstance(request, ToolRequest)
 
         # Should have inherited fields

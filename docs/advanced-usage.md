@@ -395,11 +395,11 @@ User: "Use gemini to review this code: [50,000+ character detailed analysis]"
 Zen MCP: "The prompt is too large for MCP's token limits (>50,000 characters). 
 Please save the prompt text to a temporary file named 'prompt.txt' and resend 
 the request with an empty prompt string and the absolute file path included 
-in the files parameter, along with any other files you wish to share as context."
+in the absolute_file_paths parameter, along with any other files you wish to share as context."
 
 # Claude automatically handles this:
 - Saves your prompt to /tmp/prompt.txt
-- Resends: "Use gemini to review this code" with files=["/tmp/prompt.txt", "/path/to/code.py"]
+- Resends: "Use gemini to review this code" with absolute_file_paths=["/tmp/prompt.txt", "/path/to/code.py"]
 
 # Server processes the large prompt through Gemini's 1M context
 # Returns comprehensive analysis within MCP's response limits

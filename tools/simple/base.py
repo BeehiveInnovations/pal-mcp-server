@@ -3,7 +3,7 @@ Base class for simple MCP tools.
 
 Simple tools follow a straightforward pattern:
 1. Receive request
-2. Prepare prompt (with files, context, etc.)
+2. Prepare prompt (with absolute file paths, context, etc.)
 3. Call AI model
 4. Format and return response
 
@@ -50,7 +50,7 @@ class SimpleTool(BaseTool):
                         "type": "string",
                         "description": "Your question or idea...",
                     },
-                    "files": SimpleTool.FILES_FIELD,
+                    "absolute_file_paths": SimpleTool.FILES_FIELD,
                 }
 
             def get_required_fields(self) -> List[str]:
@@ -58,7 +58,7 @@ class SimpleTool(BaseTool):
     """
 
     # Common field definitions that simple tools can reuse
-    FILES_FIELD = SchemaBuilder.SIMPLE_FIELD_SCHEMAS["files"]
+    FILES_FIELD = SchemaBuilder.SIMPLE_FIELD_SCHEMAS["absolute_file_paths"]
     IMAGES_FIELD = SchemaBuilder.COMMON_FIELD_SCHEMAS["images"]
 
     @abstractmethod
@@ -79,7 +79,7 @@ class SimpleTool(BaseTool):
                     "type": "string",
                     "description": "The user's question or request",
                 },
-                "files": SimpleTool.FILES_FIELD,  # Reuse common field
+                "absolute_file_paths": SimpleTool.FILES_FIELD,  # Reuse common field
                 "max_tokens": {
                     "type": "integer",
                     "minimum": 1,
@@ -230,11 +230,14 @@ class SimpleTool(BaseTool):
             return None
 
     def get_request_files(self, request) -> list:
-        """Get files from request. Override for custom file handling."""
+        """Get absolute file paths from request. Override for custom file handling."""
         try:
-            return request.files if request.files is not None else []
+            files = request.absolute_file_paths
         except AttributeError:
+            files = None
+        if files is None:
             return []
+        return files
 
     def get_request_as_dict(self, request) -> dict:
         """Convert request to dictionary. Override for custom serialization."""
@@ -250,11 +253,10 @@ class SimpleTool(BaseTool):
                 return {"prompt": self.get_request_prompt(request)}
 
     def set_request_files(self, request, files: list) -> None:
-        """Set files on request. Override for custom file setting."""
+        """Set absolute file paths on request. Override for custom file setting."""
         try:
-            request.files = files
+            request.absolute_file_paths = files
         except AttributeError:
-            # If request doesn't support file setting, ignore silently
             pass
 
     def get_actually_processed_files(self) -> list:
@@ -882,7 +884,7 @@ Please provide a thoughtful, comprehensive response:"""
         Raises:
             ValueError: If prompt is too large for MCP transport
         """
-        # Check for prompt.txt in files
+        # Check for prompt.txt in provided absolute file paths
         files = self.get_request_files(request)
         if files:
             prompt_content, updated_files = self.handle_prompt_file(files)
@@ -950,7 +952,7 @@ Please provide a thoughtful, comprehensive response:"""
         """
         import os
 
-        # Check if request has 'files' attribute (used by most tools)
+        # Check if request has absolute file paths attribute (legacy tools may still provide 'files')
         files = self.get_request_files(request)
         if files:
             for file_path in files:

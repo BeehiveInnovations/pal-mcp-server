@@ -227,7 +227,7 @@ class TracerTool(WorkflowTool):
         excluded_common_fields = [
             "temperature",  # Tracing doesn't need temperature control
             "thinking_mode",  # Tracing doesn't need thinking mode
-            "files",  # Tracing uses relevant_files instead
+            "absolute_file_paths",  # Tracing uses relevant_files instead
         ]
 
         return WorkflowSchemaBuilder.build_schema(

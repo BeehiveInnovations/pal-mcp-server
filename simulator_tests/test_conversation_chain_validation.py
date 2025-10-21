@@ -72,7 +72,7 @@ class TestClass:
                 "chat",
                 {
                     "prompt": "Analyze this test file and explain what it does.",
-                    "files": [test_file_path],
+                    "absolute_file_paths": [test_file_path],
                     "model": "flash",
                     "temperature": 0.7,
                 },
