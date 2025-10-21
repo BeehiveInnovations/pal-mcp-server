@@ -2,6 +2,22 @@
 
 <!-- version list -->
 
+## v9.1.2 (2025-10-21)
+
+### Bug Fixes
+
+- Configure codex with a longer timeout
+  ([`d2773f4`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/d2773f488af28986632846652874de9ff633049c))
+
+- Handle claude's array style JSON https://github.com/BeehiveInnovations/zen-mcp-server/issues/295
+  ([`d5790a9`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/d5790a9bfef719f03d17f2d719f1882e55d13b3b))
+
+### Chores
+
+- Sync version to config.py [skip ci]
+  ([`04132f1`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/04132f1459f1e086afd8e3d456f671b63338f846))
+
+
 ## v9.1.1 (2025-10-17)
 
 ### Bug Fixes
