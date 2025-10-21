@@ -18,11 +18,35 @@ class ClaudeJSONParser(BaseParser):
             raise ParserError("Claude CLI returned empty stdout while JSON output was expected")
 
         try:
-            payload: dict[str, Any] = json.loads(stdout)
+            loaded = json.loads(stdout)
         except json.JSONDecodeError as exc:  # pragma: no cover - defensive logging
             raise ParserError(f"Failed to decode Claude CLI JSON output: {exc}") from exc
 
+        events: list[dict[str, Any]] | None = None
+        assistant_entry: dict[str, Any] | None = None
+
+        if isinstance(loaded, dict):
+            payload: dict[str, Any] = loaded
+        elif isinstance(loaded, list):
+            events = [item for item in loaded if isinstance(item, dict)]
+            result_entry = next(
+                (item for item in events if item.get("type") == "result" or "result" in item),
+                None,
+            )
+            assistant_entry = next(
+                (item for item in reversed(events) if item.get("type") == "assistant"),
+                None,
+            )
+            payload = result_entry or assistant_entry or (events[-1] if events else {})
+            if not payload:
+                raise ParserError("Claude CLI JSON array did not contain any parsable objects")
+        else:
+            raise ParserError("Claude CLI returned unexpected JSON payload")
+
         metadata = self._build_metadata(payload, stderr)
+        if events is not None:
+            metadata["raw_events"] = events
+            metadata["raw"] = loaded
 
         result = payload.get("result")
         content: str = ""
@@ -37,6 +61,8 @@ class ClaudeJSONParser(BaseParser):
             return ParsedCLIResponse(content=content, metadata=metadata)
 
         message = self._extract_message(payload)
+        if message is None and assistant_entry and assistant_entry is not payload:
+            message = self._extract_message(assistant_entry)
         if message:
             return ParsedCLIResponse(content=message, metadata=metadata)
 

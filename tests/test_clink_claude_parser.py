@@ -1,5 +1,7 @@
 """Tests for the Claude CLI JSON parser."""
 
+import json
+
 import pytest
 
 from clink.parsers.base import ParserError
@@ -43,3 +45,26 @@ def test_claude_parser_requires_output():
 
     with pytest.raises(ParserError):
         parser.parse(stdout="", stderr="")
+
+
+def test_claude_parser_handles_array_payload_with_result_event():
+    parser = ClaudeJSONParser()
+    events = [
+        {"type": "system", "session_id": "abc"},
+        {"type": "assistant", "message": "intermediate"},
+        {
+            "type": "result",
+            "subtype": "success",
+            "result": "42",
+            "duration_api_ms": 9876,
+            "usage": {"input_tokens": 12, "output_tokens": 3},
+        },
+    ]
+    stdout = json.dumps(events)
+
+    parsed = parser.parse(stdout=stdout, stderr="warning")
+
+    assert parsed.content == "42"
+    assert parsed.metadata["duration_api_ms"] == 9876
+    assert parsed.metadata["raw_events"] == events
+    assert parsed.metadata["raw"] == events
