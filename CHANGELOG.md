@@ -2,6 +2,30 @@
 
 <!-- version list -->
 
+## v9.1.3 (2025-10-22)
+
+### Bug Fixes
+
+- Reduced token usage, removed parameters from schema that CLIs never seem to use
+  ([`3e27319`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/3e27319e60b0287df918856b58b2bbf042c948a8))
+
+- Telemetry option no longer available in gemini 0.11
+  ([`2a8dff0`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/2a8dff0cc8a3f33111533cdb971d654637ed0578))
+
+### Chores
+
+- Sync version to config.py [skip ci]
+  ([`9e163f9`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/9e163f9dc0654fc28961c9897b7c787a2b96e57d))
+
+- Sync version to config.py [skip ci]
+  ([`557e443`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/557e443a63ffd733fb41faaa8696f6f4bb2c2fd1))
+
+### Refactoring
+
+- Improved precommit system prompt
+  ([`3efff60`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/3efff6056e322ee1531d7bed5601038c129a8b29))
+
+
 ## v9.1.2 (2025-10-21)
 
 ### Bug Fixes
