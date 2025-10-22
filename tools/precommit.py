@@ -4,7 +4,7 @@ Precommit Workflow tool - Step-by-step pre-commit validation with expert analysi
 This tool provides a structured workflow for comprehensive pre-commit validation.
 It guides the CLI agent through systematic investigation steps with forced pauses between each step
 to ensure thorough code examination, git change analysis, and issue detection before proceeding.
-The tool supports backtracking, finding updates, and expert analysis integration.
+The tool supports finding updates and expert analysis integration.
 
 Key features:
 - Step-by-step pre-commit investigation workflow with progress tracking
@@ -51,7 +51,6 @@ PRECOMMIT_WORKFLOW_FIELD_DESCRIPTIONS = {
     "relevant_context": "Key functions/methods touched by the change (e.g. 'Class.method', 'function_name').",
     "issues_found": "List issues with severity (critical/high/medium/low) plus descriptions (bugs, security, performance, coverage).",
     "precommit_type": "'external' (default, triggers expert model) or 'internal' (local-only validation).",
-    "backtrack_from_step": "Step number to revisit when revising earlier analysis.",
     "images": "Optional absolute paths to screenshots or diagrams that aid validation.",
     "path": "Absolute path to the repository root. Required in step 1.",
     "compare_to": "Optional git ref (branch/tag/commit) to diff against; falls back to staged/unstaged changes.",
@@ -87,11 +86,6 @@ class PrecommitRequest(WorkflowRequest):
     )
     precommit_type: Optional[Literal["external", "internal"]] = Field(
         "external", description=PRECOMMIT_WORKFLOW_FIELD_DESCRIPTIONS["precommit_type"]
-    )
-
-    # Optional backtracking field
-    backtrack_from_step: Optional[int] = Field(
-        None, description=PRECOMMIT_WORKFLOW_FIELD_DESCRIPTIONS["backtrack_from_step"]
     )
 
     # Optional images for visual validation
@@ -206,11 +200,6 @@ class PrecommitTool(WorkflowTool):
                 "enum": ["external", "internal"],
                 "default": "external",
                 "description": PRECOMMIT_WORKFLOW_FIELD_DESCRIPTIONS["precommit_type"],
-            },
-            "backtrack_from_step": {
-                "type": "integer",
-                "minimum": 1,
-                "description": PRECOMMIT_WORKFLOW_FIELD_DESCRIPTIONS["backtrack_from_step"],
             },
             "issues_found": {
                 "type": "array",

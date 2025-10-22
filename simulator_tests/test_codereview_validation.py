@@ -39,8 +39,8 @@ class CodeReviewValidationTest(ConversationBaseTest):
             if not self._test_single_review_session():
                 return False
 
-            # Test 2: Review with backtracking
-            if not self._test_review_with_backtracking():
+            # Test 2: Review flow that requires refocusing
+            if not self._test_review_refocus_flow():
                 return False
 
             # Test 3: Complete review with expert analysis
@@ -336,13 +336,13 @@ class ConfigurationManager:
             self.logger.error(f"Single review session test failed: {e}")
             return False
 
-    def _test_review_with_backtracking(self) -> bool:
-        """Test code review with backtracking to revise findings"""
+    def _test_review_refocus_flow(self) -> bool:
+        """Test code review flow that revises findings by refocusing"""
         try:
-            self.logger.info("  1.2: Testing code review with backtracking")
+            self.logger.info("  1.2: Testing code review refocus workflow")
 
-            # Start a new review for testing backtracking
-            self.logger.info("    1.2.1: Start review for backtracking test")
+            # Start a new review for testing refocus behaviour
+            self.logger.info("    1.2.1: Start review for refocus test")
             response1, continuation_id = self.call_mcp_tool(
                 "codereview",
                 {
@@ -359,7 +359,7 @@ class ConfigurationManager:
             )
 
             if not response1 or not continuation_id:
-                self.logger.error("Failed to start backtracking test review")
+                self.logger.error("Failed to start refocus test review")
                 return False
 
             # Step 2: Initial direction
@@ -386,12 +386,12 @@ class ConfigurationManager:
                 self.logger.error("Failed to continue to step 2")
                 return False
 
-            # Step 3: Backtrack and focus on security
-            self.logger.info("    1.2.3: Step 3 - Backtrack to focus on security issues")
+            # Step 3: Shift focus based on new evidence
+            self.logger.info("    1.2.3: Step 3 - Refocus on security issues")
             response3, _ = self.call_mcp_tool(
                 "codereview",
                 {
-                    "step": "Backtracking - need to focus on the critical security issues I initially missed. Found hardcoded secrets and credentials in plain text.",
+                    "step": "Refocusing - need to concentrate on the critical security issues I initially missed. Found hardcoded secrets and credentials in plain text.",
                     "step_number": 3,
                     "total_steps": 4,
                     "next_step_required": True,
@@ -405,24 +405,23 @@ class ConfigurationManager:
                         {"severity": "high", "description": "Over-engineered configuration system"},
                     ],
                     "confidence": "high",
-                    "backtrack_from_step": 2,  # Backtrack from step 2
                     "continuation_id": continuation_id,
                 },
             )
 
             if not response3:
-                self.logger.error("Failed to backtrack")
+                self.logger.error("Failed to refocus")
                 return False
 
             response3_data = self._parse_review_response(response3)
             if not self._validate_step_response(response3_data, 3, 4, True, "pause_for_code_review"):
                 return False
 
-            self.logger.info("    ✅ Backtracking working correctly")
+            self.logger.info("    ✅ Refocus flow working correctly")
             return True
 
         except Exception as e:
-            self.logger.error(f"Backtracking test failed: {e}")
+            self.logger.error(f"Refocus test failed: {e}")
             return False
 
     def _test_complete_review_with_analysis(self) -> bool:

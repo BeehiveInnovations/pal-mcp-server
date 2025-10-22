@@ -101,7 +101,6 @@ class ConsensusRequest(WorkflowRequest):
     relevant_context: list[str] | None = Field(default_factory=list, exclude=True)
     issues_found: list[dict] | None = Field(default_factory=list, exclude=True)
     hypothesis: str | None = Field(None, exclude=True)
-    backtrack_from_step: int | None = Field(None, exclude=True)
 
     @model_validator(mode="after")
     def validate_step_one_requirements(self):
@@ -293,7 +292,6 @@ of the evidence, even when it strongly points in one direction.""",
             "relevant_context",  # Not used in consensus workflow
             "issues_found",  # Not used in consensus workflow
             "hypothesis",  # Not used in consensus workflow
-            "backtrack_from_step",  # Not used in consensus workflow
             "confidence",  # Not used in consensus workflow
         ]
 

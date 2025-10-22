@@ -298,7 +298,6 @@ class TestSecauditTool:
             "relevant_context",
             "issues_found",
             "confidence",
-            "backtrack_from_step",
             "images",
             "security_scope",
             "threat_level",

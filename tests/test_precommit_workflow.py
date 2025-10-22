@@ -108,20 +108,6 @@ class TestPrecommitWorkflowTool:
         assert len(request.issues_found) == 1
         assert len(request.images) == 1
 
-    def test_request_model_backtracking(self):
-        """Test backtracking functionality"""
-        request = PrecommitRequest(
-            step="Backtracking from previous step",
-            step_number=3,
-            total_steps=4,
-            next_step_required=True,
-            findings="Revised findings after backtracking",
-            backtrack_from_step=2,  # Backtrack from step 2
-        )
-
-        assert request.backtrack_from_step == 2
-        assert request.step_number == 3
-
     def test_precommit_specific_fields(self):
         """Test precommit-specific configuration fields"""
         request = PrecommitRequest(

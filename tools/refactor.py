@@ -78,7 +78,6 @@ REFACTOR_FIELD_DESCRIPTIONS = {
         "WARNING: Use 'complete' ONLY when fully analyzed and can provide recommendations without expert help. "
         "'complete' PREVENTS expert validation. Use 'partial' for large files or uncertain analysis."
     ),
-    "backtrack_from_step": ("If an earlier finding needs revision, specify the step number to backtrack from."),
     "images": (
         "Optional list of absolute paths to architecture diagrams, UI mockups, design documents, or visual references "
         "that help with refactoring context. Only include if they materially assist understanding or assessment."
@@ -112,9 +111,6 @@ class RefactorRequest(WorkflowRequest):
     confidence: Optional[Literal["exploring", "incomplete", "partial", "complete"]] = Field(
         "incomplete", description=REFACTOR_FIELD_DESCRIPTIONS["confidence"]
     )
-
-    # Optional backtracking field
-    backtrack_from_step: Optional[int] = Field(None, description=REFACTOR_FIELD_DESCRIPTIONS["backtrack_from_step"])
 
     # Optional images for visual context
     images: Optional[list[str]] = Field(default=None, description=REFACTOR_FIELD_DESCRIPTIONS["images"])
@@ -227,11 +223,6 @@ class RefactorTool(WorkflowTool):
                 "enum": ["exploring", "incomplete", "partial", "complete"],
                 "default": "incomplete",
                 "description": REFACTOR_FIELD_DESCRIPTIONS["confidence"],
-            },
-            "backtrack_from_step": {
-                "type": "integer",
-                "minimum": 1,
-                "description": REFACTOR_FIELD_DESCRIPTIONS["backtrack_from_step"],
             },
             "issues_found": {
                 "type": "array",

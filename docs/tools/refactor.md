@@ -97,7 +97,6 @@ This results in Claude first performing its own expert analysis, encouraging it 
 - `relevant_context`: Methods/functions/classes requiring refactoring
 - `issues_found`: Refactoring opportunities with severity and type
 - `confidence`: Confidence level in analysis completeness (exploring/incomplete/partial/complete)
-- `backtrack_from_step`: Step number to backtrack from (for revisions)
 - `hypothesis`: Current assessment of refactoring priorities
 
 **Initial Configuration (used in step 1):**

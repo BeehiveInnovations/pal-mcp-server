@@ -72,11 +72,6 @@ class WorkflowSchemaBuilder:
             "type": "string",
             "description": WORKFLOW_FIELD_DESCRIPTIONS["hypothesis"],
         },
-        "backtrack_from_step": {
-            "type": "integer",
-            "minimum": 1,
-            "description": WORKFLOW_FIELD_DESCRIPTIONS["backtrack_from_step"],
-        },
         "use_assistant_model": {
             "type": "boolean",
             "default": True,

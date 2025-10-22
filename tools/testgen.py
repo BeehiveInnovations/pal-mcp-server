@@ -4,8 +4,7 @@ TestGen Workflow tool - Step-by-step test generation with expert validation
 This tool provides a structured workflow for comprehensive test generation.
 It guides the CLI agent through systematic investigation steps with forced pauses between each step
 to ensure thorough code examination, test planning, and pattern identification before proceeding.
-The tool supports backtracking, finding updates, and expert analysis integration for
-comprehensive test suite generation.
+The tool supports finding updates and expert analysis integration for comprehensive test suite generation.
 
 Key features:
 - Step-by-step test generation workflow with progress tracking
@@ -52,7 +51,6 @@ TESTGEN_WORKFLOW_FIELD_DESCRIPTIONS = {
         "Do NOT use 'certain' unless the test generation analysis is comprehensively complete, use 'very_high' or 'almost_certain' instead if not 100% sure. "
         "Using 'certain' means you have complete confidence locally and prevents external model validation."
     ),
-    "backtrack_from_step": "Step number to revisit if earlier findings need revision.",
     "images": "Optional absolute paths to diagrams or visuals that clarify the system under test.",
 }
 
@@ -78,11 +76,6 @@ class TestGenRequest(WorkflowRequest):
         default_factory=list, description=TESTGEN_WORKFLOW_FIELD_DESCRIPTIONS["relevant_context"]
     )
     confidence: Optional[str] = Field("low", description=TESTGEN_WORKFLOW_FIELD_DESCRIPTIONS["confidence"])
-
-    # Optional backtracking field
-    backtrack_from_step: Optional[int] = Field(
-        None, description=TESTGEN_WORKFLOW_FIELD_DESCRIPTIONS["backtrack_from_step"]
-    )
 
     # Optional images for visual context
     images: Optional[list[str]] = Field(default=None, description=TESTGEN_WORKFLOW_FIELD_DESCRIPTIONS["images"])
@@ -183,11 +176,6 @@ class TestGenTool(WorkflowTool):
                 "type": "string",
                 "enum": ["exploring", "low", "medium", "high", "very_high", "almost_certain", "certain"],
                 "description": TESTGEN_WORKFLOW_FIELD_DESCRIPTIONS["confidence"],
-            },
-            "backtrack_from_step": {
-                "type": "integer",
-                "minimum": 1,
-                "description": TESTGEN_WORKFLOW_FIELD_DESCRIPTIONS["backtrack_from_step"],
             },
             "images": {
                 "type": "array",

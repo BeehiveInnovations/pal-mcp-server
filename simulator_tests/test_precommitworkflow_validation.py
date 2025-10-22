@@ -39,8 +39,8 @@ class PrecommitWorkflowValidationTest(ConversationBaseTest):
             if not self._test_single_validation_session():
                 return False
 
-            # Test 2: Validation with backtracking
-            if not self._test_validation_with_backtracking():
+            # Test 2: Validation flow that requires refocusing
+            if not self._test_validation_refocus_flow():
                 return False
 
             # Test 3: Complete validation with expert analysis
@@ -263,13 +263,13 @@ REQUIREMENTS:
             self.logger.error(f"Single validation session test failed: {e}")
             return False
 
-    def _test_validation_with_backtracking(self) -> bool:
-        """Test validation with backtracking to revise findings"""
+    def _test_validation_refocus_flow(self) -> bool:
+        """Test validation workflow that requires refocusing to revise findings"""
         try:
-            self.logger.info("  1.2: Testing validation with backtracking")
+            self.logger.info("  1.2: Testing validation refocus workflow")
 
-            # Start a new validation for testing backtracking
-            self.logger.info("    1.2.1: Start validation for backtracking test")
+            # Start a new validation for testing refocus behaviour
+            self.logger.info("    1.2.1: Start validation for refocus test")
             response1, continuation_id = self.call_mcp_tool(
                 "precommit",
                 {
@@ -285,7 +285,7 @@ REQUIREMENTS:
             )
 
             if not response1 or not continuation_id:
-                self.logger.error("Failed to start backtracking test validation")
+                self.logger.error("Failed to start refocus test validation")
                 return False
 
             # Step 2: Wrong direction
@@ -309,12 +309,12 @@ REQUIREMENTS:
                 self.logger.error("Failed to continue to step 2")
                 return False
 
-            # Step 3: Backtrack from step 2
-            self.logger.info("    1.2.3: Step 3 - Backtrack and revise approach")
+            # Step 3: Shift investigation focus
+            self.logger.info("    1.2.3: Step 3 - Refocus and revise approach")
             response3, _ = self.call_mcp_tool(
                 "precommit",
                 {
-                    "step": "Backtracking - the issue might not be database configuration. Let me examine the actual SQL queries and data access patterns instead.",
+                    "step": "Refocusing - the issue might not be database configuration. Let me examine the actual SQL queries and data access patterns instead.",
                     "step_number": 3,
                     "total_steps": 4,
                     "next_step_required": True,
@@ -326,24 +326,23 @@ REQUIREMENTS:
                         {"severity": "medium", "description": "N+1 query pattern in user profile loading"}
                     ],
                     # Assessment fields removed - using precommit_type instead
-                    "backtrack_from_step": 2,  # Backtrack from step 2
                     "continuation_id": continuation_id,
                 },
             )
 
             if not response3:
-                self.logger.error("Failed to backtrack")
+                self.logger.error("Failed to refocus")
                 return False
 
             response3_data = self._parse_precommit_response(response3)
             if not self._validate_step_response(response3_data, 3, 4, True, "pause_for_validation"):
                 return False
 
-            self.logger.info("    ✅ Backtracking working correctly")
+            self.logger.info("    ✅ Refocus flow working correctly")
             return True
 
         except Exception as e:
-            self.logger.error(f"Backtracking test failed: {e}")
+            self.logger.error(f"Refocus test failed: {e}")
             return False
 
     def _test_complete_validation_with_analysis(self) -> bool:

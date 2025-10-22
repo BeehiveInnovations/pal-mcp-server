@@ -3,8 +3,8 @@ Debug tool - Systematic root cause analysis and debugging assistance
 
 This tool provides a structured workflow for investigating complex bugs and issues.
 It guides you through systematic investigation steps with forced pauses between each step
-to ensure thorough code examination before proceeding. The tool supports backtracking,
-hypothesis evolution, and expert analysis integration for comprehensive debugging.
+to ensure thorough code examination before proceeding. The tool supports hypothesis evolution
+and expert analysis integration for comprehensive debugging.
 
 Key features:
 - Step-by-step investigation workflow with progress tracking
@@ -65,7 +65,6 @@ DEBUG_INVESTIGATION_FIELD_DESCRIPTIONS = {
         "WARNING: Do NOT use 'certain' unless the issue can be fully resolved with a fix, use 'very_high' or 'almost_certain' instead when not 100% sure. "
         "Using 'certain' means you have ABSOLUTE confidence locally and PREVENTS external model validation."
     ),
-    "backtrack_from_step": "Step number to backtrack from if revision needed.",
     "images": "Optional screenshots/visuals clarifying issue (absolute paths).",
 }
 
@@ -92,11 +91,6 @@ class DebugInvestigationRequest(WorkflowRequest):
     )
     hypothesis: Optional[str] = Field(None, description=DEBUG_INVESTIGATION_FIELD_DESCRIPTIONS["hypothesis"])
     confidence: Optional[str] = Field("low", description=DEBUG_INVESTIGATION_FIELD_DESCRIPTIONS["confidence"])
-
-    # Optional backtracking field
-    backtrack_from_step: Optional[int] = Field(
-        None, description=DEBUG_INVESTIGATION_FIELD_DESCRIPTIONS["backtrack_from_step"]
-    )
 
     # Optional images for visual debugging
     images: Optional[list[str]] = Field(default=None, description=DEBUG_INVESTIGATION_FIELD_DESCRIPTIONS["images"])
@@ -192,11 +186,6 @@ class DebugIssueTool(WorkflowTool):
             "hypothesis": {
                 "type": "string",
                 "description": DEBUG_INVESTIGATION_FIELD_DESCRIPTIONS["hypothesis"],
-            },
-            "backtrack_from_step": {
-                "type": "integer",
-                "minimum": 1,
-                "description": DEBUG_INVESTIGATION_FIELD_DESCRIPTIONS["backtrack_from_step"],
             },
             "images": {
                 "type": "array",

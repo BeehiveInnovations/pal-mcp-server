@@ -135,7 +135,6 @@ Use zen and perform a thorough precommit ensuring there aren't any new regressio
 - `relevant_context`: Methods/functions/classes affected by changes
 - `issues_found`: Issues identified with severity levels
 - `precommit_type`: Type of validation to perform (external/internal, default: external - ALWAYS use external unless explicitly told otherwise)
-- `backtrack_from_step`: Step number to backtrack from (for revisions)
 - `images`: Screenshots of requirements, design mockups for validation
 
 **Initial Configuration (used in step 1):**

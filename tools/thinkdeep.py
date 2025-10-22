@@ -71,13 +71,6 @@ class ThinkDeepWorkflowRequest(WorkflowRequest):
         description="exploring/low/medium/high/very_high/almost_certain/certain. CRITICAL: 'certain' PREVENTS external validation.",
     )
 
-    # Advanced workflow features
-    backtrack_from_step: Optional[int] = Field(
-        default=None,
-        description="Step number to backtrack from if revision needed.",
-        ge=1,
-    )
-
     # Expert analysis configuration - keep these fields available for configuring the final assistant model
     # in expert analysis (commented out exclude=True)
     temperature: Optional[float] = Field(

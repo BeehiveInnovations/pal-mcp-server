@@ -76,7 +76,7 @@ class WorkflowTool(BaseTool, BaseWorkflowMixin):
         Workflow tools automatically get all standard workflow fields:
         - step, step_number, total_steps, next_step_required
         - findings, files_checked, relevant_files, relevant_context
-        - issues_found, confidence, hypothesis, backtrack_from_step
+        - issues_found, confidence, hypothesis
         - plus common fields (model, temperature, etc.)
 
         Override this method to add additional tool-specific fields.

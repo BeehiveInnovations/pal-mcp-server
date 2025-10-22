@@ -68,7 +68,6 @@ This structured approach ensures Claude performs methodical groundwork before ex
 - `relevant_methods`: Specific methods/functions involved in the issue
 - `hypothesis`: Current best guess about the underlying cause
 - `confidence`: Confidence level in current hypothesis (exploring/low/medium/high/certain)
-- `backtrack_from_step`: Step number to backtrack from (for revisions)
 - `continuation_id`: Thread ID for continuing investigations across sessions
 - `images`: Visual debugging materials (error screenshots, logs, etc.)
 

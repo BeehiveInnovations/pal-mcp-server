@@ -66,7 +66,6 @@ Test generation excels with extended reasoning models like Gemini Pro or O3, whi
 - `relevant_files`: Files directly needing tests (required in step 1)
 - `relevant_context`: Methods/functions/classes requiring test coverage
 - `confidence`: Confidence level in test plan completeness (exploring/low/medium/high/certain)
-- `backtrack_from_step`: Step number to backtrack from (for revisions)
 
 **Initial Configuration (used in step 1):**
 - `prompt`: Description of what to test, testing objectives, and specific scope/focus areas (required)

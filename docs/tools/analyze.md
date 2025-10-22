@@ -60,7 +60,6 @@ This workflow ensures methodical analysis before expert insights, resulting in d
 - `relevant_context`: Methods/functions/classes central to analysis findings
 - `issues_found`: Issues or concerns identified with severity levels
 - `confidence`: Confidence level in analysis completeness (exploring/low/medium/high/certain)
-- `backtrack_from_step`: Step number to backtrack from (for revisions)
 - `images`: Visual references for analysis context
 
 **Initial Configuration (used in step 1):**

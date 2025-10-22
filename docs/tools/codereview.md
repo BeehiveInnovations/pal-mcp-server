@@ -75,7 +75,6 @@ The above prompt will simultaneously run two separate `codereview` tools with tw
 - `relevant_context`: Methods/functions/classes central to review findings
 - `issues_found`: Issues identified with severity levels
 - `confidence`: Confidence level in review completeness (exploring/low/medium/high/certain)
-- `backtrack_from_step`: Step number to backtrack from (for revisions)
 - `images`: Visual references for review context
 
 **Initial Review Configuration (used in step 1):**

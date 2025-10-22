@@ -39,8 +39,8 @@ class AnalyzeValidationTest(ConversationBaseTest):
             if not self._test_single_analysis_session():
                 return False
 
-            # Test 2: Analysis with backtracking
-            if not self._test_analysis_with_backtracking():
+            # Test 2: Analysis flow that requires refocusing
+            if not self._test_analysis_refocus_flow():
                 return False
 
             # Test 3: Complete analysis with expert validation
@@ -530,13 +530,13 @@ class PerformanceTimer:
             self.logger.error(f"Single analysis session test failed: {e}")
             return False
 
-    def _test_analysis_with_backtracking(self) -> bool:
-        """Test analysis with backtracking to revise findings"""
+    def _test_analysis_refocus_flow(self) -> bool:
+        """Test analysis flow that requires refocusing to revise findings"""
         try:
-            self.logger.info("  1.2: Testing analysis with backtracking")
+            self.logger.info("  1.2: Testing analysis refocus workflow")
 
-            # Start a new analysis for testing backtracking
-            self.logger.info("    1.2.1: Start analysis for backtracking test")
+            # Start a new analysis for testing refocus behaviour
+            self.logger.info("    1.2.1: Start analysis for refocus test")
             response1, continuation_id = self.call_mcp_tool(
                 "analyze",
                 {
@@ -553,7 +553,7 @@ class PerformanceTimer:
             )
 
             if not response1 or not continuation_id:
-                self.logger.error("Failed to start backtracking test analysis")
+                self.logger.error("Failed to start refocus test analysis")
                 return False
 
             # Step 2: Wrong direction
@@ -579,12 +579,12 @@ class PerformanceTimer:
                 self.logger.error("Failed to continue to step 2")
                 return False
 
-            # Step 3: Backtrack from step 2
-            self.logger.info("    1.2.3: Step 3 - Backtrack and revise approach")
+            # Step 3: Adjust investigation path
+            self.logger.info("    1.2.3: Step 3 - Refocus the analysis")
             response3, _ = self.call_mcp_tool(
                 "analyze",
                 {
-                    "step": "Backtracking - the performance issue might not be database related. Let me examine the caching and serialization patterns instead.",
+                    "step": "Refocus - the performance issue might not be database related. Let me examine the caching and serialization patterns instead.",
                     "step_number": 3,
                     "total_steps": 4,
                     "next_step_required": True,
@@ -597,20 +597,19 @@ class PerformanceTimer:
                         {"severity": "low", "description": "Cache key generation lacks proper escaping"},
                     ],
                     "confidence": "medium",
-                    "backtrack_from_step": 2,  # Backtrack from step 2
                     "continuation_id": continuation_id,
                 },
             )
 
             if not response3:
-                self.logger.error("Failed to backtrack")
+                self.logger.error("Failed to refocus analysis")
                 return False
 
             response3_data = self._parse_analyze_response(response3)
             if not self._validate_step_response(response3_data, 3, 4, True, "pause_for_analysis"):
                 return False
 
-            self.logger.info("    ✅ Backtracking working correctly")
+            self.logger.info("    ✅ Analysis refocus flow working correctly")
             return True
 
         except Exception as e:

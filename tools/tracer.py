@@ -115,10 +115,6 @@ class TracerRequest(WorkflowRequest):
     # Exclude fields not relevant to tracing workflow
     issues_found: list[dict] = Field(default_factory=list, exclude=True, description="Tracing doesn't track issues")
     hypothesis: Optional[str] = Field(default=None, exclude=True, description="Tracing doesn't use hypothesis")
-    backtrack_from_step: Optional[int] = Field(
-        default=None, exclude=True, description="Tracing doesn't use backtracking"
-    )
-
     # Exclude other non-tracing fields
     temperature: Optional[float] = Field(default=None, exclude=True)
     thinking_mode: Optional[str] = Field(default=None, exclude=True)
@@ -220,7 +216,6 @@ class TracerTool(WorkflowTool):
         excluded_workflow_fields = [
             "issues_found",  # Tracing doesn't track issues
             "hypothesis",  # Tracing doesn't use hypothesis
-            "backtrack_from_step",  # Tracing doesn't use backtracking
         ]
 
         # Exclude common fields that tracing doesn't need

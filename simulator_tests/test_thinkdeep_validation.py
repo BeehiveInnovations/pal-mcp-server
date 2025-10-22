@@ -39,8 +39,8 @@ class ThinkDeepWorkflowValidationTest(ConversationBaseTest):
             if not self._test_single_thinking_session():
                 return False
 
-            # Test 2: Thinking with backtracking
-            if not self._test_thinking_with_backtracking():
+            # Test 2: Thinking flow that requires refocusing
+            if not self._test_thinking_refocus_flow():
                 return False
 
             # Test 3: Complete thinking with expert analysis
@@ -243,13 +243,13 @@ class ThinkDeepWorkflowValidationTest(ConversationBaseTest):
             self.logger.error(f"Single thinking session test failed: {e}")
             return False
 
-    def _test_thinking_with_backtracking(self) -> bool:
-        """Test thinking with backtracking to revise analysis"""
+    def _test_thinking_refocus_flow(self) -> bool:
+        """Test thinking workflow that shifts direction mid-analysis"""
         try:
-            self.logger.info("  1.2: Testing thinking with backtracking")
+            self.logger.info("  1.2: Testing thinking refocus workflow")
 
-            # Start a new thinking session for testing backtracking
-            self.logger.info("    1.2.1: Start thinking for backtracking test")
+            # Start a new thinking session for testing refocus behaviour
+            self.logger.info("    1.2.1: Start thinking session for refocus test")
             response1, continuation_id = self.call_mcp_tool(
                 "thinkdeep",
                 {
@@ -266,7 +266,7 @@ class ThinkDeepWorkflowValidationTest(ConversationBaseTest):
             )
 
             if not response1 or not continuation_id:
-                self.logger.error("Failed to start backtracking test thinking")
+                self.logger.error("Failed to start refocus test thinking")
                 return False
 
             # Step 2: Initial direction
@@ -300,7 +300,7 @@ class ThinkDeepWorkflowValidationTest(ConversationBaseTest):
             response3, _ = self.call_mcp_tool(
                 "thinkdeep",
                 {
-                    "step": "Backtracking - maybe shared database with service-specific schemas is better initially. Then gradually extract databases as services mature.",
+                    "step": "Refocusing - maybe shared database with service-specific schemas is better initially. Then gradually extract databases as services mature.",
                     "step_number": 3,
                     "total_steps": 4,
                     "next_step_required": True,
@@ -309,24 +309,23 @@ class ThinkDeepWorkflowValidationTest(ConversationBaseTest):
                     "relevant_files": [self.architecture_file, self.requirements_file],
                     "relevant_context": ["shared_database", "bounded_contexts", "gradual_extraction"],
                     "confidence": "medium",
-                    "backtrack_from_step": 2,  # Backtrack from step 2
                     "continuation_id": continuation_id,
                 },
             )
 
             if not response3:
-                self.logger.error("Failed to backtrack")
+                self.logger.error("Failed to refocus")
                 return False
 
             response3_data = self._parse_thinkdeep_response(response3)
             if not self._validate_step_response(response3_data, 3, 4, True, "pause_for_thinkdeep"):
                 return False
 
-            self.logger.info("    ✅ Backtracking working correctly")
+            self.logger.info("    ✅ Refocus working correctly")
             return True
 
         except Exception as e:
-            self.logger.error(f"Backtracking test failed: {e}")
+            self.logger.error(f"Refocus test failed: {e}")
             return False
 
     def _test_complete_thinking_with_analysis(self) -> bool:

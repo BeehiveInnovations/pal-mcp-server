@@ -47,7 +47,6 @@ SECAUDIT_WORKFLOW_FIELD_DESCRIPTIONS = {
     "relevant_context": "Security-critical classes/methods (e.g. 'AuthService.login', 'encryption_helper').",
     "issues_found": "Security issues with severity (critical/high/medium/low) and descriptions (vulns, auth flaws, injection, crypto, config).",
     "confidence": "exploring/low/medium/high/very_high/almost_certain/certain. 'certain' blocks external validation—use only when fully complete.",
-    "backtrack_from_step": "Step number to revisit when revising earlier audit work.",
     "images": "Optional absolute paths to diagrams or threat models that inform the audit.",
     "security_scope": "Security context (web, mobile, API, cloud, etc.) including stack, user types, data sensitivity, and threat landscape.",
     "threat_level": "Assess the threat level: low (internal/low-risk), medium (customer-facing/business data), high (regulated or sensitive), critical (financial/healthcare/PII).",
@@ -81,11 +80,6 @@ class SecauditRequest(WorkflowRequest):
         default_factory=list, description=SECAUDIT_WORKFLOW_FIELD_DESCRIPTIONS["issues_found"]
     )
     confidence: Optional[str] = Field("low", description=SECAUDIT_WORKFLOW_FIELD_DESCRIPTIONS["confidence"])
-
-    # Optional backtracking field
-    backtrack_from_step: Optional[int] = Field(
-        None, description=SECAUDIT_WORKFLOW_FIELD_DESCRIPTIONS["backtrack_from_step"]
-    )
 
     # Optional images for visual context
     images: Optional[list[str]] = Field(default=None, description=SECAUDIT_WORKFLOW_FIELD_DESCRIPTIONS["images"])
@@ -397,11 +391,6 @@ class SecauditTool(WorkflowTool):
                 "type": "string",
                 "enum": ["exploring", "low", "medium", "high", "very_high", "almost_certain", "certain"],
                 "description": SECAUDIT_WORKFLOW_FIELD_DESCRIPTIONS["confidence"],
-            },
-            "backtrack_from_step": {
-                "type": "integer",
-                "minimum": 1,
-                "description": SECAUDIT_WORKFLOW_FIELD_DESCRIPTIONS["backtrack_from_step"],
             },
             "issues_found": {
                 "type": "array",

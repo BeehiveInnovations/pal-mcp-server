@@ -53,7 +53,6 @@ CODEREVIEW_WORKFLOW_FIELD_DESCRIPTIONS = {
     "relevant_context": "Functions or methods central to findings (e.g. 'Class.method' or 'function_name').",
     "issues_found": "Issues with severity (critical/high/medium/low) and descriptions.",
     "review_validation_type": "Set 'external' (default) for expert follow-up or 'internal' for local-only review.",
-    "backtrack_from_step": "If revising earlier analysis, note the step number to revisit.",
     "images": "Optional diagram or screenshot paths that clarify review context.",
     "review_type": "Review focus: full, security, performance, or quick.",
     "focus_on": "Optional note on areas to emphasise (e.g. 'threading', 'auth flow').",
@@ -89,11 +88,6 @@ class CodeReviewRequest(WorkflowRequest):
     confidence: Optional[str] = Field("low", exclude=True)
     review_validation_type: Optional[Literal["external", "internal"]] = Field(
         "external", description=CODEREVIEW_WORKFLOW_FIELD_DESCRIPTIONS.get("review_validation_type", "")
-    )
-
-    # Optional backtracking field
-    backtrack_from_step: Optional[int] = Field(
-        None, description=CODEREVIEW_WORKFLOW_FIELD_DESCRIPTIONS["backtrack_from_step"]
     )
 
     # Optional images for visual context
@@ -205,11 +199,6 @@ class CodeReviewTool(WorkflowTool):
                 "enum": ["external", "internal"],
                 "default": "external",
                 "description": CODEREVIEW_WORKFLOW_FIELD_DESCRIPTIONS.get("review_validation_type", ""),
-            },
-            "backtrack_from_step": {
-                "type": "integer",
-                "minimum": 1,
-                "description": CODEREVIEW_WORKFLOW_FIELD_DESCRIPTIONS["backtrack_from_step"],
             },
             "issues_found": {
                 "type": "array",

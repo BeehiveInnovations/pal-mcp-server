@@ -82,7 +82,6 @@ security remediation plan using planner
 - `relevant_context`: Methods/functions/classes central to security findings
 - `issues_found`: Security issues identified with severity levels
 - `confidence`: Confidence level in security assessment completeness (exploring/low/medium/high/certain)
-- `backtrack_from_step`: Step number to backtrack from (for revisions)
 - `images`: Architecture diagrams, security documentation, or visual references
 
 **Initial Security Configuration (used in step 1):**

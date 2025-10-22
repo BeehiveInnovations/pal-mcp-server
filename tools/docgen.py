@@ -197,7 +197,6 @@ class DocgenTool(WorkflowTool):
         excluded_workflow_fields = [
             "confidence",  # Documentation doesn't use confidence levels
             "hypothesis",  # Documentation doesn't use hypothesis
-            "backtrack_from_step",  # Documentation uses simpler error recovery
             "files_checked",  # Documentation uses doc_files and doc_methods instead for better tracking
         ]
 

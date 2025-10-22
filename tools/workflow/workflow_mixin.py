@@ -701,11 +701,6 @@ class BaseWorkflowMixin(ABC):
                 # Allow tools to store initial description for expert analysis
                 self.store_initial_issue(request.step)
 
-            # Handle backtracking if requested
-            backtrack_step = self.get_backtrack_step(request)
-            if backtrack_step:
-                self._handle_backtracking(backtrack_step)
-
             # Process work step - allow tools to customize field mapping
             step_data = self.prepare_step_data(request)
 
@@ -991,13 +986,6 @@ class BaseWorkflowMixin(ABC):
             return self._current_arguments or {}
         except AttributeError:
             return {}
-
-    def get_backtrack_step(self, request) -> Optional[int]:
-        """Get backtrack step from request. Override for custom backtrack handling."""
-        try:
-            return request.backtrack_from_step
-        except AttributeError:
-            return None
 
     def store_initial_issue(self, step_description: str):
         """Store initial issue description. Override for custom storage."""
@@ -1377,13 +1365,6 @@ class BaseWorkflowMixin(ABC):
         response_data["next_steps"] = self.get_step_guidance_message(request)
 
         return response_data
-
-    def _handle_backtracking(self, backtrack_step: int):
-        """Handle backtracking to a previous step"""
-        # Remove findings after the backtrack point
-        self.work_history = [s for s in self.work_history if s["step_number"] < backtrack_step]
-        # Reprocess consolidated findings
-        self._reprocess_consolidated_findings()
 
     def _update_consolidated_findings(self, step_data: dict):
         """Update consolidated findings with new step data"""
