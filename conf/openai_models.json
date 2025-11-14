@@ -232,6 +232,81 @@
       "supports_temperature": true,
       "max_image_size_mb": 20.0,
       "use_openai_response_api": true
+    },
+    {
+      "model_name": "gpt-5.1",
+      "friendly_name": "OpenAI (GPT-5.1)",
+      "aliases": [
+        "gpt5.1",
+        "gpt-5.1",
+        "5.1"
+      ],
+      "intelligence_score": 18,
+      "description": "GPT-5.1 (400K context, 128K output) - Flagship reasoning model with configurable thinking effort and vision support.",
+      "context_window": 400000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0,
+      "default_reasoning_effort": "medium",
+      "allow_code_generation": true,
+      "temperature_constraint": "fixed"
+    },
+    {
+      "model_name": "gpt-5.1-codex",
+      "friendly_name": "OpenAI (GPT-5.1 Codex)",
+      "aliases": [
+        "gpt5.1-codex",
+        "gpt-5.1-codex",
+        "gpt5.1code",
+        "gpt-5.1-code",
+        "codex-5.1"
+      ],
+      "intelligence_score": 19,
+      "description": "GPT-5.1 Codex (400K context, 128K output) - Agentic coding specialization available through the Responses API.",
+      "context_window": 400000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": false,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0,
+      "use_openai_response_api": true,
+      "default_reasoning_effort": "high",
+      "allow_code_generation": true,
+      "temperature_constraint": "fixed"
+    },
+    {
+      "model_name": "gpt-5.1-codex-mini",
+      "friendly_name": "OpenAI (GPT-5.1 Codex mini)",
+      "aliases": [
+        "gpt5.1-codex-mini",
+        "gpt-5.1-codex-mini",
+        "codex-mini",
+        "5.1-codex-mini"
+      ],
+      "intelligence_score": 16,
+      "description": "GPT-5.1 Codex mini (400K context, 128K output) - Cost-efficient Codex variant with streaming support.",
+      "context_window": 400000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0,
+      "allow_code_generation": true,
+      "temperature_constraint": "fixed"
     }
   ]
 }
