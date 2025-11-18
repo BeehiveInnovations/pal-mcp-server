@@ -23,7 +23,7 @@
               }
             ],
             "generationConfig": {
-              "temperature": 0.5,
+              "temperature": 1.0,
               "candidateCount": 1,
               "thinkingConfig": {
                 "thinkingBudget": 10813

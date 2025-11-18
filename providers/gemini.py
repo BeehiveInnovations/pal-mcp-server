@@ -42,14 +42,6 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
         "max": 1.0,  # 100% of max - full thinking budget
     }
 
-    # Model-specific thinking token limits
-    MAX_THINKING_TOKENS = {
-        "gemini-2.0-flash": 24576,  # Same as 2.5 flash for consistency
-        "gemini-2.0-flash-lite": 0,  # No thinking support
-        "gemini-2.5-flash": 24576,  # Flash 2.5 thinking budget limit
-        "gemini-2.5-pro": 32768,  # Pro 2.5 thinking budget limit
-    }
-
     def __init__(self, api_key: str, **kwargs):
         """Initialize Gemini provider with API key and optional base URL."""
         self._ensure_registry()
@@ -124,7 +116,7 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
         prompt: str,
         model_name: str,
         system_prompt: Optional[str] = None,
-        temperature: float = 0.3,
+        temperature: float = 1.0,
         max_output_tokens: Optional[int] = None,
         thinking_mode: str = "medium",
         images: Optional[list[str]] = None,

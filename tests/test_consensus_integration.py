@@ -29,6 +29,7 @@ GEMINI_REPLAY_ID = "consensus/step2_gemini25_flash_against/mldev"
 GEMINI_REPLAY_PATH = GEMINI_REPLAY_DIR / "consensus" / "step2_gemini25_flash_against" / "mldev.json"
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 @pytest.mark.no_mock_provider
 @pytest.mark.parametrize("openai_model", ["gpt-5", "gpt-5.1"])

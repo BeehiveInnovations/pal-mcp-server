@@ -117,7 +117,7 @@ class TestModelSelection:
             model = ModelProviderRegistry.get_preferred_fallback_model(ToolModelCategory.EXTENDED_REASONING)
             # Gemini should return one of its models for extended reasoning
             # The default behavior may return flash when pro is not explicitly preferred
-            assert model in ["gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.0-flash"]
+            assert model in ["gemini-3-pro-preview", "gemini-2.5-flash", "gemini-2.0-flash"]
 
     def test_fast_response_with_openai(self):
         """Test FAST_RESPONSE with OpenAI provider."""
