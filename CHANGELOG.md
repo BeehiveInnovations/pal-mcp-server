@@ -2,6 +2,29 @@
 
 <!-- version list -->
 
+## v9.4.0 (2025-11-18)
+
+### Bug Fixes
+
+- Failing test for gemini 3.0 pro open router
+  ([`19a2a89`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/19a2a89b12c5dec53aea21a4244aff7796a5e049))
+
+### Chores
+
+- Sync version to config.py [skip ci]
+  ([`d3de61f`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/d3de61f8787ab60261d09f2c7f362c50d2093799))
+
+### Features
+
+- Gemini 3.0 Pro Preview for Open Router
+  ([`bbfdfac`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/bbfdfac511668e8ae60f9b9b5d41eb9ab55d74cf))
+
+### Refactoring
+
+- Enable search on codex CLI
+  ([`1579d9f`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/1579d9f806a653bb04c9c73ab304cdd0e78fbdfa))
+
+
 ## v9.3.1 (2025-11-18)
 
 ### Chores
