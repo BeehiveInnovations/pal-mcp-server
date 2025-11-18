@@ -15,3 +15,4 @@ class ProviderType(Enum):
     OPENROUTER = "openrouter"
     CUSTOM = "custom"
     DIAL = "dial"
+    VERTEX_AI = "vertex_ai"

@@ -41,6 +41,7 @@ class ModelProviderRegistry:
         ProviderType.AZURE,  # Azure-hosted OpenAI deployments
         ProviderType.XAI,  # Direct X.AI GROK access
         ProviderType.DIAL,  # DIAL unified API access
+        ProviderType.VERTEX_AI,  # Google Vertex AI access
         ProviderType.CUSTOM,  # Local/self-hosted models
         ProviderType.OPENROUTER,  # Catch-all for cloud models
     ]
@@ -96,7 +97,7 @@ class ModelProviderRegistry:
         # Get provider class or factory function
         provider_class = instance._providers[provider_type]
 
-        # For custom providers, handle special initialization requirements
+        # For special providers, handle custom initialization requirements
         if provider_type == ProviderType.CUSTOM:
             # Check if it's a factory function (callable but not a class)
             if callable(provider_class) and not isinstance(provider_class, type):
@@ -139,10 +140,28 @@ class ModelProviderRegistry:
                 azure_endpoint=azure_endpoint,
                 api_version=azure_version,
             )
+        elif provider_type == ProviderType.VERTEX_AI:
+            # Vertex AI uses project_id and region instead of API key
+            import os
+
+            project_id = os.getenv("VERTEX_PROJECT_ID")
+            if not project_id:
+                logging.debug("VERTEX_PROJECT_ID not set – skipping Vertex AI provider")
+                return None
+            region = os.getenv("VERTEX_REGION", "us-central1")
+            # Initialize Vertex AI provider with project_id and region
+            try:
+                provider = provider_class(project_id=project_id, region=region)
+                # Validate credentials early to prevent late-stage runtime failures
+                _ = provider.credentials  # Force ADC check
+                logging.debug("Vertex AI credentials validated successfully")
+            except ValueError as e:
+                logging.debug(f"Vertex AI credentials not available: {e}")
+                return None  # Skip provider if credentials not usable
         else:
             if not api_key:
                 return None
-            # Initialize non-custom provider with just API key
+            # Initialize standard provider with just API key
             provider = provider_class(api_key=api_key)
 
         # Cache the instance
@@ -460,8 +479,8 @@ class ModelProviderRegistry:
         without directly manipulating private attributes.
         """
         cls._instance = None
-        if hasattr(cls, "_providers"):
-            cls._providers = {}
+        cls._providers = {}
+        cls._initialized_providers = {}
 
     @classmethod
     def unregister_provider(cls, provider_type: ProviderType) -> None:
