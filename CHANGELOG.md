@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v9.1.4 (2025-11-18)
+
+### Bug Fixes
+
+- Replaced deprecated Codex web search configuration
+  ([`2ec64ba`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/2ec64ba7489acc586846b25eedf94a4f05d5bd2d))
+
+### Chores
+
+- Sync version to config.py [skip ci]
+  ([`4d3d177`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/4d3d177d91370097ca7ac4f922fa3a8b69ce3250))
+
+
 ## v9.1.3 (2025-10-22)
 
 ### Bug Fixes
