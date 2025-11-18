@@ -572,7 +572,8 @@ def configure_providers():
         try:
             registry = ModelProviderRegistry()
             if hasattr(registry, "_initialized_providers"):
-                for provider in list(registry._initialized_providers.items()):
+                # Iterate over provider instances (values), not (type, instance) tuples
+                for provider in list(registry._initialized_providers.values()):
                     try:
                         if provider and hasattr(provider, "close"):
                             provider.close()
