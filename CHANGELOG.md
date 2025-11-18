@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v9.2.2 (2025-11-18)
+
+### Bug Fixes
+
+- **build**: Include clink resources in package
+  ([`e9ac1ce`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/e9ac1ce3354fbb124a72190702618f94266b8459))
+
+### Chores
+
+- Sync version to config.py [skip ci]
+  ([`749bc73`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/749bc7307949fa0b0e026bfcfbd546d7619eba8b))
+
+
 ## v9.2.1 (2025-11-18)
 
 ### Bug Fixes

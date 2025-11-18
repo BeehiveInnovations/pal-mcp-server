@@ -1,6 +1,6 @@
 [project]
 name = "zen-mcp-server"
-version = "9.2.1"
+version = "9.2.2"
 description = "AI-powered MCP server with multiple model providers"
 requires-python = ">=3.9"
 dependencies = [
@@ -18,7 +18,11 @@ include = ["tools*", "providers*", "systemprompts*", "utils*", "conf*", "clink*"
 py-modules = ["server", "config"]
 
 [tool.setuptools.package-data]
-"*" = ["conf/*.json"]
+"*" = [
+    "conf/*.json",
+    "conf/cli_clients/*.json",
+    "systemprompts/clink/*.txt",
+]
 
 [tool.setuptools.data-files]
 "conf" = [
