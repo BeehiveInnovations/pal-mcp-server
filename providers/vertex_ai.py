@@ -64,7 +64,8 @@ class VertexAIProvider(GeminiModelProvider):
 
     # Vertex AI specific aliases that extend the parent Gemini aliases
     VERTEX_ALIASES = {
-        "gemini-2.5-pro": ["vertex-pro", "vertex-2.5-pro"],
+        "gemini-3-pro-preview": ["vertex-3-pro", "vertex-3.0-pro", "vertex-gemini3"],
+        "gemini-2.5-pro": ["vertex-pro", "vertex-2.5-pro"],  # vertex-pro = stable pro model
         "gemini-2.5-flash": ["vertex-flash", "vertex-2.5-flash"],
         "gemini-2.5-flash-lite-preview-06-17": ["vertex-lite", "vertex-2.5-flash-lite", "gemini-2.5-flash-lite"],
         "gemini-2.0-flash": ["vertex-2.0-flash"],
