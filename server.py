@@ -464,9 +464,9 @@ def configure_providers():
         logger.info("DIAL API key found - DIAL models available")
 
     # Check for Vertex AI configuration
-    vertex_project_id = os.getenv("VERTEX_PROJECT_ID")
+    vertex_project_id = get_env("VERTEX_PROJECT_ID")
     if vertex_project_id:
-        vertex_region = os.getenv("VERTEX_REGION", "us-central1")
+        vertex_region = get_env("VERTEX_REGION") or "us-central1"
         valid_providers.append(f"Vertex AI (Project: {vertex_project_id})")
         has_native_apis = True
         logger.info(f"Vertex AI project found - Vertex AI Gemini models available in {vertex_region}")
