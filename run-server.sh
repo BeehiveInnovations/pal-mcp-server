@@ -1073,7 +1073,7 @@ setup_env_file() {
         "XAI_API_KEY:your_xai_api_key_here"
         "DIAL_API_KEY:your_dial_api_key_here"
         "OPENROUTER_API_KEY:your_openrouter_api_key_here"
-        "VERTEX_PROJECT_ID:your_vertex_project_id_here"
+        "VERTEX_PROJECT_ID:your-gcp-project-id"
         "VERTEX_REGION:us-central1"
     )
 

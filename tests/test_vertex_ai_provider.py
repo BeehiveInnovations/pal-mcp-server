@@ -12,11 +12,62 @@ class TestVertexAIProvider:
     """Test Vertex AI provider functionality."""
 
     def test_initialization(self):
-        """Test provider initialization."""
+        """Test provider initialization with valid inputs."""
         provider = VertexAIProvider(project_id="test-project", region="us-central1")
         assert provider.project_id == "test-project"
         assert provider.region == "us-central1"
         assert provider.get_provider_type() == ProviderType.VERTEX_AI
+
+    def test_project_id_validation_empty(self):
+        """Test that empty project ID raises ValueError."""
+        with pytest.raises(ValueError, match="VERTEX_PROJECT_ID is required"):
+            VertexAIProvider(project_id="", region="us-central1")
+
+    def test_project_id_validation_whitespace(self):
+        """Test that whitespace-only project ID raises ValueError."""
+        with pytest.raises(ValueError, match="VERTEX_PROJECT_ID is required"):
+            VertexAIProvider(project_id="   ", region="us-central1")
+
+    def test_project_id_validation_placeholder(self):
+        """Test that placeholder project IDs are rejected."""
+        placeholders = [
+            "your_vertex_project_id_here",
+            "your-gcp-project-id",
+            "your_gcp_project_id",
+        ]
+        for placeholder in placeholders:
+            with pytest.raises(ValueError, match="appears to be a placeholder"):
+                VertexAIProvider(project_id=placeholder, region="us-central1")
+
+    def test_project_id_normalization(self):
+        """Test that project ID whitespace is normalized."""
+        provider = VertexAIProvider(project_id="  test-project  ", region="us-central1")
+        assert provider.project_id == "test-project"
+
+    def test_project_id_lowercase_normalization(self):
+        """Test that project ID is normalized to lowercase (GCP requirement)."""
+        provider = VertexAIProvider(project_id="My-Project-123", region="us-central1")
+        assert provider.project_id == "my-project-123"
+
+    def test_project_id_mixed_case_normalization(self):
+        """Test that mixed case project IDs are normalized to lowercase."""
+        provider = VertexAIProvider(project_id="  MY-GCP-PROJECT  ", region="us-central1")
+        assert provider.project_id == "my-gcp-project"
+
+    def test_region_validation_empty(self):
+        """Test that empty region raises ValueError."""
+        with pytest.raises(ValueError, match="VERTEX_REGION cannot be empty"):
+            VertexAIProvider(project_id="test-project", region="")
+
+    def test_region_normalization(self):
+        """Test that regions are normalized to lowercase."""
+        provider = VertexAIProvider(project_id="test-project", region="US-CENTRAL1")
+        assert provider.region == "us-central1"
+
+    def test_region_whitespace_normalization(self):
+        """Test that region whitespace is normalized."""
+        provider = VertexAIProvider(project_id="test-project", region="  us-central1  ")
+        assert provider.region == "us-central1"
 
     def test_model_validation(self):
         """Test model name validation using canonical Gemini names."""
@@ -73,15 +124,52 @@ class TestVertexAIProvider:
         assert capabilities.temperature_constraint.max_temp == 2.0
 
     @patch("providers.vertex_ai.google.auth.default")
-    def test_credentials_error(self, mock_auth):
-        """Test error when credentials cannot be initialized."""
-        mock_auth.side_effect = Exception("Credentials error")
+    def test_credentials_default_error(self, mock_auth):
+        """Test DefaultCredentialsError handling."""
+        from google.auth.exceptions import DefaultCredentialsError
 
+        mock_auth.side_effect = DefaultCredentialsError("No credentials found")
         provider = VertexAIProvider(project_id="test-project")
 
-        with pytest.raises(
-            ValueError, match="An unexpected error occurred while initializing Google Cloud credentials"
-        ):
+        with pytest.raises(ValueError, match="Could not initialize Google Cloud credentials"):
+            _ = provider.credentials
+
+    @patch("providers.vertex_ai.google.auth.default")
+    def test_credentials_refresh_error(self, mock_auth):
+        """Test RefreshError handling."""
+        from google.auth.exceptions import RefreshError
+
+        mock_auth.side_effect = RefreshError("Token expired")
+        provider = VertexAIProvider(project_id="test-project")
+
+        with pytest.raises(ValueError, match="credentials exist but could not be refreshed"):
+            _ = provider.credentials
+
+    @patch("providers.vertex_ai.google.auth.default")
+    def test_credentials_os_error(self, mock_auth):
+        """Test OSError handling (e.g., file not found)."""
+        mock_auth.side_effect = OSError("File not found")
+        provider = VertexAIProvider(project_id="test-project")
+
+        with pytest.raises(ValueError, match="File system error while loading credentials"):
+            _ = provider.credentials
+
+    @patch("providers.vertex_ai.google.auth.default")
+    def test_credentials_value_error(self, mock_auth):
+        """Test ValueError handling (e.g., invalid JSON)."""
+        mock_auth.side_effect = ValueError("Invalid JSON")
+        provider = VertexAIProvider(project_id="test-project")
+
+        with pytest.raises(ValueError, match="Invalid credential file format"):
+            _ = provider.credentials
+
+    @patch("providers.vertex_ai.google.auth.default")
+    def test_credentials_unexpected_error(self, mock_auth):
+        """Test unexpected error handling."""
+        mock_auth.side_effect = RuntimeError("Unexpected error")
+        provider = VertexAIProvider(project_id="test-project")
+
+        with pytest.raises(ValueError, match="Unexpected error while initializing Google Cloud credentials"):
             _ = provider.credentials
 
     def test_list_models(self):

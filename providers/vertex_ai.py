@@ -33,20 +33,98 @@ class VertexAIProvider(GeminiModelProvider):
     def __init__(self, project_id: str, region: str = "us-central1", **kwargs):
         """Initialize Vertex AI provider with project ID and region.
 
+        Args:
+            project_id: GCP project ID
+            region: Vertex AI region (default: us-central1)
+            **kwargs: Additional arguments passed to parent class
+
+        Raises:
+            ValueError: If project_id is empty or a placeholder, or if region is empty
+
         Note: Unlike other providers, Vertex AI doesn't use an API key.
         It uses Application Default Credentials (ADC) or service account credentials.
+        Actual validation of project_id format and region availability is performed
+        by Google Cloud APIs during authentication and client initialization.
         """
         # Initialize with empty api_key to satisfy parent class
         super().__init__("", **kwargs)
-        self.project_id = project_id
-        self.region = region
+
+        # Minimal validation - reject empty values and obvious placeholders
+        self.project_id = self._validate_not_placeholder(project_id, "VERTEX_PROJECT_ID")
+        self.region = self._validate_not_empty(region, "VERTEX_REGION")
+
         self._credentials = None
         self._client = None
         self._merged_capabilities = None
 
+    def _validate_not_placeholder(self, value: str, field_name: str) -> str:
+        """Validate that a field is not empty or a placeholder value.
+
+        Args:
+            value: Value to validate
+            field_name: Name of the field for error messages
+
+        Returns:
+            Normalized value (stripped, lowercase)
+
+        Raises:
+            ValueError: If value is empty or a known placeholder
+
+        Note:
+            GCP project IDs are strictly lowercase. This method normalizes input
+            to lowercase to prevent runtime API errors from case mismatches.
+        """
+        # Normalize to stripped lowercase (GCP project IDs are case-insensitive but stored lowercase)
+        normalized = value.strip().lower() if value else ""
+
+        if not normalized:
+            raise ValueError(f"{field_name} is required for Vertex AI provider. " f"Please set it in your .env file.")
+
+        # Reject common placeholder values
+        invalid_placeholders = {
+            "your_vertex_project_id_here",
+            "your-gcp-project-id",
+            "your_gcp_project_id",
+        }
+        if normalized in invalid_placeholders:
+            raise ValueError(
+                f"{field_name} '{normalized}' appears to be a placeholder. "
+                f"Please replace it with your actual GCP project ID."
+            )
+
+        return normalized
+
+    def _validate_not_empty(self, value: str, field_name: str) -> str:
+        """Validate that a field is not empty.
+
+        Args:
+            value: Value to validate
+            field_name: Name of the field for error messages
+
+        Returns:
+            Normalized value (stripped, lowercase)
+
+        Raises:
+            ValueError: If value is empty
+        """
+        # Normalize to stripped lowercase
+        normalized = value.strip().lower() if value else ""
+
+        if not normalized:
+            raise ValueError(f"{field_name} cannot be empty.")
+
+        return normalized
+
     @property
     def credentials(self):
-        """Lazy initialization of Google credentials."""
+        """Lazy initialization of Google credentials.
+
+        Returns:
+            Google credentials object
+
+        Raises:
+            ValueError: If credentials cannot be initialized with helpful recovery instructions
+        """
         if self._credentials is None:
             try:
                 self._credentials, _ = google.auth.default(
@@ -55,14 +133,46 @@ class VertexAIProvider(GeminiModelProvider):
             except google.auth.exceptions.DefaultCredentialsError as e:
                 logger.error(f"Failed to initialize Google credentials (DefaultCredentialsError): {e}")
                 raise ValueError(
-                    f"Could not initialize Google Cloud credentials: {e}. "
-                    "Please run 'gcloud auth application-default login' or set "
-                    "GOOGLE_APPLICATION_CREDENTIALS environment variable."
+                    f"Could not initialize Google Cloud credentials: {e}\n\n"
+                    "To fix this, try one of the following:\n"
+                    "1. Run: gcloud auth application-default login\n"
+                    "2. Set GOOGLE_APPLICATION_CREDENTIALS to your service account key path\n"
+                    "3. Ensure your GCP project is properly configured\n\n"
+                    "See: https://cloud.google.com/docs/authentication/application-default-credentials"
+                ) from e
+            except google.auth.exceptions.RefreshError as e:
+                logger.error(f"Failed to refresh Google credentials (RefreshError): {e}")
+                raise ValueError(
+                    f"Google Cloud credentials exist but could not be refreshed: {e}\n\n"
+                    "This usually means your credentials have expired or are invalid.\n"
+                    "To fix this, run: gcloud auth application-default login"
+                ) from e
+            except OSError as e:
+                # Handle file-related errors (e.g., service account key file not found)
+                logger.error(f"File system error during credential initialization: {e}")
+                raise ValueError(
+                    f"File system error while loading credentials: {e}\n\n"
+                    "If using GOOGLE_APPLICATION_CREDENTIALS, ensure:\n"
+                    "1. The file path is correct and accessible\n"
+                    "2. The service account key file exists and has proper permissions\n"
+                    "3. The JSON file is valid and not corrupted"
+                ) from e
+            except ValueError as e:
+                # Handle JSON parsing errors or invalid credential formats
+                logger.error(f"Invalid credential format: {e}")
+                raise ValueError(
+                    f"Invalid credential file format: {e}\n\n"
+                    "The service account key file may be corrupted or invalid.\n"
+                    "Download a new key from GCP Console and update GOOGLE_APPLICATION_CREDENTIALS."
                 ) from e
             except Exception as e:
-                logger.error(f"An unexpected error occurred during Google credentials initialization: {e}")
+                logger.error(f"Unexpected error during Google credentials initialization: {e}")
                 raise ValueError(
-                    f"An unexpected error occurred while initializing Google Cloud credentials: {e}"
+                    f"Unexpected error while initializing Google Cloud credentials: {e}\n\n"
+                    "For debugging, check:\n"
+                    "1. GCP project ID is correct\n"
+                    "2. Vertex AI API is enabled in your project\n"
+                    "3. Your account has necessary permissions"
                 ) from e
         return self._credentials
 
@@ -139,7 +249,7 @@ class VertexAIProvider(GeminiModelProvider):
         """Get the provider type."""
         return ProviderType.VERTEX_AI
 
-    def _build_contents(self, parts: list[dict], role: str = "user") -> list[dict]:
+    def _build_contents(self, parts: list[dict]) -> list[dict]:
         """Build contents structure for Vertex AI API - requires role field.
 
         Overrides parent class method to add required "role" field for Vertex AI.
@@ -151,12 +261,11 @@ class VertexAIProvider(GeminiModelProvider):
 
         Args:
             parts: List of content parts (text, images, etc.)
-            role: The role for the message ("user", "system", or "model")
 
         Returns:
             List of content dictionaries with required Vertex AI structure
         """
-        return [{"role": role, "parts": parts}]
+        return [{"role": "user", "parts": parts}]
 
     def _build_response(
         self,
@@ -187,21 +296,25 @@ class VertexAIProvider(GeminiModelProvider):
         Returns:
             ModelResponse object with Vertex AI specific metadata
         """
-        return ModelResponse(
-            content=response.text,
-            usage=usage,
+        # Build the base response using the parent's implementation
+        model_response = super()._build_response(
+            response=response,
             model_name=model_name,
-            friendly_name="Vertex AI",
-            provider=ProviderType.VERTEX_AI,
-            metadata={
-                "project_id": self.project_id,
-                "region": self.region,
-                "thinking_mode": (thinking_mode if capabilities.supports_extended_thinking else None),
-                "finish_reason": finish_reason,
-                "is_blocked_by_safety": is_blocked_by_safety,
-                "safety_feedback": safety_feedback,
-            },
+            thinking_mode=thinking_mode,
+            capabilities=capabilities,
+            usage=usage,
+            finish_reason=finish_reason,
+            is_blocked_by_safety=is_blocked_by_safety,
+            safety_feedback=safety_feedback,
         )
+
+        # Override Vertex AI-specific fields
+        model_response.friendly_name = "Vertex AI"
+        model_response.provider = ProviderType.VERTEX_AI
+        model_response.metadata["project_id"] = self.project_id
+        model_response.metadata["region"] = self.region
+
+        return model_response
 
     def list_all_known_models(self) -> list[str]:
         """Return a list of all known model names, including both actual models and aliases.
