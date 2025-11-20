@@ -35,13 +35,14 @@ class ModelProviderRegistry:
 
     # Provider priority order for model selection
     # Native APIs first, then custom endpoints, then catch-all providers
+    # Note: Vertex AI before Gemini API to enforce "Vertex Precedence" in fallback selection
     PROVIDER_PRIORITY_ORDER = [
-        ProviderType.GOOGLE,  # Direct Gemini access
+        ProviderType.VERTEX_AI,  # Google Vertex AI access (takes precedence over Gemini API)
+        ProviderType.GOOGLE,  # Direct Gemini API access
         ProviderType.OPENAI,  # Direct OpenAI access
         ProviderType.AZURE,  # Azure-hosted OpenAI deployments
         ProviderType.XAI,  # Direct X.AI GROK access
         ProviderType.DIAL,  # DIAL unified API access
-        ProviderType.VERTEX_AI,  # Google Vertex AI access
         ProviderType.CUSTOM,  # Local/self-hosted models
         ProviderType.OPENROUTER,  # Catch-all for cloud models
     ]
@@ -186,10 +187,11 @@ class ModelProviderRegistry:
         """Check if Gemini API key is configured.
 
         Returns:
-            True if GEMINI_API_KEY is set, False otherwise
+            True if GEMINI_API_KEY is set and valid, False otherwise
         """
         api_key = get_env("GEMINI_API_KEY")
-        return bool(api_key and api_key.strip())
+        normalized_key = api_key.strip() if api_key else ""
+        return bool(normalized_key and normalized_key != "your_gemini_api_key_here")
 
     @classmethod
     def _configure_gemini_access(cls) -> Optional[ProviderType]:
