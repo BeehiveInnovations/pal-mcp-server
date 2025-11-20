@@ -528,8 +528,15 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
 
         # Helper to find best model from candidates
         def find_best(candidates: list[str]) -> str | None:
-            """Return best model from candidates (sorted for consistency)."""
-            return sorted(candidates, reverse=True)[0] if candidates else None
+            """Return best model from candidates based on intelligence score."""
+            if not candidates:
+                return None
+            # Sort by intelligence score (higher is better), then alphabetically for consistency
+            scored_candidates = [
+                (m, capability_map[m].intelligence_score if m in capability_map else 0) for m in candidates
+            ]
+            scored_candidates.sort(key=lambda x: (-x[1], x[0]), reverse=False)
+            return scored_candidates[0][0]
 
         if category == ToolModelCategory.EXTENDED_REASONING:
             # For extended reasoning, prefer models with thinking support
