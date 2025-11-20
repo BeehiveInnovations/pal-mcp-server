@@ -1110,6 +1110,34 @@ migrate_env_file() {
     echo "  (Backup saved as .env.backup_*)"
 }
 
+# Helper function to validate Vertex AI project ID against known placeholders
+# Returns 0 if valid, 1 if invalid (empty or matches a placeholder)
+is_valid_vertex_project() {
+    local project_id="$1"
+
+    # Check if empty
+    if [[ -z "$project_id" ]]; then
+        return 1
+    fi
+
+    # Define the blocklist (matches Python validation in providers/registry.py)
+    # Note: These are distinct patterns - hyphens vs underscores are different strings
+    local invalid_placeholders=(
+        "your_vertex_project_id_here"
+        "your-gcp-project-id"
+        "your_gcp_project_id"
+    )
+
+    # Check against blocklist
+    for placeholder in "${invalid_placeholders[@]}"; do
+        if [[ "$project_id" == "$placeholder" ]]; then
+            return 1  # Invalid (is a placeholder)
+        fi
+    done
+
+    return 0  # Valid project ID
+}
+
 # Check API keys and warn if missing (non-blocking)
 check_api_keys() {
     local has_key=false
@@ -1142,7 +1170,7 @@ check_api_keys() {
     local vertex_project="${VERTEX_PROJECT_ID:-}"
     local vertex_region="${VERTEX_REGION:-us-central1}"
     local has_vertex=false
-    if [[ -n "$vertex_project" ]] && [[ "$vertex_project" != "your_vertex_project_id_here" ]] && [[ "$vertex_project" != "your-gcp-project-id" ]] && [[ "$vertex_project" != "your_gcp_project_id" ]]; then
+    if is_valid_vertex_project "$vertex_project"; then
         print_success "VERTEX_PROJECT_ID configured: $vertex_project"
         if [[ -n "$vertex_region" ]] && [[ "$vertex_region" != "us-central1" ]]; then
             print_success "VERTEX_REGION configured: $vertex_region"

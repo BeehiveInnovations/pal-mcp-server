@@ -614,7 +614,13 @@ def configure_providers():
 
         # Validate restrictions against known models
         provider_instances = {}
-        provider_types_to_validate = [ProviderType.GOOGLE, ProviderType.OPENAI, ProviderType.XAI, ProviderType.DIAL]
+        provider_types_to_validate = [
+            ProviderType.GOOGLE,
+            ProviderType.VERTEX_AI,
+            ProviderType.OPENAI,
+            ProviderType.XAI,
+            ProviderType.DIAL,
+        ]
         for provider_type in provider_types_to_validate:
             provider = ModelProviderRegistry.get_provider(provider_type)
             if provider:

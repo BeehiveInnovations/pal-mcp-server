@@ -213,18 +213,9 @@ class VertexAIProvider(GeminiModelProvider):
         Returns:
             List of all model names and their aliases
         """
-        # Get all model capabilities
-        all_capabilities = self.get_all_model_capabilities()
-
-        # Start with all actual model names
-        all_models = set(all_capabilities.keys())
-
-        # Add all aliases from capabilities
-        for _model_name, capabilities in all_capabilities.items():
-            if capabilities.aliases:
-                all_models.update(capabilities.aliases)
-
-        return sorted(all_models)
+        # Rely on the base class implementation for listing models, which correctly
+        # uses the overridden get_all_model_capabilities() method.
+        return sorted(super().list_models(respect_restrictions=False, include_aliases=True, unique=True))
 
     def supports_thinking_mode(self, model_name: str) -> bool:
         """Check if a model supports extended thinking mode.
