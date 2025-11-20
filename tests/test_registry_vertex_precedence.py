@@ -36,6 +36,16 @@ class TestVertexPrecedence:
         monkeypatch.setenv("VERTEX_PROJECT_ID", "your_gcp_project_id")
         assert ModelProviderRegistry._has_vertex_credentials() is False
 
+    def test_has_vertex_credentials_placeholder_with_whitespace(self, monkeypatch):
+        """Test _has_vertex_credentials rejects placeholder with leading/trailing whitespace."""
+        monkeypatch.setenv("VERTEX_PROJECT_ID", " your-gcp-project-id ")
+        assert ModelProviderRegistry._has_vertex_credentials() is False
+
+    def test_has_vertex_credentials_placeholder_with_trailing_space(self, monkeypatch):
+        """Test _has_vertex_credentials rejects placeholder with trailing space."""
+        monkeypatch.setenv("VERTEX_PROJECT_ID", "your-gcp-project-id ")
+        assert ModelProviderRegistry._has_vertex_credentials() is False
+
     def test_has_vertex_credentials_empty(self, monkeypatch):
         """Test _has_vertex_credentials with empty string."""
         monkeypatch.setenv("VERTEX_PROJECT_ID", "")

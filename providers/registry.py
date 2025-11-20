@@ -175,9 +175,11 @@ class ModelProviderRegistry:
             True if VERTEX_PROJECT_ID is set and valid, False otherwise
         """
         project_id = get_env("VERTEX_PROJECT_ID")
+        # Normalize to stripped value for validation
+        normalized_id = project_id.strip() if project_id else ""
         # Reject common placeholder values
         invalid_placeholders = {"your_vertex_project_id_here", "your-gcp-project-id", "your_gcp_project_id"}
-        return bool(project_id and project_id.strip() and project_id not in invalid_placeholders)
+        return bool(normalized_id and normalized_id not in invalid_placeholders)
 
     @classmethod
     def _has_gemini_api_key(cls) -> bool:
