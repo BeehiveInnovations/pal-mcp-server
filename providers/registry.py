@@ -46,6 +46,15 @@ class ModelProviderRegistry:
         ProviderType.OPENROUTER,  # Catch-all for cloud models
     ]
 
+    # Gemini model aliases for routing through Vertex Precedence logic
+    # These aliases are recognized as Gemini models that should use
+    # the Vertex AI provider (if configured) or Gemini API provider
+    #
+    # IMPORTANT: This list must be kept in sync with aliases defined in
+    # GeminiModelProvider capabilities. When new Gemini aliases are added,
+    # update this set to ensure proper Vertex precedence routing.
+    GEMINI_ALIASES = {"pro", "flash", "flashlite", "flash-lite", "gemini3"}
+
     def __new__(cls):
         """Singleton pattern for registry."""
         if cls._instance is None:
@@ -142,13 +151,11 @@ class ModelProviderRegistry:
             )
         elif provider_type == ProviderType.VERTEX_AI:
             # Vertex AI uses project_id and region instead of API key
-            import os
-
-            project_id = os.getenv("VERTEX_PROJECT_ID")
+            project_id = get_env("VERTEX_PROJECT_ID")
             if not project_id:
                 logging.debug("VERTEX_PROJECT_ID not set – skipping Vertex AI provider")
                 return None
-            region = os.getenv("VERTEX_REGION", "us-central1")
+            region = get_env("VERTEX_REGION") or "us-central1"
             # Initialize Vertex AI provider with project_id and region
             try:
                 provider = provider_class(project_id=project_id, region=region)
@@ -170,11 +177,80 @@ class ModelProviderRegistry:
         return provider
 
     @classmethod
+    def _has_vertex_credentials(cls) -> bool:
+        """Check if Vertex AI credentials are configured.
+
+        Returns:
+            True if VERTEX_PROJECT_ID is set and valid, False otherwise
+        """
+        project_id = get_env("VERTEX_PROJECT_ID")
+        return bool(project_id and project_id != "your_vertex_project_id_here" and project_id.strip())
+
+    @classmethod
+    def _has_gemini_api_key(cls) -> bool:
+        """Check if Gemini API key is configured.
+
+        Returns:
+            True if GEMINI_API_KEY is set, False otherwise
+        """
+        api_key = get_env("GEMINI_API_KEY")
+        return bool(api_key and api_key.strip())
+
+    @classmethod
+    def _configure_gemini_access(cls) -> Optional[ProviderType]:
+        """Configure Gemini access via Vertex AI or API key (mutually exclusive).
+
+        Implements "Vertex Precedence" pattern:
+        - If Vertex AI credentials exist, use Vertex AI provider (GCP billing)
+        - Otherwise, use Gemini API provider (API key billing)
+        - Both providers support the same Gemini models
+
+        Returns:
+            ProviderType.VERTEX_AI if Vertex credentials configured,
+            ProviderType.GOOGLE if Gemini API key configured,
+            None if neither configured
+
+        Note:
+            This enforces mutual exclusivity to prevent billing confusion.
+            Users specify model names like "gemini-2.5-pro" and credentials
+            determine the billing method, not alias-based routing.
+        """
+        has_vertex = cls._has_vertex_credentials()
+        has_gemini_api = cls._has_gemini_api_key()
+
+        # Vertex AI takes precedence
+        if has_vertex:
+            provider = cls.get_provider(ProviderType.VERTEX_AI)
+            if provider:
+                logging.info("✓ Using Vertex AI for Gemini models (GCP billing)")
+                if has_gemini_api:
+                    logging.info(
+                        "  ℹ️  Gemini API key detected but ignored (Vertex AI takes precedence). "
+                        "Remove VERTEX_PROJECT_ID to use API key billing instead."
+                    )
+                return ProviderType.VERTEX_AI
+
+        # Fallback to Gemini API
+        if has_gemini_api:
+            provider = cls.get_provider(ProviderType.GOOGLE)
+            if provider:
+                logging.info("✓ Using Gemini API for Gemini models (API key billing)")
+                return ProviderType.GOOGLE
+
+        # No Gemini access configured
+        logging.info("No Gemini access configured (neither Vertex AI nor GEMINI_API_KEY)")
+        return None
+
+    @classmethod
     def get_provider_for_model(cls, model_name: str) -> Optional[ModelProvider]:
         """Get provider instance for a specific model name.
 
-        Provider priority order:
-        1. Native APIs (GOOGLE, OPENAI) - Most direct and efficient
+        For Gemini models, implements "Vertex Precedence":
+        - Vertex AI takes priority if configured (GCP billing)
+        - Falls back to Gemini API if available (API key billing)
+
+        For other providers, uses priority order:
+        1. Native APIs (OPENAI, XAI, etc.) - Most direct and efficient
         2. CUSTOM - For local/private models with specific endpoints
         3. OPENROUTER - Catch-all for cloud models via unified API
 
@@ -186,12 +262,26 @@ class ModelProviderRegistry:
         """
         logging.debug(f"get_provider_for_model called with model_name='{model_name}'")
 
-        # Check providers in priority order
         instance = cls()
         logging.debug(f"Registry instance: {instance}")
         logging.debug(f"Available providers in registry: {list(instance._providers.keys())}")
 
+        # Check if this is a Gemini model - use precedence logic
+        model_lower = model_name.lower()
+        if model_lower.startswith("gemini-") or model_lower in cls.GEMINI_ALIASES:
+            gemini_provider_type = cls._configure_gemini_access()
+            if gemini_provider_type:
+                provider = cls.get_provider(gemini_provider_type)
+                if provider and provider.validate_model_name(model_name):
+                    logging.debug(f"Gemini model '{model_name}' routed to {gemini_provider_type}")
+                    return provider
+
+        # For non-Gemini models, check providers in priority order
         for provider_type in cls.PROVIDER_PRIORITY_ORDER:
+            # Skip Gemini providers since we handled them above
+            if provider_type in (ProviderType.GOOGLE, ProviderType.VERTEX_AI):
+                continue
+
             if provider_type in instance._providers:
                 logging.debug(f"Found {provider_type} in registry")
                 # Get or create provider instance

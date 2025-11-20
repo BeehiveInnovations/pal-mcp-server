@@ -146,8 +146,7 @@ For best results when using [Codex CLI](https://developers.openai.com/codex/cli)
 
 **1. Get API Keys** (choose one or more):
 - **[OpenRouter](https://openrouter.ai/)** - Access multiple models with one API
-- **[Gemini](https://makersuite.google.com/app/apikey)** - Google's latest models
-- **[Vertex AI](https://cloud.google.com/vertex-ai)** - Enterprise GCP deployment of Gemini models (requires gcloud CLI)
+- **[Gemini](https://makersuite.google.com/app/apikey)** OR **[Vertex AI](https://cloud.google.com/vertex-ai)** - Google's Gemini models (choose one: API key billing or GCP billing)
 - **[OpenAI](https://platform.openai.com/api-keys)** - O3, GPT-5 series
 - **[Azure OpenAI](https://learn.microsoft.com/azure/ai-services/openai/)** - Enterprise deployments of GPT-4o, GPT-4.1, GPT-5 family
 - **[X.AI](https://console.x.ai/)** - Grok models

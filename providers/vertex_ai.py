@@ -1,5 +1,7 @@
 """Google Vertex AI model provider implementation."""
 
+from __future__ import annotations
+
 import dataclasses
 import logging
 
@@ -9,7 +11,7 @@ import google.genai as genai
 import google.genai.types as genai_types
 
 from .gemini import GeminiModelProvider
-from .shared import ModelCapabilities, ModelResponse, ProviderType, TemperatureConstraint
+from .shared import ModelCapabilities, ModelResponse, ProviderType
 
 logger = logging.getLogger(__name__)
 
@@ -20,56 +22,13 @@ class VertexAIProvider(GeminiModelProvider):
     # Inherit thinking budgets from parent
     THINKING_BUDGETS = GeminiModelProvider.THINKING_BUDGETS
 
-    # Vertex AI specific model configurations
-    # Note: Base Gemini models are inherited via get_capabilities() method override
-    # Only truly Vertex AI specific models are defined here
-    VERTEX_SPECIFIC_MODELS = {
-        "gemini-2.5-flash-lite-preview-06-17": ModelCapabilities(
-            provider=ProviderType.VERTEX_AI,
-            model_name="gemini-2.5-flash-lite-preview-06-17",
-            friendly_name="Vertex AI",
-            context_window=1_048_576,  # 1M tokens
-            max_output_tokens=65_536,
-            supports_extended_thinking=True,
-            supports_system_prompts=True,
-            supports_streaming=True,
-            supports_function_calling=True,
-            supports_json_mode=True,
-            supports_images=True,  # Vision capability
-            max_image_size_mb=20.0,  # Conservative 20MB limit for reliability
-            supports_temperature=True,
-            temperature_constraint=TemperatureConstraint.create("range"),
-            max_thinking_tokens=24576,  # Flash 2.5 thinking budget limit
-            description="Gemini 2.5 Flash Lite (Preview) - Vertex AI deployment",
-        ),
-        "gemini-2.5-pro-preview-06-05": ModelCapabilities(
-            provider=ProviderType.VERTEX_AI,
-            model_name="gemini-2.5-pro-preview-06-05",
-            friendly_name="Vertex AI",
-            context_window=1_048_576,  # 1M tokens
-            max_output_tokens=65_536,
-            supports_extended_thinking=True,
-            supports_system_prompts=True,
-            supports_streaming=True,
-            supports_function_calling=True,
-            supports_json_mode=True,
-            supports_images=True,  # Vision capability
-            max_image_size_mb=32.0,  # Higher limit for Pro model
-            supports_temperature=True,
-            temperature_constraint=TemperatureConstraint.create("range"),
-            max_thinking_tokens=32768,  # Pro 2.5 thinking budget limit
-            description="Gemini 2.5 Pro (Preview) - Vertex AI deployment",
-        ),
-    }
-
-    # Vertex AI specific aliases that extend the parent Gemini aliases
-    VERTEX_ALIASES = {
-        "gemini-3-pro-preview": ["vertex-3-pro", "vertex-3.0-pro", "vertex-gemini3"],
-        "gemini-2.5-pro": ["vertex-pro", "vertex-2.5-pro"],  # vertex-pro = stable pro model
-        "gemini-2.5-flash": ["vertex-flash", "vertex-2.5-flash"],
-        "gemini-2.5-flash-lite-preview-06-17": ["vertex-lite", "vertex-2.5-flash-lite", "gemini-2.5-flash-lite"],
-        "gemini-2.0-flash": ["vertex-2.0-flash"],
-    }
+    # Note: All Gemini models are inherited from parent GeminiModelProvider
+    # There are no Vertex AI exclusive Gemini models - all Gemini models are available
+    # in both Google AI Studio and Vertex AI. The purpose of this provider is to:
+    # 1. Route requests to Vertex AI (GCP billing) instead of Gemini API (API key billing)
+    # 2. Use standard Gemini model names (gemini-2.5-pro, etc.) - credentials determine billing
+    # 3. Enable enterprise features (data residency, compliance, MLOps)
+    # 4. Access non-Gemini models (MedLM, Computer Use, Model Garden) - not implemented here
 
     def __init__(self, project_id: str, region: str = "us-central1", **kwargs):
         """Initialize Vertex AI provider with project ID and region.
@@ -120,55 +79,36 @@ class VertexAIProvider(GeminiModelProvider):
             )
         return self._client
 
+    def _invalidate_capability_cache(self):
+        """Invalidate both parent and local capability caches.
+
+        This ensures that when the parent provider refreshes capabilities,
+        the Vertex AI provider's merged cache is also cleared to prevent
+        serving stale model information.
+        """
+        super()._invalidate_capability_cache()
+        self._merged_capabilities = None
+
     def get_all_model_capabilities(self) -> dict[str, ModelCapabilities]:
-        """Get all model capabilities for Vertex AI, merging parent Gemini models with Vertex-specific ones.
+        """Get all model capabilities for Vertex AI.
 
         Returns:
-            Dictionary mapping model names to their capabilities, including both inherited
-            Gemini models (with Vertex-specific aliases added) and Vertex-specific models.
+            Dictionary mapping model names to their capabilities. All models are inherited
+            from parent GeminiModelProvider with Vertex AI provider type and friendly name.
         """
         if self._merged_capabilities is not None:
             return self._merged_capabilities
 
-        # Get parent Gemini capabilities from registry
+        # Get parent Gemini capabilities and override provider metadata
         parent_capabilities = super().get_all_model_capabilities()
 
-        # Start with a copy of parent capabilities
-        merged = {}
-        for model_name, capabilities in parent_capabilities.items():
-            # Check if this model has Vertex-specific aliases to add
-            if model_name in self.VERTEX_ALIASES:
-                # Get existing aliases from the capabilities
-                existing_aliases = list(capabilities.aliases) if capabilities.aliases else []
+        # Override provider type and friendly name for all models
+        self._merged_capabilities = {
+            model_name: dataclasses.replace(capabilities, provider=ProviderType.VERTEX_AI, friendly_name="Vertex AI")
+            for model_name, capabilities in parent_capabilities.items()
+        }
 
-                # Merge with Vertex-specific aliases (deduplicate)
-                combined_aliases = list(dict.fromkeys(existing_aliases + self.VERTEX_ALIASES[model_name]))
-
-                # Create a new capabilities object with merged aliases
-                merged[model_name] = dataclasses.replace(capabilities, aliases=combined_aliases)
-            else:
-                # No Vertex-specific aliases, use as-is
-                merged[model_name] = capabilities
-
-        # Add Vertex-specific models (also apply alias merging)
-        for model_name, capabilities in self.VERTEX_SPECIFIC_MODELS.items():
-            # Check if this Vertex-specific model has aliases to add
-            if model_name in self.VERTEX_ALIASES:
-                # Get existing aliases from the capabilities (if any)
-                existing_aliases = list(capabilities.aliases) if capabilities.aliases else []
-
-                # Merge with Vertex-specific aliases (deduplicate)
-                combined_aliases = list(dict.fromkeys(existing_aliases + self.VERTEX_ALIASES[model_name]))
-
-                # Create a new capabilities object with merged aliases
-                merged[model_name] = dataclasses.replace(capabilities, aliases=combined_aliases)
-            else:
-                # No Vertex-specific aliases, use as-is
-                merged[model_name] = capabilities
-
-        # Cache the merged capabilities
-        self._merged_capabilities = merged
-        return merged
+        return self._merged_capabilities
 
     def get_capabilities(self, model_name: str) -> ModelCapabilities:
         """Get capabilities for a specific Vertex AI model.
@@ -225,6 +165,9 @@ class VertexAIProvider(GeminiModelProvider):
         thinking_mode: str,
         capabilities: ModelCapabilities,
         usage: dict[str, int],
+        finish_reason: str = "STOP",
+        is_blocked_by_safety: bool = False,
+        safety_feedback: str | None = None,
     ) -> ModelResponse:
         """Build response object for Vertex AI provider.
 
@@ -237,6 +180,9 @@ class VertexAIProvider(GeminiModelProvider):
             thinking_mode: Thinking mode configuration
             capabilities: Model capabilities object
             usage: Token usage information dictionary
+            finish_reason: Reason for response completion (STOP, SAFETY, etc.)
+            is_blocked_by_safety: Whether response was blocked by safety filters
+            safety_feedback: Details about safety blocking if applicable
 
         Returns:
             ModelResponse object with Vertex AI specific metadata
@@ -251,9 +197,9 @@ class VertexAIProvider(GeminiModelProvider):
                 "project_id": self.project_id,
                 "region": self.region,
                 "thinking_mode": (thinking_mode if capabilities.supports_extended_thinking else None),
-                "finish_reason": (
-                    getattr(response.candidates[0], "finish_reason", "STOP") if response.candidates else "STOP"
-                ),
+                "finish_reason": finish_reason,
+                "is_blocked_by_safety": is_blocked_by_safety,
+                "safety_feedback": safety_feedback,
             },
         )
 
@@ -291,30 +237,12 @@ class VertexAIProvider(GeminiModelProvider):
             True if the model supports extended thinking, False otherwise
         """
         try:
-            # Resolve the model name first in case it's an alias
-            resolved_name = self._resolve_model_name(model_name)
-
-            # Get capabilities for the resolved model
-            capabilities = self.get_capabilities(resolved_name)
-
+            # get_capabilities already handles alias resolution
+            capabilities = self.get_capabilities(model_name)
             return capabilities.supports_extended_thinking
         except ValueError:
             # If model is not found or not supported, return False
             return False
 
-    def count_tokens(self, text: str, model_name: str) -> int:
-        """Estimate token usage for text using character-based heuristic.
-
-        Uses pure chars // 4 formula to match Gemini's token counting behavior.
-
-        Args:
-            text: Text to count tokens for
-            model_name: Model name (not used for estimation)
-
-        Returns:
-            Estimated token count (chars // 4)
-        """
-        if not text:
-            return 0
-
-        return len(text) // 4
+    # Note: count_tokens() inherited from base ModelProvider
+    # Uses standard heuristic: max(1, len(text) // 4)

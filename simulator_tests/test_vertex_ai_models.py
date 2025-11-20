@@ -3,8 +3,8 @@
 Vertex AI Provider Model Tests
 
 Tests that verify Vertex AI provider functionality including:
-- Model alias resolution (vertex-pro, vertex-flash, vertex-lite map to Gemini models)
-- Gemini models work correctly via Vertex AI
+- Gemini models work correctly via Vertex AI (using canonical names)
+- Vertex Precedence: Vertex credentials route to VertexAIProvider (GCP billing)
 - Conversation continuity works with Vertex AI models
 - API integration with Google Cloud authentication
 - Project and region configuration
@@ -53,23 +53,23 @@ class VertexAIModelsTest(BaseSimulatorTest):
             vertex_region = os.getenv("VERTEX_REGION", "us-central1")
             self.logger.info(f"  🔧 Using Vertex AI project: {vertex_project_id} in region: {vertex_region}")
 
-            # Test 1: 'vertex-pro' alias (should map to gemini-2.5-pro)
-            self.logger.info("  1: Testing 'vertex-pro' alias (should map to gemini-2.5-pro)")
+            # Test 1: gemini-2.5-pro via Vertex AI (GCP billing)
+            self.logger.info("  1: Testing gemini-2.5-pro via Vertex AI")
 
             response1, continuation_id = self.call_mcp_tool(
                 "chat",
                 {
                     "prompt": "Say 'Hello from Vertex AI Pro model!' and nothing else.",
-                    "model": "vertex-pro",
+                    "model": "gemini-2.5-pro",
                     "temperature": 0.1,
                 },
             )
 
             if not response1:
-                self.logger.error("  ❌ Vertex AI Pro alias test failed")
+                self.logger.error("  ❌ Vertex AI gemini-2.5-pro test failed")
                 return False
 
-            self.logger.info("  ✅ Vertex AI Pro alias call completed")
+            self.logger.info("  ✅ Vertex AI gemini-2.5-pro call completed")
             if continuation_id:
                 self.logger.info(f"  ✅ Got continuation_id: {continuation_id}")
 
@@ -91,41 +91,41 @@ class VertexAIModelsTest(BaseSimulatorTest):
 
             self.logger.info("  ✅ Direct Vertex AI gemini-2.5-flash call completed")
 
-            # Test 3: vertex-lite alias (should map to gemini-2.5-flash-lite)
-            self.logger.info("  3: Testing vertex-lite alias")
+            # Test 3: gemini-2.0-flash-lite via Vertex AI
+            self.logger.info("  3: Testing gemini-2.0-flash-lite via Vertex AI")
 
             response3, _ = self.call_mcp_tool(
                 "chat",
                 {
-                    "prompt": "Say 'Hello from Vertex AI Lite!' and nothing else.",
-                    "model": "vertex-lite",
+                    "prompt": "Say 'Hello from Vertex AI Flash Lite!' and nothing else.",
+                    "model": "gemini-2.0-flash-lite",
                     "temperature": 0.1,
                 },
             )
 
             if not response3:
-                self.logger.error("  ❌ Vertex AI Lite alias test failed")
+                self.logger.error("  ❌ Vertex AI gemini-2.0-flash-lite test failed")
                 return False
 
-            self.logger.info("  ✅ Vertex AI Lite alias call completed")
+            self.logger.info("  ✅ Vertex AI gemini-2.0-flash-lite call completed")
 
-            # Test 4: Additional aliases
-            self.logger.info("  4: Testing additional aliases (vertex-2.0)")
+            # Test 4: gemini-2.0-flash via Vertex AI
+            self.logger.info("  4: Testing gemini-2.0-flash via Vertex AI")
 
             response4, _ = self.call_mcp_tool(
                 "chat",
                 {
-                    "prompt": "Say 'Hello from vertex-2.0 alias!' and nothing else.",
-                    "model": "vertex-2.0",
+                    "prompt": "Say 'Hello from Vertex AI Flash 2.0!' and nothing else.",
+                    "model": "gemini-2.0-flash",
                     "temperature": 0.1,
                 },
             )
 
             if not response4:
-                self.logger.error("  ❌ vertex-2.0 alias test failed")
+                self.logger.error("  ❌ Vertex AI gemini-2.0-flash test failed")
                 return False
 
-            self.logger.info("  ✅ Additional Vertex AI aliases work correctly")
+            self.logger.info("  ✅ All Gemini models work correctly via Vertex AI")
 
             # Test 5: Conversation continuity with Vertex AI models
             self.logger.info("  5: Testing conversation continuity with Vertex AI")
@@ -134,7 +134,7 @@ class VertexAIModelsTest(BaseSimulatorTest):
                 "chat",
                 {
                     "prompt": "Remember this number: 42. What number did I just tell you?",
-                    "model": "vertex-pro",
+                    "model": "gemini-2.5-pro",
                     "temperature": 0.1,
                 },
             )
@@ -148,7 +148,7 @@ class VertexAIModelsTest(BaseSimulatorTest):
                 "chat",
                 {
                     "prompt": "What was the number I told you earlier?",
-                    "model": "vertex-pro",
+                    "model": "gemini-2.5-pro",
                     "continuation_id": new_continuation_id,
                     "temperature": 0.1,
                 },
@@ -159,7 +159,16 @@ class VertexAIModelsTest(BaseSimulatorTest):
                 return False
 
             # Check if the model remembered the number
-            if "42" in response7:
+            # Use stricter check to avoid false positives (e.g., "I don't know, is it 42?")
+            response_lower = response7.lower()
+            conversation_memory_works = (
+                "42" in response7
+                and "don't know" not in response_lower
+                and "don't remember" not in response_lower
+                and "what was" not in response_lower
+                and "which number" not in response_lower
+            )
+            if conversation_memory_works:
                 self.logger.info("  ✅ Conversation continuity working with Vertex AI")
             else:
                 self.logger.warning("  ⚠️  Model may not have remembered the number")
@@ -216,7 +225,7 @@ class VertexAIModelsTest(BaseSimulatorTest):
                 "thinkdeep",
                 {
                     "prompt": "Think about why the sky appears blue. Explain the physics briefly.",
-                    "model": "vertex-pro",  # Should support thinking mode
+                    "model": "gemini-2.5-pro",  # Should support thinking mode
                     "thinking_mode": "medium",
                 },
             )
@@ -232,14 +241,15 @@ class VertexAIModelsTest(BaseSimulatorTest):
             api_used = len(vertex_api_logs) > 0 or len(vertex_logs) > 0
             provider_used = len(vertex_provider_logs) > 0
             project_configured = len(project_logs) > 0
+            all_calls_succeeded = True  # If we reached here, all early-return checks passed
 
             success_criteria = [
                 ("Vertex AI models mentioned in logs", vertex_mentioned),
                 ("Vertex AI API calls made", api_used),
                 ("Vertex AI provider used", provider_used),
                 ("Project configuration logged", project_configured),
-                ("All model calls succeeded", True),  # We already checked this above
-                ("Conversation continuity works", True),  # We already tested this
+                ("All model calls succeeded", all_calls_succeeded),
+                ("Conversation memory works", conversation_memory_works),
             ]
 
             passed_criteria = sum(1 for _, passed in success_criteria if passed)
@@ -249,11 +259,14 @@ class VertexAIModelsTest(BaseSimulatorTest):
                 status = "✅" if passed else "❌"
                 self.logger.info(f"    {status} {criterion}")
 
-            if passed_criteria >= 4:  # At least 4 out of 6 criteria
-                self.logger.info("  ✅ Vertex AI model tests passed")
+            # All criteria must pass for a robust test
+            if passed_criteria == len(success_criteria):
+                self.logger.info("  ✅ Vertex AI model tests passed - all criteria met")
                 return True
             else:
-                self.logger.error("  ❌ Vertex AI model tests failed")
+                self.logger.error(
+                    f"  ❌ Vertex AI model tests failed - {passed_criteria}/{len(success_criteria)} criteria met"
+                )
                 return False
 
         except Exception as e:

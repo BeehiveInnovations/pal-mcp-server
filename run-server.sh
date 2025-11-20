@@ -1073,6 +1073,8 @@ setup_env_file() {
         "XAI_API_KEY:your_xai_api_key_here"
         "DIAL_API_KEY:your_dial_api_key_here"
         "OPENROUTER_API_KEY:your_openrouter_api_key_here"
+        "VERTEX_PROJECT_ID:your_vertex_project_id_here"
+        "VERTEX_REGION:us-central1"
     )
 
     for key_pair in "${api_keys[@]}"; do
@@ -1136,6 +1138,30 @@ check_api_keys() {
         has_key=true
     fi
 
+    # Check Vertex AI configuration
+    local vertex_project="${VERTEX_PROJECT_ID:-}"
+    local vertex_region="${VERTEX_REGION:-us-central1}"
+    local has_vertex=false
+    if [[ -n "$vertex_project" ]] && [[ "$vertex_project" != "your_vertex_project_id_here" ]]; then
+        print_success "VERTEX_PROJECT_ID configured: $vertex_project"
+        if [[ -n "$vertex_region" ]] && [[ "$vertex_region" != "us-central1" ]]; then
+            print_success "VERTEX_REGION configured: $vertex_region"
+        fi
+        has_key=true
+        has_vertex=true
+    fi
+
+    # Warn if both Vertex AI and Gemini API are configured (Vertex takes precedence)
+    local gemini_key="${GEMINI_API_KEY:-}"
+    if [[ "$has_vertex" == true ]] && [[ -n "$gemini_key" ]] && [[ "$gemini_key" != "your_gemini_api_key_here" ]]; then
+        echo ""
+        print_warning "Both VERTEX_PROJECT_ID and GEMINI_API_KEY are configured"
+        echo "  → Vertex AI will be used for Gemini models (GCP billing)"
+        echo "  → GEMINI_API_KEY will be ignored for Gemini models"
+        echo "  → To use GEMINI_API_KEY instead, remove VERTEX_PROJECT_ID from .env"
+        echo ""
+    fi
+
     if [[ "$has_key" == false ]]; then
         print_warning "No API keys found in .env!"
         echo ""
@@ -1147,6 +1173,7 @@ check_api_keys() {
         echo "  XAI_API_KEY=your-actual-key"
         echo "  DIAL_API_KEY=your-actual-key"
         echo "  OPENROUTER_API_KEY=your-actual-key"
+        echo "  VERTEX_PROJECT_ID=your-project-id  # For Vertex AI"
         echo ""
         print_info "You can continue with development setup and add API keys later."
         echo ""
@@ -1196,10 +1223,12 @@ parse_env_variables() {
     if [[ -z "$env_vars" ]]; then
         local api_keys=(
             "GEMINI_API_KEY"
-            "OPENAI_API_KEY" 
+            "OPENAI_API_KEY"
             "XAI_API_KEY"
             "DIAL_API_KEY"
             "OPENROUTER_API_KEY"
+            "VERTEX_PROJECT_ID"
+            "VERTEX_REGION"
             "CUSTOM_API_URL"
             "CUSTOM_API_KEY"
             "CUSTOM_MODEL_NAME"
