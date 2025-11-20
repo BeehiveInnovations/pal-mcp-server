@@ -46,15 +46,6 @@ class ModelProviderRegistry:
         ProviderType.OPENROUTER,  # Catch-all for cloud models
     ]
 
-    # Gemini model aliases for routing through Vertex Precedence logic
-    # These aliases are recognized as Gemini models that should use
-    # the Vertex AI provider (if configured) or Gemini API provider
-    #
-    # IMPORTANT: This list must be kept in sync with aliases defined in
-    # GeminiModelProvider capabilities. When new Gemini aliases are added,
-    # update this set to ensure proper Vertex precedence routing.
-    GEMINI_ALIASES = {"pro", "flash", "flashlite", "flash-lite", "gemini3"}
-
     def __new__(cls):
         """Singleton pattern for registry."""
         if cls._instance is None:
@@ -266,19 +257,18 @@ class ModelProviderRegistry:
         logging.debug(f"Registry instance: {instance}")
         logging.debug(f"Available providers in registry: {list(instance._providers.keys())}")
 
-        # Check if this is a Gemini model - use precedence logic
-        model_lower = model_name.lower()
-        if model_lower.startswith("gemini-") or model_lower in cls.GEMINI_ALIASES:
-            gemini_provider_type = cls._configure_gemini_access()
-            if gemini_provider_type:
-                provider = cls.get_provider(gemini_provider_type)
-                if provider and provider.validate_model_name(model_name):
-                    logging.debug(f"Gemini model '{model_name}' routed to {gemini_provider_type}")
-                    return provider
+        # Check Gemini providers first using Vertex Precedence logic
+        # This ensures Vertex AI takes priority over Gemini API when both are configured
+        gemini_provider_type = cls._configure_gemini_access()
+        if gemini_provider_type:
+            provider = cls.get_provider(gemini_provider_type)
+            if provider and provider.validate_model_name(model_name):
+                logging.debug(f"Model '{model_name}' validated by Gemini provider: {gemini_provider_type}")
+                return provider
 
         # For non-Gemini models, check providers in priority order
         for provider_type in cls.PROVIDER_PRIORITY_ORDER:
-            # Skip Gemini providers since we handled them above
+            # Skip Gemini providers since we handled them above with precedence logic
             if provider_type in (ProviderType.GOOGLE, ProviderType.VERTEX_AI):
                 continue
 
@@ -567,10 +557,12 @@ class ModelProviderRegistry:
 
         This provides a safe, public API for tests to clean up registry state
         without directly manipulating private attributes.
+
+        Note: Setting cls._instance = None is sufficient. The next call to
+        ModelProviderRegistry() will trigger __new__ which creates a fresh instance
+        with empty _providers and _initialized_providers dictionaries.
         """
         cls._instance = None
-        cls._providers = {}
-        cls._initialized_providers = {}
 
     @classmethod
     def unregister_provider(cls, provider_type: ProviderType) -> None:
