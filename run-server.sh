@@ -1142,7 +1142,7 @@ check_api_keys() {
     local vertex_project="${VERTEX_PROJECT_ID:-}"
     local vertex_region="${VERTEX_REGION:-us-central1}"
     local has_vertex=false
-    if [[ -n "$vertex_project" ]] && [[ "$vertex_project" != "your_vertex_project_id_here" ]]; then
+    if [[ -n "$vertex_project" ]] && [[ "$vertex_project" != "your_vertex_project_id_here" ]] && [[ "$vertex_project" != "your-gcp-project-id" ]] && [[ "$vertex_project" != "your_gcp_project_id" ]]; then
         print_success "VERTEX_PROJECT_ID configured: $vertex_project"
         if [[ -n "$vertex_region" ]] && [[ "$vertex_region" != "us-central1" ]]; then
             print_success "VERTEX_REGION configured: $vertex_region"

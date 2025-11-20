@@ -207,9 +207,8 @@ class VertexAIProvider(GeminiModelProvider):
         """Return a list of all known model names, including both actual models and aliases.
 
         This includes:
-        - Vertex AI specific models (gemini-2.5-flash-lite-preview-06-17, etc.)
         - Inherited Gemini models (gemini-2.5-pro, gemini-2.5-flash, gemini-2.0-flash, etc.)
-        - All aliases (vertex-pro, vertex-flash, vertex-lite, pro, flash, etc.)
+        - All inherited Gemini aliases (pro, flash, flashlite, etc.)
 
         Returns:
             List of all model names and their aliases
