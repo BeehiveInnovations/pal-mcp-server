@@ -465,7 +465,7 @@ def configure_providers():
 
     # Check for Vertex AI configuration
     vertex_project_id = get_env("VERTEX_PROJECT_ID")
-    if vertex_project_id:
+    if ModelProviderRegistry._has_vertex_credentials():
         vertex_region = get_env("VERTEX_REGION") or "us-central1"
         valid_providers.append(f"Vertex AI (Project: {vertex_project_id})")
         has_native_apis = True
@@ -526,7 +526,7 @@ def configure_providers():
             ModelProviderRegistry.register_provider(ProviderType.DIAL, DIALModelProvider)
             registered_providers.append(ProviderType.DIAL.value)
             logger.debug(f"Registered provider: {ProviderType.DIAL.value}")
-        if vertex_project_id:
+        if ModelProviderRegistry._has_vertex_credentials():
             ModelProviderRegistry.register_provider(ProviderType.VERTEX_AI, VertexAIProvider)
             registered_providers.append(ProviderType.VERTEX_AI.value)
             logger.debug(f"Registered provider: {ProviderType.VERTEX_AI.value}")

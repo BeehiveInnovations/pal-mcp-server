@@ -26,6 +26,16 @@ class TestVertexPrecedence:
         monkeypatch.setenv("VERTEX_PROJECT_ID", "your_vertex_project_id_here")
         assert ModelProviderRegistry._has_vertex_credentials() is False
 
+    def test_has_vertex_credentials_placeholder_from_example(self, monkeypatch):
+        """Test _has_vertex_credentials rejects .env.example placeholder value."""
+        monkeypatch.setenv("VERTEX_PROJECT_ID", "your-gcp-project-id")
+        assert ModelProviderRegistry._has_vertex_credentials() is False
+
+    def test_has_vertex_credentials_placeholder_alternative(self, monkeypatch):
+        """Test _has_vertex_credentials rejects alternative placeholder value."""
+        monkeypatch.setenv("VERTEX_PROJECT_ID", "your_gcp_project_id")
+        assert ModelProviderRegistry._has_vertex_credentials() is False
+
     def test_has_vertex_credentials_empty(self, monkeypatch):
         """Test _has_vertex_credentials with empty string."""
         monkeypatch.setenv("VERTEX_PROJECT_ID", "")
