@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v9.4.1 (2025-11-21)
+
+### Bug Fixes
+
+- Regression https://github.com/BeehiveInnovations/zen-mcp-server/issues/338
+  ([`aceddb6`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/aceddb655fc36918108b3da1f926bdd4e94875a2))
+
+### Chores
+
+- Sync version to config.py [skip ci]
+  ([`c4461a4`](https://github.com/BeehiveInnovations/zen-mcp-server/commit/c4461a466fab9c647b0a5035328c4d0f3e28f647))
+
+
 ## v9.4.0 (2025-11-18)
 
 ### Bug Fixes
