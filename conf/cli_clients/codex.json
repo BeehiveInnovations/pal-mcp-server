@@ -3,8 +3,7 @@
   "command": "codex",
   "additional_args": [
     "--json",
-    "--dangerously-bypass-approvals-and-sandbox",
-    "--search"
+    "--dangerously-bypass-approvals-and-sandbox"
   ],
   "env": {},
   "roles": {
