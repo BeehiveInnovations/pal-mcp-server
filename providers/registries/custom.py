@@ -10,6 +10,12 @@ from ..shared import ModelCapabilities, ProviderType
 from .base import CAPABILITY_FIELD_NAMES, CapabilityModelRegistry
 
 
+# Default capabilities for dynamically injected CUSTOM_MODEL_NAME
+_DEFAULT_CONTEXT_WINDOW = 128_000
+_DEFAULT_MAX_OUTPUT_TOKENS = 16_000
+_DEFAULT_INTELLIGENCE_SCORE = 6  # Matches llama3.2 in custom_models.json
+
+
 class CustomEndpointModelRegistry(CapabilityModelRegistry):
     """Capability registry backed by ``conf/custom_models.json``.
 
@@ -59,9 +65,9 @@ class CustomEndpointModelRegistry(CapabilityModelRegistry):
             model_name=custom_model_name,
             friendly_name=f"Custom ({custom_model_name})",
             description="Custom model via CUSTOM_MODEL_NAME environment variable",
-            context_window=128000,  # Conservative default
-            max_output_tokens=16000,  # Conservative default
-            intelligence_score=6,  # Conservative default, matches llama3.2 in custom_models.json
+            context_window=_DEFAULT_CONTEXT_WINDOW,
+            max_output_tokens=_DEFAULT_MAX_OUTPUT_TOKENS,
+            intelligence_score=_DEFAULT_INTELLIGENCE_SCORE,
             supports_extended_thinking=False,
             supports_json_mode=False,
             supports_function_calling=False,

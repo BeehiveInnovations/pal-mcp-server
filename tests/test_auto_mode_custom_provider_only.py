@@ -10,6 +10,17 @@ from providers.registry import ModelProviderRegistry
 from providers.shared import ProviderType
 
 
+# Keys to clear when testing custom provider in isolation
+_OTHER_PROVIDER_KEYS = ["GEMINI_API_KEY", "OPENAI_API_KEY", "XAI_API_KEY", "OPENROUTER_API_KEY", "DIAL_API_KEY"]
+
+
+def _clear_other_provider_keys():
+    """Clear API keys for non-custom providers to isolate custom provider tests."""
+    for key in _OTHER_PROVIDER_KEYS:
+        if key in os.environ:
+            del os.environ[key]
+
+
 @pytest.mark.no_mock_provider
 class TestAutoModeCustomProviderOnly:
     """Test auto mode when only custom provider is configured."""
@@ -114,9 +125,7 @@ class TestAutoModeCustomProviderOnly:
 
         with patch.dict(os.environ, test_env, clear=False):
             # Clear other provider keys
-            for key in ["GEMINI_API_KEY", "OPENAI_API_KEY", "XAI_API_KEY", "OPENROUTER_API_KEY", "DIAL_API_KEY"]:
-                if key in os.environ:
-                    del os.environ[key]
+            _clear_other_provider_keys()
 
             # Register custom provider
             from providers.custom import CustomProvider
@@ -182,9 +191,7 @@ class TestAutoModeCustomProviderOnly:
 
         with patch.dict(os.environ, test_env, clear=False):
             # Clear other provider keys
-            for key in ["GEMINI_API_KEY", "OPENAI_API_KEY", "XAI_API_KEY", "OPENROUTER_API_KEY", "DIAL_API_KEY"]:
-                if key in os.environ:
-                    del os.environ[key]
+            _clear_other_provider_keys()
 
             # Reload config
             import config
@@ -230,9 +237,7 @@ class TestAutoModeCustomProviderOnly:
 
         with patch.dict(os.environ, test_env, clear=False):
             # Clear other provider keys
-            for key in ["GEMINI_API_KEY", "OPENAI_API_KEY", "XAI_API_KEY", "OPENROUTER_API_KEY", "DIAL_API_KEY"]:
-                if key in os.environ:
-                    del os.environ[key]
+            _clear_other_provider_keys()
 
             # Reload config
             import config
@@ -285,9 +290,7 @@ class TestAutoModeCustomProviderOnly:
 
         with patch.dict(os.environ, test_env, clear=False):
             # Clear other provider keys
-            for key in ["GEMINI_API_KEY", "OPENAI_API_KEY", "XAI_API_KEY", "OPENROUTER_API_KEY", "DIAL_API_KEY"]:
-                if key in os.environ:
-                    del os.environ[key]
+            _clear_other_provider_keys()
 
             # Create a NEW registry instance (simulating what listmodels does)
             from providers.registries.custom import CustomEndpointModelRegistry
@@ -328,9 +331,7 @@ class TestAutoModeCustomProviderOnly:
 
         with patch.dict(os.environ, test_env, clear=False):
             # Clear other provider keys
-            for key in ["GEMINI_API_KEY", "OPENAI_API_KEY", "XAI_API_KEY", "OPENROUTER_API_KEY", "DIAL_API_KEY"]:
-                if key in os.environ:
-                    del os.environ[key]
+            _clear_other_provider_keys()
 
             # Reset registry
             from providers.custom import CustomProvider
@@ -385,9 +386,7 @@ class TestAutoModeCustomProviderOnly:
                 del os.environ["CUSTOM_MODEL_NAME"]
 
             # Clear other provider keys
-            for key in ["GEMINI_API_KEY", "OPENAI_API_KEY", "XAI_API_KEY", "OPENROUTER_API_KEY", "DIAL_API_KEY"]:
-                if key in os.environ:
-                    del os.environ[key]
+            _clear_other_provider_keys()
 
             # Reset registry
             from providers.custom import CustomProvider
