@@ -247,7 +247,7 @@ class TestAutoModeCustomProviderOnly:
             # Reset registry to force re-initialization
             from providers.custom import CustomProvider
 
-            CustomProvider._registry = None
+            CustomProvider.reset_registry()
 
             # Register custom provider - this should inject CUSTOM_MODEL_NAME
             ModelProviderRegistry.register_provider(ProviderType.CUSTOM, CustomProvider)
@@ -336,7 +336,7 @@ class TestAutoModeCustomProviderOnly:
             # Reset registry
             from providers.custom import CustomProvider
 
-            CustomProvider._registry = None
+            CustomProvider.reset_registry()
 
             # Register custom provider
             ModelProviderRegistry.register_provider(ProviderType.CUSTOM, CustomProvider)
@@ -391,7 +391,7 @@ class TestAutoModeCustomProviderOnly:
             # Reset registry
             from providers.custom import CustomProvider
 
-            CustomProvider._registry = None
+            CustomProvider.reset_registry()
 
             # Register custom provider
             ModelProviderRegistry.register_provider(ProviderType.CUSTOM, CustomProvider)
