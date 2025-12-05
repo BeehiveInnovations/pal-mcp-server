@@ -27,11 +27,7 @@
     {
       "model_name": "grok-4",
       "friendly_name": "X.AI (Grok 4)",
-      "aliases": [
-        "grok",
-        "grok4",
-        "grok-4"
-      ],
+      "aliases": [],
       "intelligence_score": 16,
       "description": "GROK-4 (256K context) - Frontier multimodal reasoning model with advanced capabilities",
       "context_window": 256000,
@@ -82,6 +78,92 @@
       "supports_json_mode": false,
       "supports_images": false,
       "supports_temperature": true
+    },
+    {
+      "model_name": "grok-4-fast-reasoning",
+      "friendly_name": "X.AI (Grok 4 Fast Reasoning)",
+      "aliases": [],
+      "intelligence_score": 15,
+      "description": "GROK-4 Fast Reasoning (2M context) - Cost-efficient multimodal reasoning model with extended thinking, 40% fewer thinking tokens than Grok 4. Note: max_output_tokens set conservatively based on observed API limits; context window supports up to 2M tokens total.",
+      "context_window": 2000000,
+      "max_output_tokens": 16384,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0
+    },
+    {
+      "model_name": "grok-4-fast-non-reasoning",
+      "friendly_name": "X.AI (Grok 4 Fast Non-Reasoning)",
+      "aliases": [],
+      "intelligence_score": 14,
+      "description": "GROK-4 Fast Non-Reasoning (2M context) - Same model as reasoning variant but with quick responses, no extended thinking. Note: max_output_tokens set conservatively based on observed API limits; context window supports up to 2M tokens total.",
+      "context_window": 2000000,
+      "max_output_tokens": 16384,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0
+    },
+    {
+      "model_name": "grok-code-fast-1",
+      "friendly_name": "X.AI (Grok Code Fast)",
+      "aliases": [],
+      "intelligence_score": 14,
+      "description": "GROK Code Fast (256K context) - Specialized coding model with reasoning traces, excels at TypeScript, Python, Java, Rust, C++, and Go. Note: max_output_tokens set to 10K per OpenRouter spec.",
+      "context_window": 256000,
+      "max_output_tokens": 10000,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true
+    },
+    {
+      "model_name": "grok-4-1-fast-reasoning",
+      "friendly_name": "X.AI (Grok 4.1 Fast Reasoning)",
+      "aliases": [
+        "grok"
+      ],
+      "intelligence_score": 16,
+      "description": "GROK-4.1 Fast Reasoning (2M context) - Latest cost-efficient multimodal reasoning model with extended thinking. Note: max_output_tokens set conservatively based on observed API limits; context window supports up to 2M tokens total.",
+      "context_window": 2000000,
+      "max_output_tokens": 16384,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0
+    },
+    {
+      "model_name": "grok-4-1-fast-non-reasoning",
+      "friendly_name": "X.AI (Grok 4.1 Fast Non-Reasoning)",
+      "aliases": [],
+      "intelligence_score": 15,
+      "description": "GROK-4.1 Fast Non-Reasoning (2M context) - Latest fast response model, no extended thinking. Note: max_output_tokens set conservatively based on observed API limits; context window supports up to 2M tokens total.",
+      "context_window": 2000000,
+      "max_output_tokens": 16384,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0
     }
   ]
 }
