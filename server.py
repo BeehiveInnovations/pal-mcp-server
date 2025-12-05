@@ -399,6 +399,7 @@ def configure_providers():
     from providers.openai import OpenAIModelProvider
     from providers.openrouter import OpenRouterProvider
     from providers.shared import ProviderType
+    from providers.vertex_ai import VertexAIProvider
     from providers.xai import XAIModelProvider
     from utils.model_restrictions import get_restriction_service
 
@@ -462,6 +463,14 @@ def configure_providers():
         has_native_apis = True
         logger.info("DIAL API key found - DIAL models available")
 
+    # Check for Vertex AI configuration
+    vertex_project_id = get_env("VERTEX_PROJECT_ID")
+    if ModelProviderRegistry._has_vertex_credentials():
+        vertex_region = get_env("VERTEX_REGION") or "us-central1"
+        valid_providers.append(f"Vertex AI (Project: {vertex_project_id})")
+        has_native_apis = True
+        logger.info(f"Vertex AI project found - Vertex AI Gemini models available in {vertex_region}")
+
     # Check for OpenRouter API key
     openrouter_key = get_env("OPENROUTER_API_KEY")
     logger.debug(f"OpenRouter key check: key={'[PRESENT]' if openrouter_key else '[MISSING]'}")
@@ -517,6 +526,10 @@ def configure_providers():
             ModelProviderRegistry.register_provider(ProviderType.DIAL, DIALModelProvider)
             registered_providers.append(ProviderType.DIAL.value)
             logger.debug(f"Registered provider: {ProviderType.DIAL.value}")
+        if ModelProviderRegistry._has_vertex_credentials():
+            ModelProviderRegistry.register_provider(ProviderType.VERTEX_AI, VertexAIProvider)
+            registered_providers.append(ProviderType.VERTEX_AI.value)
+            logger.debug(f"Registered provider: {ProviderType.VERTEX_AI.value}")
 
     # 2. Custom provider second (for local/private models)
     if has_custom:
@@ -548,6 +561,7 @@ def configure_providers():
             "- OPENAI_API_KEY for OpenAI models\n"
             "- XAI_API_KEY for X.AI GROK models\n"
             "- DIAL_API_KEY for DIAL models\n"
+            "- VERTEX_PROJECT_ID for Vertex AI Gemini models\n"
             "- OPENROUTER_API_KEY for OpenRouter (multiple models)\n"
             "- CUSTOM_API_URL for local models (Ollama, vLLM, etc.)"
         )
@@ -600,7 +614,13 @@ def configure_providers():
 
         # Validate restrictions against known models
         provider_instances = {}
-        provider_types_to_validate = [ProviderType.GOOGLE, ProviderType.OPENAI, ProviderType.XAI, ProviderType.DIAL]
+        provider_types_to_validate = [
+            ProviderType.GOOGLE,
+            ProviderType.VERTEX_AI,
+            ProviderType.OPENAI,
+            ProviderType.XAI,
+            ProviderType.DIAL,
+        ]
         for provider_type in provider_types_to_validate:
             provider = ModelProviderRegistry.get_provider(provider_type)
             if provider:

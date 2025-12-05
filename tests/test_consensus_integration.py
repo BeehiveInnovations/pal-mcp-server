@@ -54,6 +54,8 @@ async def test_consensus_multi_model_consultations(monkeypatch, openai_model):
         "MISTRAL_API_KEY",
         "CUSTOM_API_KEY",
         "CUSTOM_API_URL",
+        "VERTEX_PROJECT_ID",
+        "VERTEX_REGION",
     ]
 
     recording_mode = not consensus_cassette_path.exists() or not GEMINI_REPLAY_PATH.exists()
@@ -208,6 +210,7 @@ async def test_consensus_auto_mode_with_openrouter_and_gemini(monkeypatch):
         m.setenv("DEFAULT_MODEL", "auto")
         m.setenv("GEMINI_API_KEY", gemini_key)
         m.setenv("OPENROUTER_API_KEY", openrouter_key)
+        m.setenv("DISABLED_TOOLS", "")  # Ensure consensus tool is enabled
 
         for key in [
             "OPENAI_API_KEY",
@@ -215,6 +218,8 @@ async def test_consensus_auto_mode_with_openrouter_and_gemini(monkeypatch):
             "DIAL_API_KEY",
             "CUSTOM_API_KEY",
             "CUSTOM_API_URL",
+            "VERTEX_PROJECT_ID",
+            "VERTEX_REGION",
         ]:
             m.delenv(key, raising=False)
 

@@ -120,6 +120,21 @@ class TestListModelsTool:
             assert "Available Models" in content
 
     @pytest.mark.asyncio
+    async def test_vertex_ai_appears_in_output(self, tool):
+        """Test that Vertex AI provider appears in listmodels output"""
+        # This test verifies that Vertex AI is listed as a provider option
+        # We don't test the configured state here as it requires complex Google Cloud mocking
+        result = await tool.execute({})
+
+        response = json.loads(result[0].text)
+        content = response["content"]
+
+        # Check Vertex AI shows in provider list (may be configured or not)
+        assert "Google Vertex AI" in content
+        # Check it has the correct env_key requirement
+        assert "VERTEX_PROJECT_ID" in content
+
+    @pytest.mark.asyncio
     async def test_execute_with_custom_api(self, tool):
         """Test listing models with custom API configured"""
         env_vars = {"CUSTOM_API_URL": "http://localhost:11434", "DEFAULT_MODEL": "auto"}

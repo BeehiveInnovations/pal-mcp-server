@@ -99,6 +99,7 @@ class ListModelsTool(BaseTool):
         # Map provider types to friendly names and their models
         provider_info = {
             ProviderType.GOOGLE: {"name": "Google Gemini", "env_key": "GEMINI_API_KEY"},
+            ProviderType.VERTEX_AI: {"name": "Google Vertex AI", "env_key": "VERTEX_PROJECT_ID"},
             ProviderType.OPENAI: {"name": "OpenAI", "env_key": "OPENAI_API_KEY"},
             ProviderType.AZURE: {"name": "Azure OpenAI", "env_key": "AZURE_OPENAI_API_KEY"},
             ProviderType.XAI: {"name": "X.AI (Grok)", "env_key": "XAI_API_KEY"},

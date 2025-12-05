@@ -1,8 +1,10 @@
 """Gemini model provider implementation."""
 
+from __future__ import annotations
+
 import base64
 import logging
-from typing import TYPE_CHECKING, ClassVar, Optional
+from typing import TYPE_CHECKING, ClassVar
 
 if TYPE_CHECKING:
     from tools.models import ToolModelCategory
@@ -82,7 +84,7 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
                 self._client = genai.Client(api_key=self.api_key)
         return self._client
 
-    def _resolve_http_timeout(self) -> Optional[float]:
+    def _resolve_http_timeout(self) -> float | None:
         """Compute timeout override from shared custom timeout environment variables."""
 
         timeouts: list[float] = []
@@ -115,11 +117,11 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
         self,
         prompt: str,
         model_name: str,
-        system_prompt: Optional[str] = None,
+        system_prompt: str | None = None,
         temperature: float = 1.0,
-        max_output_tokens: Optional[int] = None,
+        max_output_tokens: int | None = None,
         thinking_mode: str = "medium",
-        images: Optional[list[str]] = None,
+        images: list[str] | None = None,
         **kwargs,
     ) -> ModelResponse:
         """
@@ -171,7 +173,7 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
             logger.warning(f"Model {resolved_model_name} does not support images, ignoring {len(images)} image(s)")
 
         # Create contents structure
-        contents = [{"parts": parts}]
+        contents = self._build_contents(parts)
 
         # Gemini 3 Pro Preview currently rejects medium thinking budgets; bump to high.
         effective_thinking_mode = thinking_mode
@@ -281,18 +283,15 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
                 except (AttributeError, TypeError):
                     pass
 
-            return ModelResponse(
-                content=response.text,
-                usage=usage,
+            return self._build_response(
+                response=response,
                 model_name=resolved_model_name,
-                friendly_name="Gemini",
-                provider=ProviderType.GOOGLE,
-                metadata={
-                    "thinking_mode": effective_thinking_mode if capabilities.supports_extended_thinking else None,
-                    "finish_reason": finish_reason_str,
-                    "is_blocked_by_safety": is_blocked_by_safety,
-                    "safety_feedback": safety_feedback_details,
-                },
+                thinking_mode=effective_thinking_mode,
+                capabilities=capabilities,
+                usage=usage,
+                finish_reason=finish_reason_str,
+                is_blocked_by_safety=is_blocked_by_safety,
+                safety_feedback=safety_feedback_details,
             )
 
         try:
@@ -430,7 +429,64 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
 
         return any(indicator in error_str for indicator in retryable_indicators)
 
-    def _process_image(self, image_path: str) -> Optional[dict]:
+    def _build_contents(self, parts: list[dict]) -> list[dict]:
+        """Build contents structure for API request.
+
+        Template method that subclasses can override to customize the content structure.
+        For example, Vertex AI requires a "role" field while direct Gemini API does not.
+
+        Args:
+            parts: List of content parts (text, images, etc.)
+
+        Returns:
+            List of content dictionaries structured for the specific API
+        """
+        return [{"parts": parts}]
+
+    def _build_response(
+        self,
+        response,
+        model_name: str,
+        thinking_mode: str,
+        capabilities: ModelCapabilities,
+        usage: dict,
+        finish_reason: str = "STOP",
+        is_blocked_by_safety: bool = False,
+        safety_feedback: str | None = None,
+    ) -> ModelResponse:
+        """Build response object from API response.
+
+        Template method that subclasses can override to customize response formatting.
+        Subclasses can modify metadata, provider information, or other response details.
+
+        Args:
+            response: Raw API response object
+            model_name: Name of the model used
+            thinking_mode: Thinking mode configuration
+            capabilities: Model capabilities object
+            usage: Token usage information
+            finish_reason: Reason for response completion (STOP, SAFETY, etc.)
+            is_blocked_by_safety: Whether response was blocked by safety filters
+            safety_feedback: Details about safety blocking if applicable
+
+        Returns:
+            ModelResponse object with standardized format
+        """
+        return ModelResponse(
+            content=response.text,
+            usage=usage,
+            model_name=model_name,
+            friendly_name="Gemini",
+            provider=ProviderType.GOOGLE,
+            metadata={
+                "thinking_mode": thinking_mode if capabilities.supports_extended_thinking else None,
+                "finish_reason": finish_reason,
+                "is_blocked_by_safety": is_blocked_by_safety,
+                "safety_feedback": safety_feedback,
+            },
+        )
+
+    def _process_image(self, image_path: str) -> dict | None:
         """Process an image for Gemini API."""
         try:
             # Use base class validation
@@ -453,7 +509,7 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
             logger.error(f"Error processing image {image_path}: {e}")
             return None
 
-    def get_preferred_model(self, category: "ToolModelCategory", allowed_models: list[str]) -> Optional[str]:
+    def get_preferred_model(self, category: ToolModelCategory, allowed_models: list[str]) -> str | None:
         """Get Gemini's preferred model for a given category from allowed models.
 
         Args:
@@ -471,9 +527,16 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
         capability_map = self.get_all_model_capabilities()
 
         # Helper to find best model from candidates
-        def find_best(candidates: list[str]) -> Optional[str]:
-            """Return best model from candidates (sorted for consistency)."""
-            return sorted(candidates, reverse=True)[0] if candidates else None
+        def find_best(candidates: list[str]) -> str | None:
+            """Return best model from candidates based on intelligence score."""
+            if not candidates:
+                return None
+            # Sort by intelligence score (higher is better), then alphabetically for consistency
+            scored_candidates = [
+                (m, capability_map[m].intelligence_score if m in capability_map else 0) for m in candidates
+            ]
+            scored_candidates.sort(key=lambda x: (-x[1], x[0]), reverse=False)
+            return scored_candidates[0][0]
 
         if category == ToolModelCategory.EXTENDED_REASONING:
             # For extended reasoning, prefer models with thinking support

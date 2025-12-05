@@ -33,7 +33,7 @@
         "gemini3",
         "gemini-pro"
       ],
-      "intelligence_score": 18,
+      "intelligence_score": 19,
       "description": "Deep reasoning + thinking mode (1M context) - Complex problems, architecture, deep analysis",
       "context_window": 1048576,
       "max_output_tokens": 65536,
@@ -118,6 +118,48 @@
       ],
       "intelligence_score": 10,
       "description": "Ultra-fast (1M context) - Quick analysis, simple queries, rapid iterations",
+      "context_window": 1048576,
+      "max_output_tokens": 65536,
+      "max_thinking_tokens": 24576,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0
+    },
+    {
+      "model_name": "gemini-2.5-flash-lite",
+      "friendly_name": "Gemini (Flash Lite 2.5)",
+      "aliases": [
+        "flash-lite-2.5",
+        "flashlite2.5"
+      ],
+      "intelligence_score": 8,
+      "description": "Balanced fast model (1M context) - Low latency with thinking, multimodal support",
+      "context_window": 1048576,
+      "max_output_tokens": 65536,
+      "max_thinking_tokens": 24576,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0
+    },
+    {
+      "model_name": "gemini-2.5-flash-lite-preview-09-2025",
+      "friendly_name": "Gemini (Flash Lite 2.5 Preview)",
+      "aliases": [
+        "flash-lite-preview",
+        "flashlite-preview"
+      ],
+      "intelligence_score": 7,
+      "description": "Preview balanced fast model (1M context) - Experimental version with latest improvements",
       "context_window": 1048576,
       "max_output_tokens": 65536,
       "max_thinking_tokens": 24576,

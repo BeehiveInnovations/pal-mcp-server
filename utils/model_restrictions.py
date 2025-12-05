@@ -8,7 +8,7 @@ standardization purposes.
 
 Environment Variables:
 - OPENAI_ALLOWED_MODELS: Comma-separated list of allowed OpenAI models
-- GOOGLE_ALLOWED_MODELS: Comma-separated list of allowed Gemini models
+- GOOGLE_ALLOWED_MODELS: Comma-separated list of allowed Gemini/Vertex AI models
 - XAI_ALLOWED_MODELS: Comma-separated list of allowed X.AI GROK models
 - OPENROUTER_ALLOWED_MODELS: Comma-separated list of allowed OpenRouter models
 - DIAL_ALLOWED_MODELS: Comma-separated list of allowed DIAL models
@@ -51,6 +51,7 @@ class ModelRestrictionService:
     ENV_VARS = {
         ProviderType.OPENAI: "OPENAI_ALLOWED_MODELS",
         ProviderType.GOOGLE: "GOOGLE_ALLOWED_MODELS",
+        ProviderType.VERTEX_AI: "GOOGLE_ALLOWED_MODELS",  # Vertex AI uses same models as Google
         ProviderType.XAI: "XAI_ALLOWED_MODELS",
         ProviderType.OPENROUTER: "OPENROUTER_ALLOWED_MODELS",
         ProviderType.DIAL: "DIAL_ALLOWED_MODELS",
