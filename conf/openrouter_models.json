@@ -25,6 +25,23 @@
   },
   "models": [
     {
+      "model_name": "anthropic/claude-opus-4.5",
+      "aliases": [
+        "opus",
+        "opus4.5",
+        "claude-opus"
+      ],
+      "context_window": 200000,
+      "max_output_tokens": 64000,
+      "supports_extended_thinking": false,
+      "supports_json_mode": false,
+      "supports_function_calling": false,
+      "supports_images": true,
+      "max_image_size_mb": 5.0,
+      "description": "Claude Opus 4.5 - Anthropic's frontier reasoning model for complex software engineering and agentic workflows",
+      "intelligence_score": 18
+    },
+    {
       "model_name": "anthropic/claude-sonnet-4.5",
       "aliases": [
         "sonnet",
@@ -43,8 +60,7 @@
     {
       "model_name": "anthropic/claude-opus-4.1",
       "aliases": [
-        "opus",
-        "claude-opus"
+        "opus4.1"
       ],
       "context_window": 200000,
       "max_output_tokens": 64000,
@@ -53,7 +69,7 @@
       "supports_function_calling": false,
       "supports_images": true,
       "max_image_size_mb": 5.0,
-      "description": "Claude Opus 4.1 - Our most capable and intelligent model yet",
+      "description": "Claude Opus 4.1 - Last generation flagship model with strong coding and reasoning",
       "intelligence_score": 14
     },
     {
