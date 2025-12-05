@@ -38,6 +38,43 @@ class TestOpenAIProvider:
         assert provider.api_key == "test-key"
         assert provider.base_url == "https://custom.openai.com/v1"
 
+    @patch.dict(os.environ, {"OPENAI_API_KEY": "test-key", "OPENAI_BASE_URL": "https://custom-env.openai.com/v1"})
+    def test_initialization_with_env_base_url(self):
+        """Test provider initialization with OPENAI_BASE_URL environment variable via registry."""
+        # Import registry and clear any cached instances
+        from providers.registry import ModelProviderRegistry
+        from providers.shared import ProviderType
+
+        ModelProviderRegistry.clear_cache()
+
+        # Get provider via registry (which reads OPENAI_BASE_URL)
+        provider = ModelProviderRegistry.get_provider(ProviderType.OPENAI)
+        assert provider is not None
+        assert provider.api_key == "test-key"
+        assert provider.base_url == "https://custom-env.openai.com/v1"
+
+    def test_env_base_url_can_be_overridden(self):
+        """Test that explicitly passed base_url overrides default."""
+        # Direct instantiation with explicit base_url
+        provider = OpenAIModelProvider("test-key", base_url="https://explicit.openai.com/v1")
+        assert provider.api_key == "test-key"
+        assert provider.base_url == "https://explicit.openai.com/v1"
+
+    @patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"}, clear=True)
+    def test_initialization_without_env_base_url(self):
+        """Test provider initialization uses default URL when OPENAI_BASE_URL is not set."""
+        # Import registry and clear any cached instances
+        from providers.registry import ModelProviderRegistry
+        from providers.shared import ProviderType
+
+        ModelProviderRegistry.clear_cache()
+
+        # Get provider via registry (without OPENAI_BASE_URL set)
+        provider = ModelProviderRegistry.get_provider(ProviderType.OPENAI)
+        assert provider is not None
+        assert provider.api_key == "test-key"
+        assert provider.base_url == "https://api.openai.com/v1"
+
     def test_model_validation(self):
         """Test model name validation."""
         provider = OpenAIModelProvider("test-key")
