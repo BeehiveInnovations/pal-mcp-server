@@ -1,0 +1,49 @@
+{
+  "_README": {
+    "description": "Model metadata for Zhipu AI GLM API access.",
+    "documentation": "https://github.com/BeehiveInnovations/zen-mcp-server/blob/main/docs/custom_models.md",
+    "usage": "Models listed here are exposed directly through the Zhipu AI provider. Aliases are case-insensitive.",
+    "field_notes": "Matches providers/shared/model_capabilities.py.",
+    "field_descriptions": {
+      "model_name": "The model identifier (e.g., 'glm-4.5', 'glm-4.6')",
+      "aliases": "Array of short names users can type instead of the full model name",
+      "context_window": "Total number of tokens the model can process (input + output combined)",
+      "max_output_tokens": "Maximum number of tokens the model can generate in a single response",
+      "supports_extended_thinking": "Whether the model supports extended reasoning tokens",
+      "supports_function_calling": "Whether the model supports function/tool calling",
+      "supports_images": "Whether the model can process images/visual input",
+      "supports_temperature": "Whether the model accepts temperature parameter in API calls",
+      "temperature_constraint": "Type of temperature constraint: 'fixed', 'range', 'discrete', or omit for default range",
+      "description": "Human-readable description of the model",
+      "friendly_name": "Display name for the model in UI and logs"
+    }
+  },
+  "models": [
+    {
+      "model_name": "glm-4.6",
+      "friendly_name": "GLM",
+      "context_window": 200000,
+      "max_output_tokens": 128000,
+      "supports_temperature": true,
+      "supports_images": false,
+      "supports_extended_thinking": true,
+      "supports_function_calling": true,
+      "temperature_constraint": "range",
+      "aliases": ["glm46", "glm"],
+      "description": "Latest GLM model with 200K context and enhanced reasoning capabilities"
+    },
+    {
+      "model_name": "glm-4.5",
+      "friendly_name": "GLM",
+      "context_window": 128000,
+      "max_output_tokens": 96000,
+      "supports_temperature": true,
+      "supports_images": false,
+      "supports_extended_thinking": true,
+      "supports_function_calling": true,
+      "temperature_constraint": "range",
+      "aliases": ["glm45", "glm4"],
+      "description": "GLM-4.5: Advanced model with 128K context, optimized for tool use and software engineering"
+    }
+  ]
+}

@@ -30,13 +30,17 @@ OPENAI_API_KEY=your-openai-key
 GEMINI_API_KEY=your_gemini_api_key_here
 # Get from: https://makersuite.google.com/app/apikey
 
-# OpenAI API  
+# OpenAI API
 OPENAI_API_KEY=your_openai_api_key_here
 # Get from: https://platform.openai.com/api-keys
 
 # X.AI GROK API
 XAI_API_KEY=your_xai_api_key_here
 # Get from: https://console.x.ai/
+
+# Zhipu AI GLM API
+ZHIPU_API_KEY=your_zhipu_api_key_here
+# Get from: https://z.ai/model-api
 ```
 
 **Option 2: OpenRouter (Access multiple models through one API)**
@@ -71,6 +75,7 @@ DEFAULT_MODEL=auto  # Claude picks best model for each task (recommended)
   - `conf/openai_models.json` – OpenAI catalogue (can be overridden with `OPENAI_MODELS_CONFIG_PATH`)
   - `conf/gemini_models.json` – Gemini catalogue (`GEMINI_MODELS_CONFIG_PATH`)
   - `conf/xai_models.json` – X.AI / GROK catalogue (`XAI_MODELS_CONFIG_PATH`)
+  - `conf/zhipu_models.json` – Zhipu AI GLM catalogue (`ZHIPU_MODELS_CONFIG_PATH`)
   - `conf/openrouter_models.json` – OpenRouter catalogue (`OPENROUTER_MODELS_CONFIG_PATH`)
   - `conf/dial_models.json` – DIAL aggregation catalogue (`DIAL_MODELS_CONFIG_PATH`)
   - `conf/custom_models.json` – Custom/OpenAI-compatible endpoints (`CUSTOM_MODELS_CONFIG_PATH`)
@@ -84,6 +89,7 @@ DEFAULT_MODEL=auto  # Claude picks best model for each task (recommended)
   | OpenAI | `gpt-5.1`, `gpt-5.1-codex`, `gpt-5.1-codex-mini`, `gpt-5`, `gpt-5-pro`, `gpt-5-mini`, `gpt-5-nano`, `gpt-5-codex`, `gpt-4.1`, `o3`, `o3-mini`, `o3-pro`, `o4-mini` | `gpt5.1`, `gpt-5.1`, `5.1`, `gpt5.1-codex`, `codex-5.1`, `codex-mini`, `gpt5`, `gpt5pro`, `mini`, `nano`, `codex`, `o3mini`, `o3pro`, `o4mini` |
   | Gemini | `gemini-2.5-pro`, `gemini-2.5-flash`, `gemini-2.0-flash`, `gemini-2.0-flash-lite` | `pro`, `gemini-pro`, `flash`, `flash-2.0`, `flashlite` |
   | X.AI | `grok-4`, `grok-3`, `grok-3-fast` | `grok`, `grok4`, `grok3`, `grok3fast`, `grokfast` |
+  | Zhipu AI | `glm-4.6`, `glm-4.5` | `glm46`, `glm`, `glm45`, `glm4` |
   | OpenRouter | See `conf/openrouter_models.json` for the continually evolving catalogue | e.g., `opus`, `sonnet`, `flash`, `pro`, `mistral` |
   | Custom | User-managed entries such as `llama3.2` | Define your own aliases per entry |
 
@@ -158,7 +164,7 @@ DEFAULT_THINKING_MODE_THINKDEEP=high
 
 # Available modes and token consumption:
 #   minimal: 128 tokens   - Quick analysis, fastest response
-#   low:     2,048 tokens - Light reasoning tasks  
+#   low:     2,048 tokens - Light reasoning tasks
 #   medium:  8,192 tokens - Balanced reasoning
 #   high:    16,384 tokens - Complex analysis (recommended for thinkdeep)
 #   max:     32,768 tokens - Maximum reasoning depth
@@ -175,7 +181,7 @@ Control which models can be used from each provider for cost control, compliance
 # OpenAI model restrictions
 OPENAI_ALLOWED_MODELS=gpt-5.1-codex-mini,gpt-5-mini,o3-mini,o4-mini,mini
 
-# Gemini model restrictions  
+# Gemini model restrictions
 GOOGLE_ALLOWED_MODELS=flash,pro
 
 # X.AI GROK model restrictions
@@ -219,6 +225,7 @@ XAI_ALLOWED_MODELS=grok,grok-3-fast
 OPENAI_MODELS_CONFIG_PATH=/path/to/openai_models.json
 GEMINI_MODELS_CONFIG_PATH=/path/to/gemini_models.json
 XAI_MODELS_CONFIG_PATH=/path/to/xai_models.json
+ZHIPU_MODELS_CONFIG_PATH=/path/to/zhipu_models.json
 OPENROUTER_MODELS_CONFIG_PATH=/path/to/openrouter_models.json
 DIAL_MODELS_CONFIG_PATH=/path/to/dial_models.json
 CUSTOM_MODELS_CONFIG_PATH=/path/to/custom_models.json
@@ -227,8 +234,8 @@ CUSTOM_MODELS_CONFIG_PATH=/path/to/custom_models.json
 **Conversation Settings:**
 ```env
 # How long AI-to-AI conversation threads persist in memory (hours)
-# Conversations are auto-purged when claude closes its MCP connection or 
-# when a session is quit / re-launched 
+# Conversations are auto-purged when claude closes its MCP connection or
+# when a session is quit / re-launched
 CONVERSATION_TIMEOUT_HOURS=5
 
 # Maximum conversation turns (each exchange = 2 turns)

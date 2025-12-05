@@ -336,6 +336,7 @@ class ModelProviderRegistry:
             ProviderType.OPENAI: "OPENAI_API_KEY",
             ProviderType.AZURE: "AZURE_OPENAI_API_KEY",
             ProviderType.XAI: "XAI_API_KEY",
+            ProviderType.ZHIPU: "ZHIPU_API_KEY",
             ProviderType.OPENROUTER: "OPENROUTER_API_KEY",
             ProviderType.CUSTOM: "CUSTOM_API_KEY",  # Can be empty for providers that don't need auth
             ProviderType.DIAL: "DIAL_API_KEY",

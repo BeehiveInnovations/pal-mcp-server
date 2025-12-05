@@ -8,6 +8,7 @@ from .openai_compatible import OpenAICompatibleProvider
 from .openrouter import OpenRouterProvider
 from .registry import ModelProviderRegistry
 from .shared import ModelCapabilities, ModelResponse
+from .zhipu import ZhipuModelProvider
 
 __all__ = [
     "ModelProvider",
@@ -19,4 +20,5 @@ __all__ = [
     "OpenAIModelProvider",
     "OpenAICompatibleProvider",
     "OpenRouterProvider",
+    "ZhipuModelProvider",
 ]
