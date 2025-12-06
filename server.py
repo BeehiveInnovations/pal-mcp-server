@@ -393,6 +393,7 @@ def configure_providers():
         logger.debug(f"  {key}: {'[PRESENT]' if value else '[MISSING]'}")
     from providers import ModelProviderRegistry
     from providers.azure_openai import AzureOpenAIProvider
+    from providers.bedrock import BedrockModelProvider
     from providers.custom import CustomProvider
     from providers.dial import DIALModelProvider
     from providers.gemini import GeminiModelProvider
@@ -462,6 +463,19 @@ def configure_providers():
         has_native_apis = True
         logger.info("DIAL API key found - DIAL models available")
 
+    # Check for AWS Bedrock (uses boto3 default credential chain)
+    bedrock_enabled = get_env("BEDROCK_ENABLED", "true").lower() == "true"
+    if bedrock_enabled:
+        try:
+            import boto3
+            # Test if credentials are available
+            boto3.client('sts').get_caller_identity()
+            valid_providers.append("AWS Bedrock")
+            has_native_apis = True
+            logger.info("AWS Bedrock credentials found - Bedrock models available")
+        except Exception as e:
+            logger.debug(f"AWS Bedrock not available: {e}")
+
     # Check for OpenRouter API key
     openrouter_key = get_env("OPENROUTER_API_KEY")
     logger.debug(f"OpenRouter key check: key={'[PRESENT]' if openrouter_key else '[MISSING]'}")
@@ -517,6 +531,13 @@ def configure_providers():
             ModelProviderRegistry.register_provider(ProviderType.DIAL, DIALModelProvider)
             registered_providers.append(ProviderType.DIAL.value)
             logger.debug(f"Registered provider: {ProviderType.DIAL.value}")
+        if bedrock_enabled:
+            try:
+                ModelProviderRegistry.register_provider(ProviderType.BEDROCK, BedrockModelProvider)
+                registered_providers.append(ProviderType.BEDROCK.value)
+                logger.debug(f"Registered provider: {ProviderType.BEDROCK.value}")
+            except Exception as e:
+                logger.warning(f"Failed to register Bedrock provider: {e}")
 
     # 2. Custom provider second (for local/private models)
     if has_custom:
