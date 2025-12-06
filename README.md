@@ -11,11 +11,11 @@
 
 ### Your CLI + Multiple Models = Your AI Dev Team
 
-**Use the 🤖 CLI you love:**  
+**Use the 🤖 CLI you love:**
 [Claude Code](https://www.anthropic.com/claude-code) · [Gemini CLI](https://github.com/google-gemini/gemini-cli) · [Codex CLI](https://github.com/openai/codex) · [Qwen Code CLI](https://qwenlm.github.io/qwen-code-docs/) · [Cursor](https://cursor.com) · _and more_
 
-**With multiple models within a single prompt:**  
-Gemini · OpenAI · Anthropic · Grok · Azure · Ollama · OpenRouter · DIAL · On-Device Model
+**With multiple models within a single prompt:**
+Gemini · OpenAI · DeepSeek · Anthropic · Grok · Azure · Ollama · OpenRouter · DIAL · On-Device Model
 
 </div>
 
@@ -148,6 +148,7 @@ For best results when using [Codex CLI](https://developers.openai.com/codex/cli)
 - **[OpenRouter](https://openrouter.ai/)** - Access multiple models with one API
 - **[Gemini](https://makersuite.google.com/app/apikey)** - Google's latest models
 - **[OpenAI](https://platform.openai.com/api-keys)** - O3, GPT-5 series
+- **[DeepSeek](https://platform.deepseek.com/)** - DeepSeek V3.1 models
 - **[Azure OpenAI](https://learn.microsoft.com/azure/ai-services/openai/)** - Enterprise deployments of GPT-4o, GPT-4.1, GPT-5 family
 - **[X.AI](https://console.x.ai/)** - Grok models
 - **[DIAL](https://dialx.ai/)** - Vendor-agnostic model access
@@ -178,6 +179,7 @@ cd pal-mcp-server
       "env": {
         "PATH": "/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin:~/.local/bin",
         "GEMINI_API_KEY": "your-key-here",
+        "DEEPSEEK_API_KEY": "your-deepseek-key-here",
         "DISABLED_TOOLS": "analyze,refactor,testgen,secaudit,docgen,tracer",
         "DEFAULT_MODEL": "auto"
       }
@@ -278,6 +280,8 @@ DISABLED_TOOLS=
         // API configuration
         "GEMINI_API_KEY": "your-gemini-key",
         "OPENAI_API_KEY": "your-openai-key",
+        "DEEPSEEK_API_KEY": "your-deepseek-key",
+        "DEEPSEEK_BASE_URL": "https://api.deepseek.com",  // Optional custom endpoint
         "OPENROUTER_API_KEY": "your-openrouter-key",
         
         // Logging and performance
@@ -381,8 +385,8 @@ DISABLED_TOOLS=
 - **[Context revival](docs/context-revival.md)** - Continue conversations even after context resets
 
 **Model Support**
-- **Multiple providers** - Gemini, OpenAI, Azure, X.AI, OpenRouter, DIAL, Ollama
-- **Latest models** - GPT-5, Gemini 3.0 Pro, O3, Grok-4, local Llama
+- **Multiple providers** - Gemini, OpenAI, DeepSeek, Azure, X.AI, OpenRouter, DIAL, Ollama
+- **Latest models** - GPT-5, Gemini 3.0 Pro, O3, DeepSeek V3.1, Grok-4, local Llama
 - **[Thinking modes](docs/advanced-usage.md#thinking-modes)** - Control reasoning depth vs cost
 - **Vision support** - Analyze images, diagrams, screenshots
 
@@ -443,6 +447,7 @@ Built with the power of **Multi-Model AI** collaboration 🤝
 - [Claude Code](https://claude.ai/code)
 - [Gemini](https://ai.google.dev/)
 - [OpenAI](https://openai.com/)
+- [DeepSeek](https://platform.deepseek.com/)
 - [Azure OpenAI](https://learn.microsoft.com/azure/ai-services/openai/)
 
 ### Star History

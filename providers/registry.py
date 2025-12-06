@@ -38,6 +38,7 @@ class ModelProviderRegistry:
     PROVIDER_PRIORITY_ORDER = [
         ProviderType.GOOGLE,  # Direct Gemini access
         ProviderType.OPENAI,  # Direct OpenAI access
+        ProviderType.DEEPSEEK,  # Direct DeepSeek access
         ProviderType.AZURE,  # Azure-hosted OpenAI deployments
         ProviderType.XAI,  # Direct X.AI GROK access
         ProviderType.DIAL,  # DIAL unified API access
@@ -142,8 +143,16 @@ class ModelProviderRegistry:
         else:
             if not api_key:
                 return None
-            # Initialize non-custom provider with just API key
-            provider = provider_class(api_key=api_key)
+            # Initialize non-custom provider, allowing optional base URL overrides
+            provider_kwargs = {"api_key": api_key}
+
+            if provider_type == ProviderType.DEEPSEEK:
+                base_url = os.getenv("DEEPSEEK_BASE_URL")
+                if base_url:
+                    provider_kwargs["base_url"] = base_url
+
+            # Initialize the provider with any additional kwargs
+            provider = provider_class(**provider_kwargs)
 
         # Cache the instance
         instance._initialized_providers[provider_type] = provider
@@ -334,7 +343,11 @@ class ModelProviderRegistry:
         key_mapping = {
             ProviderType.GOOGLE: "GEMINI_API_KEY",
             ProviderType.OPENAI: "OPENAI_API_KEY",
+<<<<<<< HEAD
+            ProviderType.DEEPSEEK: "DEEPSEEK_API_KEY",
+=======
             ProviderType.AZURE: "AZURE_OPENAI_API_KEY",
+>>>>>>> upstream/main
             ProviderType.XAI: "XAI_API_KEY",
             ProviderType.OPENROUTER: "OPENROUTER_API_KEY",
             ProviderType.CUSTOM: "CUSTOM_API_KEY",  # Can be empty for providers that don't need auth

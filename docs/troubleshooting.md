@@ -38,6 +38,8 @@ cat .env
 # Ensure at least one key is set:
 # GEMINI_API_KEY=your-key-here
 # OPENAI_API_KEY=your-key-here
+# DEEPSEEK_API_KEY=your-key-here
+# DEEPSEEK_BASE_URL=https://api.deepseek.com
 ```
 
 If you need to update your API keys, edit the `.env` file and then restart Claude for changes to take effect.

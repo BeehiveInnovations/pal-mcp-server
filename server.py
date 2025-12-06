@@ -380,7 +380,7 @@ def configure_providers():
     Configure and validate AI providers based on available API keys.
 
     This function checks for API keys and registers the appropriate providers.
-    At least one valid API key (Gemini or OpenAI) is required.
+    At least one valid API key (Gemini, OpenAI, DeepSeek, etc.) is required.
 
     Raises:
         ValueError: If no valid API keys are found or conflicting configurations detected
@@ -394,6 +394,7 @@ def configure_providers():
     from providers import ModelProviderRegistry
     from providers.azure_openai import AzureOpenAIProvider
     from providers.custom import CustomProvider
+    from providers.deepseek import DeepSeekModelProvider
     from providers.dial import DIALModelProvider
     from providers.gemini import GeminiModelProvider
     from providers.openai import OpenAIModelProvider
@@ -426,6 +427,13 @@ def configure_providers():
             logger.debug("OpenAI API key not found in environment")
         else:
             logger.debug("OpenAI API key is placeholder value")
+
+    # Check for DeepSeek API key
+    deepseek_key = os.getenv("DEEPSEEK_API_KEY")
+    if deepseek_key and deepseek_key != "your_deepseek_api_key_here":
+        valid_providers.append("DeepSeek")
+        has_native_apis = True
+        logger.info("DeepSeek API key found - DeepSeek models available")
 
     # Check for Azure OpenAI configuration
     azure_key = get_env("AZURE_OPENAI_API_KEY")
@@ -505,6 +513,10 @@ def configure_providers():
             ModelProviderRegistry.register_provider(ProviderType.OPENAI, OpenAIModelProvider)
             registered_providers.append(ProviderType.OPENAI.value)
             logger.debug(f"Registered provider: {ProviderType.OPENAI.value}")
+        if deepseek_key and deepseek_key != "your_deepseek_api_key_here":
+            ModelProviderRegistry.register_provider(ProviderType.DEEPSEEK, DeepSeekModelProvider)
+            registered_providers.append(ProviderType.DEEPSEEK.value)
+            logger.debug(f"Registered provider: {ProviderType.DEEPSEEK.value}")
         if azure_models_available:
             ModelProviderRegistry.register_provider(ProviderType.AZURE, AzureOpenAIProvider)
             registered_providers.append(ProviderType.AZURE.value)
@@ -600,7 +612,13 @@ def configure_providers():
 
         # Validate restrictions against known models
         provider_instances = {}
-        provider_types_to_validate = [ProviderType.GOOGLE, ProviderType.OPENAI, ProviderType.XAI, ProviderType.DIAL]
+        provider_types_to_validate = [
+            ProviderType.GOOGLE,
+            ProviderType.OPENAI,
+            ProviderType.DEEPSEEK,
+            ProviderType.XAI,
+            ProviderType.DIAL,
+        ]
         for provider_type in provider_types_to_validate:
             provider = ModelProviderRegistry.get_provider(provider_type)
             if provider:
@@ -619,7 +637,7 @@ def configure_providers():
         if not available_models:
             logger.error(
                 "Auto mode is enabled but no models are available after applying restrictions. "
-                "Please check your OPENAI_ALLOWED_MODELS and GOOGLE_ALLOWED_MODELS settings."
+                "Please check your OPENAI_ALLOWED_MODELS, GOOGLE_ALLOWED_MODELS, DEEPSEEK_ALLOWED_MODELS, XAI_ALLOWED_MODELS, and DIAL_ALLOWED_MODELS settings."
             )
             raise ValueError(
                 "No models available for auto mode due to restrictions. "

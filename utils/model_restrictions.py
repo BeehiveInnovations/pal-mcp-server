@@ -9,6 +9,7 @@ standardization purposes.
 Environment Variables:
 - OPENAI_ALLOWED_MODELS: Comma-separated list of allowed OpenAI models
 - GOOGLE_ALLOWED_MODELS: Comma-separated list of allowed Gemini models
+- DEEPSEEK_ALLOWED_MODELS: Comma-separated list of allowed DeepSeek models
 - XAI_ALLOWED_MODELS: Comma-separated list of allowed X.AI GROK models
 - OPENROUTER_ALLOWED_MODELS: Comma-separated list of allowed OpenRouter models
 - DIAL_ALLOWED_MODELS: Comma-separated list of allowed DIAL models
@@ -51,6 +52,7 @@ class ModelRestrictionService:
     ENV_VARS = {
         ProviderType.OPENAI: "OPENAI_ALLOWED_MODELS",
         ProviderType.GOOGLE: "GOOGLE_ALLOWED_MODELS",
+        ProviderType.DEEPSEEK: "DEEPSEEK_ALLOWED_MODELS",
         ProviderType.XAI: "XAI_ALLOWED_MODELS",
         ProviderType.OPENROUTER: "OPENROUTER_ALLOWED_MODELS",
         ProviderType.DIAL: "DIAL_ALLOWED_MODELS",

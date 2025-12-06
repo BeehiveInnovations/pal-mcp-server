@@ -11,6 +11,9 @@ This guide covers all configuration options for the PAL MCP Server. The server i
 DEFAULT_MODEL=auto
 GEMINI_API_KEY=your-gemini-key
 OPENAI_API_KEY=your-openai-key
+DEEPSEEK_API_KEY=your-deepseek-key
+# Optional: override DeepSeek API base URL
+# DEEPSEEK_BASE_URL=https://api.deepseek.com
 ```
 
 ## Complete Configuration Reference
@@ -30,9 +33,15 @@ OPENAI_API_KEY=your-openai-key
 GEMINI_API_KEY=your_gemini_api_key_here
 # Get from: https://makersuite.google.com/app/apikey
 
-# OpenAI API  
+# OpenAI API
 OPENAI_API_KEY=your_openai_api_key_here
 # Get from: https://platform.openai.com/api-keys
+
+# DeepSeek API
+DEEPSEEK_API_KEY=your_deepseek_api_key_here
+# Get from: https://platform.deepseek.com/
+# Optional: override API base URL
+# DEEPSEEK_BASE_URL=https://api.deepseek.com
 
 # X.AI GROK API
 XAI_API_KEY=your_xai_api_key_here
@@ -190,6 +199,33 @@ OPENROUTER_ALLOWED_MODELS=opus,sonnet,mistral
 - Aliases are case-insensitive and defined per entry (for example, `mini` maps to `gpt-5-mini` by default, while `flash` maps to `gemini-2.5-flash`).
 - When you override the manifest files you can add or remove aliases as needed; restriction policies (`*_ALLOWED_MODELS`) automatically pick up those changes.
 - Models omitted from a manifest fall back to generic capability detection (where supported) and may have limited feature metadata.
+
+**Common Model Aliases:**
+
+**OpenAI Models:**
+- `o3` (200K context, high reasoning)
+- `o3-mini` (200K context, balanced)
+- `o4-mini` (200K context, latest balanced)
+- `mini` (shorthand for o4-mini)
+
+**Gemini Models:**
+- `gemini-2.5-flash` (1M context, fast)
+- `gemini-2.5-pro` (1M context, powerful)
+- `flash` (shorthand for Flash model)
+- `pro` (shorthand for Pro model)
+
+**DeepSeek Models:**
+- `deepseek-chat` (128K context, chat)
+- `deepseek-reasoner` (128K context, reasoning with thinking tokens)
+
+**X.AI GROK Models:**
+- `grok-4-latest` (256K context, latest flagship model with reasoning, vision, and structured outputs)
+- `grok-3` (131K context, advanced reasoning)
+- `grok-3-fast` (131K context, higher performance)
+- `grok` (shorthand for grok-4-latest)
+- `grok4` (shorthand for grok-4-latest)
+- `grok3` (shorthand for grok-3)
+- `grokfast` (shorthand for grok-3-fast)
 
 **Example Configurations:**
 ```env

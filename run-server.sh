@@ -1070,6 +1070,7 @@ setup_env_file() {
     local api_keys=(
         "GEMINI_API_KEY:your_gemini_api_key_here"
         "OPENAI_API_KEY:your_openai_api_key_here"
+        "DEEPSEEK_API_KEY:your_deepseek_api_key_here"
         "XAI_API_KEY:your_xai_api_key_here"
         "DIAL_API_KEY:your_dial_api_key_here"
         "OPENROUTER_API_KEY:your_openrouter_api_key_here"
@@ -1114,6 +1115,7 @@ check_api_keys() {
     local api_keys=(
         "GEMINI_API_KEY:your_gemini_api_key_here"
         "OPENAI_API_KEY:your_openai_api_key_here"
+        "DEEPSEEK_API_KEY:your_deepseek_api_key_here"
         "XAI_API_KEY:your_xai_api_key_here"
         "DIAL_API_KEY:your_dial_api_key_here"
         "OPENROUTER_API_KEY:your_openrouter_api_key_here"
@@ -1144,6 +1146,7 @@ check_api_keys() {
         echo "To add API keys, edit .env and add at least one:"
         echo "  GEMINI_API_KEY=your-actual-key"
         echo "  OPENAI_API_KEY=your-actual-key"
+        echo "  DEEPSEEK_API_KEY=your-actual-key"
         echo "  XAI_API_KEY=your-actual-key"
         echo "  DIAL_API_KEY=your-actual-key"
         echo "  OPENROUTER_API_KEY=your-actual-key"
@@ -1196,7 +1199,8 @@ parse_env_variables() {
     if [[ -z "$env_vars" ]]; then
         local api_keys=(
             "GEMINI_API_KEY"
-            "OPENAI_API_KEY" 
+            "OPENAI_API_KEY"
+            "DEEPSEEK_API_KEY"
             "XAI_API_KEY"
             "DIAL_API_KEY"
             "OPENROUTER_API_KEY"
