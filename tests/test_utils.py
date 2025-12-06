@@ -29,14 +29,12 @@ class TestFileUtils:
         assert "Error: File does not exist" in content
         assert tokens > 0
 
-    def test_read_file_content_safe_files_allowed(self):
-        """Test that safe files outside the original project root are now allowed"""
-        # In the new security model, safe files like /etc/passwd
-        # can be read as they're not in the dangerous paths list
+    def test_read_file_content_dangerous_files_blocked(self):
+        """Test that dangerous system files are blocked"""
+        # /etc/passwd should be blocked as it's under /etc (dangerous path)
         content, tokens = read_file_content("/etc/passwd")
-        # Should successfully read the file (with timestamp in header)
-        assert "--- BEGIN FILE: /etc/passwd (Last modified:" in content
-        assert "--- END FILE: /etc/passwd ---" in content
+        assert "--- ERROR ACCESSING FILE:" in content
+        assert "Access to system directory denied" in content
         assert tokens > 0
 
     def test_read_file_content_relative_path_rejected(self):

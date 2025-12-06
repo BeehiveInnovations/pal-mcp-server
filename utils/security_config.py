@@ -89,16 +89,42 @@ EXCLUDED_DIRS = {
 
 def is_dangerous_path(path: Path) -> bool:
     """
-    Check if a path is in the dangerous paths list.
+    Check if a path is in or under a dangerous directory.
+
+    Uses Path.is_relative_to() to block dangerous directories AND their subdirectories.
+    For example, if "/etc" is in DANGEROUS_PATHS, both "/etc" and "/etc/passwd"
+    will be blocked.
 
     Args:
         path: Path to check
 
     Returns:
         True if the path is dangerous and should not be accessed
+
+    Security:
+        Fixes path traversal vulnerability (CWE-22)
     """
     try:
         resolved = path.resolve()
-        return str(resolved) in DANGEROUS_PATHS or resolved.parent == resolved
+
+        # Check 1: Root directory (filesystem root)
+        if resolved.parent == resolved:
+            return True
+
+        # Check 2: Exact match or subdirectory of dangerous paths
+        # Use Path.is_relative_to() for correct cross-platform path comparison
+        for dangerous in DANGEROUS_PATHS:
+            # Skip root "/" - already handled above
+            if dangerous == "/":
+                continue
+
+            dangerous_path = Path(dangerous)
+            # is_relative_to() correctly handles both exact matches and subdirectories
+            # Works properly on Windows with paths like "C:\" and "C:\Users"
+            if resolved == dangerous_path or resolved.is_relative_to(dangerous_path):
+                return True
+
+        return False
+
     except Exception:
         return True  # If we can't resolve, consider it dangerous
