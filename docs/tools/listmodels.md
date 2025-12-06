@@ -7,7 +7,7 @@ The `listmodels` tool shows which providers are configured, available models, th
 ## Usage
 
 ```
-"Use zen to list available models"
+"Use pal to list available models"
 ```
 
 ## Key Features

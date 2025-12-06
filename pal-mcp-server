@@ -4,8 +4,8 @@
 # Get the directory of this script
 DIR="$(cd "$(dirname "$0")" && pwd)"
 
-# Change to the zen-mcp-server directory
+# Change to the pal-mcp-server directory
 cd "$DIR"
 
 # Execute the Python server with all arguments passed through
-exec .zen_venv/bin/python server.py "$@"
+exec .pal_venv/bin/python server.py "$@"

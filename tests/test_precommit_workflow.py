@@ -34,8 +34,8 @@ class TestPrecommitWorkflowTool:
         """Test analytical temperature setting"""
         tool = PrecommitTool()
         temp = tool.get_default_temperature()
-        # Should be analytical temperature (0.2)
-        assert temp == 0.2
+        # Should be analytical temperature (now 1.0)
+        assert temp == 1.0
 
     def test_request_model_basic_validation(self):
         """Test basic request model validation"""

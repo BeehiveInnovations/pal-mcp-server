@@ -1,5 +1,5 @@
 """
-Unit tests for Docker configuration and implementation of Zen MCP Server
+Unit tests for Docker configuration and implementation of PAL MCP Server
 
 This module tests:
 - Docker and MCP configuration
@@ -24,7 +24,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
 class TestDockerConfiguration:
-    """Tests for Docker configuration of Zen MCP Server"""
+    """Tests for Docker configuration of PAL MCP Server"""
 
     def setup_method(self):
         """Setup for each test"""
@@ -51,7 +51,7 @@ class TestDockerConfiguration:
         # Basic YAML syntax check
         content = self.docker_compose_path.read_text()
         assert "services:" in content, "docker-compose.yml must have services"
-        assert "zen-mcp" in content, "Service zen-mcp must be defined"
+        assert "pal-mcp" in content, "Service pal-mcp must be defined"
         assert "build:" in content, "Build configuration must be present"
 
     def test_environment_file_template(self):
@@ -80,7 +80,7 @@ class TestDockerCommands:
 
         # Simulate docker build
         subprocess.run(
-            ["docker", "build", "-t", "zen-mcp-server:latest", str(self.project_root)], capture_output=True, text=True
+            ["docker", "build", "-t", "pal-mcp-server:latest", str(self.project_root)], capture_output=True, text=True
         )
 
         mock_run.assert_called_once()
@@ -100,7 +100,7 @@ class TestDockerCommands:
             ".env",
             "-v",
             "logs:/app/logs",
-            "zen-mcp-server:latest",
+            "pal-mcp-server:latest",
             "python",
             "server.py",
         ]
@@ -111,7 +111,7 @@ class TestDockerCommands:
         assert "--rm" in cmd, "Must contain --rm for cleanup"
         assert "-i" in cmd, "Must contain -i for stdio"
         assert "--env-file" in cmd, "Must contain --env-file"
-        assert "zen-mcp-server:latest" in cmd, "Must reference the image"
+        assert "pal-mcp-server:latest" in cmd, "Must reference the image"
 
     @patch("subprocess.run")
     def test_docker_health_check(self, mock_run):
@@ -121,7 +121,7 @@ class TestDockerCommands:
 
         # Simulate health check
         subprocess.run(
-            ["docker", "run", "--rm", "zen-mcp-server:latest", "python", "/usr/local/bin/healthcheck.py"],
+            ["docker", "run", "--rm", "pal-mcp-server:latest", "python", "/usr/local/bin/healthcheck.py"],
             capture_output=True,
             text=True,
         )
@@ -187,7 +187,7 @@ class TestMCPIntegration:
         # Expected MCP configuration
         expected_config = {
             "servers": {
-                "zen-docker": {
+                "pal-docker": {
                     "command": "docker",
                     "args": [
                         "run",
@@ -197,7 +197,7 @@ class TestMCPIntegration:
                         "/path/to/.env",
                         "-v",
                         "/path/to/logs:/app/logs",
-                        "zen-mcp-server:latest",
+                        "pal-mcp-server:latest",
                         "python",
                         "server.py",
                     ],
@@ -208,11 +208,11 @@ class TestMCPIntegration:
 
         # Check structure
         assert "servers" in expected_config
-        zen_docker = expected_config["servers"]["zen-docker"]
-        assert zen_docker["command"] == "docker"
-        assert "run" in zen_docker["args"]
-        assert "--rm" in zen_docker["args"]
-        assert "-i" in zen_docker["args"]
+        pal_docker = expected_config["servers"]["pal-docker"]
+        assert pal_docker["command"] == "docker"
+        assert "run" in pal_docker["args"]
+        assert "--rm" in pal_docker["args"]
+        assert "-i" in pal_docker["args"]
 
     def test_stdio_communication_structure(self):
         """Test structure of stdio communication"""
@@ -279,7 +279,7 @@ class TestDockerPerformance:
         expected_max_size_mb = 500  # 500MB max
 
         # In production, we would do:
-        # result = subprocess.run(['docker', 'images', '--format', '{{.Size}}', 'zen-mcp-server:latest'])
+        # result = subprocess.run(['docker', 'images', '--format', '{{.Size}}', 'pal-mcp-server:latest'])
         # Here we simulate
         simulated_size = "294MB"  # Current observed size
 
@@ -346,7 +346,7 @@ LOG_LEVEL=INFO
             "-i",
             "--env-file",
             ".env",
-            "zen-mcp-server:latest",
+            "pal-mcp-server:latest",
             "python",
             "server.py",
         ]

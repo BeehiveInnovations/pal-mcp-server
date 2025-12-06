@@ -5,7 +5,7 @@ Most importantly, it does this within in a sub-process / sub-agent, saving you p
 
 ## Why Use This Tool?
 
-### Without Zen (Using Standard AI)
+### Without PAL (Using Standard AI)
 ```
 User: "How do I add glass look to a button in Swift?"
 
@@ -17,11 +17,11 @@ Result: You get outdated APIs for iOS 18, not the iOS 26 effect you're after
 
 <div align="center">
     
- [API without Zen](https://github.com/user-attachments/assets/01a79dc9-ad16-4264-9ce1-76a56c3580ee)
+[API without PAL](https://github.com/user-attachments/assets/01a79dc9-ad16-4264-9ce1-76a56c3580ee)
  
 </div>
 
-### With Zen (Using apilookup)
+### With PAL (Using apilookup)
 ```
 User: "use apilookup how do I add glass look to a button in swift?"
 
@@ -36,7 +36,7 @@ Result: You get the correct, current APIs that work with today's iOS version
 
 <div align="center">
 
-[API with Zen](https://github.com/user-attachments/assets/5c847326-4b66-41f7-8f30-f380453dce22)
+[API with PAL](https://github.com/user-attachments/assets/5c847326-4b66-41f7-8f30-f380453dce22)
 
 </div>
 
@@ -110,7 +110,7 @@ The AI then performs the actual web searches and synthesizes the results into ac
 
 ## Codex CLI Configuration Reminder
 
-If you use Zen through the Codex CLI, the assistant needs Codex's native web-search tool to fetch current documentation. After adding the Zen MCP entry to `~/.codex/config.toml`, confirm the file also contains:
+If you use PAL through the Codex CLI, the assistant needs Codex's native web-search tool to fetch current documentation. After adding the PAL MCP entry to `~/.codex/config.toml`, confirm the file also contains:
 
 ```toml
 [tools]

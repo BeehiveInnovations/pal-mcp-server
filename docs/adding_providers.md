@@ -1,6 +1,6 @@
 # Adding a New Provider
 
-This guide explains how to add support for a new AI model provider to the Zen MCP Server. The provider system is designed to be extensible and follows a simple pattern.
+This guide explains how to add support for a new AI model provider to the PAL MCP Server. The provider system is designed to be extensible and follows a simple pattern.
 
 ## Overview
 

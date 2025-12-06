@@ -5,14 +5,14 @@ See `requirements.txt` and `requirements-dev.txt`
 Also read CLAUDE.md and CLAUDE.local.md if available.
 
 ## Project Structure & Module Organization
-Zen MCP Server centers on `server.py`, which exposes MCP entrypoints and coordinates multi-model workflows. 
+PAL MCP Server centers on `server.py`, which exposes MCP entrypoints and coordinates multi-model workflows. 
 Feature-specific tools live in `tools/`, provider integrations in `providers/`, and shared helpers in `utils/`. 
 Prompt and system context assets stay in `systemprompts/`, while configuration templates and automation scripts live under `conf/`, `scripts/`, and `docker/`. 
 Unit tests sit in `tests/`; simulator-driven scenarios and log utilities are in `simulator_tests/` with the `communication_simulator_test.py` harness. 
 Authoritative documentation and samples live in `docs/`, and runtime diagnostics are rotated in `logs/`.
 
 ## Build, Test, and Development Commands
-- `source .zen_venv/bin/activate` – activate the managed Python environment.
+- `source .pal_venv/bin/activate` – activate the managed Python environment.
 - `./run-server.sh` – install dependencies, refresh `.env`, and launch the MCP server locally.
 - `./code_quality_checks.sh` – run Ruff autofix, Black, isort, and the default pytest suite.
 - `python communication_simulator_test.py --quick` – smoke-test orchestration across tools and providers.
@@ -20,14 +20,14 @@ Authoritative documentation and samples live in `docs/`, and runtime diagnostics
 
 Run code quality checks:
 ```bash
-.zen_venv/bin/activate && ./code_quality_checks.sh
+.pal_venv/bin/activate && ./code_quality_checks.sh
 ```
 
 For example, this is how we run an individual / all tests:
 
 ```bash
-.zen_venv/bin/activate && pytest tests/test_auto_mode_model_listing.py -q
-.zen_venv/bin/activate && pytest -q
+.pal_venv/bin/activate && pytest tests/test_auto_mode_model_listing.py -q
+.pal_venv/bin/activate && pytest -q
 ```
 
 ## Coding Style & Naming Conventions

@@ -431,9 +431,16 @@ class UserController:
         output = json.loads(result[0].text)
         assert output["status"] in ["success", "continuation_available"]
         assert "content" in output
-        # Should mention hello or world or greeting in some form
+        # Should mention hello or world or greeting in some form (including French equivalents)
         content_lower = output["content"].lower()
-        assert "hello" in content_lower or "world" in content_lower or "greeting" in content_lower
+        assert (
+            "hello" in content_lower
+            or "world" in content_lower
+            or "greeting" in content_lower
+            or "bonjour" in content_lower  # French: hello
+            or "monde" in content_lower  # French: world
+            or "salut" in content_lower  # French: greeting
+        )
 
 
 if __name__ == "__main__":

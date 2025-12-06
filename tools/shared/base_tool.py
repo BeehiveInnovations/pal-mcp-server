@@ -1,5 +1,5 @@
 """
-Core Tool Infrastructure for Zen MCP Tools
+Core Tool Infrastructure for PAL MCP Tools
 
 This module provides the fundamental base class for all tools:
 - BaseTool: Abstract base class defining the tool interface
@@ -45,7 +45,7 @@ logger = logging.getLogger(__name__)
 
 class BaseTool(ABC):
     """
-    Abstract base class for all Zen MCP tools.
+    Abstract base class for all PAL MCP tools.
 
     This class defines the interface that all tools must implement and provides
     common functionality for request handling, model creation, and response formatting.

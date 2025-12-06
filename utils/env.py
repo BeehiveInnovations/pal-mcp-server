@@ -1,4 +1,4 @@
-"""Centralized environment variable access for Zen MCP Server."""
+"""Centralized environment variable access for PAL MCP Server."""
 
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ def _read_dotenv_values() -> dict[str, str | None]:
 
 
 def _compute_force_override(values: Mapping[str, str | None]) -> bool:
-    raw = (values.get("ZEN_MCP_FORCE_ENV_OVERRIDE") or "false").strip().lower()
+    raw = (values.get("PAL_MCP_FORCE_ENV_OVERRIDE") or "false").strip().lower()
     return raw == "true"
 
 
@@ -58,13 +58,13 @@ reload_env()
 
 
 def env_override_enabled() -> bool:
-    """Return True when ZEN_MCP_FORCE_ENV_OVERRIDE is enabled via the .env file."""
+    """Return True when PAL_MCP_FORCE_ENV_OVERRIDE is enabled via the .env file."""
 
     return _FORCE_ENV_OVERRIDE
 
 
 def get_env(key: str, default: str | None = None) -> str | None:
-    """Retrieve environment variables respecting ZEN_MCP_FORCE_ENV_OVERRIDE."""
+    """Retrieve environment variables respecting PAL_MCP_FORCE_ENV_OVERRIDE."""
 
     if env_override_enabled():
         if key in _DOTENV_VALUES:

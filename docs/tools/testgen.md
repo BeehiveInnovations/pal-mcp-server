@@ -35,7 +35,7 @@ Test generation excels with extended reasoning models like Gemini Pro or O3, whi
 
 **Basic Usage:**
 ```
-"Use zen to generate tests for User.login() method"
+"Use pal to generate tests for User.login() method"
 "Generate comprehensive tests for the sorting method in src/new_sort.py using o3"
 "Create tests for edge cases not already covered in our tests using gemini pro"
 ```
@@ -69,7 +69,7 @@ Test generation excels with extended reasoning models like Gemini Pro or O3, whi
 
 **Initial Configuration (used in step 1):**
 - `prompt`: Description of what to test, testing objectives, and specific scope/focus areas (required)
-- `model`: auto|pro|flash|flash-2.0|flashlite|o3|o3-mini|o4-mini|gpt4.1|gpt5|gpt5-mini|gpt5-nano (default: server default)
+- `model`: auto|pro|flash|flash-2.0|flashlite|o3|o3-mini|o4-mini|gpt4.1|gpt5.1|gpt5.1-codex|gpt5.1-codex-mini|gpt5|gpt5-mini|gpt5-nano (default: server default)
 - `test_examples`: Optional existing test files or directories to use as style/pattern reference (absolute paths)
 - `thinking_mode`: minimal|low|medium|high|max (default: medium, Gemini only)
 - `use_assistant_model`: Whether to use expert test generation phase (default: true, set to false to use Claude only)

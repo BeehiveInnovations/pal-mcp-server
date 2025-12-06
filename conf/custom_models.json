@@ -1,7 +1,7 @@
 {
   "_README": {
     "description": "Model metadata for local/self-hosted OpenAI-compatible endpoints (Custom provider).",
-    "documentation": "https://github.com/BeehiveInnovations/zen-mcp-server/blob/main/docs/custom_models.md",
+    "documentation": "https://github.com/BeehiveInnovations/pal-mcp-server/blob/main/docs/custom_models.md",
     "usage": "Each entry will be advertised by the Custom provider. Aliases are case-insensitive.",
     "field_notes": "Matches providers/shared/model_capabilities.py.",
     "field_descriptions": {

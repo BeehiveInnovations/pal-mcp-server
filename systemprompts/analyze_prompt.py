@@ -31,7 +31,7 @@ review is essential - e.g., the issue spans multiple modules or exposes a system
 with partial analysis. Instead, respond ONLY with the JSON below (and nothing else). Clearly state the reason why
 you strongly feel this is necessary and ask the agent to inform the user why you're switching to a different tool:
 {"status": "full_codereview_required",
- "important": "Please use zen's codereview tool instead",
+ "important": "Please use pal's codereview tool instead",
  "reason": "<brief, specific rationale for escalation>"}
 
 SCOPE & FOCUS

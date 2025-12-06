@@ -30,7 +30,7 @@ with the best architecture for my project
 ## Tool Parameters
 
 - `prompt`: Your current thinking/analysis to extend and validate (required)
-- `model`: auto|pro|flash|flash-2.0|flashlite|o3|o3-mini|o4-mini|gpt4.1|gpt5|gpt5-mini|gpt5-nano (default: server default)
+- `model`: auto|pro|flash|flash-2.0|flashlite|o3|o3-mini|o4-mini|gpt4.1|gpt5.1|gpt5.1-codex|gpt5.1-codex-mini|gpt5|gpt5-mini|gpt5-nano (default: server default)
 - `problem_context`: Additional context about the problem or goal
 - `focus_areas`: Specific aspects to focus on (architecture, performance, security, etc.)
 - `files`: Optional file paths or directories for additional context (absolute paths)

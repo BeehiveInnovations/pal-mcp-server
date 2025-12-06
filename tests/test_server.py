@@ -101,7 +101,7 @@ class TestServerTools:
         content = data["content"]
 
         # Check for expected content in the markdown output
-        assert "# Zen MCP Server Version" in content
+        assert "# PAL MCP Server Version" in content
         assert "## Server Information" in content
         assert "## Configuration" in content
         assert "Current Version" in content

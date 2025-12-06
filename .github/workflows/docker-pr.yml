@@ -95,7 +95,7 @@ jobs:
             ```json
             {
               "mcpServers": {
-                "zen": {
+                "pal": {
                   "command": "docker",
                   "args": ["run", "--rm", "-i", "-e", "GEMINI_API_KEY", "ghcr.io/${{ github.repository }}:pr-${{ github.event.number }}"],
                   "env": { "GEMINI_API_KEY": "your-key" }

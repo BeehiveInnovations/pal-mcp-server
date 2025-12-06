@@ -37,14 +37,14 @@ of the work so you can enforce organisational preferences easily.
 
 A straightforward rubric that mirrors typical provider tiers:
 
-| Intelligence | Guidance |
-|--------------|----------|
-| 18–19 | Frontier reasoning models (Gemini 2.5 Pro, GPT‑5) |
-| 15–17 | Strong general models with large context (O3 Pro, DeepSeek R1) |
-| 12–14 | Balanced assistants (Claude Opus/Sonnet, Mistral Large) |
-| 9–11  | Fast distillations (Gemini Flash, GPT-5 Mini, Mistral medium) |
-| 6–8   | Local or efficiency-focused models (Llama 3 70B, Claude Haiku) |
-| ≤5    | Experimental/lightweight models |
+| Intelligence | Guidance                                                                                  |
+|--------------|-------------------------------------------------------------------------------------------|
+| 18–19 | Frontier reasoning models (Gemini 3.0 Pro, Gemini 2.5 Pro, GPT‑5.1 Codex, GPT‑5.1, GPT‑5) |
+| 15–17 | Strong general models with large context (O3 Pro, DeepSeek R1)                            |
+| 12–14 | Balanced assistants (Claude Opus/Sonnet, Mistral Large)                                   |
+| 9–11  | Fast distillations (Gemini Flash, GPT-5 Mini, Mistral medium)                             |
+| 6–8   | Local or efficiency-focused models (Llama 3 70B, Claude Haiku)                            |
+| ≤5    | Experimental/lightweight models                                                           |
 
 Record the reasoning for your scores so future updates stay consistent.
 

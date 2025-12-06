@@ -1,5 +1,5 @@
 """
-Workflow tools for Zen MCP.
+Workflow tools for PAL MCP.
 
 Workflow tools follow a multi-step pattern with forced pauses between steps
 to encourage thorough investigation and analysis. They inherit from WorkflowTool

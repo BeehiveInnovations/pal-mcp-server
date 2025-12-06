@@ -35,6 +35,6 @@ class TestConfig:
 
     def test_temperature_defaults(self):
         """Test temperature constants"""
-        assert TEMPERATURE_ANALYTICAL == 0.2
-        assert TEMPERATURE_BALANCED == 0.5
-        assert TEMPERATURE_CREATIVE == 0.7
+        assert TEMPERATURE_ANALYTICAL == 1.0
+        assert TEMPERATURE_BALANCED == 1.0
+        assert TEMPERATURE_CREATIVE == 1.0

@@ -251,7 +251,7 @@ class ChatTool(SimpleTool):
                 except Exception as exc:  # pragma: no cover - rare filesystem failures
                     logger.error("Failed to persist generated code block: %s", exc, exc_info=True)
                     warning = (
-                        f"WARNING: Unable to write zen_generated.code inside '{target_directory}'. "
+                        f"WARNING: Unable to write pal_generated.code inside '{target_directory}'. "
                         "Check the path permissions and re-run. The generated code block is included below for manual handling."
                     )
 
@@ -264,7 +264,7 @@ class ChatTool(SimpleTool):
                 else:
                     if not sanitized_text:
                         base_message = (
-                            "Generated code saved to zen_generated.code.\n"
+                            "Generated code saved to pal_generated.code.\n"
                             "\n"
                             "CRITICAL: Contains mixed instructions + partial snippets - NOT complete code to copy as-is!\n"
                             "\n"
@@ -339,12 +339,12 @@ class ChatTool(SimpleTool):
         if not target_dir.is_dir():
             raise FileNotFoundError(f"Absolute working directory path '{working_directory}' does not exist")
 
-        target_file = target_dir / "zen_generated.code"
+        target_file = target_dir / "pal_generated.code"
         if target_file.exists():
             try:
                 target_file.unlink()
             except OSError as exc:
-                logger.warning("Unable to remove existing zen_generated.code: %s", exc)
+                logger.warning("Unable to remove existing pal_generated.code: %s", exc)
 
         content = block if block.endswith("\n") else f"{block}\n"
         target_file.write_text(content, encoding="utf-8")

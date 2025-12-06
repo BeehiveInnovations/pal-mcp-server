@@ -29,18 +29,18 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
 FROM python:3.11-slim AS runtime
 
 # Add metadata labels for traceability
-LABEL maintainer="Zen MCP Server Team"
+LABEL maintainer="PAL MCP Server Team"
 LABEL version="1.0.0"
-LABEL description="Zen MCP Server - AI-powered Model Context Protocol server"
-LABEL org.opencontainers.image.title="zen-mcp-server"
+LABEL description="PAL MCP Server - AI-powered Model Context Protocol server"
+LABEL org.opencontainers.image.title="pal-mcp-server"
 LABEL org.opencontainers.image.description="AI-powered Model Context Protocol server with multi-provider support"
 LABEL org.opencontainers.image.version="1.0.0"
-LABEL org.opencontainers.image.source="https://github.com/BeehiveInnovations/zen-mcp-server"
-LABEL org.opencontainers.image.documentation="https://github.com/BeehiveInnovations/zen-mcp-server/blob/main/README.md"
+LABEL org.opencontainers.image.source="https://github.com/BeehiveInnovations/pal-mcp-server"
+LABEL org.opencontainers.image.documentation="https://github.com/BeehiveInnovations/pal-mcp-server/blob/main/README.md"
 LABEL org.opencontainers.image.licenses="Apache 2.0 License"
 
 # Create non-root user for security
-RUN groupadd -r zenuser && useradd -r -g zenuser zenuser
+RUN groupadd -r paluser && useradd -r -g paluser paluser
 
 # Install minimal runtime dependencies
 RUN apt-get update && apt-get install -y \
@@ -57,20 +57,20 @@ ENV PATH="/opt/venv/bin:$PATH"
 WORKDIR /app
 
 # Copy application code
-COPY --chown=zenuser:zenuser . .
+COPY --chown=paluser:paluser . .
 
 # Create logs directory with proper permissions
-RUN mkdir -p logs && chown -R zenuser:zenuser logs
+RUN mkdir -p logs && chown -R paluser:paluser logs
 
 # Create tmp directory for container operations
-RUN mkdir -p tmp && chown -R zenuser:zenuser tmp
+RUN mkdir -p tmp && chown -R paluser:paluser tmp
 
 # Copy health check script
-COPY --chown=zenuser:zenuser docker/scripts/healthcheck.py /usr/local/bin/healthcheck.py
+COPY --chown=paluser:paluser docker/scripts/healthcheck.py /usr/local/bin/healthcheck.py
 RUN chmod +x /usr/local/bin/healthcheck.py
 
 # Switch to non-root user
-USER zenuser
+USER paluser
 
 # Health check configuration
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \

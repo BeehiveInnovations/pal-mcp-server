@@ -28,7 +28,7 @@ class TestChallengeTool:
         assert "reflexive agreement" in self.tool.get_description()
         assert "critical thinking" in self.tool.get_description()
         assert "reasoned analysis" in self.tool.get_description()
-        assert self.tool.get_default_temperature() == 0.2  # TEMPERATURE_ANALYTICAL
+        assert self.tool.get_default_temperature() == 1.0  # TEMPERATURE_ANALYTICAL
 
     def test_requires_model(self):
         """Test that challenge tool doesn't require a model"""

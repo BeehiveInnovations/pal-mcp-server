@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Health check script for Zen MCP Server Docker container
+Health check script for PAL MCP Server Docker container
 """
 
 import os
