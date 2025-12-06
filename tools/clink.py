@@ -25,6 +25,10 @@ logger = logging.getLogger(__name__)
 MAX_RESPONSE_CHARS = 20_000
 SUMMARY_PATTERN = re.compile(r"<SUMMARY>(.*?)</SUMMARY>", re.IGNORECASE | re.DOTALL)
 
+# Allowed values for thinking_mode and execution_mode
+ALLOWED_THINKING_MODES = {"minimal", "low", "medium", "high", "max", "extended", "heavy"}
+ALLOWED_EXECUTION_MODES = {"standard", "careful", "precise"}
+
 
 class CLinkRequest(BaseModel):
     """Request model for clink tool."""
@@ -49,6 +53,14 @@ class CLinkRequest(BaseModel):
     continuation_id: str | None = Field(
         default=None,
         description=COMMON_FIELD_DESCRIPTIONS["continuation_id"],
+    )
+    thinking_mode: str | None = Field(
+        default=None,
+        description="Optional thinking mode for CLIs that support it (e.g., 'extended', 'high', 'max').",
+    )
+    execution_mode: str | None = Field(
+        default=None,
+        description="Optional execution mode for CLIs that support it.",
     )
 
 
@@ -143,6 +155,14 @@ class CLinkTool(SimpleTool):
             "absolute_file_paths": SchemaBuilder.SIMPLE_FIELD_SCHEMAS["absolute_file_paths"],
             "images": SchemaBuilder.COMMON_FIELD_SCHEMAS["images"],
             "continuation_id": SchemaBuilder.COMMON_FIELD_SCHEMAS["continuation_id"],
+            "thinking_mode": {
+                "type": "string",
+                "description": "Optional thinking mode for CLIs that support it. Common values: 'minimal', 'low', 'medium', 'high', 'max'. Gemini CLI supports this; Claude CLI ignores it.",
+            },
+            "execution_mode": {
+                "type": "string",
+                "description": "Optional execution mode for CLIs that support it. Common values: 'standard', 'careful', 'precise'.",
+            },
         }
 
         schema = {
@@ -168,6 +188,18 @@ class CLinkTool(SimpleTool):
         path_error = self._validate_file_paths(request)
         if path_error:
             self._raise_tool_error(path_error)
+
+        # Validate thinking_mode and execution_mode against allowlists
+        if request.thinking_mode and request.thinking_mode not in ALLOWED_THINKING_MODES:
+            self._raise_tool_error(
+                f"Invalid thinking_mode: '{request.thinking_mode}'. "
+                f"Allowed values: {', '.join(sorted(ALLOWED_THINKING_MODES))}"
+            )
+        if request.execution_mode and request.execution_mode not in ALLOWED_EXECUTION_MODES:
+            self._raise_tool_error(
+                f"Invalid execution_mode: '{request.execution_mode}'. "
+                f"Allowed values: {', '.join(sorted(ALLOWED_EXECUTION_MODES))}"
+            )
 
         selected_cli = request.cli_name or self._default_cli_name
         if not selected_cli:
@@ -211,6 +243,8 @@ class CLinkTool(SimpleTool):
                 system_prompt=system_prompt_text if system_prompt_text.strip() else None,
                 files=absolute_file_paths,
                 images=images,
+                thinking_mode=request.thinking_mode,
+                execution_mode=request.execution_mode,
             )
         except CLIAgentError as exc:
             metadata = self._build_error_metadata(client_config, exc)

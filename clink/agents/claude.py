@@ -11,7 +11,18 @@ from .base import AgentOutput, BaseCLIAgent
 class ClaudeAgent(BaseCLIAgent):
     """Claude CLI agent with system-prompt injection support."""
 
-    def _build_command(self, *, role: ResolvedCLIRole, system_prompt: str | None) -> list[str]:
+    def _build_command(
+        self,
+        *,
+        role: ResolvedCLIRole,
+        system_prompt: str | None,
+        thinking_mode: str | None = None,
+        execution_mode: str | None = None,
+    ) -> list[str]:
+        # NOTE: Claude CLI does not currently support thinking_mode or execution_mode flags.
+        # These parameters are accepted for API compatibility but are not used.
+        _ = (thinking_mode, execution_mode)
+
         command = list(self.client.executable)
         command.extend(self.client.internal_args)
         command.extend(self.client.config_args)

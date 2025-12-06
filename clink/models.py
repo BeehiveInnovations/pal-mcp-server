@@ -51,6 +51,14 @@ class CLIClientConfig(BaseModel):
     timeout_seconds: PositiveInt | None = Field(default=None)
     roles: dict[str, CLIRoleConfig] = Field(default_factory=dict)
     output_to_file: OutputCaptureConfig | None = None
+    thinking_mode_flag_template: str | None = Field(
+        default=None,
+        description="Optional CLI flag template for thinking mode. Use $value for string.Template placeholder.",
+    )
+    execution_mode_flag_template: str | None = Field(
+        default=None,
+        description="Optional CLI flag template for execution mode. Use $value for string.Template placeholder.",
+    )
 
     @field_validator("additional_args", mode="before")
     @classmethod
@@ -87,6 +95,14 @@ class ResolvedCLIClient(BaseModel):
     runner: str | None = None
     roles: dict[str, ResolvedCLIRole]
     output_to_file: OutputCaptureConfig | None = None
+    thinking_mode_flag_template: str | None = Field(
+        default=None,
+        description="Optional CLI flag template for thinking mode. Use $value for string.Template placeholder.",
+    )
+    execution_mode_flag_template: str | None = Field(
+        default=None,
+        description="Optional CLI flag template for execution mode. Use $value for string.Template placeholder.",
+    )
 
     def list_roles(self) -> list[str]:
         return list(self.roles.keys())

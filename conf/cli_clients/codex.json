@@ -6,6 +6,8 @@
     "--dangerously-bypass-approvals-and-sandbox"
   ],
   "env": {},
+  "thinking_mode_flag_template": "--thinking-mode $value",
+  "execution_mode_flag_template": "--execution-mode $value",
   "roles": {
     "default": {
       "prompt_path": "systemprompts/clink/default.txt",
