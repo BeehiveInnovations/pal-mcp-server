@@ -5,24 +5,39 @@ import binascii
 import os
 from collections.abc import Iterable
 
-from utils.file_types import IMAGES, get_image_mime_type
+from utils.file_types import (
+    IMAGES,
+    IMAGES_GEMINI_AI_STUDIO,
+    get_image_mime_type,
+)
 
 DEFAULT_MAX_IMAGE_SIZE_MB = 20.0
 
 __all__ = ["DEFAULT_MAX_IMAGE_SIZE_MB", "validate_image"]
 
 
-def _valid_mime_types() -> Iterable[str]:
-    """Return the MIME types permitted by the IMAGES whitelist."""
+def _valid_mime_types(allow_heic_heif: bool = False) -> Iterable[str]:
+    """Return the MIME types permitted by the IMAGES whitelist.
+
+    Args:
+        allow_heic_heif: If True, include HEIC/HEIF formats (Gemini AI Studio only)
+
+    Returns:
+        Iterator of supported MIME types
+    """
+    if allow_heic_heif:
+        return (get_image_mime_type(ext) for ext in IMAGES_GEMINI_AI_STUDIO)
     return (get_image_mime_type(ext) for ext in IMAGES)
 
 
-def validate_image(image_path: str, max_size_mb: float = None) -> tuple[bytes, str]:
+def validate_image(image_path: str, max_size_mb: float = None, allow_heic_heif: bool = False) -> tuple[bytes, str]:
     """Validate a user-supplied image path or data URL.
 
     Args:
         image_path: Either a filesystem path or a data URL.
         max_size_mb: Optional size limit (defaults to ``DEFAULT_MAX_IMAGE_SIZE_MB``).
+        allow_heic_heif: If True, allow HEIC/HEIF formats (Gemini AI Studio only).
+                        Default is False (OpenAI, Vertex AI, etc. do not support HEIC/HEIF).
 
     Returns:
         A tuple ``(image_bytes, mime_type)`` ready for upstream providers.
@@ -34,12 +49,12 @@ def validate_image(image_path: str, max_size_mb: float = None) -> tuple[bytes, s
         max_size_mb = DEFAULT_MAX_IMAGE_SIZE_MB
 
     if image_path.startswith("data:"):
-        return _validate_data_url(image_path, max_size_mb)
+        return _validate_data_url(image_path, max_size_mb, allow_heic_heif)
 
-    return _validate_file_path(image_path, max_size_mb)
+    return _validate_file_path(image_path, max_size_mb, allow_heic_heif)
 
 
-def _validate_data_url(image_data_url: str, max_size_mb: float) -> tuple[bytes, str]:
+def _validate_data_url(image_data_url: str, max_size_mb: float, allow_heic_heif: bool) -> tuple[bytes, str]:
     """Validate a data URL and return image bytes plus MIME type."""
     try:
         header, data = image_data_url.split(",", 1)
@@ -47,7 +62,7 @@ def _validate_data_url(image_data_url: str, max_size_mb: float) -> tuple[bytes, 
     except (ValueError, IndexError) as exc:
         raise ValueError(f"Invalid data URL format: {exc}")
 
-    valid_mime_types = list(_valid_mime_types())
+    valid_mime_types = list(_valid_mime_types(allow_heic_heif))
     if mime_type not in valid_mime_types:
         raise ValueError(
             "Unsupported image type: {mime}. Supported types: {supported}".format(
@@ -64,7 +79,7 @@ def _validate_data_url(image_data_url: str, max_size_mb: float) -> tuple[bytes, 
     return image_bytes, mime_type
 
 
-def _validate_file_path(file_path: str, max_size_mb: float) -> tuple[bytes, str]:
+def _validate_file_path(file_path: str, max_size_mb: float, allow_heic_heif: bool) -> tuple[bytes, str]:
     """Validate an image loaded from the filesystem."""
     try:
         with open(file_path, "rb") as handle:
@@ -75,10 +90,11 @@ def _validate_file_path(file_path: str, max_size_mb: float) -> tuple[bytes, str]
         raise ValueError(f"Failed to read image file: {exc}")
 
     ext = os.path.splitext(file_path)[1].lower()
-    if ext not in IMAGES:
+    allowed_extensions = IMAGES_GEMINI_AI_STUDIO if allow_heic_heif else IMAGES
+    if ext not in allowed_extensions:
         raise ValueError(
             "Unsupported image format: {ext}. Supported formats: {supported}".format(
-                ext=ext, supported=", ".join(sorted(IMAGES))
+                ext=ext, supported=", ".join(sorted(allowed_extensions))
             )
         )
 

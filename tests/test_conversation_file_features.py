@@ -543,3 +543,207 @@ class TestFailureScenarios:
         assert "--- Turn 1 (Agent) ---" in history
         assert "Analyze these files" in history
         assert tokens > 0
+
+
+class TestGeminiTokenEstimationIntegration:
+    """Test Gemini token estimation integration in conversation memory"""
+
+    def test_plan_file_inclusion_uses_gemini_estimation(self, project_path):
+        """Test that _plan_file_inclusion_by_size uses Gemini's precise token estimation when available."""
+        from unittest.mock import Mock
+
+        from utils.model_context import ModelContext
+
+        # Create test image file
+        test_image = os.path.join(project_path, "test.jpg")
+        with open(test_image, "wb") as f:
+            f.write(b"\xff\xd8\xff\xe0")  # JPEG header
+
+        # Create mock provider with Gemini estimation capability
+        mock_provider = Mock()
+        mock_provider.get_capabilities.return_value = Mock(
+            context_window=1_000_000,
+            max_output_tokens=8192,
+        )
+        # Gemini returns precise token count for images
+        mock_provider.estimate_tokens_for_files.return_value = 258
+
+        with patch("utils.model_context.ModelProviderRegistry.get_provider_for_model", return_value=mock_provider):
+            model_context = ModelContext("gemini-2.5-flash")
+
+            all_files = [test_image]
+            max_tokens = 1000
+
+            # Call with model_context parameter
+            included, skipped, total_tokens = _plan_file_inclusion_by_size(all_files, max_tokens, model_context)
+
+            # Verify Gemini estimation was called
+            mock_provider.estimate_tokens_for_files.assert_called_once()
+
+            # Verify call arguments
+            call_args = mock_provider.estimate_tokens_for_files.call_args[0]
+            model_name, files = call_args
+            assert model_name == "gemini-2.5-flash"
+            assert len(files) == 1
+            assert files[0]["path"] == test_image
+            assert files[0]["mime_type"] == "image/jpeg"
+
+            # Verify file was included with precise token count
+            assert test_image in included
+            assert skipped == []
+            assert total_tokens == 258  # Gemini's precise count
+
+    def test_plan_file_inclusion_fallback_without_gemini(self, project_path):
+        """Test that _plan_file_inclusion_by_size falls back to file_utils when provider lacks estimation."""
+        from unittest.mock import Mock
+
+        from utils.model_context import ModelContext
+
+        # Create test file
+        test_file = os.path.join(project_path, "test.py")
+        with open(test_file, "w") as f:
+            f.write("# Test file\nprint('hello')\n")
+
+        # Mock provider without estimate_tokens_for_files (e.g., OpenAI)
+        mock_provider = Mock(spec=["get_capabilities", "generate_content"])
+        mock_provider.get_capabilities.return_value = Mock(
+            context_window=200_000,
+            max_output_tokens=4096,
+        )
+
+        with patch("utils.model_context.ModelProviderRegistry.get_provider_for_model", return_value=mock_provider):
+            model_context = ModelContext("gpt-5")
+
+            all_files = [test_file]
+            max_tokens = 1000
+
+            # Should fall back to file_utils estimation
+            included, skipped, total_tokens = _plan_file_inclusion_by_size(all_files, max_tokens, model_context)
+
+            # File should still be included using fallback estimation
+            assert test_file in included
+            assert skipped == []
+            assert total_tokens > 0  # Should have estimated with fallback
+
+    def test_plan_file_inclusion_without_model_context(self, project_path):
+        """Test that _plan_file_inclusion_by_size works without model_context (backward compatibility)."""
+        # Create test file
+        test_file = os.path.join(project_path, "test.py")
+        with open(test_file, "w") as f:
+            f.write("# Test file\nprint('hello')\n")
+
+        all_files = [test_file]
+        max_tokens = 1000
+
+        # Call without model_context (should use fallback)
+        included, skipped, total_tokens = _plan_file_inclusion_by_size(all_files, max_tokens, model_context=None)
+
+        # Should work with fallback estimation
+        assert test_file in included
+        assert skipped == []
+        assert total_tokens > 0
+
+    def test_build_conversation_history_uses_gemini_estimation(self, project_path):
+        """Test that build_conversation_history uses Gemini estimation for files."""
+        from unittest.mock import Mock
+
+        from utils.model_context import ModelContext
+
+        # Create test image file
+        test_image = os.path.join(project_path, "diagram.png")
+        with open(test_image, "wb") as f:
+            f.write(b"\x89PNG\r\n\x1a\n")  # PNG header
+
+        # Create conversation with image reference
+        turns = [
+            ConversationTurn(
+                role="user",
+                content="Analyze this diagram",
+                timestamp="2023-01-01T00:00:00Z",
+                files=[test_image],
+            )
+        ]
+
+        context = ThreadContext(
+            thread_id="test-gemini",
+            created_at="2023-01-01T00:00:00Z",
+            last_updated_at="2023-01-01T00:00:00Z",
+            tool_name="analyze",
+            turns=turns,
+            initial_context={},
+        )
+
+        # Create mock Gemini provider
+        mock_provider = Mock()
+        mock_provider.get_capabilities.return_value = Mock(
+            context_window=1_000_000,
+            max_output_tokens=8192,
+        )
+        mock_provider.estimate_tokens_for_files.return_value = 258
+        mock_provider._calculate_text_tokens.return_value = 100  # For text content
+
+        with patch("utils.model_context.ModelProviderRegistry.get_provider_for_model", return_value=mock_provider):
+            model_context = ModelContext("gemini-2.5-flash")
+
+            history, tokens = build_conversation_history(context, model_context)
+
+            # Verify Gemini estimation was called for the image
+            mock_provider.estimate_tokens_for_files.assert_called()
+
+            # Verify history was built
+            assert "=== CONVERSATION HISTORY (CONTINUATION) ===" in history
+            assert tokens > 0
+
+    def test_gemini_estimation_with_multiple_file_types(self, project_path):
+        """Test Gemini estimation handles multiple file types correctly."""
+        from unittest.mock import Mock
+
+        from utils.model_context import ModelContext
+
+        # Create different file types
+        image_file = os.path.join(project_path, "image.jpg")
+        pdf_file = os.path.join(project_path, "doc.pdf")
+        text_file = os.path.join(project_path, "code.py")
+
+        with open(image_file, "wb") as f:
+            f.write(b"\xff\xd8\xff\xe0")  # JPEG header
+        with open(pdf_file, "wb") as f:
+            f.write(b"%PDF-1.4")  # PDF header
+        with open(text_file, "w") as f:
+            f.write("print('hello')")
+
+        # Mock provider with different token counts per file type
+        mock_provider = Mock()
+        mock_provider.get_capabilities.return_value = Mock(
+            context_window=1_000_000,
+            max_output_tokens=8192,
+        )
+
+        def mock_estimate(model_name, files):
+            total = 0
+            for file_info in files:
+                mime = file_info["mime_type"]
+                if "image" in mime:
+                    total += 258
+                elif "pdf" in mime:
+                    total += 2580  # 10 pages * 258
+                else:
+                    total += 50
+            return total
+
+        mock_provider.estimate_tokens_for_files.side_effect = mock_estimate
+
+        with patch("utils.model_context.ModelProviderRegistry.get_provider_for_model", return_value=mock_provider):
+            model_context = ModelContext("gemini-2.5-flash")
+
+            all_files = [image_file, pdf_file, text_file]
+            max_tokens = 10000
+
+            included, skipped, total_tokens = _plan_file_inclusion_by_size(all_files, max_tokens, model_context)
+
+            # All files should be included
+            assert set(included) == set(all_files)
+            assert skipped == []
+
+            # Total should be sum of individual estimates: 258 (image) + 2580 (pdf) + 50 (text)
+            assert total_tokens == 2888

@@ -278,6 +278,7 @@ class TestLargePromptHandling:
             mock_model_context.model_name = "gemini-2.5-flash"
             mock_model_context.provider = mock_provider
             mock_model_context.capabilities = MagicMock(supports_extended_thinking=False)
+            mock_model_context.estimate_tokens.return_value = 1000  # Mock token estimation
             mock_model_context.calculate_token_allocation.return_value = TokenAllocation(
                 total_tokens=1_000_000,
                 content_tokens=800_000,
@@ -415,6 +416,7 @@ class TestLargePromptHandling:
 
             mock_model_context = MagicMock()
             mock_model_context.model_name = "gemini-2.5-flash"
+            mock_model_context.estimate_tokens.return_value = 1000  # Mock token estimation
             mock_model_context.calculate_token_allocation.return_value = TokenAllocation(
                 total_tokens=1_048_576,
                 content_tokens=838_861,
@@ -463,6 +465,10 @@ class TestLargePromptHandling:
             @property
             def provider(self):
                 return self._provider
+
+            def estimate_tokens(self, text):
+                """Estimate token count for text."""
+                return len(text) // 4  # Match fallback ratio
 
             def calculate_token_allocation(self):
                 return TokenAllocation(
@@ -524,6 +530,7 @@ class TestLargePromptHandling:
                 mock_model_context = MagicMock()
                 mock_model_context.model_name = "flash"
                 mock_model_context.provider = mock_provider
+                mock_model_context.estimate_tokens.return_value = 1000  # Mock token estimation
                 mock_model_context.calculate_token_allocation.return_value = TokenAllocation(
                     total_tokens=1_048_576,
                     content_tokens=838_861,
@@ -650,6 +657,7 @@ class TestLargePromptHandling:
             mock_model_context = MagicMock()
             mock_model_context.model_name = "flash"
             mock_model_context.provider = mock_provider
+            mock_model_context.estimate_tokens.return_value = 1000  # Mock token estimation
             mock_model_context.calculate_token_allocation.return_value = TokenAllocation(
                 total_tokens=1_048_576,
                 content_tokens=838_861,

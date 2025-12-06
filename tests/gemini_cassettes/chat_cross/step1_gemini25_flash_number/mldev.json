@@ -25,6 +25,7 @@
             "generationConfig": {
               "temperature": 0.2,
               "candidateCount": 1,
+              "mediaResolution": "MEDIA_RESOLUTION_MEDIUM",
               "thinkingConfig": {
                 "thinking_budget": 8110
               }
@@ -38,12 +39,12 @@
           "content-type": "application/json; charset=UTF-8",
           "vary": "Origin, X-Origin, Referer",
           "content-encoding": "gzip",
-          "date": "Sat, 04 Oct 2025 10:14:27 GMT",
+          "date": "Mon, 10 Nov 2025 00:57:34 GMT",
           "server": "scaffolding on HTTPServer2",
           "x-xss-protection": "0",
           "x-frame-options": "SAMEORIGIN",
           "x-content-type-options": "nosniff",
-          "server-timing": "gfet4t7; dur=1246",
+          "server-timing": "gfet4t7; dur=945",
           "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
           "transfer-encoding": "chunked"
         },
@@ -76,7 +77,7 @@
               "thoughtsTokenCount": 63
             },
             "modelVersion": "gemini-2.5-flash",
-            "responseId": "g_PgaIL5LL6VkdUPgr3q2A8"
+            "responseId": "fjgRacDiJqG0qtsP-uXToQg"
           }
         ],
         "byte_segments": [],
@@ -87,12 +88,12 @@
                 "content-type": "application/json; charset=UTF-8",
                 "vary": "Origin, X-Origin, Referer",
                 "content-encoding": "gzip",
-                "date": "Sat, 04 Oct 2025 10:14:27 GMT",
+                "date": "Mon, 10 Nov 2025 00:57:34 GMT",
                 "server": "scaffolding on HTTPServer2",
                 "x-xss-protection": "0",
                 "x-frame-options": "SAMEORIGIN",
                 "x-content-type-options": "nosniff",
-                "server-timing": "gfet4t7; dur=1246",
+                "server-timing": "gfet4t7; dur=945",
                 "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
                 "transfer-encoding": "chunked"
               }
@@ -112,7 +113,7 @@
               }
             ],
             "model_version": "gemini-2.5-flash",
-            "response_id": "g_PgaIL5LL6VkdUPgr3q2A8",
+            "response_id": "fjgRacDiJqG0qtsP-uXToQg",
             "usage_metadata": {
               "candidates_token_count": 1,
               "prompt_token_count": 1085,

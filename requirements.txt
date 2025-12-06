@@ -1,9 +1,12 @@
 mcp>=1.0.0
-google-genai>=1.19.0
+google-genai[local-tokenizer]>=1.46.0  # local-tokenizer extra for offline text token counting (tested with v1.46.0, latest stable)
 openai>=1.55.2  # Minimum version for httpx 0.28.0 compatibility
 pydantic>=2.0.0
 python-dotenv>=1.0.0
 importlib-resources>=5.0.0; python_version<"3.9"
+imagesize>=1.4.1  # For local image token estimation (Gemini provider)
+pypdf>=3.0.0  # For local PDF token estimation (Gemini provider)
+tinytag>=1.10.0  # For local video/audio duration extraction (Gemini provider)
 
 # Development dependencies (install with pip install -r requirements-dev.txt)
 # pytest>=7.4.0

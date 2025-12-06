@@ -38,4 +38,27 @@ def create_mock_provider(model_name="gemini-2.5-flash", context_window=1_048_576
 
     mock_provider.generate_content.return_value = mock_response
 
+    # Set up token estimation methods for Gemini-like behavior
+    def mock_calculate_text_tokens(model_name, text):
+        return len(text) // 4 if text else 0  # Match fallback ratio (1 token ≈ 4 chars)
+
+    def mock_estimate_tokens_for_files(model_name, files):
+        total = 0
+        for file_info in files:
+            mime_type = file_info.get("mime_type", "")
+            if "image" in mime_type:
+                total += 258
+            elif "pdf" in mime_type:
+                total += 258
+            elif "video" in mime_type:
+                total += 300
+            elif "audio" in mime_type:
+                total += 32
+            else:
+                total += 100
+        return total
+
+    mock_provider._calculate_text_tokens = mock_calculate_text_tokens
+    mock_provider.estimate_tokens_for_files = mock_estimate_tokens_for_files
+
     return mock_provider

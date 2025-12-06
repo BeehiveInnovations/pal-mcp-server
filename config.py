@@ -150,6 +150,31 @@ MCP_PROMPT_SIZE_LIMIT = _calculate_mcp_prompt_limit()
 # Leave empty for default language (English)
 LOCALE = get_env("LOCALE", "") or ""
 
+# Gemini API Configuration
+# GEMINI_MEDIA_RESOLUTION: Controls media processing resolution
+# Official API description: "If specified, the media resolution specified will be used."
+#
+# Valid configuration values:
+#   ""       - (empty/default) Use API default resolution (recommended)
+#   "LOW"    - Low resolution: 66 tokens/frame for video (~100 tokens/sec total, saves ~67%)
+#   "MEDIUM" - Medium resolution: 258 tokens/frame for video (~300 tokens/sec total)
+#   "HIGH"   - High resolution: 258 tokens/frame with zoomed reframing (~300 tokens/sec)
+#
+# Note: Do NOT explicitly configure "UNSPECIFIED" - empty value automatically means default.
+# Per Google API design guidelines (AIP-126), omitting the field is the standard way to
+# indicate default behavior, which the SDK handles automatically.
+#
+# Confirmed impact per official documentation:
+#   - Video: ~100 tokens/sec (LOW) vs ~300 tokens/sec (MEDIUM/HIGH/default)
+#   - Images: 258 tokens (≤384px) or tiled calculation (fixed, not affected)
+#   - Audio: 32 tokens/sec (fixed, not affected)
+#   - PDF: 258 tokens/page (fixed, not affected)
+#
+# References:
+#   - https://ai.google.dev/gemini-api/docs/video-understanding
+#   - Google API Design Guide (AIP-126): Enum default values
+GEMINI_MEDIA_RESOLUTION = get_env("GEMINI_MEDIA_RESOLUTION", "") or ""
+
 # Threading configuration
 # Simple in-memory conversation threading for stateless MCP environment
 # Conversations persist only during the Claude session

@@ -213,6 +213,18 @@ XAI_ALLOWED_MODELS=grok,grok-3-fast
 
 ### Advanced Configuration
 
+**Provider-Specific Settings:**
+```env
+# Gemini Endpoint Type (optional)
+# Options: 'aistudio' or 'vertex'
+# Default: aistudio
+#
+# Controls file upload limits and supported formats:
+# - AI Studio: 3600 images/request, 9.5h audio (unlimited files), HEIC/HEIF support
+# - Vertex AI: 3000 images/request, 8.4h audio (1 file max), no HEIC/HEIF
+GEMINI_ENDPOINT_TYPE=aistudio
+```
+
 **Custom Model Configuration & Manifest Overrides:**
 ```env
 # Override default location of built-in catalogues

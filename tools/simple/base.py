@@ -431,11 +431,44 @@ class SimpleTool(BaseTool):
                 f"Using model: {self._model_context.model_name} via {provider.get_provider_type().value} provider"
             )
 
-            # Estimate tokens for logging
-            from utils.token_utils import estimate_tokens
-
-            estimated_tokens = estimate_tokens(prompt)
+            # Estimate tokens for logging using model context
+            estimated_tokens = self._model_context.estimate_tokens(prompt)
             logger.debug(f"Prompt length: {len(prompt)} characters (~{estimated_tokens:,} tokens)")
+
+            # Estimate image tokens if images are provided
+            if images:
+                image_tokens = 0
+                use_fallback = False
+
+                if hasattr(provider, "estimate_tokens_for_files"):
+                    try:
+                        # Prepare file list for token estimation
+                        files_for_estimation = [
+                            {"path": image_path, "mime_type": self._model_context.detect_mime_type(image_path)}
+                            for image_path in images
+                        ]
+
+                        image_tokens = (
+                            provider.estimate_tokens_for_files(self._current_model_name, files_for_estimation) or 0
+                        )
+                        logger.debug(f"Image tokens: {image_tokens:,} for {len(images)} image(s)")
+                    except Exception as e:
+                        logger.warning(f"Image token estimation failed: {e}, using fallback")
+                        use_fallback = True
+                else:
+                    use_fallback = True
+
+                if use_fallback:
+                    # Fallback: rough estimate for images (258 tokens per image)
+                    image_tokens = len(images) * 258
+                    logger.debug(f"Image tokens (fallback): {image_tokens:,} for {len(images)} image(s)")
+
+                total_tokens = estimated_tokens + image_tokens
+                logger.debug(
+                    f"Total estimated tokens: {total_tokens:,} (text: {estimated_tokens:,}, images: {image_tokens:,})"
+                )
+            else:
+                total_tokens = estimated_tokens
 
             # Resolve model capabilities for feature gating
             supports_thinking = capabilities.supports_extended_thinking

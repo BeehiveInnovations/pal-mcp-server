@@ -2,6 +2,7 @@
 
 import logging
 
+from utils import gemini_token_estimator
 from utils.env import get_env
 
 from .openai_compatible import OpenAICompatibleProvider
@@ -215,3 +216,68 @@ class OpenRouterProvider(OpenAICompatibleProvider):
 
             capabilities[model_name] = config
         return capabilities
+
+    # ------------------------------------------------------------------
+    # Gemini-specific token estimation
+    # ------------------------------------------------------------------
+
+    def _calculate_text_tokens(self, model_name: str, content: str) -> int:
+        """Calculate text token count with Gemini-specific support.
+
+        When using Gemini models through OpenRouter, delegates to the shared
+        Gemini token estimator for accurate LocalTokenizer-based counting.
+
+        Args:
+            model_name: The model to count tokens for
+            content: Text content
+
+        Returns:
+            Token count
+        """
+        if gemini_token_estimator.is_gemini_model(model_name):
+            return gemini_token_estimator.calculate_text_tokens(model_name, content)
+
+        # For non-Gemini models, fallback to default behavior
+        return len(content) // 4
+
+    def estimate_tokens_for_files(self, model_name: str, files: list[dict]) -> int:
+        """Estimate token count for files with Gemini-specific support.
+
+        When using Gemini models through OpenRouter, delegates to the shared
+        Gemini token estimator for accurate multimodal token counting.
+
+        Args:
+            model_name: The model to estimate tokens for
+            files: List of file dicts with 'path' and 'mime_type' keys
+
+        Returns:
+            Estimated token count
+
+        Raises:
+            ValueError: If a file cannot be accessed or has unsupported mime type
+        """
+        if not files:
+            return 0
+
+        # For Gemini models, use accurate Gemini-specific estimation
+        if gemini_token_estimator.is_gemini_model(model_name):
+            return gemini_token_estimator.estimate_tokens_for_files(model_name, files, media_resolution="MEDIUM")
+
+        # For non-Gemini models, use conservative file-based estimation
+        from utils.file_utils import estimate_file_tokens
+
+        total = 0
+        for file_info in files:
+            file_path = file_info.get("path", "")
+            if file_path:
+                try:
+                    total += estimate_file_tokens(file_path)
+                except Exception as e:
+                    logging.warning(
+                        "Failed to estimate tokens for %s: %s, using fallback",
+                        file_path,
+                        e,
+                        exc_info=True,
+                    )
+                    total += 1000  # Conservative fallback
+        return total

@@ -90,8 +90,13 @@ TEXT_DATA = {
 }
 
 # Image file extensions - limited to what AI models actually support
-# Based on OpenAI and Gemini supported formats: PNG, JPEG, GIF, WebP
-IMAGES = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
+# Based on OpenAI and Gemini supported formats: PNG, JPEG, WebP
+# Note: GIF is NOT supported by Gemini (https://ai.google.dev/gemini-api/docs/vision)
+IMAGES = {".jpg", ".jpeg", ".png", ".webp"}
+
+# Gemini AI Studio supports additional formats (HEIC, HEIF)
+# Reference: https://ai.google.dev/gemini-api/docs/vision
+IMAGES_GEMINI_AI_STUDIO = IMAGES | {".heic", ".heif"}
 
 # Binary executable and library extensions
 BINARIES = {
@@ -245,19 +250,29 @@ def get_token_estimation_ratio(file_path: str) -> float:
 
 
 # MIME type mappings for image files - limited to what AI models actually support
-# Based on OpenAI and Gemini supported formats: PNG, JPEG, GIF, WebP
+# Based on OpenAI and Gemini supported formats: PNG, JPEG, WebP
+# Note: GIF is NOT supported by Gemini (https://ai.google.dev/gemini-api/docs/vision)
 IMAGE_MIME_TYPES = {
     ".jpg": "image/jpeg",
     ".jpeg": "image/jpeg",
     ".png": "image/png",
-    ".gif": "image/gif",
     ".webp": "image/webp",
+}
+
+# Additional MIME types for Gemini AI Studio
+# Reference: https://ai.google.dev/gemini-api/docs/vision
+IMAGE_MIME_TYPES_GEMINI_AI_STUDIO = IMAGE_MIME_TYPES | {
+    ".heic": "image/heic",
+    ".heif": "image/heif",
 }
 
 
 def get_image_mime_type(extension: str) -> str:
     """
     Get the MIME type for an image file extension.
+
+    Supports both standard formats (PNG, JPEG, WebP) and Gemini AI Studio formats (HEIC, HEIF).
+    Note: Format support validation happens in validate_image(), not here.
 
     Args:
         extension: File extension (with or without leading dot)
@@ -268,4 +283,5 @@ def get_image_mime_type(extension: str) -> str:
     if not extension.startswith("."):
         extension = "." + extension
     extension = extension.lower()
-    return IMAGE_MIME_TYPES.get(extension, "image/jpeg")
+    # Try Gemini AI Studio MIME types first (includes HEIC/HEIF), then fall back
+    return IMAGE_MIME_TYPES_GEMINI_AI_STUDIO.get(extension, "image/jpeg")

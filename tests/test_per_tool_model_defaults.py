@@ -519,6 +519,7 @@ class TestUnavailableModelFallback:
                 with patch.object(ModelProviderRegistry, "get_provider_for_model") as mock_get_provider:
                     # Model is available
                     mock_provider = MagicMock()
+                    mock_provider._calculate_text_tokens = lambda model, text: len(text) // 4  # Mock token estimation
                     mock_provider.generate_content.return_value = MagicMock(content="Test response", metadata={})
                     mock_get_provider.return_value = mock_provider
 

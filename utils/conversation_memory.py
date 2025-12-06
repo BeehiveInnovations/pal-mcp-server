@@ -574,7 +574,9 @@ def get_conversation_image_list(context: ThreadContext) -> list[str]:
     return image_list
 
 
-def _plan_file_inclusion_by_size(all_files: list[str], max_file_tokens: int) -> tuple[list[str], list[str], int]:
+def _plan_file_inclusion_by_size(
+    all_files: list[str], max_file_tokens: int, model_context=None
+) -> tuple[list[str], list[str], int]:
     """
     Plan which files to include based on size constraints.
 
@@ -583,6 +585,7 @@ def _plan_file_inclusion_by_size(all_files: list[str], max_file_tokens: int) -> 
     Args:
         all_files: List of files to consider for inclusion
         max_file_tokens: Maximum tokens available for file content
+        model_context: Optional ModelContext for provider-specific token estimation
 
     Returns:
         Tuple of (files_to_include, files_to_skip, estimated_total_tokens)
@@ -598,11 +601,15 @@ def _plan_file_inclusion_by_size(all_files: list[str], max_file_tokens: int) -> 
 
     for file_path in all_files:
         try:
-            from utils.file_utils import estimate_file_tokens
-
             if os.path.exists(file_path) and os.path.isfile(file_path):
-                # Use centralized token estimation for consistency
-                estimated_tokens = estimate_file_tokens(file_path)
+                # Use model-specific token estimation when available (e.g., Gemini)
+                # Falls back to file_utils estimation for other providers
+                if model_context:
+                    estimated_tokens = model_context.estimate_file_tokens(file_path)
+                else:
+                    from utils.file_utils import estimate_file_tokens
+
+                    estimated_tokens = estimate_file_tokens(file_path)
 
                 if total_tokens + estimated_tokens <= max_file_tokens:
                     files_to_include.append(file_path)
@@ -811,7 +818,9 @@ def build_conversation_history(context: ThreadContext, model_context=None, read_
         # CRITICAL: all_files is already ordered by newest-first prioritization from get_conversation_file_list()
         # So when _plan_file_inclusion_by_size() hits token limits, it naturally excludes OLDER files first
         # while preserving the most recent file references - exactly what we want!
-        files_to_include, files_to_skip, estimated_tokens = _plan_file_inclusion_by_size(all_files, max_file_tokens)
+        files_to_include, files_to_skip, estimated_tokens = _plan_file_inclusion_by_size(
+            all_files, max_file_tokens, model_context
+        )
 
         if files_to_skip:
             logger.info(f"[FILES] Excluding {len(files_to_skip)} files from conversation history: {files_to_skip}")

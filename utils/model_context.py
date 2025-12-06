@@ -27,6 +27,8 @@ optimal token allocation for multi-turn conversations:
 """
 
 import logging
+import mimetypes
+import os
 from dataclasses import dataclass
 from typing import Any, Optional
 
@@ -59,6 +61,23 @@ class ModelContext:
     This class provides a single source of truth for all model-related
     token calculations, ensuring consistency across the system.
     """
+
+    # MIME type mapping for common file extensions
+    # Note: GIF removed as Gemini doesn't support it
+    # Reference: https://ai.google.dev/gemini-api/docs/vision
+    _MIME_MAP = {
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".png": "image/png",
+        ".webp": "image/webp",
+        ".pdf": "application/pdf",
+        ".mp4": "video/mp4",
+        ".mpeg": "video/mpeg",
+        ".mov": "video/quicktime",
+        ".avi": "video/x-msvideo",
+        ".mp3": "audio/mpeg",
+        ".wav": "audio/wav",
+    }
 
     def __init__(self, model_name: str, model_option: Optional[str] = None):
         self.model_name = model_name
@@ -164,14 +183,95 @@ class ModelContext:
 
     def estimate_tokens(self, text: str) -> int:
         """
-        Estimate token count for text using model-specific tokenizer.
+        Estimate token count for text using provider-specific tokenizer when available.
 
-        For now, uses simple estimation. Can be enhanced with model-specific
-        tokenizers (tiktoken for OpenAI, etc.) in the future.
+        This method integrates with provider-specific token estimation:
+        - Gemini: Uses LocalTokenizer (SentencePiece) with character-based fallback
+        - Other providers: Falls back to conservative character-based estimation
+
+        Args:
+            text: The text to estimate tokens for
+
+        Returns:
+            Estimated token count
         """
-        # TODO: Integrate model-specific tokenizers
-        # For now, use conservative estimation
-        return len(text) // 3  # Conservative estimate
+        if not text:
+            return 0
+
+        # Try provider-specific text tokenization
+        if hasattr(self.provider, "_calculate_text_tokens"):
+            try:
+                return self.provider._calculate_text_tokens(self.model_name, text)
+            except Exception as e:
+                logger.warning(
+                    "Provider tokenization failed for %s: %s, using fallback",
+                    self.model_name,
+                    e,
+                )
+
+        # Fallback: Conservative character-based estimation (1 token ≈ 4 chars)
+        return len(text) // 4
+
+    def estimate_file_tokens(self, file_path: str) -> int:
+        """
+        Estimate token count for a file using provider-specific estimation when available.
+
+        This method enables Gemini models to use their precise token estimation for
+        images, PDFs, videos, and audio files. Other providers automatically fall back
+        to the conservative file-size-based estimation.
+
+        Integration with conversation memory:
+        - Used by conversation_memory.py to estimate tokens for files in history
+        - Ensures Gemini models use precise estimation for all file types
+        - Maintains backward compatibility with other providers
+
+        Args:
+            file_path: Path to the file to estimate tokens for
+
+        Returns:
+            Estimated token count for the file
+        """
+        if not file_path:
+            return 0
+
+        # Try provider-specific file token estimation (e.g., Gemini)
+        if hasattr(self.provider, "estimate_tokens_for_files"):
+            try:
+                mime_type = self.detect_mime_type(file_path)
+                files = [{"path": file_path, "mime_type": mime_type}]
+                tokens = self.provider.estimate_tokens_for_files(self.model_name, files)
+                if tokens is not None:
+                    return tokens
+            except Exception as e:
+                logger.warning(
+                    "Provider file tokenization failed for %s: %s, using fallback",
+                    self.model_name,
+                    e,
+                )
+
+        # Fallback: Use file_utils for conservative estimation
+        from utils.file_utils import estimate_file_tokens
+
+        return estimate_file_tokens(file_path)
+
+    def detect_mime_type(self, file_path: str) -> str:
+        """
+        Detect MIME type for a file using standard library and extension mapping.
+
+        This method can be used by tools and other components to determine
+        the MIME type needed for provider-specific token estimation.
+
+        Args:
+            file_path: Path to the file
+
+        Returns:
+            MIME type string (e.g., "image/jpeg", "application/pdf")
+        """
+        mime_type, _ = mimetypes.guess_type(file_path)
+        if not mime_type:
+            ext = os.path.splitext(file_path)[1].lower()
+            mime_type = self._MIME_MAP.get(ext, "text/plain")
+        return mime_type
 
     @classmethod
     def from_arguments(cls, arguments: dict[str, Any]) -> "ModelContext":

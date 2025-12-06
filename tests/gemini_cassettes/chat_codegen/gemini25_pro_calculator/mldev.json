@@ -25,6 +25,7 @@
             "generationConfig": {
               "temperature": 1.0,
               "candidateCount": 1,
+              "mediaResolution": "MEDIA_RESOLUTION_MEDIUM",
               "thinkingConfig": {
                 "thinking_budget": 10813
               }
@@ -38,12 +39,12 @@
           "content-type": "application/json; charset=UTF-8",
           "vary": "Origin, X-Origin, Referer",
           "content-encoding": "gzip",
-          "date": "Tue, 07 Oct 2025 14:34:26 GMT",
+          "date": "Mon, 10 Nov 2025 00:57:18 GMT",
           "server": "scaffolding on HTTPServer2",
           "x-xss-protection": "0",
           "x-frame-options": "SAMEORIGIN",
           "x-content-type-options": "nosniff",
-          "server-timing": "gfet4t7; dur=12286",
+          "server-timing": "gfet4t7; dur=11407",
           "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
           "transfer-encoding": "chunked"
         },
@@ -54,7 +55,7 @@
                 "content": {
                   "parts": [
                     {
-                      "text": "<GENERATED-CODE>\nHere is the implementation for the requested Python module. I've structured this as a proper Python package for better organization and scalability.\n\n1.  Create a new file `calculator/__init__.py`. This file makes the `calculator` directory a Python package and exposes the `add` and `multiply` functions for convenient importing (e.g., `from calculator import add`).\n2.  Create a new file `calculator/operations.py` to house the core arithmetic functions. This separation of concerns keeps the logic clean.\n\n<NEWFILE: calculator/__init__.py>\n\"\"\"A simple calculator package.\"\"\"\n\nfrom .operations import add, multiply\n\n__all__ = [\"add\", \"multiply\"]\n</NEWFILE>\n\n<NEWFILE: calculator/operations.py>\n\"\"\"\nCore arithmetic operations.\n\nThis module provides basic functions for performing mathematical calculations.\n\"\"\"\n\nfrom typing import Union\n\n# Define a type alias for numeric types for clarity\nNumeric = Union[int, float]\n\n\ndef add(a: Numeric, b: Numeric) -> Numeric:\n    \"\"\"\n    Calculate the sum of two numbers.\n\n    Args:\n        a: The first number (integer or float).\n        b: The second number (integer or float).\n\n    Returns:\n        The sum of a and b.\n    \"\"\"\n    return a + b\n\n\ndef multiply(a: Numeric, b: Numeric) -> Numeric:\n    \"\"\"\n    Calculate the product of two numbers.\n\n    Args:\n        a: The first number (integer or float).\n        b: The second number (integer or float).\n\n    Returns:\n        The product of a and b.\n    \"\"\"\n    return a * b\n</NEWFILE>\n</GENERATED-CODE>"
+                      "text": "<GENERATED-CODE>\nHere is the implementation for the requested Python module.\n1. Create a new file `calculator/__init__.py` to define the `calculator` directory as a Python package.\n2. Create a new file `calculator/operations.py` containing the `add` and `multiply` functions.\n\n<NEWFILE: calculator/__init__.py>\n\"\"\"A simple calculator package.\"\"\"\n</NEWFILE>\n\n<NEWFILE: calculator/operations.py>\n\"\"\"\nA module for basic arithmetic operations.\n\nThis module provides simple functions to perform addition and multiplication.\n\"\"\"\n\nfrom typing import Union\n\n# Define a type alias for numbers for clarity.\nNumber = Union[int, float]\n\n\ndef add(a: Number, b: Number) -> Number:\n    \"\"\"\n    Adds two numbers together.\n\n    Args:\n        a: The first number (integer or float).\n        b: The second number (integer or float).\n\n    Returns:\n        The sum of the two numbers.\n    \"\"\"\n    return a + b\n\n\ndef multiply(a: Number, b: Number) -> Number:\n    \"\"\"\n    Multiplies two numbers.\n\n    Args:\n        a: The first number (integer or float).\n        b: The second number (integer or float).\n\n    Returns:\n        The product of the two numbers.\n    \"\"\"\n    return a * b\n</NEWFILE>\n</GENERATED-CODE>"
                     }
                   ],
                   "role": "model"
@@ -65,18 +66,18 @@
             ],
             "usageMetadata": {
               "promptTokenCount": 2600,
-              "candidatesTokenCount": 379,
-              "totalTokenCount": 3879,
+              "candidatesTokenCount": 314,
+              "totalTokenCount": 4008,
               "promptTokensDetails": [
                 {
                   "modality": "TEXT",
                   "tokenCount": 2600
                 }
               ],
-              "thoughtsTokenCount": 900
+              "thoughtsTokenCount": 1094
             },
             "modelVersion": "gemini-2.5-pro",
-            "responseId": "8iTlaM64EdCwxN8PwYfx0Qo"
+            "responseId": "bjgRaZLiJ6XUz7IPxKzF0AE"
           }
         ],
         "byte_segments": [],
@@ -87,12 +88,12 @@
                 "content-type": "application/json; charset=UTF-8",
                 "vary": "Origin, X-Origin, Referer",
                 "content-encoding": "gzip",
-                "date": "Tue, 07 Oct 2025 14:34:26 GMT",
+                "date": "Mon, 10 Nov 2025 00:57:18 GMT",
                 "server": "scaffolding on HTTPServer2",
                 "x-xss-protection": "0",
                 "x-frame-options": "SAMEORIGIN",
                 "x-content-type-options": "nosniff",
-                "server-timing": "gfet4t7; dur=12286",
+                "server-timing": "gfet4t7; dur=11407",
                 "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
                 "transfer-encoding": "chunked"
               }
@@ -102,7 +103,7 @@
                 "content": {
                   "parts": [
                     {
-                      "text": "<GENERATED-CODE>\nHere is the implementation for the requested Python module. I've structured this as a proper Python package for better organization and scalability.\n\n1.  Create a new file `calculator/__init__.py`. This file makes the `calculator` directory a Python package and exposes the `add` and `multiply` functions for convenient importing (e.g., `from calculator import add`).\n2.  Create a new file `calculator/operations.py` to house the core arithmetic functions. This separation of concerns keeps the logic clean.\n\n<NEWFILE: calculator/__init__.py>\n\"\"\"A simple calculator package.\"\"\"\n\nfrom .operations import add, multiply\n\n__all__ = [\"add\", \"multiply\"]\n</NEWFILE>\n\n<NEWFILE: calculator/operations.py>\n\"\"\"\nCore arithmetic operations.\n\nThis module provides basic functions for performing mathematical calculations.\n\"\"\"\n\nfrom typing import Union\n\n# Define a type alias for numeric types for clarity\nNumeric = Union[int, float]\n\n\ndef add(a: Numeric, b: Numeric) -> Numeric:\n    \"\"\"\n    Calculate the sum of two numbers.\n\n    Args:\n        a: The first number (integer or float).\n        b: The second number (integer or float).\n\n    Returns:\n        The sum of a and b.\n    \"\"\"\n    return a + b\n\n\ndef multiply(a: Numeric, b: Numeric) -> Numeric:\n    \"\"\"\n    Calculate the product of two numbers.\n\n    Args:\n        a: The first number (integer or float).\n        b: The second number (integer or float).\n\n    Returns:\n        The product of a and b.\n    \"\"\"\n    return a * b\n</NEWFILE>\n</GENERATED-CODE>"
+                      "text": "<GENERATED-CODE>\nHere is the implementation for the requested Python module.\n1. Create a new file `calculator/__init__.py` to define the `calculator` directory as a Python package.\n2. Create a new file `calculator/operations.py` containing the `add` and `multiply` functions.\n\n<NEWFILE: calculator/__init__.py>\n\"\"\"A simple calculator package.\"\"\"\n</NEWFILE>\n\n<NEWFILE: calculator/operations.py>\n\"\"\"\nA module for basic arithmetic operations.\n\nThis module provides simple functions to perform addition and multiplication.\n\"\"\"\n\nfrom typing import Union\n\n# Define a type alias for numbers for clarity.\nNumber = Union[int, float]\n\n\ndef add(a: Number, b: Number) -> Number:\n    \"\"\"\n    Adds two numbers together.\n\n    Args:\n        a: The first number (integer or float).\n        b: The second number (integer or float).\n\n    Returns:\n        The sum of the two numbers.\n    \"\"\"\n    return a + b\n\n\ndef multiply(a: Number, b: Number) -> Number:\n    \"\"\"\n    Multiplies two numbers.\n\n    Args:\n        a: The first number (integer or float).\n        b: The second number (integer or float).\n\n    Returns:\n        The product of the two numbers.\n    \"\"\"\n    return a * b\n</NEWFILE>\n</GENERATED-CODE>"
                     }
                   ],
                   "role": "model"
@@ -112,9 +113,9 @@
               }
             ],
             "model_version": "gemini-2.5-pro",
-            "response_id": "8iTlaM64EdCwxN8PwYfx0Qo",
+            "response_id": "bjgRaZLiJ6XUz7IPxKzF0AE",
             "usage_metadata": {
-              "candidates_token_count": 379,
+              "candidates_token_count": 314,
               "prompt_token_count": 2600,
               "prompt_tokens_details": [
                 {
@@ -122,8 +123,8 @@
                   "token_count": 2600
                 }
               ],
-              "thoughts_token_count": 900,
-              "total_token_count": 3879
+              "thoughts_token_count": 1094,
+              "total_token_count": 4008
             }
           }
         ]

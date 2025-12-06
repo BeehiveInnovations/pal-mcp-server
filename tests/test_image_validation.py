@@ -195,12 +195,15 @@ class TestImageValidation:
             os.unlink(tmp_file_path)
 
     def test_validate_all_supported_formats(self) -> None:
-        """Test validation of all supported image formats."""
+        """Test validation of all supported image formats.
+
+        Note: GIF is NOT supported by Gemini API
+        Reference: https://ai.google.dev/gemini-api/docs/vision
+        """
         supported_formats = {
             ".png": "image/png",
             ".jpg": "image/jpeg",
             ".jpeg": "image/jpeg",
-            ".gif": "image/gif",
             ".webp": "image/webp",
         }
 
