@@ -24,6 +24,11 @@ env_config.reload_env({"PAL_MCP_FORCE_ENV_OVERRIDE": "false"})
 # This prevents all tests from failing due to missing model parameter
 os.environ["DEFAULT_MODEL"] = "gemini-2.5-flash"
 
+# Delete MAX_MCP_OUTPUT_TOKENS to ensure consistent MCP_PROMPT_SIZE_LIMIT (60000)
+# This must be done before importing config module
+if "MAX_MCP_OUTPUT_TOKENS" in os.environ:
+    del os.environ["MAX_MCP_OUTPUT_TOKENS"]
+
 # Force reload of config module to pick up the env var
 import config  # noqa: E402
 
@@ -182,6 +187,14 @@ def clear_model_restriction_env(monkeypatch):
     for var in restriction_vars:
         monkeypatch.delenv(var, raising=False)
 
+    # Reset the restriction service singleton to ensure clean state
+    try:
+        from utils import model_restrictions
+
+        model_restrictions._restriction_service = None  # type: ignore[attr-defined]
+    except Exception:
+        pass
+
 
 @pytest.fixture(autouse=True)
 def disable_force_env_override(monkeypatch):
@@ -191,6 +204,9 @@ def disable_force_env_override(monkeypatch):
     env_config.reload_env({"PAL_MCP_FORCE_ENV_OVERRIDE": "false"})
     monkeypatch.setenv("DEFAULT_MODEL", "gemini-2.5-flash")
     monkeypatch.setenv("MAX_CONVERSATION_TURNS", "50")
+    monkeypatch.setenv("CONVERSATION_TIMEOUT_HOURS", "3")  # 3 hours for tests
+    # Delete MAX_MCP_OUTPUT_TOKENS to ensure consistent MCP_PROMPT_SIZE_LIMIT (60000)
+    monkeypatch.delenv("MAX_MCP_OUTPUT_TOKENS", raising=False)
 
     import importlib
     import sys
@@ -204,6 +220,7 @@ def disable_force_env_override(monkeypatch):
     test_conversation_module = sys.modules.get("tests.test_conversation_memory")
     if test_conversation_module is not None:
         test_conversation_module.MAX_CONVERSATION_TURNS = conversation_memory.MAX_CONVERSATION_TURNS
+        test_conversation_module.CONVERSATION_TIMEOUT_SECONDS = conversation_memory.CONVERSATION_TIMEOUT_SECONDS
 
     try:
         yield

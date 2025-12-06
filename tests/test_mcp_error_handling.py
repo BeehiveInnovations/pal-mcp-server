@@ -51,7 +51,7 @@ async def test_tool_execution_error_sets_is_error_flag_for_mcp_response(monkeypa
         "model": "gemini-2.5-flash",
     }
 
-    request = CallToolRequest(params=CallToolRequestParams(name="chat", arguments=arguments))
+    request = CallToolRequest(method="tools/call", params=CallToolRequestParams(name="chat", arguments=arguments))
 
     server_result = await handler(request)
 

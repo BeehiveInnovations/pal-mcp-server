@@ -380,7 +380,7 @@ class SimpleTool(BaseTool):
                 prompt = await self.prepare_prompt(request)
 
                 # Add follow-up instructions for new conversations
-                from server import get_follow_up_instructions
+                from utils.follow_up import get_follow_up_instructions
 
                 follow_up_instructions = get_follow_up_instructions(0)
                 prompt = f"{prompt}\n\n{follow_up_instructions}"

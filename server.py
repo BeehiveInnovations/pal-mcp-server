@@ -26,7 +26,7 @@ import sys
 import time
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from mcp.server import Server  # noqa: E402
 from mcp.server.models import InitializationOptions  # noqa: E402
@@ -70,6 +70,7 @@ from tools import (  # noqa: E402
 from tools.models import ToolOutput  # noqa: E402
 from tools.shared.exceptions import ToolExecutionError  # noqa: E402
 from utils.env import env_override_enabled, get_env  # noqa: E402
+from utils.model_resolution import ModelResolutionError, resolve_model  # noqa: E402
 
 # Configure logging for server operations
 # Can be controlled via LOG_LEVEL environment variable (DEBUG, INFO, WARNING, ERROR)
@@ -785,7 +786,6 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[TextCon
         # EARLY MODEL RESOLUTION AT MCP BOUNDARY
         # Resolve model before passing to tool - this ensures consistent model handling
         # NOTE: Consensus tool is exempt as it handles multiple models internally
-        from providers.registry import ModelProviderRegistry
         from utils.file_utils import check_total_file_size
         from utils.model_context import ModelContext
 
@@ -809,35 +809,19 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[TextCon
             # Execute tool directly without model context
             return await tool.execute(arguments)
 
-        # Handle auto mode at MCP boundary - resolve to specific model
-        if model_name.lower() == "auto":
-            # Get tool category to determine appropriate model
-            tool_category = tool.get_model_category()
-            resolved_model = ModelProviderRegistry.get_preferred_fallback_model(tool_category)
-            logger.info(f"Auto mode resolved to {resolved_model} for {name} (category: {tool_category.value})")
-            model_name = resolved_model
+        # Resolve model (handles 'auto' mode and validates availability)
+        # Uses shared resolution logic for consistency with Skills mode
+        tool_category = tool.get_model_category()
+        try:
+            model_name = resolve_model(model_name, tool_category, tool_name=name)
             # Update arguments with resolved model
             arguments["model"] = model_name
-
-        # Validate model availability at MCP boundary
-        provider = ModelProviderRegistry.get_provider_for_model(model_name)
-        if not provider:
-            # Get list of available models for error message
-            available_models = list(ModelProviderRegistry.get_available_models(respect_restrictions=True).keys())
-            tool_category = tool.get_model_category()
-            suggested_model = ModelProviderRegistry.get_preferred_fallback_model(tool_category)
-
-            error_message = (
-                f"Model '{model_name}' is not available with current API keys. "
-                f"Available models: {', '.join(available_models)}. "
-                f"Suggested model for {name}: '{suggested_model}' "
-                f"(category: {tool_category.value})"
-            )
+        except ModelResolutionError as e:
             error_output = ToolOutput(
                 status="error",
-                content=error_message,
+                content=str(e),
                 content_type="text",
-                metadata={"tool_name": name, "requested_model": model_name},
+                metadata={"tool_name": name, "available_models": e.available_models},
             )
             raise ToolExecutionError(error_output.model_dump_json())
 
@@ -878,91 +862,11 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[TextCon
         return [TextContent(type="text", text=f"Unknown tool: {name}")]
 
 
-def parse_model_option(model_string: str) -> tuple[str, Optional[str]]:
-    """
-    Parse model:option format into model name and option.
-
-    Handles different formats:
-    - OpenRouter models: preserve :free, :beta, :preview suffixes as part of model name
-    - Ollama/Custom models: split on : to extract tags like :latest
-    - Consensus stance: extract options like :for, :against
-
-    Args:
-        model_string: String that may contain "model:option" format
-
-    Returns:
-        tuple: (model_name, option) where option may be None
-    """
-    if ":" in model_string and not model_string.startswith("http"):  # Avoid parsing URLs
-        # Check if this looks like an OpenRouter model (contains /)
-        if "/" in model_string and model_string.count(":") == 1:
-            # Could be openai/gpt-4:something - check what comes after colon
-            parts = model_string.split(":", 1)
-            suffix = parts[1].strip().lower()
-
-            # Known OpenRouter suffixes to preserve
-            if suffix in ["free", "beta", "preview"]:
-                return model_string.strip(), None
-
-        # For other patterns (Ollama tags, consensus stances), split normally
-        parts = model_string.split(":", 1)
-        model_name = parts[0].strip()
-        model_option = parts[1].strip() if len(parts) > 1 else None
-        return model_name, model_option
-    return model_string.strip(), None
-
-
-def get_follow_up_instructions(current_turn_count: int, max_turns: int = None) -> str:
-    """
-    Generate dynamic follow-up instructions based on conversation turn count.
-
-    Args:
-        current_turn_count: Current number of turns in the conversation
-        max_turns: Maximum allowed turns before conversation ends (defaults to MAX_CONVERSATION_TURNS)
-
-    Returns:
-        Follow-up instructions to append to the tool prompt
-    """
-    if max_turns is None:
-        from utils.conversation_memory import MAX_CONVERSATION_TURNS
-
-        max_turns = MAX_CONVERSATION_TURNS
-
-    if current_turn_count >= max_turns - 1:
-        # We're at or approaching the turn limit - no more follow-ups
-        return """
-IMPORTANT: This is approaching the final exchange in this conversation thread.
-Do NOT include any follow-up questions in your response. Provide your complete
-final analysis and recommendations."""
-    else:
-        # Normal follow-up instructions
-        remaining_turns = max_turns - current_turn_count - 1
-        return f"""
-
-CONVERSATION CONTINUATION: You can continue this discussion with the agent! ({remaining_turns} exchanges remaining)
-
-Feel free to ask clarifying questions or suggest areas for deeper exploration naturally within your response.
-If something needs clarification or you'd benefit from additional context, simply mention it conversationally.
-
-IMPORTANT: When you suggest follow-ups or ask questions, you MUST explicitly instruct the agent to use the continuation_id
-to respond. Use clear, direct language based on urgency:
-
-For optional follow-ups: "Please continue this conversation using the continuation_id from this response if you'd "
-"like to explore this further."
-
-For needed responses: "Please respond using the continuation_id from this response - your input is needed to proceed."
-
-For essential/critical responses: "RESPONSE REQUIRED: Please immediately continue using the continuation_id from "
-"this response. Cannot proceed without your clarification/input."
-
-This ensures the agent knows both HOW to maintain the conversation thread AND whether a response is optional, "
-"needed, or essential.
-
-The tool will automatically provide a continuation_id in the structured response that the agent can use in subsequent
-tool calls to maintain full conversation context across multiple exchanges.
-
-Remember: Only suggest follow-ups when they would genuinely add value to the discussion, and always instruct "
-"The agent to use the continuation_id when you do."""
+# Import parse_model_option from shared module (single source of truth)
+# This ensures MCP server and Skills mode use identical parsing logic
+# Re-export from utils.follow_up for backward compatibility
+from utils.follow_up import get_follow_up_instructions  # noqa: E402, F401
+from utils.tool_entry import parse_model_option  # noqa: E402, F401
 
 
 async def reconstruct_thread_context(arguments: dict[str, Any]) -> dict[str, Any]:

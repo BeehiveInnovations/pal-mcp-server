@@ -6,19 +6,25 @@ stateless MCP (Model Context Protocol) environments. It enables multi-turn
 conversations between the agent and downstream models by storing conversation
 state in memory across independent request cycles.
 
-CRITICAL ARCHITECTURAL REQUIREMENT:
-This conversation memory system is designed for PERSISTENT MCP SERVER PROCESSES.
-It uses in-memory storage that persists only within a single Python process.
+STORAGE BACKEND ARCHITECTURE:
+This conversation memory system supports two storage backends:
 
-⚠️  IMPORTANT: This system will NOT work correctly if MCP tool calls are made
-    as separate subprocess invocations (each subprocess starts with empty memory).
+1. IN-MEMORY STORAGE (Default):
+   - Uses in-memory storage that persists only within a single Python process
+   - Ideal for persistent MCP server processes (e.g., Claude Desktop)
+   - Fast and lightweight, no external dependencies
 
-    WORKING SCENARIO: Claude Desktop with persistent MCP server process
-    FAILING SCENARIO: Simulator tests calling server.py as individual subprocesses
+2. SQLITE STORAGE (Skills mode / Multi-process Support):
+   - Uses SQLite database for cross-process persistence
+   - Automatically enabled in Skills mode for session persistence
+   - Enables multi-process scenarios (e.g., simulator tests, concurrent workers)
+   - Environment variable: PAL_SKILL_STORAGE=sqlite
+   - Database location: ~/.pal_mcp/sessions.db (or set PAL_SKILL_STORAGE_PATH to override)
 
-    Root cause of test failures: Each subprocess call loses the conversation
-    state from previous calls because memory is process-specific, not shared
-    across subprocess boundaries.
+Configuration:
+- MCP Server mode: In-memory storage by default (single process)
+- Skills mode: SQLite storage by default (cross-process persistence)
+- Sessions are isolated between modes by default
 
 ARCHITECTURE OVERVIEW:
 The MCP protocol is inherently stateless - each tool request is independent
@@ -1041,22 +1047,25 @@ def _get_tool_formatted_content(turn: ConversationTurn) -> list[str]:
         list[str]: Formatted content lines for this turn
     """
     if turn.tool_name:
-        try:
-            # Dynamically import to avoid circular dependencies
-            from server import TOOLS
+        # Skip tool-specific formatting in Skills mode to avoid importing server.py
+        # which triggers MCP server initialization
+        if os.environ.get("PAL_SKILL_STORAGE") != "sqlite":
+            try:
+                # Dynamically import to avoid circular dependencies
+                from server import TOOLS
 
-            tool = TOOLS.get(turn.tool_name)
-            if tool:
-                # Use inheritance pattern - try to call the method directly
-                # If it doesn't exist or raises AttributeError, fall back to default
-                try:
-                    return tool.format_conversation_turn(turn)
-                except AttributeError:
-                    # Tool doesn't implement format_conversation_turn - use default
-                    pass
-        except Exception as e:
-            # Log but don't fail - fall back to default formatting
-            logger.debug(f"[HISTORY] Could not get tool-specific formatting for {turn.tool_name}: {e}")
+                tool = TOOLS.get(turn.tool_name)
+                if tool:
+                    # Use inheritance pattern - try to call the method directly
+                    # If it doesn't exist or raises AttributeError, fall back to default
+                    try:
+                        return tool.format_conversation_turn(turn)
+                    except AttributeError:
+                        # Tool doesn't implement format_conversation_turn - use default
+                        pass
+            except Exception as e:
+                # Log but don't fail - fall back to default formatting
+                logger.debug(f"[HISTORY] Could not get tool-specific formatting for {turn.tool_name}: {e}")
 
     # Default formatting
     return _default_turn_formatting(turn)

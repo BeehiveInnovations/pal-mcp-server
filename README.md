@@ -186,6 +186,10 @@ cd pal-mcp-server
 }
 ```
 
+**Option C: Claude Code Agent Skills** (standalone mode)
+
+Skills are standalone executables that run without MCP server - see [Skills Mode](#-claude-code-agent-skills) section below.
+
 **3. Start Using!**
 ```
 "Use pal to analyze this code for security issues with gemini pro"
@@ -413,6 +417,42 @@ DISABLED_TOOLS=
 → Structured planning → Multiple expert opinions → Consensus building → Implementation roadmap
 
 👉 **[Advanced Usage Guide](docs/advanced-usage.md)** for complex workflows, model configuration, and power-user features
+
+## 🎯 Claude Code Agent Skills
+
+PAL also supports **Claude Code Agent Skills** - standalone executables that can be invoked directly by Claude Code without running the MCP server.
+
+**Why Skills?** Reduces token overhead - tool descriptions are only loaded when invoked, not always present in your context window.
+
+**Shared Conversation Memory:** Skills use SQLite (`~/.pal_mcp/sessions.db`) to persist conversations across invocations, enabling multi-turn workflows just like MCP mode.
+
+### Installation
+
+**Requirements:** Python 3.10+, macOS/Linux, [Claude Code](https://www.anthropic.com/claude-code) installed
+
+```bash
+git clone https://github.com/BeehiveInnovations/pal-mcp-server.git
+cd pal-mcp-server
+
+# Install all 17 skills to ~/.claude/skills/
+./install-skills.sh
+
+# Or install specific skills
+./install-skills.sh pal-chat pal-thinkdeep pal-codereview
+
+# Update: re-run to overwrite existing skills
+./install-skills.sh
+```
+
+Skills use the same environment variables as MCP mode (`GEMINI_API_KEY`, `OPENAI_API_KEY`, etc.).
+
+**Verify installation:**
+```
+# In Claude Code, try:
+"Use pal-chat to say hello with gemini flash"
+```
+
+> **Note:** This is an **experimental implementation** - interfaces may change. Feedback welcome on [#346](https://github.com/BeehiveInnovations/pal-mcp-server/issues/346).
 
 ## Quick Links
 
