@@ -79,7 +79,7 @@ The above prompt will simultaneously run two separate `codereview` tools with tw
 
 **Initial Review Configuration (used in step 1):**
 - `prompt`: User's summary of what the code does, expected behavior, constraints, and review objectives (required)
-- `model`: auto|pro|flash|flash-2.0|flashlite|o3|o3-mini|o4-mini|gpt4.1|gpt5.1|gpt5.1-codex|gpt5.1-codex-mini|gpt5|gpt5-mini|gpt5-nano (default: server default)
+- `model`: auto|pro|flash|flash-2.0|flashlite|o3|o3-mini|o4-mini|gpt4.1|gpt5.1|gpt5.1-codex|gpt5.1-codex-mini|gpt5|gpt5-mini|gpt5-nano|grok-4-1-fast|grok-4-1-fast-non-reasoning|grok-code-fast-1|grok-4|grok-3|grok-3-fast (default: server default)
 - `review_type`: full|security|performance|quick (default: full)
 - `focus_on`: Specific aspects to focus on (e.g., "security vulnerabilities", "performance bottlenecks")
 - `standards`: Coding standards to enforce (e.g., "PEP8", "ESLint", "Google Style Guide")

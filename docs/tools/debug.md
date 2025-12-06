@@ -72,7 +72,7 @@ This structured approach ensures Claude performs methodical groundwork before ex
 - `images`: Visual debugging materials (error screenshots, logs, etc.)
 
 **Model Selection:**
-- `model`: auto|pro|flash|flash-2.0|flashlite|o3|o3-mini|o4-mini|gpt4.1|gpt5.1|gpt5.1-codex|gpt5.1-codex-mini|gpt5|gpt5-mini|gpt5-nano (default: server default)
+- `model`: auto|pro|flash|flash-2.0|flashlite|o3|o3-mini|o4-mini|gpt4.1|gpt5.1|gpt5.1-codex|gpt5.1-codex-mini|gpt5|gpt5-mini|gpt5-nano|grok-4-1-fast|grok-4-1-fast-non-reasoning|grok-code-fast-1|grok-4|grok-3|grok-3-fast (default: server default)
 - `thinking_mode`: minimal|low|medium|high|max (default: medium, Gemini only)
 - `use_assistant_model`: Whether to use expert analysis phase (default: true, set to false to use Claude only)
 

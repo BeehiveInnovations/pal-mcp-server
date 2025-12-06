@@ -37,7 +37,12 @@ class TestAutoModeProviderSelection:
 
         # Save original environment
         original_env = {}
-        for key in ["GEMINI_API_KEY", "OPENAI_API_KEY", "XAI_API_KEY", "OPENROUTER_API_KEY"]:
+        for key in [
+            "GEMINI_API_KEY",
+            "OPENAI_API_KEY",
+            "XAI_API_KEY",
+            "OPENROUTER_API_KEY",
+        ]:
             original_env[key] = os.environ.get(key)
 
         try:
@@ -59,7 +64,11 @@ class TestAutoModeProviderSelection:
             balanced = ModelProviderRegistry.get_preferred_fallback_model(ToolModelCategory.BALANCED)
 
             # Should select appropriate Gemini models
-            assert extended_reasoning in ["gemini-3-pro-preview", "gemini-2.5-pro", "pro"]
+            assert extended_reasoning in [
+                "gemini-3-pro-preview",
+                "gemini-2.5-pro",
+                "pro",
+            ]
             assert fast_response in ["gemini-2.5-flash", "flash"]
             assert balanced in ["gemini-2.5-flash", "flash"]
 
@@ -76,7 +85,12 @@ class TestAutoModeProviderSelection:
 
         # Save original environment
         original_env = {}
-        for key in ["GEMINI_API_KEY", "OPENAI_API_KEY", "XAI_API_KEY", "OPENROUTER_API_KEY"]:
+        for key in [
+            "GEMINI_API_KEY",
+            "OPENAI_API_KEY",
+            "XAI_API_KEY",
+            "OPENROUTER_API_KEY",
+        ]:
             original_env[key] = os.environ.get(key)
 
         try:
@@ -115,7 +129,12 @@ class TestAutoModeProviderSelection:
 
         # Save original environment
         original_env = {}
-        for key in ["GEMINI_API_KEY", "OPENAI_API_KEY", "XAI_API_KEY", "OPENROUTER_API_KEY"]:
+        for key in [
+            "GEMINI_API_KEY",
+            "OPENAI_API_KEY",
+            "XAI_API_KEY",
+            "OPENROUTER_API_KEY",
+        ]:
             original_env[key] = os.environ.get(key)
 
         try:
@@ -157,7 +176,12 @@ class TestAutoModeProviderSelection:
 
         # Save original environment
         original_env = {}
-        for key in ["GEMINI_API_KEY", "OPENAI_API_KEY", "XAI_API_KEY", "OPENROUTER_API_KEY"]:
+        for key in [
+            "GEMINI_API_KEY",
+            "OPENAI_API_KEY",
+            "XAI_API_KEY",
+            "OPENROUTER_API_KEY",
+        ]:
             original_env[key] = os.environ.get(key)
 
         try:
@@ -317,10 +341,18 @@ class TestAutoModeProviderSelection:
             # Test that providers resolve aliases correctly
             test_cases = [
                 ("flash", ProviderType.GOOGLE, "gemini-2.5-flash"),
-                ("pro", ProviderType.GOOGLE, "gemini-3-pro-preview"),  # "pro" now resolves to gemini-3-pro-preview
-                ("mini", ProviderType.OPENAI, "gpt-5-mini"),  # "mini" now resolves to gpt-5-mini
+                (
+                    "pro",
+                    ProviderType.GOOGLE,
+                    "gemini-3-pro-preview",
+                ),  # "pro" now resolves to gemini-3-pro-preview
+                (
+                    "mini",
+                    ProviderType.OPENAI,
+                    "gpt-5-mini",
+                ),  # "mini" now resolves to gpt-5-mini
                 ("o3mini", ProviderType.OPENAI, "o3-mini"),
-                ("grok", ProviderType.XAI, "grok-4"),
+                ("grok", ProviderType.XAI, "grok-4-1-fast"),
                 ("grokfast", ProviderType.XAI, "grok-3-fast"),
             ]
 

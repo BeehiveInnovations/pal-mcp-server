@@ -4,16 +4,33 @@ This guide covers advanced features, configuration options, and workflows for po
 
 ## Table of Contents
 
-- [Model Configuration](#model-configuration)
-- [Model Usage Restrictions](#model-usage-restrictions)
-- [Thinking Modes](#thinking-modes)
-- [Tool Parameters](#tool-parameters)
-- [Context Revival: AI Memory Beyond Context Limits](#context-revival-ai-memory-beyond-context-limits)
-- [Collaborative Workflows](#collaborative-workflows)
-- [Working with Large Prompts](#working-with-large-prompts)
-- [Vision Support](#vision-support)
-- [Web Search Integration](#web-search-integration)
-- [System Prompts](#system-prompts)
+- [Advanced Usage Guide](#advanced-usage-guide)
+  - [Table of Contents](#table-of-contents)
+  - [Model Configuration](#model-configuration)
+  - [Model Usage Restrictions](#model-usage-restrictions)
+  - [Thinking Modes](#thinking-modes)
+    - [Thinking Modes \& Token Budgets](#thinking-modes--token-budgets)
+    - [How to Use Thinking Modes](#how-to-use-thinking-modes)
+      - [Optimizing Token Usage \& Costs](#optimizing-token-usage--costs)
+  - [Tool Parameters](#tool-parameters)
+    - [File-Processing Tools](#file-processing-tools)
+  - [Context Revival: AI Memory Beyond Context Limits](#context-revival-ai-memory-beyond-context-limits)
+    - [**The Breakthrough**](#the-breakthrough)
+    - [Key Benefits](#key-benefits)
+    - [Quick Example](#quick-example)
+  - [Collaborative Workflows](#collaborative-workflows)
+    - [Design → Review → Implement](#design--review--implement)
+    - [Code → Review → Fix](#code--review--fix)
+    - [Debug → Analyze → Solution → Precommit Check → Publish](#debug--analyze--solution--precommit-check--publish)
+    - [Refactor → Review → Implement → Test](#refactor--review--implement--test)
+    - [Tool Selection Guidance](#tool-selection-guidance)
+  - [Vision Support](#vision-support)
+  - [Working with Large Prompts](#working-with-large-prompts)
+  - [Web Search Integration](#web-search-integration)
+  - [System Prompts](#system-prompts)
+    - [Prompt Architecture](#prompt-architecture)
+    - [Specialized Expertise](#specialized-expertise)
+    - [Customization](#customization)
 
 ## Model Configuration
 
@@ -48,6 +65,11 @@ Regardless of your default configuration, you can specify models per request:
 | **`gpt5-mini`** (GPT-5 Mini) | OpenAI | 400K tokens | Efficient variant with reasoning | Balanced performance and capability |
 | **`gpt5-nano`** (GPT-5 Nano) | OpenAI | 400K tokens | Fastest, cheapest GPT-5 variant | Summarization and classification tasks |
 | **`grok-4`** | X.AI | 256K tokens | Latest flagship Grok model with reasoning, vision | Complex analysis, reasoning tasks |
+| **`grok-4-1-fast`** (Grok 4.1 Fast Reasoning) | X.AI | 2M tokens | Frontier multimodal model optimized for high-performance agentic tool calling with cost-efficient reasoning | Complex analysis, cost-conscious reasoning tasks |
+| **`grok-4-fast`** (Grok 4 Fast Reasoning) | X.AI | 2M tokens | Cost-efficient frontier reasoning model with 98% lower cost than Grok 4 | Complex analysis, cost-conscious reasoning |
+| **`grok-code-fast-1`** (Grok Code Fast 1) | X.AI | 256K tokens | Speedy reasoning model specialized for agentic coding | Fast coding workflows, agentic development |
+| **`grok-4-1-fast-non-reasoning`** (Grok 4.1 Fast Non-Reasoning) | X.AI | 2M tokens | Ultra-fast text-to-text generation without reasoning | Rapid text processing, high-throughput tasks |
+| **`grok-4-fast-non-reasoning`** (Grok 4 Fast Non-Reasoning) | X.AI | 2M tokens | Ultra-fast text generation without reasoning | Rapid text processing, low-latency applications |
 | **`grok-3`** | X.AI | 131K tokens | Advanced reasoning model | Deep analysis, complex problems |
 | **`grok-3-fast`** | X.AI | 131K tokens | Higher performance variant | Fast responses with reasoning |
 | **`llama`** (Llama 3.2) | Custom/Local | 128K tokens | Local inference, privacy | On-device analysis, cost-free processing |
@@ -72,6 +94,13 @@ cloud models (expensive/powerful) AND local models (free/private) in the same co
   - **GPT-5**: Full-featured with reasoning support and vision
   - **GPT-5 Mini**: Balanced efficiency and capability
   - **GPT-5 Nano**: Optimized for fast, low-cost tasks
+- **Grok-4.1 Fast Series**: Latest cost-efficient models with 2M context
+  - **Grok-4.1 Fast Reasoning**: Cost-efficient reasoning with frontier-level performance
+  - **Grok-4.1 Fast Non-Reasoning**: Ultra-fast text-to-text generation without reasoning
+- **Grok-4 Fast Series**: Cost-efficient models with 2M context
+  - **Grok-4 Fast Reasoning**: 98% cheaper than Grok 4 with comparable performance
+  - **Grok-4 Fast Non-Reasoning**: Ultra-fast text generation without reasoning
+- **Grok Code Fast 1**: Specialized for agentic coding workflows, 256K context
 - **Grok-4**: Extended thinking support, vision capabilities, 256K context
 - **Grok-3 Models**: Advanced reasoning, 131K context
 
@@ -168,7 +197,7 @@ All tools that work with files support **both individual files and entire direct
 **`analyze`** - Analyze files or directories
 - `files`: List of file paths or directories (required)
 - `question`: What to analyze (required)  
-- `model`: auto|pro|flash|flash-2.0|flashlite|o3|o3-mini|o4-mini|gpt4.1|gpt5.1|gpt5.1-codex|gpt5.1-codex-mini|gpt5|gpt5-mini|gpt5-nano (default: server default)
+- `model`: auto|pro|flash|flash-2.0|flashlite|o3|o3-mini|o4-mini|gpt4.1|gpt5.1|gpt5.1-codex|gpt5.1-codex-mini|gpt5|gpt5-mini|gpt5-nano|grok-4-1-fast|grok-4-1-fast-non-reasoning|grok-4-fast|grok-4-fast-non-reasoning|grok-code-fast-1|grok-4|grok-3|grok-3-fast (default: server default)
 - `analysis_type`: architecture|performance|security|quality|general
 - `output_format`: summary|detailed|actionable
 - `thinking_mode`: minimal|low|medium|high|max (default: medium, Gemini only)
@@ -183,7 +212,7 @@ All tools that work with files support **both individual files and entire direct
 
 **`codereview`** - Review code files or directories
 - `files`: List of file paths or directories (required)
-- `model`: auto|pro|flash|flash-2.0|flashlite|o3|o3-mini|o4-mini|gpt4.1|gpt5.1|gpt5.1-codex|gpt5.1-codex-mini|gpt5|gpt5-mini|gpt5-nano (default: server default)
+- `model`: auto|pro|flash|flash-2.0|flashlite|o3|o3-mini|o4-mini|gpt4.1|gpt5.1|gpt5.1-codex|gpt5.1-codex-mini|gpt5|gpt5-mini|gpt5-nano|grok-4-1-fast|grok-4-1-fast-non-reasoning|grok-4-fast|grok-4-fast-non-reasoning|grok-code-fast-1|grok-4|grok-3|grok-3-fast (default: server default)
 - `review_type`: full|security|performance|quick
 - `focus_on`: Specific aspects to focus on
 - `standards`: Coding standards to enforce
@@ -199,7 +228,7 @@ All tools that work with files support **both individual files and entire direct
 
 **`debug`** - Debug with file context
 - `error_description`: Description of the issue (required)
-- `model`: auto|pro|flash|flash-2.0|flashlite|o3|o3-mini|o4-mini|gpt4.1|gpt5.1|gpt5.1-codex|gpt5.1-codex-mini|gpt5|gpt5-mini|gpt5-nano (default: server default)
+- `model`: auto|pro|flash|flash-2.0|flashlite|o3|o3-mini|o4-mini|gpt4.1|gpt5.1|gpt5.1-codex|gpt5.1-codex-mini|gpt5|gpt5-mini|gpt5-nano|grok-4-1-fast|grok-4-1-fast-non-reasoning|grok-4-fast|grok-4-fast-non-reasoning|grok-code-fast-1|grok-4|grok-3|grok-3-fast (default: server default)
 - `error_context`: Stack trace or logs
 - `files`: Files or directories related to the issue
 - `runtime_info`: Environment details
@@ -215,7 +244,7 @@ All tools that work with files support **both individual files and entire direct
 
 **`thinkdeep`** - Extended analysis with file context
 - `current_analysis`: Your current thinking (required)
-- `model`: auto|pro|flash|flash-2.0|flashlite|o3|o3-mini|o4-mini|gpt4.1|gpt5.1|gpt5.1-codex|gpt5.1-codex-mini|gpt5|gpt5-mini|gpt5-nano (default: server default)
+- `model`: auto|pro|flash|flash-2.0|flashlite|o3|o3-mini|o4-mini|gpt4.1|gpt5.1|gpt5.1-codex|gpt5.1-codex-mini|gpt5|gpt5-mini|gpt5-nano|grok-4-1-fast|grok-4-1-fast-non-reasoning|grok-4-fast|grok-4-fast-non-reasoning|grok-code-fast-1|grok-4|grok-3|grok-3-fast (default: server default)
 - `problem_context`: Additional context
 - `focus_areas`: Specific aspects to focus on
 - `files`: Files or directories for context
@@ -231,7 +260,7 @@ All tools that work with files support **both individual files and entire direct
 **`testgen`** - Comprehensive test generation with edge case coverage
 - `files`: Code files or directories to generate tests for (required)
 - `prompt`: Description of what to test, testing objectives, and scope (required)
-- `model`: auto|pro|flash|flash-2.0|flashlite|o3|o3-mini|o4-mini|gpt4.1|gpt5.1|gpt5.1-codex|gpt5.1-codex-mini|gpt5|gpt5-mini|gpt5-nano (default: server default)
+- `model`: auto|pro|flash|flash-2.0|flashlite|o3|o3-mini|o4-mini|gpt4.1|gpt5.1|gpt5.1-codex|gpt5.1-codex-mini|gpt5|gpt5-mini|gpt5-nano|grok-4-1-fast|grok-4-1-fast-non-reasoning|grok-4-fast|grok-4-fast-non-reasoning|grok-code-fast-1|grok-4|grok-3|grok-3-fast (default: server default)
 - `test_examples`: Optional existing test files as style/pattern reference
 - `thinking_mode`: minimal|low|medium|high|max (default: medium, Gemini only)
 
@@ -246,7 +275,7 @@ All tools that work with files support **both individual files and entire direct
 - `files`: Code files or directories to analyze for refactoring opportunities (required)
 - `prompt`: Description of refactoring goals, context, and specific areas of focus (required)
 - `refactor_type`: codesmells|decompose|modernize|organization (required)
-- `model`: auto|pro|flash|flash-2.0|flashlite|o3|o3-mini|o4-mini|gpt4.1|gpt5.1|gpt5.1-codex|gpt5.1-codex-mini|gpt5|gpt5-mini|gpt5-nano (default: server default)
+- `model`: auto|pro|flash|flash-2.0|flashlite|o3|o3-mini|o4-mini|gpt4.1|gpt5.1|gpt5.1-codex|gpt5.1-codex-mini|gpt5|gpt5-mini|gpt5-nano|grok-4-1-fast|grok-4-1-fast-non-reasoning|grok-4-fast|grok-4-fast-non-reasoning|grok-code-fast-1|grok-4|grok-3|grok-3-fast (default: server default)
 - `focus_areas`: Specific areas to focus on (e.g., 'performance', 'readability', 'maintainability', 'security')
 - `style_guide_examples`: Optional existing code files to use as style/pattern reference
 - `thinking_mode`: minimal|low|medium|high|max (default: medium, Gemini only)

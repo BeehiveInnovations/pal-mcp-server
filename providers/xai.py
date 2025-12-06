@@ -53,34 +53,55 @@ class XAIModelProvider(RegistryBackedProviderMixin, OpenAICompatibleProvider):
         if not allowed_models:
             return None
 
+        # Helper to find first available from preference list
+        def find_first(preferences: list[str]) -> Optional[str]:
+            """Return first available model from preference list."""
+            for model in preferences:
+                if model in allowed_models:
+                    return model
+            return None
+
         if category == ToolModelCategory.EXTENDED_REASONING:
-            # Prefer GROK-4 for advanced reasoning with thinking mode
-            if "grok-4" in allowed_models:
-                return "grok-4"
-            elif "grok-3" in allowed_models:
-                return "grok-3"
-            # Fall back to any available model
-            return allowed_models[0]
+            # Prefer GROK-4.1 Fast Reasoning for cost-efficient reasoning, then GROK-4 Fast, then GROK-4
+            preferred = find_first(
+                [
+                    "grok-4-1-fast",
+                    "grok-4-fast",
+                    "grok-4",
+                    "grok-code-fast-1",
+                    "grok-3",
+                ]
+            )
+            return preferred if preferred else allowed_models[0]
 
         elif category == ToolModelCategory.FAST_RESPONSE:
-            # Prefer GROK-3-Fast for speed, then GROK-4
-            if "grok-3-fast" in allowed_models:
-                return "grok-3-fast"
-            elif "grok-4" in allowed_models:
-                return "grok-4"
-            # Fall back to any available model
-            return allowed_models[0]
+            # Prefer GROK-4.1 Fast Non-Reasoning for speed, then GROK-4 Fast Non-Reasoning, then GROK-3-Fast
+            preferred = find_first(
+                [
+                    "grok-4-1-fast-non-reasoning",
+                    "grok-4-fast-non-reasoning",
+                    "grok-4-1-fast",
+                    "grok-4-fast",
+                    "grok-3-fast",
+                    "grok-code-fast-1",
+                    "grok-4",
+                ]
+            )
+            return preferred if preferred else allowed_models[0]
 
         else:  # BALANCED or default
-            # Prefer GROK-4 for balanced use (best overall capabilities)
-            if "grok-4" in allowed_models:
-                return "grok-4"
-            elif "grok-3" in allowed_models:
-                return "grok-3"
-            elif "grok-3-fast" in allowed_models:
-                return "grok-3-fast"
-            # Fall back to any available model
-            return allowed_models[0]
+            # Prefer GROK-4.1 Fast Reasoning for balanced use (cost-efficient with reasoning)
+            preferred = find_first(
+                [
+                    "grok-4-1-fast",
+                    "grok-4-fast",
+                    "grok-code-fast-1",
+                    "grok-4",
+                    "grok-3",
+                    "grok-3-fast",
+                ]
+            )
+            return preferred if preferred else allowed_models[0]
 
 
 # Load registry data at import time

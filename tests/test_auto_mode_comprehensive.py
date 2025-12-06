@@ -108,9 +108,9 @@ class TestAutoModeComprehensive:
                     "OPENROUTER_API_KEY": None,
                 },
                 {
-                    "EXTENDED_REASONING": "grok-4",  # GROK-4 for reasoning (now preferred)
-                    "FAST_RESPONSE": "grok-3-fast",  # GROK-3-fast for speed
-                    "BALANCED": "grok-4",  # GROK-4 as balanced (now preferred)
+                    "EXTENDED_REASONING": "grok-4-1-fast",  # GROK-4.1 Fast Reasoning for cost-efficient reasoning
+                    "FAST_RESPONSE": "grok-4-1-fast-non-reasoning",  # GROK-4.1 Fast Non-Reasoning for speed
+                    "BALANCED": "grok-4-1-fast",  # GROK-4.1 Fast Reasoning as balanced (cost-efficient with reasoning)
                 },
             ),
             # Both Gemini and OpenAI available - Google comes first in priority
@@ -190,7 +190,10 @@ class TestAutoModeComprehensive:
         "tool_class,expected_category",
         [
             (ChatTool, ToolModelCategory.FAST_RESPONSE),
-            (AnalyzeTool, ToolModelCategory.EXTENDED_REASONING),  # AnalyzeTool uses EXTENDED_REASONING
+            (
+                AnalyzeTool,
+                ToolModelCategory.EXTENDED_REASONING,
+            ),  # AnalyzeTool uses EXTENDED_REASONING
             (DebugIssueTool, ToolModelCategory.EXTENDED_REASONING),
             (ThinkDeepTool, ToolModelCategory.EXTENDED_REASONING),
         ],
@@ -533,12 +536,20 @@ class TestAutoModeComprehensive:
             mock_provider._resolve_model_name = lambda alias: ("gemini-2.5-flash" if alias == "flash" else alias)
             mock_provider.generate_content.return_value = mock_response
 
-            with patch.object(ModelProviderRegistry, "get_provider_for_model", return_value=mock_provider):
+            with patch.object(
+                ModelProviderRegistry,
+                "get_provider_for_model",
+                return_value=mock_provider,
+            ):
                 chat_tool = ChatTool()
                 workdir = tmp_path / "chat_artifacts"
                 workdir.mkdir(parents=True, exist_ok=True)
                 result = await chat_tool.execute(
-                    {"prompt": "test", "model": "flash", "working_directory_absolute_path": str(workdir)}
+                    {
+                        "prompt": "test",
+                        "model": "flash",
+                        "working_directory_absolute_path": str(workdir),
+                    }
                 )  # Use alias in auto mode
 
                 # Should succeed with proper model resolution

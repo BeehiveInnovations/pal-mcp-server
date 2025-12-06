@@ -85,7 +85,7 @@ security remediation plan using planner
 - `images`: Architecture diagrams, security documentation, or visual references
 
 **Initial Security Configuration (used in step 1):**
-- `model`: auto|pro|flash|flash-2.0|flashlite|o3|o3-mini|o4-mini|gpt4.1|gpt5.1|gpt5.1-codex|gpt5.1-codex-mini|gpt5|gpt5-mini|gpt5-nano (default: server default)
+- `model`: auto|pro|flash|flash-2.0|flashlite|o3|o3-mini|o4-mini|gpt4.1|gpt5.1|gpt5.1-codex|gpt5.1-codex-mini|gpt5|gpt5-mini|gpt5-nano|grok-4-1-fast|grok-4-1-fast-non-reasoning|grok-code-fast-1|grok-4|grok-3|grok-3-fast (default: server default)
 - `security_scope`: Application context, technology stack, and security boundary definition (required)
 - `threat_level`: low|medium|high|critical (default: medium) - determines assessment depth and urgency
 - `compliance_requirements`: List of compliance frameworks to assess against (e.g., ["PCI DSS", "SOC2"])
