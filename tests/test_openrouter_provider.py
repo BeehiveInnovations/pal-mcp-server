@@ -370,3 +370,111 @@ class TestOpenRouterFunctionality:
         # Registry should be initialized
         assert hasattr(provider, "_registry")
         assert provider._registry is not None
+
+
+class TestOpenRouterImageSupport:
+    """Test cases for OpenRouter image support functionality."""
+
+    def test_generic_fallback_no_image_support(self):
+        """Test that generic fallback does NOT enable image support by default.
+
+        Models that support images should be explicitly configured in openrouter_models.json
+        with proper limits from their official provider documentation.
+        """
+        provider = OpenRouterProvider(api_key="test-key")
+
+        # Test with an unknown model that has provider/model format
+        capabilities = provider._lookup_capabilities("unknown/test-vision-model")
+
+        assert capabilities is not None
+        # Generic fallback should NOT enable images - explicit configuration required
+        assert capabilities.supports_images is False
+        assert capabilities.max_image_size_mb == 0.0  # Default: no vision support
+        assert capabilities.max_image_count is None  # Default: no vision support
+
+    def test_configured_models_have_official_limits(self):
+        """Test that models have correct limits from official provider documentation."""
+        provider = OpenRouterProvider(api_key="test-key")
+
+        # Test models with official limits (count, per-image size, total size)
+        test_cases = [
+            # Anthropic: 100 images, 5MB per image, 24MB total (to account for base64 encoding ~32MB)
+            ("anthropic/claude-sonnet-4.5", 100, 5.0, 24.0),
+            ("anthropic/claude-opus-4.1", 100, 5.0, 24.0),
+            ("anthropic/claude-sonnet-4.1", 100, 5.0, 24.0),
+            ("anthropic/claude-3.5-haiku", 100, 5.0, 24.0),
+            # Google: 3000 images, 7MB per image, 15MB total (to account for base64 encoding ~20MB)
+            ("google/gemini-2.5-pro", 3000, 7.0, 15.0),
+            ("google/gemini-2.5-flash", 3000, 7.0, 15.0),
+            # X.AI: No count limit, 20MB per image, no total limit (official docs)
+            ("x-ai/grok-4", None, 20.0, 0.0),
+        ]
+
+        for model_name, expected_count, expected_per_image_size, expected_total_size in test_cases:
+            capabilities = provider._registry.get_capabilities(model_name)
+            assert capabilities is not None, f"{model_name} should be in registry"
+            assert capabilities.supports_images is True, f"{model_name} should support images"
+            assert (
+                capabilities.max_image_count == expected_count
+            ), f"{model_name} should have {expected_count} image count limit (from official docs)"
+            assert (
+                capabilities.max_image_size_mb == expected_per_image_size
+            ), f"{model_name} should have {expected_per_image_size}MB per-image size limit (from official docs)"
+            assert (
+                capabilities.max_total_image_size_mb == expected_total_size
+            ), f"{model_name} should have {expected_total_size}MB total size limit (from official docs)"
+
+    def test_openai_models_with_vision_support(self):
+        """Test that OpenAI vision models support images with token-based limits."""
+        provider = OpenRouterProvider(api_key="test-key")
+
+        # OpenAI models that officially support vision (token-based, no fixed limits)
+        vision_models = [
+            "openai/o3",
+            "openai/o3-pro",
+            "openai/o4-mini",
+            "openai/gpt-4o",
+            "openai/gpt-4-turbo",
+            "openai/chatgpt-4o-latest",
+            "openai/gpt-5",
+            "openai/gpt-5-pro",
+            "openai/gpt-5-codex",
+        ]
+
+        for model_name in vision_models:
+            capabilities = provider._registry.get_capabilities(model_name)
+            assert capabilities is not None, f"{model_name} should be in registry"
+            assert capabilities.supports_images is True, f"{model_name} should support images (official vision model)"
+            # OpenAI API has no documented fixed image size/count limits
+            # Limits are token-based, so we don't configure max_image_size_mb or max_image_count
+            assert capabilities.max_image_size_mb == 0.0, f"{model_name} should have no fixed size limit (token-based)"
+            assert capabilities.max_image_count is None, f"{model_name} should have no fixed count limit (token-based)"
+
+    def test_openai_models_without_vision_support(self):
+        """Test that specific OpenAI models do not support vision per official docs."""
+        provider = OpenRouterProvider(api_key="test-key")
+
+        # OpenAI models that officially do NOT support vision
+        non_vision_models = [
+            ("openai/o3-mini", "Official docs state: 'o3-mini does not support vision capabilities'"),
+            ("openai/o3-mini-high", "Deprecated model - no vision support documented"),
+        ]
+
+        for model_name, reason in non_vision_models:
+            capabilities = provider._registry.get_capabilities(model_name)
+            assert capabilities is not None, f"{model_name} should be in registry"
+            assert capabilities.supports_images is False, f"{model_name} should NOT support images: {reason}"
+            assert capabilities.max_image_size_mb == 0.0, f"{model_name} should have 0MB image size (no vision support)"
+
+    def test_non_vision_models_no_image_support(self):
+        """Test that non-vision models don't have image support."""
+        provider = OpenRouterProvider(api_key="test-key")
+
+        # Test models that don't support images
+        text_only_models = ["mistralai/mistral-large-2411", "meta-llama/llama-3-70b", "deepseek/deepseek-r1-0528"]
+
+        for model_name in text_only_models:
+            # Get capabilities directly from registry
+            capabilities = provider._registry.get_capabilities(model_name)
+            assert capabilities is not None, f"{model_name} should be in registry"
+            assert capabilities.supports_images is False, f"{model_name} should not support images"

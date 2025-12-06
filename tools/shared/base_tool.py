@@ -9,9 +9,11 @@ common functionality for request validation, error handling, model management,
 conversation handling, file processing, and response formatting.
 """
 
+import base64
 import logging
 import os
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
 from mcp.types import TextContent
@@ -1449,6 +1451,54 @@ When recommending searches, be specific about what information you need and why 
             logger.warning(f"Temperature validation failed for {model_context.model_name}: {e}")
             return temperature, [f"Temperature validation failed: {e}"]
 
+    def _get_effective_limit(self, configured_limit_mb: float, capabilities: Any) -> float:
+        """
+        Calculate effective size limit for custom models.
+        - If configured as 0 or negative, return original value (no limit)
+        - ProviderType.CUSTOM is capped at 40MB
+        """
+        if configured_limit_mb <= 0:
+            return configured_limit_mb
+
+        effective_limit_mb = configured_limit_mb
+        try:
+            from providers.shared import ProviderType
+
+            if getattr(capabilities, "provider", None) == ProviderType.CUSTOM:
+                effective_limit_mb = min(configured_limit_mb, 40.0)
+        except Exception:
+            # Fall back to configured limit on any exception
+            logger.debug("Failed to apply provider-specific limit; using configured limit", exc_info=True)
+
+        return effective_limit_mb
+
+    def _calculate_image_size(self, image_path: str) -> tuple[Optional[float], Optional[str]]:
+        """
+        Calculate image size in MB, returning (size_mb, error_message).
+        - Success: Returns size_mb, error_message is None
+        - Failure: size_mb is None, error_message contains readable error (does not raise exception)
+        """
+        try:
+            if not isinstance(image_path, str):
+                return None, "Image path must be a string"
+
+            if image_path.startswith("data:image/"):
+                if "," not in image_path:
+                    return None, "Invalid data URL format"
+
+                _, data = image_path.split(",", 1)
+                actual_size = len(base64.b64decode(data))
+                return actual_size / (1024 * 1024), None
+
+            path = Path(image_path)
+            if not path.exists():
+                return None, f"Image file not found: {image_path}"
+
+            file_size = path.stat().st_size
+            return file_size / (1024 * 1024), None
+        except Exception as exc:
+            return None, f"Failed to read image {image_path}: {exc}"
+
     def _validate_image_limits(
         self, images: Optional[list[str]], model_context: Optional[Any] = None, continuation_id: Optional[str] = None
     ) -> Optional[dict]:
@@ -1469,10 +1519,6 @@ When recommending searches, be specific about what information you need and why 
         """
         if not images:
             return None
-
-        # Import here to avoid circular imports
-        import base64
-        from pathlib import Path
 
         if not model_context:
             # Get from tool's stored context as fallback
@@ -1520,15 +1566,16 @@ When recommending searches, be specific about what information you need and why 
             }
 
         # Get model image limits from capabilities
-        max_images = 5  # Default max number of images
+        max_image_count = capabilities.max_image_count
         max_size_mb = capabilities.max_image_size_mb
 
-        # Check image count
-        if len(images) > max_images:
+        # Check image count (only if model has explicit limit)
+        # If max_image_count is None, skip count validation (no official limit documented)
+        if max_image_count is not None and len(images) > max_image_count:
             return {
                 "status": "error",
                 "content": (
-                    f"Too many images: Model '{model_name}' supports a maximum of {max_images} images, "
+                    f"Too many images: Model '{model_name}' supports a maximum of {max_image_count} images, "
                     f"but {len(images)} were provided. Please reduce the number of images."
                 ),
                 "content_type": "text",
@@ -1536,68 +1583,96 @@ When recommending searches, be specific about what information you need and why 
                     "error_type": "validation_error",
                     "model_name": model_name,
                     "image_count": len(images),
-                    "max_images": max_images,
+                    "max_images": max_image_count,
                 },
             }
 
-        # Calculate total size of all images
-        total_size_mb = 0.0
-        for image_path in images:
-            try:
-                if image_path.startswith("data:image/"):
-                    # Handle data URL: data:image/png;base64,iVBORw0...
-                    _, data = image_path.split(",", 1)
-                    # Base64 encoding increases size by ~33%, so decode to get actual size
-                    actual_size = len(base64.b64decode(data))
-                    total_size_mb += actual_size / (1024 * 1024)
-                else:
-                    # Handle file path
-                    path = Path(image_path)
-                    if path.exists():
-                        file_size = path.stat().st_size
-                        total_size_mb += file_size / (1024 * 1024)
-                    else:
-                        logger.warning(f"Image file not found: {image_path}")
-                        # Assume a reasonable size for missing files to avoid breaking validation
-                        total_size_mb += 1.0  # 1MB assumption
-            except Exception as e:
-                logger.warning(f"Failed to get size for image {image_path}: {e}")
-                # Assume a reasonable size for problematic files
-                total_size_mb += 1.0  # 1MB assumption
+        # Check individual image sizes and calculate total
+        total_images_size_mb = 0.0
 
-        # Apply 40MB cap for custom models if needed
-        effective_limit_mb = max_size_mb
-        try:
-            from providers.shared import ProviderType
+        # Check per-image size limit (only if model has explicit size limit)
+        # If max_size_mb is 0, skip per-image size validation (no official limit documented)
+        for idx, image_path in enumerate(images):
+            image_size_mb, size_error = self._calculate_image_size(image_path)
+            if size_error:
+                logger.warning(size_error)
+                return {
+                    "status": "error",
+                    "content": (
+                        f"Image #{idx + 1} could not be processed: {size_error}. "
+                        "Please provide a valid image file or data URL."
+                    ),
+                    "content_type": "text",
+                    "metadata": {
+                        "error_type": "validation_error",
+                        "model_name": model_name,
+                        "image_index": idx,
+                        "image_path": image_path,
+                        "image_count": len(images),
+                        "supports_images": True,
+                    },
+                }
 
-            # ModelCapabilities dataclass has provider field defined
-            if capabilities.provider == ProviderType.CUSTOM:
-                effective_limit_mb = min(max_size_mb, 40.0)
-        except Exception:
-            pass
+            if image_size_mb is None:
+                continue
 
-        # Validate against size limit
-        if total_size_mb > effective_limit_mb:
-            return {
-                "status": "error",
-                "content": (
-                    f"Image size limit exceeded: Model '{model_name}' supports maximum {effective_limit_mb:.1f}MB "
-                    f"for all images combined, but {total_size_mb:.1f}MB was provided. "
-                    f"Please reduce image sizes or count and try again."
-                ),
-                "content_type": "text",
-                "metadata": {
-                    "error_type": "validation_error",
-                    "model_name": model_name,
-                    "total_size_mb": round(total_size_mb, 2),
-                    "limit_mb": round(effective_limit_mb, 2),
-                    "image_count": len(images),
-                    "supports_images": True,
-                },
-            }
+            # Accumulate total size for later validation
+            total_images_size_mb += image_size_mb
+
+            if max_size_mb > 0:
+                effective_limit_mb = self._get_effective_limit(max_size_mb, capabilities)
+                # Check if this image exceeds the per-image size limit
+                if image_size_mb > effective_limit_mb:
+                    return {
+                        "status": "error",
+                        "content": (
+                            f"Image size limit exceeded: Image #{idx + 1} is {image_size_mb:.1f}MB, "
+                            f"but model '{model_name}' supports maximum {effective_limit_mb:.1f}MB per image. "
+                            f"Please reduce the image size and try again."
+                        ),
+                        "content_type": "text",
+                        "metadata": {
+                            "error_type": "validation_error",
+                            "model_name": model_name,
+                            "image_index": idx,
+                            "image_size_mb": round(image_size_mb, 2),
+                            "limit_mb": round(effective_limit_mb, 2),
+                            "image_count": len(images),
+                            "supports_images": True,
+                        },
+                    }
+
+        # Check total request size limit (only if model has explicit total limit)
+        # If max_total_image_size_mb is 0, skip total size validation (no official limit documented)
+        # NOTE: We validate against original image sizes, not base64-encoded sizes.
+        # Provider-specific limits (e.g. Google 15MB, Anthropic 24MB) are already adjusted
+        # to account for base64 encoding overhead (~33% increase) and text content.
+        # This keeps validation simple and performant while providing adequate safety margin.
+        max_total_size_mb = capabilities.max_total_image_size_mb
+        if max_total_size_mb > 0:
+            effective_total_limit_mb = self._get_effective_limit(max_total_size_mb, capabilities)
+            # Check if total size exceeds the request limit
+            if total_images_size_mb > effective_total_limit_mb:
+                return {
+                    "status": "error",
+                    "content": (
+                        f"Total image size limit exceeded: All images combined are {total_images_size_mb:.1f}MB, "
+                        f"but model '{model_name}' supports maximum {effective_total_limit_mb:.1f}MB total per request. "
+                        f"Please reduce image sizes or count and try again."
+                    ),
+                    "content_type": "text",
+                    "metadata": {
+                        "error_type": "validation_error",
+                        "model_name": model_name,
+                        "total_size_mb": round(total_images_size_mb, 2),
+                        "total_limit_mb": round(effective_total_limit_mb, 2),
+                        "image_count": len(images),
+                        "supports_images": True,
+                    },
+                }
 
         # All validations passed
-        logger.debug(f"Image validation passed: {len(images)} images, {total_size_mb:.1f}MB total")
+        logger.debug(f"Image validation passed: {len(images)} images, {total_images_size_mb:.1f}MB total")
         return None
 
     def _parse_response(self, raw_text: str, request, model_info: Optional[dict] = None):

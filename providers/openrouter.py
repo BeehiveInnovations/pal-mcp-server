@@ -82,6 +82,10 @@ class OpenRouterProvider(OpenAICompatibleProvider):
             logging.debug(
                 "Using generic OpenRouter capabilities for %s (provider/model format detected)", canonical_name
             )
+            # Note: Generic fallback for unconfigured models in provider/model format.
+            # Image support is disabled by default - models that support images should be
+            # explicitly configured in openrouter_models.json with proper limits.
+            # Source: https://openrouter.ai/docs/features/multimodal/overview
             generic = ModelCapabilities(
                 provider=ProviderType.OPENROUTER,
                 model_name=canonical_name,
@@ -93,6 +97,7 @@ class OpenRouterProvider(OpenAICompatibleProvider):
                 supports_system_prompts=True,
                 supports_streaming=True,
                 supports_function_calling=False,
+                supports_images=False,  # Disabled by default - configure explicitly if needed
                 temperature_constraint=RangeTemperatureConstraint(0.0, 2.0, 1.0),
             )
             generic._is_generic = True

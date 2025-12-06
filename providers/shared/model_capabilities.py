@@ -59,7 +59,9 @@ class ModelCapabilities:
     )
 
     # Additional attributes
-    max_image_size_mb: float = 0.0
+    max_image_size_mb: float = 0.0  # Maximum size per individual image in MB (0 = no limit)
+    max_image_count: Optional[int] = None  # Maximum number of images per request (None = no limit)
+    max_total_image_size_mb: float = 0.0  # Maximum total size of all images in request in MB (0 = no limit)
     temperature_constraint: TemperatureConstraint = field(
         default_factory=lambda: RangeTemperatureConstraint(0.0, 2.0, 0.3)
     )

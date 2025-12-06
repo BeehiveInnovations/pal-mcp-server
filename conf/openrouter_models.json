@@ -13,14 +13,18 @@
       "supports_json_mode": "Whether the model can guarantee valid JSON output",
       "supports_function_calling": "Whether the model supports function/tool calling",
       "supports_images": "Whether the model can process images/visual input",
-      "max_image_size_mb": "Maximum total size in MB for all images combined (capped at 40MB max for custom models)",
+      "max_image_size_mb": "Maximum size in MB for each individual image (0 = no per-image limit documented). Capped at 40MB for custom models.",
+      "max_image_count": "Maximum number of images per request (None/omit = no fixed count limit). Based on provider official docs.",
+      "max_total_image_size_mb": "Maximum total size in MB for all images combined (0 = no total limit). Validation checks original file size. NOTE: Some providers (e.g. Anthropic 32MB, Google 15MB) account for base64 encoding overhead and text content in their API limits. Capped at 40MB for custom models.",
       "supports_temperature": "Whether the model accepts temperature parameter in API calls (set to false for O3/O4 reasoning models)",
       "temperature_constraint": "Type of temperature constraint: 'fixed' (fixed value), 'range' (continuous range), 'discrete' (specific values), or omit for default range",
       "use_openai_response_api": "Set to true when the model must use the /responses endpoint (reasoning models like GPT-5 Pro). Leave false/omit for standard chat completions.",
       "default_reasoning_effort": "Default reasoning effort level for models that support it (e.g., 'low', 'medium', 'high'). Omit if not applicable.",
       "description": "Human-readable description of the model",
       "intelligence_score": "1-20 human rating used as the primary signal for auto-mode model ordering",
-      "allow_code_generation": "Whether this model can generate and suggest fully working code - complete with functions, files, and detailed implementation instructions - for your AI tool to use right away. Only set this to 'true' for a model more capable than the AI model / CLI you're currently using."
+      "allow_code_generation": "Whether this model can generate and suggest fully working code - complete with functions, files, and detailed implementation instructions - for your AI tool to use right away. Only set this to 'true' for a model more capable than the AI model / CLI you're currently using.",
+      "_limits_source": "Official documentation URL for image limits",
+      "_limits_verified": "Date when limits were verified against official docs (YYYY-MM-DD)"
     }
   },
   "models": [
@@ -36,9 +40,14 @@
       "supports_json_mode": false,
       "supports_function_calling": false,
       "supports_images": true,
-      "max_image_size_mb": 5.0,
       "description": "Claude Sonnet 4.5 - High-performance model with exceptional reasoning and efficiency",
-      "intelligence_score": 12
+      "intelligence_score": 12,
+      "max_image_count": 100,
+      "max_image_size_mb": 5.0,
+      "max_total_image_size_mb": 24.0,
+      "_limits_source": "https://docs.anthropic.com/en/docs/build-with-claude/vision",
+      "_limits_verified": "2025-11-18",
+      "_limits_note": "Messages API: 100 images, 5MB per image. 24MB original size limit to ensure base64-encoded payload (~32MB after +33% encoding) stays within API's 32MB request limit (includes text, images, and all parameters)."
     },
     {
       "model_name": "anthropic/claude-opus-4.1",
@@ -52,9 +61,14 @@
       "supports_json_mode": false,
       "supports_function_calling": false,
       "supports_images": true,
-      "max_image_size_mb": 5.0,
       "description": "Claude Opus 4.1 - Our most capable and intelligent model yet",
-      "intelligence_score": 14
+      "intelligence_score": 14,
+      "max_image_count": 100,
+      "max_image_size_mb": 5.0,
+      "max_total_image_size_mb": 24.0,
+      "_limits_source": "https://docs.anthropic.com/en/docs/build-with-claude/vision",
+      "_limits_verified": "2025-11-18",
+      "_limits_note": "Messages API: 100 images, 5MB per image. 24MB original size limit to ensure base64-encoded payload (~32MB after +33% encoding) stays within API's 32MB request limit (includes text, images, and all parameters)."
     },
     {
       "model_name": "anthropic/claude-sonnet-4.1",
@@ -67,9 +81,14 @@
       "supports_json_mode": false,
       "supports_function_calling": false,
       "supports_images": true,
-      "max_image_size_mb": 5.0,
       "description": "Claude Sonnet 4.1 - Last generation high-performance model with exceptional reasoning and efficiency",
-      "intelligence_score": 10
+      "intelligence_score": 10,
+      "max_image_count": 100,
+      "max_image_size_mb": 5.0,
+      "max_total_image_size_mb": 24.0,
+      "_limits_source": "https://docs.anthropic.com/en/docs/build-with-claude/vision",
+      "_limits_verified": "2025-11-18",
+      "_limits_note": "Messages API: 100 images, 5MB per image. 24MB original size limit to ensure base64-encoded payload (~32MB after +33% encoding) stays within API's 32MB request limit (includes text, images, and all parameters)."
     },
     {
       "model_name": "anthropic/claude-3.5-haiku",
@@ -82,9 +101,14 @@
       "supports_json_mode": false,
       "supports_function_calling": false,
       "supports_images": true,
-      "max_image_size_mb": 5.0,
       "description": "Claude 3 Haiku - Fast and efficient with vision",
-      "intelligence_score": 8
+      "intelligence_score": 8,
+      "max_image_count": 100,
+      "max_image_size_mb": 5.0,
+      "max_total_image_size_mb": 24.0,
+      "_limits_source": "https://docs.anthropic.com/en/docs/build-with-claude/vision",
+      "_limits_verified": "2025-11-18",
+      "_limits_note": "Messages API: 100 images, 5MB per image. 24MB original size limit to ensure base64-encoded payload (~32MB after +33% encoding) stays within API's 32MB request limit (includes text, images, and all parameters)."
     },
     {
       "model_name": "google/gemini-3-pro-preview",
@@ -101,7 +125,6 @@
       "supports_json_mode": true,
       "supports_function_calling": true,
       "supports_images": true,
-      "max_image_size_mb": 20.0,
       "allow_code_generation": true,
       "description": "Google's Gemini 3.0 Pro via OpenRouter with vision",
       "intelligence_score": 18
@@ -121,7 +144,13 @@
       "max_image_size_mb": 20.0,
       "allow_code_generation": true,
       "description": "Google's Gemini 2.5 Pro via OpenRouter with vision",
-      "intelligence_score": 18
+      "intelligence_score": 18,
+      "max_image_count": 3000,
+      "max_image_size_mb": 7.0,
+      "max_total_image_size_mb": 15.0,
+      "_limits_source": "https://ai.google.dev/gemini-api/docs/vision",
+      "_limits_verified": "2025-11-18",
+      "_limits_note": "3000 images/prompt, 7MB per image. 15MB original size limit to ensure base64-encoded payload (~20MB after +33% encoding) stays within API's 20MB inline request limit."
     },
     {
       "model_name": "google/gemini-2.5-flash",
@@ -135,9 +164,14 @@
       "supports_json_mode": true,
       "supports_function_calling": true,
       "supports_images": true,
-      "max_image_size_mb": 15.0,
       "description": "Google's Gemini 2.5 Flash via OpenRouter with vision",
-      "intelligence_score": 10
+      "intelligence_score": 10,
+      "max_image_count": 3000,
+      "max_image_size_mb": 7.0,
+      "max_total_image_size_mb": 15.0,
+      "_limits_source": "https://ai.google.dev/gemini-api/docs/vision",
+      "_limits_verified": "2025-11-18",
+      "_limits_note": "3000 images/prompt, 7MB per image. 15MB original size limit to ensure base64-encoded payload (~20MB after +33% encoding) stays within API's 20MB inline request limit."
     },
     {
       "model_name": "mistralai/mistral-large-2411",
@@ -220,11 +254,13 @@
       "supports_json_mode": true,
       "supports_function_calling": true,
       "supports_images": true,
-      "max_image_size_mb": 20.0,
       "supports_temperature": false,
       "temperature_constraint": "fixed",
-      "description": "OpenAI's o3 model - well-rounded and powerful across domains with vision",
-      "intelligence_score": 14
+      "description": "OpenAI's o3 model - first reasoning model with vision, can think with images",
+      "intelligence_score": 14,
+      "_limits_source": "https://openai.com/index/introducing-o3-and-o4-mini/",
+      "_limits_verified": "2025-11-18",
+      "_limits_note": "Token-based limit (200K context). No fixed image count or size limit documented in API. Released April 2025 as first reasoning model with vision capabilities."
     },
     {
       "model_name": "openai/o3-mini",
@@ -237,12 +273,15 @@
       "supports_extended_thinking": false,
       "supports_json_mode": true,
       "supports_function_calling": true,
-      "supports_images": true,
-      "max_image_size_mb": 20.0,
+      "supports_images": false,
+      "max_image_size_mb": 0.0,
       "supports_temperature": false,
       "temperature_constraint": "fixed",
-      "description": "OpenAI's o3-mini model - balanced performance and speed with vision",
-      "intelligence_score": 12
+      "description": "OpenAI's o3-mini model - balanced performance and speed (text-only, no vision support)",
+      "intelligence_score": 12,
+      "_limits_source": "https://openai.com/index/openai-o3-mini/",
+      "_limits_verified": "2025-11-16",
+      "_limits_note": "Official documentation states: 'o3-mini does not support vision capabilities'"
     },
     {
       "model_name": "openai/o3-mini-high",
@@ -255,12 +294,15 @@
       "supports_extended_thinking": false,
       "supports_json_mode": true,
       "supports_function_calling": true,
-      "supports_images": true,
-      "max_image_size_mb": 20.0,
+      "supports_images": false,
+      "max_image_size_mb": 0.0,
       "supports_temperature": false,
       "temperature_constraint": "fixed",
-      "description": "OpenAI's o3-mini with high reasoning effort - optimized for complex problems with vision",
-      "intelligence_score": 13
+      "description": "OpenAI's o3-mini with high reasoning effort (DEPRECATED - replaced by o3/o4-mini/high, text-only)",
+      "intelligence_score": 13,
+      "_limits_source": "https://openai.com/index/introducing-openai-o3-and-o4-mini/",
+      "_limits_verified": "2025-11-16",
+      "_limits_note": "Deprecated: replaced by o3/o4-mini/high models as of 2025-04-16; no vision support documented"
     },
     {
       "model_name": "openai/o3-pro",
@@ -273,11 +315,13 @@
       "supports_json_mode": true,
       "supports_function_calling": true,
       "supports_images": true,
-      "max_image_size_mb": 20.0,
       "supports_temperature": false,
       "temperature_constraint": "fixed",
-      "description": "OpenAI's o3-pro model - professional-grade reasoning and analysis with vision",
-      "intelligence_score": 15
+      "description": "OpenAI's o3-pro model - professional-grade reasoning with vision capabilities",
+      "intelligence_score": 15,
+      "_limits_source": "https://openai.com/index/introducing-o3-and-o4-mini/",
+      "_limits_verified": "2025-11-18",
+      "_limits_note": "Token-based limit (200K context). Enhanced version of o3 with same vision capabilities. Can reason about visual inputs."
     },
     {
       "model_name": "openai/o4-mini",
@@ -291,11 +335,67 @@
       "supports_json_mode": true,
       "supports_function_calling": true,
       "supports_images": true,
-      "max_image_size_mb": 20.0,
       "supports_temperature": false,
       "temperature_constraint": "fixed",
-      "description": "OpenAI's o4-mini model - optimized for shorter contexts with rapid reasoning and vision",
-      "intelligence_score": 11
+      "description": "OpenAI's o4-mini model - fast and efficient reasoning with vision, thinks with images",
+      "intelligence_score": 11,
+      "_limits_source": "https://openai.com/index/introducing-o3-and-o4-mini/",
+      "_limits_verified": "2025-11-18",
+      "_limits_note": "Token-based limit (200K context). Released with o3 in April 2025 as reasoning model with 'thinking with images' capability."
+    },
+    {
+      "model_name": "openai/gpt-4o",
+      "aliases": [
+        "gpt4o"
+      ],
+      "context_window": 128000,
+      "max_output_tokens": 16384,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "description": "OpenAI's GPT-4o - flagship multimodal model with vision capabilities",
+      "intelligence_score": 13,
+      "_limits_source": "https://platform.openai.com/docs/models/gpt-4-turbo-and-gpt-4o",
+      "_limits_verified": "2025-11-18",
+      "_limits_note": "Token-based limit (128K context). Supports JPEG, PNG, GIF, WebP. Images processed at token level with no fixed count limit."
+    },
+    {
+      "model_name": "openai/gpt-4-turbo",
+      "aliases": [
+        "gpt4turbo"
+      ],
+      "context_window": 128000,
+      "max_output_tokens": 4096,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "description": "OpenAI's GPT-4 Turbo - enhanced GPT-4 with vision support",
+      "intelligence_score": 12,
+      "_limits_source": "https://platform.openai.com/docs/models",
+      "_limits_verified": "2025-11-18",
+      "_limits_note": "Token-based limit (128K context). Vision support added in gpt-4-turbo-2024-04-09 and later versions."
+    },
+    {
+      "model_name": "openai/chatgpt-4o-latest",
+      "aliases": [
+        "chatgpt4o"
+      ],
+      "context_window": 128000,
+      "max_output_tokens": 16384,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "description": "OpenAI's ChatGPT-4o - always-updated alias to latest GPT-4o with vision",
+      "intelligence_score": 13,
+      "_limits_source": "https://platform.openai.com/docs/models/gpt-4-turbo-and-gpt-4o",
+      "_limits_verified": "2025-11-18",
+      "_limits_note": "Alias for latest GPT-4o. Token-based limit (128K context). Same vision capabilities as gpt-4o."
     },
     {
       "model_name": "openai/gpt-5",
@@ -308,11 +408,13 @@
       "supports_json_mode": true,
       "supports_function_calling": true,
       "supports_images": true,
-      "max_image_size_mb": 20.0,
       "supports_temperature": true,
       "temperature_constraint": "range",
-      "description": "GPT-5 (400K context, 128K output) - Advanced model with reasoning support",
-      "intelligence_score": 16
+      "description": "GPT-5 (400K context, 128K output) - Advanced model with vision and reasoning support",
+      "intelligence_score": 16,
+      "_limits_source": "https://platform.openai.com/docs/models",
+      "_limits_verified": "2025-11-18",
+      "_limits_note": "Token-based limit (400K context). Future OpenAI model assumed to follow same token-based vision approach as GPT-4o."
     },
     {
       "model_name": "openai/gpt-5-pro",
@@ -325,14 +427,16 @@
       "supports_json_mode": true,
       "supports_function_calling": true,
       "supports_images": true,
-      "max_image_size_mb": 20.0,
       "supports_temperature": false,
       "temperature_constraint": "fixed",
       "use_openai_response_api": true,
       "default_reasoning_effort": "high",
       "allow_code_generation": true,
-      "description": "GPT-5 Pro - Advanced reasoning model with highest quality responses (text+image input, text output only)",
-      "intelligence_score": 18
+      "description": "GPT-5 Pro - Advanced reasoning model with vision (text+image input, text output)",
+      "intelligence_score": 18,
+      "_limits_source": "https://platform.openai.com/docs/models",
+      "_limits_verified": "2025-11-18",
+      "_limits_note": "Token-based limit (400K context). Pro variant assumed to follow same token-based vision approach."
     },
     {
       "model_name": "openai/gpt-5-codex",
@@ -345,10 +449,12 @@
       "supports_extended_thinking": false,
       "supports_json_mode": true,
       "supports_function_calling": false,
-      "supports_images": false,
-      "max_image_size_mb": 0.0,
-      "description": "GPT-5-Codex is a specialized version of GPT-5 optimized for software engineering and coding workflows",
-      "intelligence_score": 17
+      "supports_images": true,
+      "description": "GPT-5-Codex - specialized version optimized for software engineering with vision support",
+      "intelligence_score": 17,
+      "_limits_source": "https://platform.openai.com/docs/models",
+      "_limits_verified": "2025-11-18",
+      "_limits_note": "Token-based limit (400K context). Codex variant assumed to follow same token-based vision approach for screenshots/UI."
     },
     {
       "model_name": "openai/gpt-5-mini",
@@ -463,11 +569,14 @@
       "supports_json_mode": true,
       "supports_function_calling": true,
       "supports_images": true,
-      "max_image_size_mb": 20.0,
       "supports_temperature": true,
       "temperature_constraint": "range",
       "description": "xAI's Grok 4 via OpenRouter with vision and advanced reasoning",
-      "intelligence_score": 15
+      "intelligence_score": 15,
+      "max_image_size_mb": 20.0,
+      "_limits_source": "https://docs.x.ai/docs/guides/image-understanding",
+      "_limits_verified": "2025-11-16",
+      "_limits_note": "No image count limit, 20MiB per image"
     }
   ]
 }

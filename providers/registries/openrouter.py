@@ -18,6 +18,14 @@ class OpenRouterModelRegistry(CapabilityModelRegistry):
             config_path=config_path,
         )
 
+    def _extra_keys(self) -> set[str]:
+        """Allow metadata fields for image limits documentation."""
+        return {
+            "_limits_source",  # Official documentation URL
+            "_limits_verified",  # Date when limits were verified
+            "_limits_note",  # Additional notes about limits
+        }
+
     def _finalise_entry(self, entry: dict) -> tuple[ModelCapabilities, dict]:
         provider_override = entry.get("provider")
         if isinstance(provider_override, str):
