@@ -488,6 +488,44 @@
       "intelligence_score": 15
     },
     {
+      "model_name": "x-ai/grok-4-fast",
+      "aliases": [
+        "grok-4-fast",
+        "grok-4-fast-reasoning",
+        "grok-4-fast-reasoning-latest",
+        "grok4fast"
+      ],
+      "context_window": 2000000,
+      "max_output_tokens": 2000000,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 20.0,
+      "supports_temperature": true,
+      "temperature_constraint": "range",
+      "description": "xAI's Grok 4 Fast via OpenRouter - 2M context window with reasoning capabilities and vision support. Reasoning can be enabled/disabled using the reasoning parameter.",
+      "intelligence_score": 15
+    },
+    {
+      "model_name": "x-ai/grok-4-fast-non-reasoning",
+      "aliases": [
+        "grok-4-fast-non-reasoning",
+        "grok4fast-nr"
+      ],
+      "context_window": 2000000,
+      "max_output_tokens": 2000000,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": false,
+      "max_image_size_mb": 0.0,
+      "supports_temperature": true,
+      "temperature_constraint": "range",
+      "description": "xAI's Grok 4 Fast Non-Reasoning via OpenRouter - 2M context window without reasoning overhead for faster responses (text-only).",
+      "intelligence_score": 13
+    },
+    {
       "model_name": "x-ai/grok-code-fast-1",
       "aliases": [
         "grok-code-fast",

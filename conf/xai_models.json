@@ -121,6 +121,45 @@
       "supports_temperature": true
     },
     {
+      "model_name": "grok-4-fast",
+      "friendly_name": "X.AI (Grok 4 Fast Reasoning)",
+      "aliases": [
+        "grok-4-fast-reasoning",
+        "grok-4-fast-reasoning-latest",
+        "grok4fast"
+      ],
+      "intelligence_score": 15,
+      "description": "GROK-4 Fast Reasoning (2M context) - Cost-efficient frontier reasoning model with 98% lower cost vs Grok 4 while achieving comparable benchmark performance",
+      "context_window": 2000000,
+      "max_output_tokens": 2000000,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0
+    },
+    {
+      "model_name": "grok-4-fast-non-reasoning",
+      "friendly_name": "X.AI (Grok 4 Fast Non-Reasoning)",
+      "aliases": [
+        "grok-4-fast-non-reasoning-latest"
+      ],
+      "intelligence_score": 13,
+      "description": "GROK-4 Fast Non-Reasoning (2M context) - Ultra-fast text generation optimized for low latency without reasoning overhead",
+      "context_window": 2000000,
+      "max_output_tokens": 2000000,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true
+    },
+    {
       "model_name": "grok-code-fast-1",
       "friendly_name": "X.AI (Grok Code Fast 1)",
       "aliases": [

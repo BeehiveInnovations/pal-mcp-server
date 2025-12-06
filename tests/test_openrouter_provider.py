@@ -98,6 +98,9 @@ class TestOpenRouterProvider:
         assert provider._resolve_model_name("grok-4") == "x-ai/grok-4"
         assert provider._resolve_model_name("grok4") == "x-ai/grok-4"
         assert provider._resolve_model_name("grok") == "x-ai/grok-4.1-fast"
+        assert provider._resolve_model_name("grok-4-fast") == "x-ai/grok-4-fast"
+        assert provider._resolve_model_name("grok4fast") == "x-ai/grok-4-fast"
+        assert provider._resolve_model_name("grok-4-fast-non-reasoning") == "x-ai/grok-4-fast-non-reasoning"
         assert provider._resolve_model_name("deepseek") == "deepseek/deepseek-r1-0528"
         assert provider._resolve_model_name("r1") == "deepseek/deepseek-r1-0528"
 
@@ -106,10 +109,12 @@ class TestOpenRouterProvider:
         assert provider._resolve_model_name("SONNET") == "anthropic/claude-sonnet-4.5"
         assert provider._resolve_model_name("O3") == "openai/o3"
         assert provider._resolve_model_name("Mistral") == "mistralai/mistral-large-2411"
+        assert provider._resolve_model_name("GROK-4-FAST") == "x-ai/grok-4-fast"
 
         # Test direct model names (should pass through unchanged)
         assert provider._resolve_model_name("anthropic/claude-opus-4.1") == "anthropic/claude-opus-4.1"
         assert provider._resolve_model_name("openai/o3") == "openai/o3"
+        assert provider._resolve_model_name("x-ai/grok-4-fast") == "x-ai/grok-4-fast"
 
         # Test unknown models pass through
         assert provider._resolve_model_name("unknown-model") == "unknown-model"
@@ -348,6 +353,61 @@ class TestOpenRouterRegistry:
         config = registry.resolve("sonnet4.1")
         assert config is not None
         assert config.model_name == "anthropic/claude-sonnet-4.1"
+
+    def test_grok4_fast_reasoning_capabilities(self):
+        """Test Grok 4 Fast reasoning model capabilities via OpenRouter."""
+        from providers.registries.openrouter import OpenRouterModelRegistry
+
+        registry = OpenRouterModelRegistry()
+
+        # Test using alias
+        caps = registry.get_capabilities("grok-4-fast")
+        assert caps is not None
+        assert caps.model_name == "x-ai/grok-4-fast"
+        assert caps.context_window == 2000000
+        assert caps.max_output_tokens == 2000000
+        assert caps.supports_extended_thinking is True
+        assert caps.supports_images is True
+        assert caps.supports_json_mode is True
+        assert caps.supports_function_calling is True
+
+        # Test using full model name
+        caps = registry.get_capabilities("x-ai/grok-4-fast")
+        assert caps is not None
+        assert caps.model_name == "x-ai/grok-4-fast"
+
+        # Test other aliases
+        for alias in ["grok-4-fast-reasoning", "grok4fast"]:
+            caps = registry.get_capabilities(alias)
+            assert caps is not None, f"Alias {alias} should resolve"
+            assert caps.model_name == "x-ai/grok-4-fast"
+
+    def test_grok4_fast_non_reasoning_capabilities(self):
+        """Test Grok 4 Fast non-reasoning model capabilities via OpenRouter."""
+        from providers.registries.openrouter import OpenRouterModelRegistry
+
+        registry = OpenRouterModelRegistry()
+
+        # Test using alias
+        caps = registry.get_capabilities("grok-4-fast-non-reasoning")
+        assert caps is not None
+        assert caps.model_name == "x-ai/grok-4-fast-non-reasoning"
+        assert caps.context_window == 2000000
+        assert caps.max_output_tokens == 2000000
+        assert caps.supports_extended_thinking is False  # Non-reasoning
+        assert caps.supports_images is False  # Text-only
+        assert caps.supports_json_mode is True
+        assert caps.supports_function_calling is True
+
+        # Test using full model name
+        caps = registry.get_capabilities("x-ai/grok-4-fast-non-reasoning")
+        assert caps is not None
+        assert caps.model_name == "x-ai/grok-4-fast-non-reasoning"
+
+        # Test grok4fast-nr alias
+        caps = registry.get_capabilities("grok4fast-nr")
+        assert caps is not None
+        assert caps.model_name == "x-ai/grok-4-fast-non-reasoning"
 
 
 class TestOpenRouterFunctionality:

@@ -11,22 +11,26 @@ This guide covers setting up multiple AI model providers including OpenRouter, c
 ## When to Use What
 
 **Use OpenRouter when you want:**
+
 - Access to models not available through native APIs (GPT-4, Claude, Mistral, etc.)
 - Simplified billing across multiple model providers
 - Experimentation with various models without separate API keys
 
 **Use Custom URLs for:**
+
 - **Local models** like Ollama (Llama, Mistral, etc.)
 - **Self-hosted inference** with vLLM, LM Studio, text-generation-webui
 - **Private/enterprise APIs** that use OpenAI-compatible format
 - **Cost control** with local hardware
 
 **Use native APIs (Gemini/OpenAI) when you want:**
+
 - Direct access to specific providers without intermediary
 - Potentially lower latency and costs
 - Access to the latest model features immediately upon release
 
 **Mix & Match:** You can use multiple providers simultaneously! For example:
+
 - OpenRouter for expensive commercial models (GPT-4, Claude)
 - Custom URLs for local models (Ollama Llama)
 - Native APIs for specific providers (Gemini Pro with extended thinking)
@@ -50,30 +54,30 @@ Copy whichever file you need into your project (or point the corresponding `*_MO
 
 The curated defaults in `conf/openrouter_models.json` include popular entries such as:
 
-| Alias | Canonical Model | Highlights |
-|-------|-----------------|------------|
-| `opus`, `claude-opus` | `anthropic/claude-opus-4.1` | Flagship Claude reasoning model with vision |
-| `sonnet`, `sonnet4.5` | `anthropic/claude-sonnet-4.5` | Balanced Claude with high context window |
-| `haiku` | `anthropic/claude-3.5-haiku` | Fast Claude option with vision |
-| `pro`, `gemini` | `google/gemini-2.5-pro` | Frontier Gemini with extended thinking |
-| `flash` | `google/gemini-2.5-flash` | Ultra-fast Gemini with vision |
-| `mistral` | `mistralai/mistral-large-2411` | Frontier Mistral (text only) |
-| `llama3` | `meta-llama/llama-3-70b` | Large open-weight text model |
-| `deepseek-r1` | `deepseek/deepseek-r1-0528` | DeepSeek reasoning model |
-| `perplexity` | `perplexity/llama-3-sonar-large-32k-online` | Search-augmented model |
-| `gpt5.1`, `gpt-5.1`, `5.1` | `openai/gpt-5.1` | Flagship GPT-5.1 with reasoning and vision |
-| `gpt5.1-codex`, `codex-5.1` | `openai/gpt-5.1-codex` | Agentic coding specialization (Responses API) |
-| `codex-mini`, `gpt5.1-codex-mini` | `openai/gpt-5.1-codex-mini` | Cost-efficient Codex variant with streaming |
-| `grok`, `grok-4-1-fast`, `grok-4-1-fast-reasoning` | `x-ai/grok-4.1-fast` | Frontier multimodal model optimized for high-performance agentic tool calling with 2M context window |
-| `grok-code-fast`, `grokcodefast` | `x-ai/grok-code-fast-1` | Speedy reasoning model specialized for agentic coding |
+| Alias                                              | Canonical Model                             | Highlights                                                                                           |
+| -------------------------------------------------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `opus`, `claude-opus`                              | `anthropic/claude-opus-4.1`                 | Flagship Claude reasoning model with vision                                                          |
+| `sonnet`, `sonnet4.5`                              | `anthropic/claude-sonnet-4.5`               | Balanced Claude with high context window                                                             |
+| `haiku`                                            | `anthropic/claude-3.5-haiku`                | Fast Claude option with vision                                                                       |
+| `pro`, `gemini`                                    | `google/gemini-2.5-pro`                     | Frontier Gemini with extended thinking                                                               |
+| `flash`                                            | `google/gemini-2.5-flash`                   | Ultra-fast Gemini with vision                                                                        |
+| `mistral`                                          | `mistralai/mistral-large-2411`              | Frontier Mistral (text only)                                                                         |
+| `llama3`                                           | `meta-llama/llama-3-70b`                    | Large open-weight text model                                                                         |
+| `deepseek-r1`                                      | `deepseek/deepseek-r1-0528`                 | DeepSeek reasoning model                                                                             |
+| `perplexity`                                       | `perplexity/llama-3-sonar-large-32k-online` | Search-augmented model                                                                               |
+| `gpt5.1`, `gpt-5.1`, `5.1`                         | `openai/gpt-5.1`                            | Flagship GPT-5.1 with reasoning and vision                                                           |
+| `gpt5.1-codex`, `codex-5.1`                        | `openai/gpt-5.1-codex`                      | Agentic coding specialization (Responses API)                                                        |
+| `codex-mini`, `gpt5.1-codex-mini`                  | `openai/gpt-5.1-codex-mini`                 | Cost-efficient Codex variant with streaming                                                          |
+| `grok`, `grok-4-1-fast`, `grok-4-1-fast-reasoning` | `x-ai/grok-4.1-fast`                        | Frontier multimodal model optimized for high-performance agentic tool calling with 2M context window |
+| `grok-code-fast`, `grokcodefast`                   | `x-ai/grok-code-fast-1`                     | Speedy reasoning model specialized for agentic coding                                                |
 
 Consult the JSON file for the full list, aliases, and capability flags. Add new entries as OpenRouter releases additional models.
 
 ### Custom/Local Models
 
-| Alias | Maps to Local Model | Note |
-|-------|-------------------|------|
-| `local-llama`, `local` | `llama3.2` | Requires `CUSTOM_API_URL` configured |
+| Alias                  | Maps to Local Model | Note                                 |
+| ---------------------- | ------------------- | ------------------------------------ |
+| `local-llama`, `local` | `llama3.2`          | Requires `CUSTOM_API_URL` configured |
 
 View the baseline OpenRouter catalogue in [`conf/openrouter_models.json`](conf/openrouter_models.json) and populate [`conf/custom_models.json`](conf/custom_models.json) with your local models.
 
@@ -87,25 +91,34 @@ Native catalogues (`conf/openai_models.json`, `conf/gemini_models.json`, `conf/x
 
 OpenAI's November 13, 2025 drop introduced `gpt-5.1`, `gpt-5.1-codex`, and `gpt-5.1-codex-mini`, all of which now ship in `conf/openai_models.json`:
 
-| Model | Highlights | Notes |
-|-------|------------|-------|
-| `gpt-5.1` | 400K context, 128K output, multimodal IO, configurable reasoning effort | Streaming enabled; use for balanced agent/coding flows |
-| `gpt-5.1-codex` | Responses-only agentic coding version of GPT-5.1 | Streaming disabled; `use_openai_response_api=true`; `allow_code_generation=true` |
-| `gpt-5.1-codex-mini` | Cost-efficient Codex variant | Streaming enabled, retains 400K context and code-generation flag |
+| Model                | Highlights                                                              | Notes                                                                            |
+| -------------------- | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `gpt-5.1`            | 400K context, 128K output, multimodal IO, configurable reasoning effort | Streaming enabled; use for balanced agent/coding flows                           |
+| `gpt-5.1-codex`      | Responses-only agentic coding version of GPT-5.1                        | Streaming disabled; `use_openai_response_api=true`; `allow_code_generation=true` |
+| `gpt-5.1-codex-mini` | Cost-efficient Codex variant                                            | Streaming enabled, retains 400K context and code-generation flag                 |
 
 These entries include pricing-friendly aliases (`gpt5.1`, `codex-5.1`, `codex-mini`) plus updated capability flags (`supports_extended_thinking`, `allow_code_generation`). Copy the manifest if you operate custom deployment names so downstream providers inherit the same metadata.
 
 ### Latest xAI releases
 
-xAI's recent release introduced `grok-4-1-fast`, `grok-4-1-fast-non-reasoning`, and `grok-code-fast-1`, all of which now ship in `conf/xai_models.json`:
+xAI has released two model families in `conf/xai_models.json`:
 
-| Model | Highlights | Notes |
-|-------|------------|-------|
-| `grok-4-1-fast` | 2M context, frontier multimodal model optimized for high-performance agentic tool calling | Streaming enabled; exceptional token efficiency; function calling, structured outputs, and reasoning support; use for cost-conscious reasoning tasks |
-| `grok-4-1-fast-non-reasoning` | 2M context, ultra-fast text-to-text generation | No reasoning support; optimized for speed and stability; high-throughput tasks |
-| `grok-code-fast-1` | 256K context, specialized for agentic coding | Streaming enabled; `allow_code_generation=true`; optimized for coding workflows |
+**Grok 4.1 Fast Series (November 2025):**
 
-These entries include convenient aliases (`grok`, `grok-4-1-fast-reasoning`, `grok-4-1-fast-reasoning-latest`, `grok-code-fast`, `grokcodefast`) plus capability flags (`supports_extended_thinking`, `allow_code_generation`). Note that the `grok` alias now resolves to `grok-4-1-fast` (the latest flagship model). Copy the manifest if you operate custom deployment names so downstream providers inherit the same metadata.
+| Model                         | Highlights                                                                                | Notes                                                                                                                                                |
+| ----------------------------- | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `grok-4-1-fast`               | 2M context, frontier multimodal model optimized for high-performance agentic tool calling | Streaming enabled; exceptional token efficiency; function calling, structured outputs, and reasoning support; use for cost-conscious reasoning tasks |
+| `grok-4-1-fast-non-reasoning` | 2M context, ultra-fast text-to-text generation                                            | No reasoning support; optimized for speed and stability; high-throughput tasks                                                                       |
+| `grok-code-fast-1`            | 256K context, specialized for agentic coding                                              | Streaming enabled; `allow_code_generation=true`; optimized for coding workflows                                                                      |
+
+**Grok 4 Fast Series (September 2025):**
+
+| Model                       | Highlights                                          | Notes                                                                                        |
+| --------------------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `grok-4-fast`               | 2M context, cost-efficient frontier reasoning model | 98% lower cost vs Grok 4; comparable benchmark performance; reasoning and multimodal support |
+| `grok-4-fast-non-reasoning` | 2M context, ultra-low latency text generation       | No reasoning support; optimized for speed; text-only                                         |
+
+These entries include convenient aliases (`grok`, `grok-4-1-fast-reasoning`, `grok-4-1-fast-reasoning-latest`, `grok-4-fast-reasoning`, `grok-4-fast-reasoning-latest`, `grok4fast`, `grok-code-fast`, `grokcodefast`) plus capability flags (`supports_extended_thinking`, `allow_code_generation`). Note that the `grok` alias resolves to `grok-4-1-fast` (the latest flagship model). Copy the manifest if you operate custom deployment names so downstream providers inherit the same metadata.
 
 Because providers load the manifests on import, you can tweak capabilities without touching Python. Restart the server after editing the JSON files so changes are picked up.
 
@@ -120,17 +133,19 @@ heuristic described there).
 ### Option 1: OpenRouter Setup
 
 #### 1. Get API Key
+
 1. Sign up at [openrouter.ai](https://openrouter.ai/)
 2. Create an API key from your dashboard
 3. Add credits to your account
 
 #### 2. Set Environment Variable
+
 ```bash
 # Add to your .env file
 OPENROUTER_API_KEY=your-openrouter-api-key
 ```
 
-> **Note:** Control which models can be used directly in your OpenRouter dashboard at [openrouter.ai](https://openrouter.ai/). 
+> **Note:** Control which models can be used directly in your OpenRouter dashboard at [openrouter.ai](https://openrouter.ai/).
 > This gives you centralized control over model access and spending limits.
 
 That's it! The setup script handles all necessary configuration automatically.
@@ -140,6 +155,7 @@ That's it! The setup script handles all necessary configuration automatically.
 For local models like Ollama, vLLM, LM Studio, or any OpenAI-compatible API:
 
 #### 1. Start Your Local Model Server
+
 ```bash
 # Example: Ollama
 ollama serve
@@ -153,6 +169,7 @@ python -m vllm.entrypoints.openai.api_server --model meta-llama/Llama-2-7b-chat-
 ```
 
 #### 2. Configure Environment Variables
+
 ```bash
 # Add to your .env file
 CUSTOM_API_URL=http://localhost:11434/v1  # Ollama example
@@ -172,6 +189,7 @@ CUSTOM_API_URL=http://localhost:11434/v1  # Ollama default port
 #### 3. Examples for Different Platforms
 
 **Ollama:**
+
 ```bash
 CUSTOM_API_URL=http://localhost:11434/v1
 CUSTOM_API_KEY=
@@ -179,6 +197,7 @@ CUSTOM_MODEL_NAME=llama3.2
 ```
 
 **vLLM:**
+
 ```bash
 CUSTOM_API_URL=http://localhost:8000/v1
 CUSTOM_API_KEY=
@@ -186,6 +205,7 @@ CUSTOM_MODEL_NAME=meta-llama/Llama-2-7b-chat-hf
 ```
 
 **LM Studio:**
+
 ```bash
 CUSTOM_API_URL=http://localhost:1234/v1
 CUSTOM_API_KEY=lm-studio  # Or any value, LM Studio often requires some key
@@ -193,6 +213,7 @@ CUSTOM_MODEL_NAME=local-model
 ```
 
 **text-generation-webui (with OpenAI extension):**
+
 ```bash
 CUSTOM_API_URL=http://localhost:5001/v1
 CUSTOM_API_KEY=
@@ -202,6 +223,7 @@ CUSTOM_MODEL_NAME=your-loaded-model
 ## Using Models
 
 **Using model aliases (from the registry files):**
+
 ```
 # OpenRouter models:
 "Use opus for deep analysis"         # → anthropic/claude-opus-4
@@ -216,6 +238,7 @@ CUSTOM_MODEL_NAME=your-loaded-model
 ```
 
 **Using full model names:**
+
 ```
 # OpenRouter models:
 "Use anthropic/claude-opus-4 via zen for deep analysis"
@@ -239,8 +262,9 @@ The system automatically routes models to the appropriate provider:
 3. **Unknown models** → Fallback logic based on model name patterns
 
 **Provider Priority Order:**
+
 1. Native APIs (Google, OpenAI) - if API keys are available
-2. Custom endpoints - for models declared in `conf/custom_models.json`  
+2. Custom endpoints - for models declared in `conf/custom_models.json`
 3. OpenRouter - catch-all for cloud models
 
 This ensures clean separation between local and cloud models while maintaining flexibility for unknown models.
@@ -286,6 +310,7 @@ Edit `conf/openrouter_models.json` to tweak OpenRouter behaviour or `conf/custom
 ```
 
 **Field explanations:**
+
 - `model_name`: The model identifier (OpenRouter format like `vendor/model` or local name like `llama3.2`)
 - `aliases`: Array of short names users can type instead of the full model name
 - `context_window`: Total tokens the model can process (input + output combined)
@@ -299,6 +324,7 @@ Edit `conf/openrouter_models.json` to tweak OpenRouter behaviour or `conf/custom
 ## Available Models
 
 Popular models available through OpenRouter:
+
 - **GPT-4** - OpenAI's most capable model
 - **Claude 4** - Anthropic's models (Opus, Sonnet, Haiku)
 - **Mistral** - Including Mistral Large

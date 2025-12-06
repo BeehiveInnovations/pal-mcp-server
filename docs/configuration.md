@@ -83,7 +83,7 @@ DEFAULT_MODEL=auto  # Claude picks best model for each task (recommended)
   |----------|-----------------|-----------------|
   | OpenAI | `gpt-5.1`, `gpt-5.1-codex`, `gpt-5.1-codex-mini`, `gpt-5`, `gpt-5-pro`, `gpt-5-mini`, `gpt-5-nano`, `gpt-5-codex`, `gpt-4.1`, `o3`, `o3-mini`, `o3-pro`, `o4-mini` | `gpt5.1`, `gpt-5.1`, `5.1`, `gpt5.1-codex`, `codex-5.1`, `codex-mini`, `gpt5`, `gpt5pro`, `mini`, `nano`, `codex`, `o3mini`, `o3pro`, `o4mini` |
   | Gemini | `gemini-2.5-pro`, `gemini-2.5-flash`, `gemini-2.0-flash`, `gemini-2.0-flash-lite` | `pro`, `gemini-pro`, `flash`, `flash-2.0`, `flashlite` |
-  | X.AI | `grok-4-1-fast`, `grok-4-1-fast-non-reasoning`, `grok-code-fast-1`, `grok-4`, `grok-3`, `grok-3-fast` | `grok-4-1-fast-reasoning`, `grok-4-1-fast-reasoning-latest`, `grok-code-fast`, `grokcodefast`, `grok`, `grok4`, `grok3`, `grok3fast`, `grokfast` |
+  | X.AI | `grok-4-1-fast`, `grok-4-1-fast-non-reasoning`, `grok-4-fast`, `grok-4-fast-non-reasoning`, `grok-code-fast-1`, `grok-4`, `grok-3`, `grok-3-fast` | `grok-4-1-fast-reasoning`, `grok-4-1-fast-reasoning-latest`, `grok-4-fast-reasoning`, `grok-4-fast-reasoning-latest`, `grok4fast`, `grok-code-fast`, `grokcodefast`, `grok`, `grok4`, `grok3`, `grok3fast`, `grokfast` |
   | OpenRouter | See `conf/openrouter_models.json` for the continually evolving catalogue | e.g., `opus`, `sonnet`, `flash`, `pro`, `mistral` |
   | Custom | User-managed entries such as `llama3.2` | Define your own aliases per entry |
 
@@ -179,7 +179,7 @@ OPENAI_ALLOWED_MODELS=gpt-5.1-codex-mini,gpt-5-mini,o3-mini,o4-mini,mini
 GOOGLE_ALLOWED_MODELS=flash,pro
 
 # X.AI GROK model restrictions
-XAI_ALLOWED_MODELS=grok-4-1-fast,grok-code-fast-1,grok-4-1-fast-non-reasoning,grok-4
+XAI_ALLOWED_MODELS=grok-4-1-fast,grok-4-fast,grok-code-fast-1,grok-4-1-fast-non-reasoning,grok-4-fast-non-reasoning,grok-4
 
 # OpenRouter model restrictions (affects models via custom provider)
 OPENROUTER_ALLOWED_MODELS=opus,sonnet,mistral
@@ -208,7 +208,7 @@ GOOGLE_ALLOWED_MODELS=pro
 # Balanced selection
 GOOGLE_ALLOWED_MODELS=flash,pro
 OPENAI_ALLOWED_MODELS=gpt-5.1-codex-mini,gpt-5-mini,o4-mini
-XAI_ALLOWED_MODELS=grok-4-1-fast,grok-code-fast-1,grok,grok-3-fast
+XAI_ALLOWED_MODELS=grok-4-1-fast,grok-4-fast,grok-code-fast-1,grok,grok-3-fast
 ```
 
 ### Advanced Configuration

@@ -62,10 +62,11 @@ class XAIModelProvider(RegistryBackedProviderMixin, OpenAICompatibleProvider):
             return None
 
         if category == ToolModelCategory.EXTENDED_REASONING:
-            # Prefer GROK-4.1 Fast Reasoning for cost-efficient reasoning, then GROK-4
+            # Prefer GROK-4.1 Fast Reasoning for cost-efficient reasoning, then GROK-4 Fast, then GROK-4
             preferred = find_first(
                 [
                     "grok-4-1-fast",
+                    "grok-4-fast",
                     "grok-4",
                     "grok-code-fast-1",
                     "grok-3",
@@ -74,11 +75,13 @@ class XAIModelProvider(RegistryBackedProviderMixin, OpenAICompatibleProvider):
             return preferred if preferred else allowed_models[0]
 
         elif category == ToolModelCategory.FAST_RESPONSE:
-            # Prefer GROK-4.1 Fast Non-Reasoning for speed, then GROK-3-Fast
+            # Prefer GROK-4.1 Fast Non-Reasoning for speed, then GROK-4 Fast Non-Reasoning, then GROK-3-Fast
             preferred = find_first(
                 [
                     "grok-4-1-fast-non-reasoning",
+                    "grok-4-fast-non-reasoning",
                     "grok-4-1-fast",
+                    "grok-4-fast",
                     "grok-3-fast",
                     "grok-code-fast-1",
                     "grok-4",
@@ -91,6 +94,7 @@ class XAIModelProvider(RegistryBackedProviderMixin, OpenAICompatibleProvider):
             preferred = find_first(
                 [
                     "grok-4-1-fast",
+                    "grok-4-fast",
                     "grok-code-fast-1",
                     "grok-4",
                     "grok-3",

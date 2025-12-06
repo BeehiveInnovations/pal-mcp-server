@@ -56,6 +56,10 @@ class TestXAIProvider:
         assert provider.validate_model_name("grok-4-1-fast-reasoning") is True
         assert provider.validate_model_name("grok-4-1-fast") is True
         assert provider.validate_model_name("grok-4-1-fast-non-reasoning") is True
+        assert provider.validate_model_name("grok-4-fast") is True
+        assert provider.validate_model_name("grok-4-fast-reasoning") is True
+        assert provider.validate_model_name("grok-4-fast-non-reasoning") is True
+        assert provider.validate_model_name("grok4fast") is True
         assert provider.validate_model_name("grok-code-fast-1") is True
         assert provider.validate_model_name("grok-code-fast") is True
         assert provider.validate_model_name("grokcodefast") is True
@@ -78,6 +82,10 @@ class TestXAIProvider:
         assert provider._resolve_model_name("grok-4-1-fast") == "grok-4-1-fast"
         assert provider._resolve_model_name("grok-4-1-fast-reasoning") == "grok-4-1-fast"
         assert provider._resolve_model_name("grok-4-1-fast-non-reasoning") == "grok-4-1-fast-non-reasoning"
+        assert provider._resolve_model_name("grok-4-fast") == "grok-4-fast"
+        assert provider._resolve_model_name("grok-4-fast-reasoning") == "grok-4-fast"
+        assert provider._resolve_model_name("grok-4-fast-non-reasoning") == "grok-4-fast-non-reasoning"
+        assert provider._resolve_model_name("grok4fast") == "grok-4-fast"
         assert provider._resolve_model_name("grok-code-fast") == "grok-code-fast-1"
         assert provider._resolve_model_name("grokcodefast") == "grok-code-fast-1"
 
@@ -184,6 +192,57 @@ class TestXAIProvider:
         assert capabilities.temperature_constraint.max_temp == 2.0
         assert capabilities.temperature_constraint.default_temp == 0.3
 
+    def test_get_capabilities_grok4_fast_reasoning(self):
+        """Test getting model capabilities for GROK-4 Fast Reasoning."""
+        provider = XAIModelProvider("test-key")
+
+        capabilities = provider.get_capabilities("grok-4-fast")
+        assert capabilities.model_name == "grok-4-fast"
+        assert capabilities.friendly_name == "X.AI (Grok 4 Fast Reasoning)"
+        assert capabilities.context_window == 2_000_000
+        assert capabilities.provider == ProviderType.XAI
+        assert capabilities.supports_extended_thinking is True
+        assert capabilities.supports_system_prompts is True
+        assert capabilities.supports_streaming is True
+        assert capabilities.supports_function_calling is True
+        assert capabilities.supports_json_mode is True
+        assert capabilities.supports_images is True
+
+        # Test temperature range
+        assert capabilities.temperature_constraint.min_temp == 0.0
+        assert capabilities.temperature_constraint.max_temp == 2.0
+        assert capabilities.temperature_constraint.default_temp == 0.3
+
+        # Test that alias also works
+        capabilities_alias = provider.get_capabilities("grok-4-fast-reasoning")
+        assert capabilities_alias.model_name == "grok-4-fast"
+        assert capabilities_alias.friendly_name == "X.AI (Grok 4 Fast Reasoning)"
+
+        # Test grok4fast alias
+        capabilities_alias2 = provider.get_capabilities("grok4fast")
+        assert capabilities_alias2.model_name == "grok-4-fast"
+
+    def test_get_capabilities_grok4_fast_non_reasoning(self):
+        """Test getting model capabilities for GROK-4 Fast Non-Reasoning."""
+        provider = XAIModelProvider("test-key")
+
+        capabilities = provider.get_capabilities("grok-4-fast-non-reasoning")
+        assert capabilities.model_name == "grok-4-fast-non-reasoning"
+        assert capabilities.friendly_name == "X.AI (Grok 4 Fast Non-Reasoning)"
+        assert capabilities.context_window == 2_000_000
+        assert capabilities.provider == ProviderType.XAI
+        assert capabilities.supports_extended_thinking is False
+        assert capabilities.supports_system_prompts is True
+        assert capabilities.supports_streaming is True
+        assert capabilities.supports_function_calling is True
+        assert capabilities.supports_json_mode is True
+        assert capabilities.supports_images is False
+
+        # Test temperature range
+        assert capabilities.temperature_constraint.min_temp == 0.0
+        assert capabilities.temperature_constraint.max_temp == 2.0
+        assert capabilities.temperature_constraint.default_temp == 0.3
+
     def test_get_capabilities_grok_code_fast_1(self):
         """Test getting model capabilities for GROK Code Fast 1."""
         provider = XAIModelProvider("test-key")
@@ -228,11 +287,17 @@ class TestXAIProvider:
         """X.AI capabilities should expose extended thinking support correctly."""
         provider = XAIModelProvider("test-key")
 
-        thinking_aliases = ["grok-4", "grok", "grok4"]
+        thinking_aliases = ["grok-4", "grok", "grok4", "grok-4-fast", "grok-4-1-fast"]
         for alias in thinking_aliases:
             assert provider.get_capabilities(alias).supports_extended_thinking is True
 
-        non_thinking_aliases = ["grok-3", "grok-3-fast", "grokfast"]
+        non_thinking_aliases = [
+            "grok-3",
+            "grok-3-fast",
+            "grokfast",
+            "grok-4-fast-non-reasoning",
+            "grok-4-1-fast-non-reasoning",
+        ]
         for alias in non_thinking_aliases:
             assert provider.get_capabilities(alias).supports_extended_thinking is False
 
@@ -351,6 +416,8 @@ class TestXAIProvider:
         assert "grok-3-fast" in provider.MODEL_CAPABILITIES
         assert "grok-4-1-fast" in provider.MODEL_CAPABILITIES
         assert "grok-4-1-fast-non-reasoning" in provider.MODEL_CAPABILITIES
+        assert "grok-4-fast" in provider.MODEL_CAPABILITIES
+        assert "grok-4-fast-non-reasoning" in provider.MODEL_CAPABILITIES
         assert "grok-code-fast-1" in provider.MODEL_CAPABILITIES
 
         # Check model configs have required fields
@@ -393,6 +460,18 @@ class TestXAIProvider:
         grok4_1_fast_non_reasoning_config = provider.MODEL_CAPABILITIES["grok-4-1-fast-non-reasoning"]
         assert grok4_1_fast_non_reasoning_config.context_window == 2_000_000
         assert grok4_1_fast_non_reasoning_config.supports_extended_thinking is False
+
+        # Check new Grok-4 Fast models
+        grok4_fast_config = provider.MODEL_CAPABILITIES["grok-4-fast"]
+        assert grok4_fast_config.context_window == 2_000_000
+        assert grok4_fast_config.supports_extended_thinking is True
+        assert "grok-4-fast-reasoning" in grok4_fast_config.aliases
+        assert "grok-4-fast-reasoning-latest" in grok4_fast_config.aliases
+        assert "grok4fast" in grok4_fast_config.aliases
+
+        grok4_fast_non_reasoning_config = provider.MODEL_CAPABILITIES["grok-4-fast-non-reasoning"]
+        assert grok4_fast_non_reasoning_config.context_window == 2_000_000
+        assert grok4_fast_non_reasoning_config.supports_extended_thinking is False
 
         grok_code_fast_config = provider.MODEL_CAPABILITIES["grok-code-fast-1"]
         assert grok_code_fast_config.context_window == 256_000
