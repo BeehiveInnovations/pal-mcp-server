@@ -11,7 +11,7 @@ __pycache__/
 env/
 venv/
 .venv/
-.zen_venv/
+.pal_venv/
 ENV/
 env.bak/
 venv.bak/

@@ -2,12 +2,12 @@
 
 **Get server version, configuration details, and list of available tools**
 
-The `version` tool provides information about the Zen MCP Server version, configuration details, and system capabilities. This is useful for debugging, understanding server capabilities, and verifying your installation.
+The `version` tool provides information about the PAL MCP Server version, configuration details, and system capabilities. This is useful for debugging, understanding server capabilities, and verifying your installation.
 
 ## Usage
 
 ```
-"Get zen to show its version"
+"Get pal to show its version"
 ```
 
 ## Key Features
@@ -48,7 +48,7 @@ The tool provides:
 ## Example Output
 
 ```
-🔧 Zen MCP Server Information
+🔧 PAL MCP Server Information
 
 📋 Version: 2.15.0
 🏗️ Build: 2024-01-15T10:30:00Z (commit: abc123f)

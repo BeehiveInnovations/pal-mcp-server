@@ -16,7 +16,12 @@ from tools.consensus import ConsensusTool
 # Directories for recorded HTTP interactions
 CASSETTE_DIR = Path(__file__).parent / "openai_cassettes"
 CASSETTE_DIR.mkdir(exist_ok=True)
-CONSENSUS_CASSETTE_PATH = CASSETTE_DIR / "consensus_step1_gpt5_for.json"
+
+# Mapping of OpenAI model names to their cassette files
+CONSENSUS_CASSETTES = {
+    "gpt-5": CASSETTE_DIR / "consensus_step1_gpt5_for.json",
+    "gpt-5.1": CASSETTE_DIR / "consensus_step1_gpt51_for.json",
+}
 
 GEMINI_REPLAY_DIR = Path(__file__).parent / "gemini_cassettes"
 GEMINI_REPLAY_DIR.mkdir(exist_ok=True)
@@ -24,10 +29,18 @@ GEMINI_REPLAY_ID = "consensus/step2_gemini25_flash_against/mldev"
 GEMINI_REPLAY_PATH = GEMINI_REPLAY_DIR / "consensus" / "step2_gemini25_flash_against" / "mldev.json"
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 @pytest.mark.no_mock_provider
-async def test_consensus_multi_model_consultations(monkeypatch):
-    """Exercise ConsensusTool against gpt-5 (supporting) and gemini-2.0-flash (critical)."""
+@pytest.mark.parametrize("openai_model", ["gpt-5", "gpt-5.1"])
+async def test_consensus_multi_model_consultations(monkeypatch, openai_model):
+    """Exercise ConsensusTool against OpenAI model (supporting) and gemini-2.5-flash (critical).
+
+    Tests both gpt-5 and gpt-5.1 to ensure regression coverage for both model families.
+    """
+
+    # Get the cassette path for this model
+    consensus_cassette_path = CONSENSUS_CASSETTES[openai_model]
 
     env_updates = {
         "DEFAULT_MODEL": "auto",
@@ -43,13 +56,14 @@ async def test_consensus_multi_model_consultations(monkeypatch):
         "CUSTOM_API_URL",
     ]
 
-    recording_mode = not CONSENSUS_CASSETTE_PATH.exists() or not GEMINI_REPLAY_PATH.exists()
+    recording_mode = not consensus_cassette_path.exists() or not GEMINI_REPLAY_PATH.exists()
     if recording_mode:
         openai_key = env_updates["OPENAI_API_KEY"].strip()
         gemini_key = env_updates["GEMINI_API_KEY"].strip()
         if (not openai_key or openai_key.startswith("dummy")) or (not gemini_key or gemini_key.startswith("dummy")):
             pytest.skip(
-                "Consensus cassette missing and OPENAI_API_KEY/GEMINI_API_KEY not configured. Provide real keys to record."
+                "Consensus cassette missing and OPENAI_API_KEY/GEMINI_API_KEY "
+                "not configured. Provide real keys to record."
             )
 
     GEMINI_REPLAY_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -66,27 +80,43 @@ async def test_consensus_multi_model_consultations(monkeypatch):
             m.setenv("GEMINI_API_KEY", "dummy-key-for-replay")
             m.setenv("GOOGLE_GENAI_CLIENT_MODE", "replay")
 
+        # Ensure restriction policies allow the latest OpenAI models under test
+        m.setenv("OPENAI_ALLOWED_MODELS", openai_model)
+
         m.setenv("GOOGLE_GENAI_REPLAYS_DIRECTORY", str(GEMINI_REPLAY_DIR))
         m.setenv("GOOGLE_GENAI_REPLAY_ID", GEMINI_REPLAY_ID)
 
         for key in keys_to_clear:
             m.delenv(key, raising=False)
 
-        # Reset providers and register only OpenAI & Gemini for deterministic behavior
+        # Ensure we use the built-in OpenAI catalogue rather than leftovers from
+        # other tests that patch OPENAI_MODELS_CONFIG_PATH.
+        m.delenv("OPENAI_MODELS_CONFIG_PATH", raising=False)
+
+        # Reset providers/restrictions and register only OpenAI & Gemini for deterministic behavior
         ModelProviderRegistry.reset_for_testing()
+        import utils.model_restrictions as model_restrictions
+
+        model_restrictions._restriction_service = None
         from providers.gemini import GeminiModelProvider
         from providers.openai import OpenAIModelProvider
+
+        # Earlier tests may override the OpenAI provider's registry by pointing
+        # OPENAI_MODELS_CONFIG_PATH at fixtures. Force a reload so model
+        # metadata is restored from conf/openai_models.json.
+        OpenAIModelProvider.reload_registry()
+        assert openai_model in OpenAIModelProvider.MODEL_CAPABILITIES
 
         ModelProviderRegistry.register_provider(ProviderType.OPENAI, OpenAIModelProvider)
         ModelProviderRegistry.register_provider(ProviderType.GOOGLE, GeminiModelProvider)
 
         # Inject HTTP transport for OpenAI interactions
-        inject_transport(monkeypatch, CONSENSUS_CASSETTE_PATH)
+        inject_transport(monkeypatch, str(consensus_cassette_path))
 
         tool = ConsensusTool()
 
         models_to_consult = [
-            {"model": "gpt-5", "stance": "for"},
+            {"model": openai_model, "stance": "for"},
             {"model": "gemini-2.5-flash", "stance": "against"},
         ]
 
@@ -105,7 +135,7 @@ async def test_consensus_multi_model_consultations(monkeypatch):
         step1_data = json.loads(step1_response[0].text)
 
         assert step1_data["status"] == "analysis_and_first_model_consulted"
-        assert step1_data["model_consulted"] == "gpt-5"
+        assert step1_data["model_consulted"] == openai_model
         assert step1_data["model_response"]["status"] == "success"
         assert step1_data["model_response"]["metadata"]["provider"] == "openai"
         assert step1_data["model_response"]["verdict"]
@@ -118,7 +148,7 @@ async def test_consensus_multi_model_consultations(monkeypatch):
         summary_for_step2 = step1_data["model_response"]["verdict"][:200]
 
         step2_arguments = {
-            "step": f"Incorporated gpt-5 perspective: {summary_for_step2}",
+            "step": f"Incorporated {openai_model} perspective: {summary_for_step2}",
             "step_number": 2,
             "total_steps": len(models_to_consult),
             "next_step_required": False,
@@ -138,7 +168,7 @@ async def test_consensus_multi_model_consultations(monkeypatch):
     assert step2_data["model_response"]["metadata"]["provider"] == "google"
     assert step2_data["model_response"]["verdict"]
     assert step2_data["complete_consensus"]["models_consulted"] == [
-        "gpt-5:for",
+        f"{openai_model}:for",
         "gemini-2.5-flash:against",
     ]
     assert step2_data["consensus_complete"] is True
@@ -159,7 +189,7 @@ async def test_consensus_multi_model_consultations(monkeypatch):
                 gemini_provider._client = None
 
     # Ensure cassettes exist for future replays
-    assert CONSENSUS_CASSETTE_PATH.exists()
+    assert consensus_cassette_path.exists()
     assert GEMINI_REPLAY_PATH.exists()
 
     # Clean up provider registry state after test

@@ -2,7 +2,7 @@
 
 ## **The Most Profound Feature: Context Revival After Reset**
 
-**This powerful feature cannot be highlighted enough**: The Zen MCP Server implements a simple continuation system that seemingly transcends Claude's context limitations. 
+**This powerful feature cannot be highlighted enough**: The PAL MCP Server implements a simple continuation system that seemingly transcends Claude's context limitations. 
 
 ## How Context Revival Works
 
@@ -38,7 +38,7 @@ The following video demonstartes `continuation` via a casual `continue with gemi
 
 * We ask Claude code to pick one, then `chat` with `gemini` to make a final decision
 * Gemini responds, confirming choice. We use `continuation` to ask another question using the same conversation thread
-* Gemini responds with explanation. We use continuation again, using `/zen:continue (MCP)` command the second time
+* Gemini responds with explanation. We use continuation again, using `/pal:continue (MCP)` command the second time
 
 <div style="center">
   
@@ -51,20 +51,20 @@ The following video demonstartes `continuation` via a casual `continue with gemi
 Here's how this works in practice with a modern AI/ML workflow:
 
 **Session 1 - Claude's Initial Context (before reset):**
-You: "Help me design a RAG system for our customer support chatbot. I want to integrate vector embeddings with real-time retrieval. think deeply with zen using 03 after you've come up with a detailed plan."
+You: "Help me design a RAG system for our customer support chatbot. I want to integrate vector embeddings with real-time retrieval. think deeply with pal using 03 after you've come up with a detailed plan."
 
 Claude: "I'll analyze your requirements and design a comprehensive RAG architecture..."
 → Uses [`thinkdeep`](../README.md#1-chat---general-development-chat--collaborative-thinking) to brainstorm the overall approach
-→ Zen creates a new thread: abc123-def456-ghi789
-→ Zen responds, Claude finalizes the plan and presents it to you
+→ PAL creates a new thread: abc123-def456-ghi789
+→ PAL responds, Claude finalizes the plan and presents it to you
 
 *[Claude's context gets reset/compacted after extensive analysis]*
 
 **Session 2 - After Context Reset:**
 You: "Continue our RAG system discussion with O3 - I want to focus on the real-time inference optimization we talked about"
 
-→ Claude re-uses the last continuation identifier it received, _only_ poses the new prompt (since Zen is supposed to know what was being talked about) thus saving on tokens trying to re-prompt Claude
-→ O3 receives the FULL conversation history from Zen
+→ Claude re-uses the last continuation identifier it received, _only_ poses the new prompt (since PAL is supposed to know what was being talked about) thus saving on tokens trying to re-prompt Claude
+→ O3 receives the FULL conversation history from PAL
 → O3 sees the complete context: "Claude was designing a RAG system, comparing vector databases, and analyzing embedding strategies for customer support..."
 → O3 continues: "Building on our previous vector database analysis, for real-time inference optimization, I recommend implementing semantic caching with embedding similarity thresholds..."
 → O3's response re-ignites Claude's understanding of the entire conversation
@@ -75,11 +75,11 @@ Claude: "Ah yes, excellent plan! Based on O3's optimization insights and our ear
 
 ## Why This Changes Everything
 
-**Before Zen MCP**: Claude's context resets meant losing entire conversation threads. 
+**Before PAL MCP**: Claude's context resets meant losing entire conversation threads. 
 Complex multi-step analyses were fragmented and had to restart from scratch. You most likely need to re-prompt Claude or to make it re-read some previously
-saved document / `CLAUDE.md` etc - no need. Zen remembers.
+saved document / `CLAUDE.md` etc - no need. PAL remembers.
 
-**With Zen MCP**: Claude can orchestrate multi-hour, multi-tool workflows where:
+**With PAL MCP**: Claude can orchestrate multi-hour, multi-tool workflows where:
 - **O3** handles logical analysis and debugging
 - **Gemini Pro** performs deep architectural reviews  
 - **Flash** provides quick formatting and style checks

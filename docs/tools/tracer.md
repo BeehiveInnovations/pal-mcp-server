@@ -36,13 +36,13 @@ The `tracer` tool is a specialized prompt-generation tool that creates structure
 
 **Method Execution Tracing:**
 ```
-"Use zen tracer to analyze how UserAuthManager.authenticate is used and why"
+"Use pal tracer to analyze how UserAuthManager.authenticate is used and why"
 ```
 → Uses `precision` mode to trace the method's execution flow
 
 **Class Dependency Mapping:**
 ```
-"Use zen to generate a dependency trace for the PaymentProcessor class to understand its relationships"
+"Use pal to generate a dependency trace for the PaymentProcessor class to understand its relationships"
 ```
 → Uses `dependencies` mode to map structural relationships
 

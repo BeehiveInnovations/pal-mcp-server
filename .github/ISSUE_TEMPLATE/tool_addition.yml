@@ -1,5 +1,5 @@
 name: 🛠️ New Gemini Tool Proposal
-description: Propose a new Zen MCP tool (e.g., `summarize`, `fixer`, `refactor`)
+description: Propose a new PAL MCP tool (e.g., `summarize`, `fixer`, `refactor`)
 labels: ["enhancement", "new-tool"]
 body:
   - type: input
@@ -15,7 +15,7 @@ body:
     id: purpose
     attributes:
       label: What is the primary purpose of this tool?
-      description: "Explain the tool's core function and the value it provides to developers using Claude + Zen."
+      description: "Explain the tool's core function and the value it provides to developers using Claude + PAL."
       placeholder: "This tool will automatically generate comprehensive documentation from code, extracting class and function signatures, docstrings, and creating usage examples."
     validations:
       required: true
@@ -27,7 +27,7 @@ body:
       description: "Show how a user would invoke this tool through Claude and what the expected output would look like."
       placeholder: |
         **User prompt to Claude:**
-        "Use zen to generate documentation for my entire src/ directory"
+        "Use pal to generate documentation for my entire src/ directory"
 
         **Expected behavior:**
         - Analyze all Python files in src/
@@ -61,7 +61,7 @@ body:
     id: system-prompt
     attributes:
       label: Proposed System Prompt (Optional)
-      description: "If you have ideas for how zen should be prompted for this tool, share them here."
+      description: "If you have ideas for how pal should be prompted for this tool, share them here."
       placeholder: |
         You are an expert technical documentation generator. Your task is to create comprehensive, user-friendly documentation from source code...
 

@@ -222,10 +222,45 @@ If you encounter issues with cassette testing:
 3. Run semantic matching tests to verify the system
 4. Open an issue if you find a bug in the matching logic
 
+## Dual-Model Cassette Coverage
+
+Some integration tests maintain cassettes for multiple model variants to ensure regression coverage across model families. For example:
+
+### Consensus Tool Cassettes
+
+The `test_consensus_integration.py` test uses parameterized fixtures to test both `gpt-5` and `gpt-5.1` models:
+
+- `tests/openai_cassettes/consensus_step1_gpt5_for.json` - Cassette for gpt-5 model
+- `tests/openai_cassettes/consensus_step1_gpt51_for.json` - Cassette for gpt-5.1 model
+
+**When updating consensus cassettes:**
+
+1. Both cassettes should be updated if the test logic changes
+2. If only one model's behavior changes, update only that cassette
+3. The test uses `@pytest.mark.parametrize` to run against both models
+4. Each cassette path is mapped in the `CONSENSUS_CASSETTES` dictionary
+
+**To re-record a specific model's cassette:**
+
+```bash
+# Delete the specific cassette
+rm tests/openai_cassettes/consensus_step1_gpt5_for.json
+
+# Run the test with real API key (it will record for gpt-5)
+OPENAI_API_KEY="your-real-key" python -m pytest tests/test_consensus_integration.py::test_consensus_multi_model_consultations[gpt-5] -v
+
+# Or for gpt-5.1
+rm tests/openai_cassettes/consensus_step1_gpt51_for.json
+OPENAI_API_KEY="your-real-key" python -m pytest tests/test_consensus_integration.py::test_consensus_multi_model_consultations[gpt-5.1] -v
+```
+
+This dual-coverage approach ensures that both model families continue to work correctly as the codebase evolves.
+
 ## Related Files
 
 - `tests/http_transport_recorder.py` - Cassette recording/replay implementation
 - `tests/transport_helpers.py` - Helper functions for injecting transports
 - `tests/test_cassette_semantic_matching.py` - Tests for semantic matching
 - `tests/test_o3_pro_output_text_fix.py` - Example of cassette usage
+- `tests/test_consensus_integration.py` - Example of dual-model cassette coverage
 - `tests/openai_cassettes/` - Directory containing recorded cassettes

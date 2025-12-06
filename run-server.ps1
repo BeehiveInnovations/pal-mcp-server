@@ -1,9 +1,9 @@
 ﻿<#
 .SYNOPSIS
-    Installation, configuration, and launch script for Zen MCP server on Windows.
+    Installation, configuration, and launch script for PAL MCP server on Windows.
 
 .DESCRIPTION
-    This PowerShell script prepares the environment for the Zen MCP server:
+    This PowerShell script prepares the environment for the PAL MCP server:
     - Installs and checks Python 3.10+ (with venv or uv if available)
     - Installs required Python dependencies
     - Configures environment files (.env)
@@ -17,7 +17,7 @@
     Shows script help.
 
 .PARAMETER Version
-    Shows Zen MCP server version.
+    Shows PAL MCP server version.
 
 .PARAMETER Follow
     Follows server logs in real time.
@@ -48,7 +48,7 @@
 
 .EXAMPLE
     .\run-server.ps1
-    Prepares the environment and starts the Zen MCP server.
+    Prepares the environment and starts the PAL MCP server.
 
     .\run-server.ps1 -Follow
     Follows server logs in real time.
@@ -73,7 +73,7 @@
     Script Author      : GiGiDKR (https://github.com/GiGiDKR)
     Date               : 07-05-2025
     Version            : See config.py (__version__)
-    References         : https://github.com/BeehiveInnovations/zen-mcp-server
+    References         : https://github.com/BeehiveInnovations/pal-mcp-server
 
 #>
 #Requires -Version 5.1
@@ -93,7 +93,7 @@ param(
 )
 
 # ============================================================================
-# Zen MCP Server Setup Script for Windows
+# PAL MCP Server Setup Script for Windows
 # 
 # A Windows-compatible setup script that handles environment setup, 
 # dependency installation, and configuration.
@@ -106,11 +106,12 @@ $ErrorActionPreference = "Stop"
 # Constants and Configuration  
 # ----------------------------------------------------------------------------
 
-$script:VENV_PATH = ".zen_venv"
+$script:VENV_PATH = ".pal_venv"
 $script:DOCKER_CLEANED_FLAG = ".docker_cleaned"
 $script:DESKTOP_CONFIG_FLAG = ".desktop_configured"
 $script:LOG_DIR = "logs"
 $script:LOG_FILE = "mcp_server.log"
+$script:LegacyServerNames = @("zen", "zen-mcp", "zen-mcp-server", "zen_mcp", "zen_mcp_server")
 
 # ----------------------------------------------------------------------------
 # Utility Functions
@@ -207,6 +208,31 @@ function Remove-LockedDirectory {
         # If all methods fail, return false
         return $false
     }
+}
+
+# Remove legacy MCP server entries from a hash/dictionary or PSObject
+function Remove-LegacyServerKeys {
+    param([object]$Container)
+
+    $removed = $false
+    if ($null -eq $Container) {
+        return $false
+    }
+
+    foreach ($legacy in $script:LegacyServerNames) {
+        if ($Container -is [System.Collections.IDictionary]) {
+            if ($Container.Contains($legacy)) {
+                $Container.Remove($legacy) | Out-Null
+                $removed = $true
+            }
+        }
+        elseif ($Container.PSObject -and $Container.PSObject.Properties[$legacy]) {
+            $Container.PSObject.Properties.Remove($legacy)
+            $removed = $true
+        }
+    }
+
+    return $removed
 }
 
 # Manage configuration file backups with maximum 3 files retention
@@ -382,9 +408,9 @@ function Cleanup-Docker {
     $containers = @(
         "gemini-mcp-server",
         "gemini-mcp-redis", 
-        "zen-mcp-server",
-        "zen-mcp-redis",
-        "zen-mcp-log-monitor"
+        "pal-mcp-server",
+        "pal-mcp-redis",
+        "pal-mcp-log-monitor"
     )
     
     # Remove containers
@@ -407,7 +433,7 @@ function Cleanup-Docker {
     }
     
     # Remove images
-    $images = @("gemini-mcp-server:latest", "zen-mcp-server:latest")
+    $images = @("gemini-mcp-server:latest", "pal-mcp-server:latest")
     foreach ($image in $images) {
         try {
             $exists = docker images --format "{{.Repository}}:{{.Tag}}" | Where-Object { $_ -eq $image }
@@ -786,7 +812,7 @@ function Build-DockerImage {
     
     # Check if image exists
     try {
-        $imageExists = docker images --format "{{.Repository}}:{{.Tag}}" | Where-Object { $_ -eq "zen-mcp-server:latest" }
+        $imageExists = docker images --format "{{.Repository}}:{{.Tag}}" | Where-Object { $_ -eq "pal-mcp-server:latest" }
         if ($imageExists -and !$Force) {
             Write-Success "Docker image already exists. Use -Force to rebuild."
             return $true
@@ -799,7 +825,7 @@ function Build-DockerImage {
     if ($Force -and $imageExists) {
         Write-Info "Forcing rebuild of Docker image..."
         try {
-            docker rmi zen-mcp-server:latest 2>$null
+            docker rmi pal-mcp-server:latest 2>$null
         }
         catch {
             Write-Warning "Could not remove existing image, continuing..."
@@ -814,7 +840,7 @@ function Build-DockerImage {
             Write-Info "Building with development support..."
         }
         
-        docker build -t zen-mcp-server:latest .
+        docker build -t pal-mcp-server:latest .
         if ($LASTEXITCODE -ne 0) {
             throw "Docker build failed"
         }
@@ -901,7 +927,7 @@ function Start-DockerServices {
         }
         
         # Start services
-        Write-Info "Starting Zen MCP Server with Docker Compose..."
+        Write-Info "Starting PAL MCP Server with Docker Compose..."
         if (Test-Command "docker-compose") {
             if ($Follow) {
                 docker-compose up --build
@@ -925,10 +951,10 @@ function Start-DockerServices {
         
         if (!$Follow) {
             Write-Success "Docker services started successfully"
-            Write-Info "Container name: zen-mcp-server"
+            Write-Info "Container name: pal-mcp-server"
             Write-Host ""
             Write-Host "To view logs: " -NoNewline
-            Write-Host "docker logs -f zen-mcp-server" -ForegroundColor Yellow
+            Write-Host "docker logs -f pal-mcp-server" -ForegroundColor Yellow
             Write-Host "To stop: " -NoNewline
             Write-Host "docker-compose down" -ForegroundColor Yellow
         }
@@ -944,7 +970,7 @@ function Start-DockerServices {
 # Get Docker container status
 function Get-DockerStatus {
     try {
-        $containerStatus = docker ps --filter "name=zen-mcp-server" --format "{{.Status}}"
+        $containerStatus = docker ps --filter "name=pal-mcp-server" --format "{{.Status}}"
         if ($containerStatus) {
             Write-Success "Container status: $containerStatus"
             return $true
@@ -1018,7 +1044,7 @@ $script:McpClientDefinitions = @(
         DetectionPath  = "$env:APPDATA\Claude\claude_desktop_config.json"
         DetectionType  = "Path"
         ConfigPath     = "$env:APPDATA\Claude\claude_desktop_config.json"
-        ConfigJsonPath = "mcpServers.zen"
+        ConfigJsonPath = "mcpServers.pal"
         NeedsConfigDir = $true
     },
     @{
@@ -1026,7 +1052,7 @@ $script:McpClientDefinitions = @(
         DetectionCommand = "code"
         DetectionType    = "Command"
         ConfigPath       = "$env:APPDATA\Code\User\settings.json"
-        ConfigJsonPath   = "mcp.servers.zen"
+        ConfigJsonPath   = "mcp.servers.pal"
         IsVSCode         = $true
     },
     @{
@@ -1034,7 +1060,7 @@ $script:McpClientDefinitions = @(
         DetectionCommand = "code-insiders"
         DetectionType    = "Command"
         ConfigPath       = "$env:APPDATA\Code - Insiders\User\mcp.json"
-        ConfigJsonPath   = "servers.zen"
+        ConfigJsonPath   = "servers.pal"
         IsVSCodeInsiders = $true
     },
     @{
@@ -1042,28 +1068,28 @@ $script:McpClientDefinitions = @(
         DetectionCommand = "cursor"
         DetectionType    = "Command"
         ConfigPath       = "$env:USERPROFILE\.cursor\mcp.json"
-        ConfigJsonPath   = "mcpServers.zen"
+        ConfigJsonPath   = "mcpServers.pal"
     },
     @{
         Name           = "Windsurf"
         DetectionPath  = "$env:USERPROFILE\.codeium\windsurf"
         DetectionType  = "Path"
         ConfigPath     = "$env:USERPROFILE\.codeium\windsurf\mcp_config.json"
-        ConfigJsonPath = "mcpServers.zen"
+        ConfigJsonPath = "mcpServers.pal"
     },
     @{
         Name           = "Trae"
         DetectionPath  = "$env:APPDATA\Trae"
         DetectionType  = "Path"
         ConfigPath     = "$env:APPDATA\Trae\User\mcp.json"
-        ConfigJsonPath = "mcpServers.zen"
+        ConfigJsonPath = "mcpServers.pal"
     }
 )
 
 # Docker MCP configuration template (legacy, kept for backward compatibility)
 $script:DockerMcpConfig = @{
     command = "docker"
-    args    = @("exec", "-i", "zen-mcp-server", "python", "server.py")
+    args    = @("exec", "-i", "pal-mcp-server", "python", "server.py")
     type    = "stdio"
 }
 
@@ -1076,7 +1102,7 @@ function Get-DockerMcpConfigRun {
     
     return @{
         command = "docker"
-        args    = @("run", "--rm", "-i", "--env-file", $envFile, "zen-mcp-server:latest", "python", "server.py")
+        args    = @("run", "--rm", "-i", "--env-file", $envFile, "pal-mcp-server:latest", "python", "server.py")
         type    = "stdio"
     }
 }
@@ -1103,7 +1129,7 @@ function Test-McpJsonFormat {
 function Test-VSCodeInsidersFormat {
     param([hashtable]$Client)
     
-    return $Client.IsVSCodeInsiders -eq $true -and $Client.ConfigJsonPath -eq "servers.zen"
+    return $Client.IsVSCodeInsiders -eq $true -and $Client.ConfigJsonPath -eq "servers.pal"
 }
 
 # Analyze existing MCP configuration to determine type (Python or Docker)
@@ -1133,9 +1159,9 @@ function Get-ExistingMcpConfigType {
             }
         }
         
-        # Navigate to zen configuration
+        # Navigate to pal configuration
         $pathParts = $Client.ConfigJsonPath.Split('.')
-        $zenKey = $pathParts[-1]
+        $palKey = $pathParts[-1]
         $parentPath = $pathParts[0..($pathParts.Length - 2)]
         
         $targetObject = $content
@@ -1150,32 +1176,32 @@ function Get-ExistingMcpConfigType {
             $targetObject = $targetObject.$key
         }
         
-        if (!$targetObject.PSObject.Properties[$zenKey]) {
+        if (!$targetObject.PSObject.Properties[$palKey]) {
             return @{
                 Exists  = $false
                 Type    = "None"
-                Details = "Zen configuration not found"
+                Details = "PAL configuration not found"
             }
         }
         
-        $zenConfig = $targetObject.$zenKey
+        $palConfig = $targetObject.$palKey
         
         # Analyze configuration type
-        if ($zenConfig.command -eq "docker") {
+        if ($palConfig.command -eq "docker") {
             $dockerType = "Unknown"
             $details = "Docker configuration"
             
-            if ($zenConfig.args -and $zenConfig.args.Count -gt 0) {
-                if ($zenConfig.args[0] -eq "run") {
+            if ($palConfig.args -and $palConfig.args.Count -gt 0) {
+                if ($palConfig.args[0] -eq "run") {
                     $dockerType = "Docker Run"
                     $details = "Docker run (dedicated container)"
                 }
-                elseif ($zenConfig.args[0] -eq "exec") {
+                elseif ($palConfig.args[0] -eq "exec") {
                     $dockerType = "Docker Exec"
                     $details = "Docker exec (existing container)"
                 }
                 else {
-                    $details = "Docker ($($zenConfig.args[0]))"
+                    $details = "Docker ($($palConfig.args[0]))"
                 }
             }
             
@@ -1184,18 +1210,18 @@ function Get-ExistingMcpConfigType {
                 Type    = "Docker"
                 SubType = $dockerType
                 Details = $details
-                Command = $zenConfig.command
-                Args    = $zenConfig.args
+                Command = $palConfig.command
+                Args    = $palConfig.args
             }
         }
-        elseif ($zenConfig.command -and $zenConfig.command.EndsWith("python.exe")) {
+        elseif ($palConfig.command -and $palConfig.command.EndsWith("python.exe")) {
             $pythonType = "Python"
             $details = "Python virtual environment"
             
-            if ($zenConfig.command.Contains(".zen_venv")) {
-                $details = "Python (zen virtual environment)"
+            if ($palConfig.command.Contains(".pal_venv")) {
+                $details = "Python (pal virtual environment)"
             }
-            elseif ($zenConfig.command.Contains("venv")) {
+            elseif ($palConfig.command.Contains("venv")) {
                 $details = "Python (virtual environment)"
             }
             else {
@@ -1207,17 +1233,17 @@ function Get-ExistingMcpConfigType {
                 Type    = "Python"
                 SubType = $pythonType
                 Details = $details
-                Command = $zenConfig.command
-                Args    = $zenConfig.args
+                Command = $palConfig.command
+                Args    = $palConfig.args
             }
         }
         else {
             return @{
                 Exists  = $true
                 Type    = "Unknown"
-                Details = "Unknown configuration type: $($zenConfig.command)"
-                Command = $zenConfig.command
-                Args    = $zenConfig.args
+                Details = "Unknown configuration type: $($palConfig.command)"
+                Command = $palConfig.command
+                Args    = $palConfig.args
             }
         }
         
@@ -1337,7 +1363,7 @@ function Configure-McpClient {
     $newConfigType = if ($UseDocker) { "Docker" } else { "Python" }
     
     if ($existingConfig.Exists) {
-        Write-Info "Found existing Zen MCP configuration in $($Client.Name)"
+        Write-Info "Found existing PAL MCP configuration in $($Client.Name)"
         Write-Info "  Current: $($existingConfig.Details)"
         Write-Info "  New: $newConfigType configuration"
         
@@ -1360,7 +1386,7 @@ function Configure-McpClient {
     }
     else {
         # User confirmation for new installation
-        $response = Read-Host "`nConfigure Zen MCP for $($Client.Name) (mode: $newConfigType)? (y/N)"
+        $response = Read-Host "`nConfigure PAL MCP for $($Client.Name) (mode: $newConfigType)? (y/N)"
         if ($response -ne 'y' -and $response -ne 'Y') {
             Write-Info "Skipping $($Client.Name) integration"
             return
@@ -1429,7 +1455,7 @@ function Configure-McpClient {
 
         # Navigate and set configuration
         $pathParts = $Client.ConfigJsonPath.Split('.')
-        $zenKey = $pathParts[-1]
+        $palKey = $pathParts[-1]
         $parentPath = $pathParts[0..($pathParts.Length - 2)]
         
         $targetObject = $config
@@ -1440,7 +1466,13 @@ function Configure-McpClient {
             $targetObject = $targetObject.$key
         }
 
-        $targetObject | Add-Member -MemberType NoteProperty -Name $zenKey -Value $serverConfig -Force
+        # Remove legacy zen entries to avoid duplicate or broken MCP servers
+        $legacyRemoved = Remove-LegacyServerKeys $targetObject
+        if ($legacyRemoved) {
+            Write-Info "Removed legacy MCP entries (zen → pal)"
+        }
+
+        $targetObject | Add-Member -MemberType NoteProperty -Name $palKey -Value $serverConfig -Force
 
         # Write config
         $config | ConvertTo-Json -Depth 10 | Out-File $configPath -Encoding UTF8
@@ -1487,62 +1519,108 @@ function Test-ClaudeCliIntegration {
     }
     
     Write-Info "Claude CLI detected - checking configuration..."
+
+    foreach ($legacy in $script:LegacyServerNames) {
+        try { claude mcp remove -s user $legacy 2>$null | Out-Null } catch {}
+    }
     
     try {
         $claudeConfig = claude mcp list 2>$null
-        if ($claudeConfig -match "zen") {
-            Write-Success "Claude CLI already configured for zen server"
+        if ($claudeConfig -match "pal") {
+            Write-Success "Claude CLI already configured for pal server"
         }
         else {
-            Write-Info "To add zen server to Claude CLI, run:"
-            Write-Host "  claude mcp add -s user zen $PythonPath $ServerPath" -ForegroundColor Cyan
+            Write-Info "To add pal server to Claude CLI, run:"
+            Write-Host "  claude mcp add -s user pal $PythonPath $ServerPath" -ForegroundColor Cyan
         }
     }
     catch {
         Write-Info "To configure Claude CLI manually, run:"
-        Write-Host "  claude mcp add -s user zen $PythonPath $ServerPath" -ForegroundColor Cyan
+        Write-Host "  claude mcp add -s user pal $PythonPath $ServerPath" -ForegroundColor Cyan
     }
 }
 
 function Test-GeminiCliIntegration {
     param([string]$ScriptDir)
     
-    $zenWrapper = Join-Path $ScriptDir "zen-mcp-server.cmd"
+    $palWrapper = Join-Path $ScriptDir "pal-mcp-server.cmd"
     
     # Check if Gemini settings file exists (Windows path)
     $geminiConfig = "$env:USERPROFILE\.gemini\settings.json"
     if (!(Test-Path $geminiConfig)) {
         return
     }
-    
-    # Check if zen is already configured
+
+    # Load existing config
+    $config = @{}
     $configContent = Get-Content $geminiConfig -Raw -ErrorAction SilentlyContinue
-    if ($configContent -and $configContent -match '"zen"') {
+    if ($configContent) {
+        try { $config = $configContent | ConvertFrom-Json -ErrorAction Stop } catch { $config = @{} }
+    }
+    if ($null -eq $config -or $config -isnot [System.Collections.IDictionary]) {
+        $config = @{}
+    }
+
+    if (-not $config.mcpServers -or $config.mcpServers -isnot [System.Collections.IDictionary]) {
+        $config.mcpServers = [ordered]@{}
+    }
+
+    $legacyRemoved = Remove-LegacyServerKeys $config.mcpServers
+    $palConfig = $config.mcpServers.pal
+    $needsWrite = $legacyRemoved
+
+    if ($palConfig) {
+        if ($palConfig.command -ne $palWrapper) {
+            $palConfig.command = $palWrapper
+            $needsWrite = $true
+        }
+
+        if (!(Test-Path $palWrapper)) {
+            Write-Info "Creating wrapper script for Gemini CLI..."
+            @"
+@echo off
+cd /d "%~dp0"
+if exist ".pal_venv\Scripts\python.exe" (
+    .pal_venv\Scripts\python.exe server.py %*
+) else (
+    python server.py %*
+)
+"@ | Out-File -FilePath $palWrapper -Encoding ASCII
+            Write-Success "Created pal-mcp-server.cmd wrapper script"
+        }
+
+        if ($needsWrite) {
+            Manage-ConfigBackups -ConfigFilePath $geminiConfig | Out-Null
+            $config | ConvertTo-Json -Depth 10 | Out-File $geminiConfig -Encoding UTF8
+            Write-Success "Updated Gemini CLI configuration (cleaned legacy entries)"
+            Write-Host "  Config: $geminiConfig" -ForegroundColor Gray
+            Write-Host "  Restart Gemini CLI to use PAL MCP Server" -ForegroundColor Gray
+        }
         return
     }
-    
-    # Ask user if they want to add Zen to Gemini CLI
+
+    # Ask user if they want to add PAL to Gemini CLI
     Write-Host ""
-    $response = Read-Host "Configure Zen for Gemini CLI? (y/N)"
+    $response = Read-Host "Configure PAL for Gemini CLI? (y/N)"
     if ($response -ne 'y' -and $response -ne 'Y') {
         Write-Info "Skipping Gemini CLI integration"
         return
     }
     
     # Ensure wrapper script exists
-    if (!(Test-Path $zenWrapper)) {
+    if (!(Test-Path $palWrapper)) {
         Write-Info "Creating wrapper script for Gemini CLI..."
         @"
 @echo off
 cd /d "%~dp0"
-if exist ".zen_venv\Scripts\python.exe" (
-    .zen_venv\Scripts\python.exe server.py %*
+if exist ".pal_venv\Scripts\python.exe" (
+    .pal_venv\Scripts\python.exe server.py %*
 ) else (
     python server.py %*
 )
-"@ | Out-File -FilePath $zenWrapper -Encoding ASCII
+"@ | Out-File -FilePath $palWrapper -Encoding ASCII
         
-        Write-Success "Created zen-mcp-server.cmd wrapper script"
+        Write-Success "Created pal-mcp-server.cmd wrapper script"
     }
     
     # Update Gemini settings
@@ -1552,30 +1630,24 @@ if exist ".zen_venv\Scripts\python.exe" (
         # Create backup with retention management
         $backupPath = Manage-ConfigBackups $geminiConfig
         
-        # Read existing config or create new one
-        $config = @{}
-        if (Test-Path $geminiConfig) {
-            $config = Get-Content $geminiConfig -Raw | ConvertFrom-Json
-        }
-        
         # Ensure mcpServers exists
-        if (!$config.mcpServers) {
-            $config | Add-Member -MemberType NoteProperty -Name "mcpServers" -Value @{} -Force
+        if (-not $config.mcpServers -or $config.mcpServers -isnot [System.Collections.IDictionary]) {
+            $config.mcpServers = [ordered]@{}
         }
         
-        # Add zen server
-        $zenConfig = @{
-            command = $zenWrapper
+        # Add pal server
+        $palConfig = @{
+            command = $palWrapper
         }
         
-        $config.mcpServers | Add-Member -MemberType NoteProperty -Name "zen" -Value $zenConfig -Force
+        $config.mcpServers | Add-Member -MemberType NoteProperty -Name "pal" -Value $palConfig -Force
         
         # Write updated config
         $config | ConvertTo-Json -Depth 10 | Out-File $geminiConfig -Encoding UTF8
         
         Write-Success "Successfully configured Gemini CLI"
         Write-Host "  Config: $geminiConfig" -ForegroundColor Gray
-        Write-Host "  Restart Gemini CLI to use Zen MCP Server" -ForegroundColor Gray
+        Write-Host "  Restart Gemini CLI to use PAL MCP Server" -ForegroundColor Gray
         
     }
     catch {
@@ -1586,8 +1658,8 @@ if exist ".zen_venv\Scripts\python.exe" (
         Write-Host @"
 {
   "mcpServers": {
-    "zen": {
-      "command": "$zenWrapper"
+    "pal": {
+      "command": "$palWrapper"
     }
   }
 }
@@ -1615,7 +1687,7 @@ function Show-QwenManualConfig {
 
         Write-Host "{" -ForegroundColor Yellow
         Write-Host "  \"mcpServers\": {" -ForegroundColor Yellow
-        Write-Host "    \"zen\": {" -ForegroundColor Yellow
+        Write-Host "    \"pal\": {" -ForegroundColor Yellow
         Write-Host "      \"command\": \"$PythonPath\"," -ForegroundColor Yellow
         Write-Host "      \"args\": [\"$ServerPath\"]," -ForegroundColor Yellow
         Write-Host "      \"cwd\": \"$ScriptDir\"," -ForegroundColor Yellow
@@ -1629,7 +1701,7 @@ function Show-QwenManualConfig {
     else {
         Write-Host "{" -ForegroundColor Yellow
         Write-Host "  \"mcpServers\": {" -ForegroundColor Yellow
-        Write-Host "    \"zen\": {" -ForegroundColor Yellow
+        Write-Host "    \"pal\": {" -ForegroundColor Yellow
         Write-Host "      \"command\": \"$PythonPath\"," -ForegroundColor Yellow
         Write-Host "      \"args\": [\"$ServerPath\"]," -ForegroundColor Yellow
         Write-Host "      \"cwd\": \"$ScriptDir\"" -ForegroundColor Yellow
@@ -1653,6 +1725,8 @@ function Test-QwenCliIntegration {
     $scriptDir = Split-Path $ServerPath -Parent
 
     $configStatus = "missing"
+    $legacyRemoved = $false
+    $skipPrompt = $false
     $config = @{}
 
     if (Test-Path $configPath) {
@@ -1668,11 +1742,12 @@ function Test-QwenCliIntegration {
 
             if ($config.ContainsKey('mcpServers') -and $config['mcpServers'] -is [System.Collections.IDictionary]) {
                 $servers = $config['mcpServers']
-                if ($servers.Contains('zen') -and $servers['zen'] -is [System.Collections.IDictionary]) {
-                    $zenConfig = $servers['zen']
-                    $commandMatches = ($zenConfig['command'] -eq $PythonPath)
+                $legacyRemoved = (Remove-LegacyServerKeys $servers) -or $legacyRemoved
+                if ($servers.Contains('pal') -and $servers['pal'] -is [System.Collections.IDictionary]) {
+                    $palConfig = $servers['pal']
+                    $commandMatches = ($palConfig['command'] -eq $PythonPath)
 
-                    $argsValue = $zenConfig['args']
+                    $argsValue = $palConfig['args']
                     $argsList = @()
                     if ($argsValue -is [System.Collections.IEnumerable] -and $argsValue -isnot [string]) {
                         $argsList = @($argsValue)
@@ -1683,18 +1758,18 @@ function Test-QwenCliIntegration {
                     $argsMatches = ($argsList.Count -eq 1 -and $argsList[0] -eq $ServerPath)
 
                     $cwdValue = $null
-                    if ($zenConfig.Contains('cwd')) {
-                        $cwdValue = $zenConfig['cwd']
+                    if ($palConfig.Contains('cwd')) {
+                        $cwdValue = $palConfig['cwd']
                     }
                     $cwdMatches = ([string]::IsNullOrEmpty($cwdValue) -or $cwdValue -eq $scriptDir)
 
                     if ($commandMatches -and $argsMatches -and $cwdMatches) {
-                        Write-Success "Qwen CLI already configured for zen server"
-                        return
+                        $configStatus = $legacyRemoved ? "cleanup" : "match"
                     }
-
-                    $configStatus = "mismatch"
-                    Write-Warning "Existing Qwen CLI configuration differs from the current setup."
+                    else {
+                        $configStatus = "mismatch"
+                        Write-Warning "Existing Qwen CLI configuration differs from the current setup."
+                    }
                 }
             }
         }
@@ -1735,7 +1810,7 @@ function Test-QwenCliIntegration {
         "AZURE_OPENAI_API_KEY", "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_VERSION", "AZURE_OPENAI_ALLOWED_MODELS", "AZURE_MODELS_CONFIG_PATH",
         "CUSTOM_API_URL", "CUSTOM_API_KEY", "CUSTOM_MODEL_NAME", "DEFAULT_MODEL", "GOOGLE_ALLOWED_MODELS",
         "OPENAI_ALLOWED_MODELS", "OPENROUTER_ALLOWED_MODELS", "XAI_ALLOWED_MODELS", "DEFAULT_THINKING_MODE_THINKDEEP",
-        "DISABLED_TOOLS", "CONVERSATION_TIMEOUT_HOURS", "MAX_CONVERSATION_TURNS", "LOG_LEVEL", "ZEN_MCP_FORCE_ENV_OVERRIDE"
+        "DISABLED_TOOLS", "CONVERSATION_TIMEOUT_HOURS", "MAX_CONVERSATION_TURNS", "LOG_LEVEL", "PAL_MCP_FORCE_ENV_OVERRIDE"
     )
 
     foreach ($key in $extraKeys) {
@@ -1747,16 +1822,31 @@ function Test-QwenCliIntegration {
         }
     }
 
-    $prompt = "Configure Zen for Qwen CLI? (y/N)"
-    if ($configStatus -eq "mismatch" -or $configStatus -eq "invalid") {
-        $prompt = "Update Qwen CLI zen configuration? (y/N)"
+    if ($configStatus -eq "match") {
+        Write-Success "Qwen CLI already configured for pal server"
+        return
     }
 
-    $response = Read-Host $prompt
-    if ($response -ne 'y' -and $response -ne 'Y') {
-        Write-Info "Skipping Qwen CLI integration"
-        Show-QwenManualConfig $PythonPath $ServerPath $scriptDir $configPath $envMap
-        return
+    if ($configStatus -eq "cleanup") {
+        Write-Info "Removing legacy Qwen MCP entries from previous zen configuration..."
+        $skipPrompt = $true
+    }
+
+    $prompt = "Configure PAL for Qwen CLI? (y/N)"
+    if ($configStatus -eq "cleanup") {
+        $prompt = "Remove legacy Qwen MCP entries and refresh configuration? (Y/n)"
+    }
+    elseif ($configStatus -eq "mismatch" -or $configStatus -eq "invalid") {
+        $prompt = "Update Qwen CLI pal configuration? (y/N)"
+    }
+
+    if (-not $skipPrompt) {
+        $response = Read-Host $prompt
+        if ($response -ne 'y' -and $response -ne 'Y') {
+            Write-Info "Skipping Qwen CLI integration"
+            Show-QwenManualConfig $PythonPath $ServerPath $scriptDir $configPath $envMap
+            return
+        }
     }
 
     if (!(Test-Path $configDir)) {
@@ -1776,24 +1866,24 @@ function Test-QwenCliIntegration {
             $config['mcpServers'] = @{}
         }
 
-        $zenConfig = [ordered]@{
+        $palConfig = [ordered]@{
             command = $PythonPath
             args    = @($ServerPath)
             cwd     = $scriptDir
         }
 
         if ($envMap.Count -gt 0) {
-            $zenConfig['env'] = $envMap
+            $palConfig['env'] = $envMap
         }
 
-        $config['mcpServers']['zen'] = $zenConfig
+        $config['mcpServers']['pal'] = $palConfig
 
         $json = ($config | ConvertTo-Json -Depth 20)
         Set-Content -Path $configPath -Value $json -Encoding UTF8
 
         Write-Success "Successfully configured Qwen CLI"
         Write-Host "  Config: $configPath" -ForegroundColor Gray
-        Write-Host "  Restart Qwen CLI to use Zen MCP Server" -ForegroundColor Gray
+        Write-Host "  Restart Qwen CLI to use PAL MCP Server" -ForegroundColor Gray
     }
     catch {
         Write-Error "Failed to update Qwen CLI configuration: $_"
@@ -1813,7 +1903,7 @@ function Test-QwenCliIntegration {
 # Show script help
 function Show-Help {
     Write-Host @"
-Zen MCP Server - Setup and Launch Script
+PAL MCP Server - Setup and Launch Script
 
 USAGE:
 .\run-server.ps1 [OPTIONS]
@@ -1838,17 +1928,17 @@ EXAMPLES:
 .\run-server.ps1 -Docker              # Use Docker deployment
 .\run-server.ps1 -Docker -Follow      # Docker with log following
 
-For more information, visit: https://github.com/BeehiveInnovations/zen-mcp-server
+For more information, visit: https://github.com/BeehiveInnovations/pal-mcp-server
 "@ -ForegroundColor White
 }
 
 # Show version information
 function Show-Version {
     $version = Get-Version
-    Write-Host "Zen MCP Server version: $version" -ForegroundColor Green
+    Write-Host "PAL MCP Server version: $version" -ForegroundColor Green
     Write-Host "PowerShell Setup Script for Windows" -ForegroundColor Cyan
     Write-Host "Author: GiGiDKR (https://github.com/GiGiDKR)" -ForegroundColor Gray
-    Write-Host "Project: BeehiveInnovations/zen-mcp-server" -ForegroundColor Gray
+    Write-Host "Project: BeehiveInnovations/pal-mcp-server" -ForegroundColor Gray
 }
 
 # Show configuration instructions
@@ -1886,7 +1976,7 @@ function Show-ConfigInstructions {
     Write-Host "✓ Qwen CLI" -ForegroundColor White
     Write-Host ""
     Write-Host "The script automatically detects and configures compatible clients." -ForegroundColor Gray
-    Write-Host "Restart your MCP clients after configuration to use the Zen MCP Server." -ForegroundColor Yellow
+    Write-Host "Restart your MCP clients after configuration to use the PAL MCP Server." -ForegroundColor Yellow
 }
 
 # Show setup instructions
@@ -1900,11 +1990,11 @@ function Show-SetupInstructions {
     Write-Step "Setup Complete"
     
     if ($UseDocker) {
-        Write-Success "Zen MCP Server is configured for Docker deployment"
-        Write-Host "Docker command: docker exec -i zen-mcp-server python server.py" -ForegroundColor Cyan
+        Write-Success "PAL MCP Server is configured for Docker deployment"
+        Write-Host "Docker command: docker exec -i pal-mcp-server python server.py" -ForegroundColor Cyan
     }
     else {
-        Write-Success "Zen MCP Server is configured for Python virtual environment"
+        Write-Success "PAL MCP Server is configured for Python virtual environment"
         Write-Host "Python: $PythonPath" -ForegroundColor Cyan
         Write-Host "Server: $ServerPath" -ForegroundColor Cyan
     }
@@ -1916,7 +2006,7 @@ function Show-SetupInstructions {
 
 # Start the server
 function Start-Server {
-    Write-Step "Starting Zen MCP Server"
+    Write-Step "Starting PAL MCP Server"
     
     $pythonPath = "$VENV_PATH\Scripts\python.exe"
     if (!(Test-Path $pythonPath)) {
@@ -2041,7 +2131,7 @@ function Import-EnvFile {
 # Docker deployment workflow
 function Invoke-DockerWorkflow {
     Write-Step "Starting Docker Workflow"
-    Write-Host "Zen MCP Server" -ForegroundColor Green
+    Write-Host "PAL MCP Server" -ForegroundColor Green
     Write-Host "=================" -ForegroundColor Cyan
     
     $version = Get-Version
@@ -2064,7 +2154,7 @@ function Invoke-DockerWorkflow {
     Show-SetupInstructions -UseDocker
     
     # Start Docker services
-    Write-Step "Starting Zen MCP Server"
+    Write-Step "Starting PAL MCP Server"
     if ($Follow) {
         Write-Info "Starting server and following logs..."
         Start-DockerServices -Follow
@@ -2074,7 +2164,7 @@ function Invoke-DockerWorkflow {
     if (!(Start-DockerServices)) { exit 1 }
     
     Write-Host ""
-    Write-Success "Zen MCP Server is running in Docker!"
+    Write-Success "PAL MCP Server is running in Docker!"
     Write-Host ""
     
     Write-Host "Next steps:" -ForegroundColor Cyan
@@ -2083,7 +2173,7 @@ function Invoke-DockerWorkflow {
     Write-Host ""
     Write-Host "Useful commands:" -ForegroundColor Cyan
     Write-Host "  View logs: " -NoNewline -ForegroundColor White
-    Write-Host "docker logs -f zen-mcp-server" -ForegroundColor Yellow
+    Write-Host "docker logs -f pal-mcp-server" -ForegroundColor Yellow
     Write-Host "  Stop server: " -NoNewline -ForegroundColor White
     Write-Host "docker-compose down" -ForegroundColor Yellow
     Write-Host "  Restart server: " -NoNewline -ForegroundColor White
@@ -2093,7 +2183,7 @@ function Invoke-DockerWorkflow {
 # Python virtual environment deployment workflow
 function Invoke-PythonWorkflow {
     Write-Step "Starting Python Virtual Environment Workflow"
-    Write-Host "Zen MCP Server" -ForegroundColor Green
+    Write-Host "PAL MCP Server" -ForegroundColor Green
     Write-Host "=================" -ForegroundColor Cyan
     
     $version = Get-Version

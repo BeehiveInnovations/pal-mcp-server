@@ -20,7 +20,7 @@ class TestSupportedModelsAliases:
 
         # Test specific aliases
         assert "flash" in provider.MODEL_CAPABILITIES["gemini-2.5-flash"].aliases
-        assert "pro" in provider.MODEL_CAPABILITIES["gemini-2.5-pro"].aliases
+        assert "pro" in provider.MODEL_CAPABILITIES["gemini-3-pro-preview"].aliases
         assert "flash-2.0" in provider.MODEL_CAPABILITIES["gemini-2.0-flash"].aliases
         assert "flash2" in provider.MODEL_CAPABILITIES["gemini-2.0-flash"].aliases
         assert "flashlite" in provider.MODEL_CAPABILITIES["gemini-2.0-flash-lite"].aliases
@@ -28,14 +28,14 @@ class TestSupportedModelsAliases:
 
         # Test alias resolution
         assert provider._resolve_model_name("flash") == "gemini-2.5-flash"
-        assert provider._resolve_model_name("pro") == "gemini-2.5-pro"
+        assert provider._resolve_model_name("pro") == "gemini-3-pro-preview"
         assert provider._resolve_model_name("flash-2.0") == "gemini-2.0-flash"
         assert provider._resolve_model_name("flash2") == "gemini-2.0-flash"
         assert provider._resolve_model_name("flashlite") == "gemini-2.0-flash-lite"
 
         # Test case insensitive resolution
         assert provider._resolve_model_name("Flash") == "gemini-2.5-flash"
-        assert provider._resolve_model_name("PRO") == "gemini-2.5-pro"
+        assert provider._resolve_model_name("PRO") == "gemini-3-pro-preview"
 
     def test_openai_provider_aliases(self):
         """Test OpenAI provider's alias structure."""
@@ -54,6 +54,9 @@ class TestSupportedModelsAliases:
         assert "o3mini" in provider.MODEL_CAPABILITIES["o3-mini"].aliases
         assert "o3pro" in provider.MODEL_CAPABILITIES["o3-pro"].aliases
         assert "gpt4.1" in provider.MODEL_CAPABILITIES["gpt-4.1"].aliases
+        assert "gpt5.1" in provider.MODEL_CAPABILITIES["gpt-5.1"].aliases
+        assert "gpt5.1-codex" in provider.MODEL_CAPABILITIES["gpt-5.1-codex"].aliases
+        assert "codex-mini" in provider.MODEL_CAPABILITIES["gpt-5.1-codex-mini"].aliases
 
         # Test alias resolution
         assert provider._resolve_model_name("mini") == "gpt-5-mini"  # mini -> gpt-5-mini now
@@ -61,10 +64,14 @@ class TestSupportedModelsAliases:
         assert provider._resolve_model_name("o3pro") == "o3-pro"  # o3pro resolves to o3-pro
         assert provider._resolve_model_name("o4mini") == "o4-mini"
         assert provider._resolve_model_name("gpt4.1") == "gpt-4.1"  # gpt4.1 resolves to gpt-4.1
+        assert provider._resolve_model_name("gpt5.1") == "gpt-5.1"
+        assert provider._resolve_model_name("gpt5.1-codex") == "gpt-5.1-codex"
+        assert provider._resolve_model_name("codex-mini") == "gpt-5.1-codex-mini"
 
         # Test case insensitive resolution
         assert provider._resolve_model_name("Mini") == "gpt-5-mini"  # mini -> gpt-5-mini now
         assert provider._resolve_model_name("O3MINI") == "o3-mini"
+        assert provider._resolve_model_name("Gpt5.1") == "gpt-5.1"
 
     def test_xai_provider_aliases(self):
         """Test XAI provider's alias structure."""
@@ -126,7 +133,7 @@ class TestSupportedModelsAliases:
         gemini_models = gemini_provider.list_models(respect_restrictions=False)
         assert "gemini-2.5-flash" in gemini_models
         assert "flash" in gemini_models
-        assert "gemini-2.5-pro" in gemini_models
+        assert "gemini-3-pro-preview" in gemini_models
         assert "pro" in gemini_models
 
         # Test OpenAI
@@ -163,7 +170,7 @@ class TestSupportedModelsAliases:
         )
         assert "gemini-2.5-flash" in gemini_all
         assert "flash" in gemini_all
-        assert "gemini-2.5-pro" in gemini_all
+        assert "gemini-3-pro-preview" in gemini_all
         assert "pro" in gemini_all
         # All should be lowercase
         assert all(model == model.lower() for model in gemini_all)

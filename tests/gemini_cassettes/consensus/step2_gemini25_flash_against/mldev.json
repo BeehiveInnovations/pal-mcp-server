@@ -23,7 +23,7 @@
               }
             ],
             "generationConfig": {
-              "temperature": 0.2,
+              "temperature": 1.0,
               "candidateCount": 1,
               "mediaResolution": "MEDIA_RESOLUTION_MEDIUM",
               "thinkingConfig": {

@@ -1,6 +1,6 @@
 # Configuration Guide
 
-This guide covers all configuration options for the Zen MCP Server. The server is configured through environment variables defined in your `.env` file.
+This guide covers all configuration options for the PAL MCP Server. The server is configured through environment variables defined in your `.env` file.
 
 ## Quick Start Configuration
 
@@ -63,7 +63,7 @@ CUSTOM_MODEL_NAME=llama3.2                          # Default model
 
 **Default Model Selection:**
 ```env
-# Options: 'auto', 'pro', 'flash', 'o3', 'o3-mini', 'o4-mini', etc.
+# Options: 'auto', 'pro', 'flash', 'gpt5.1', 'gpt5.1-codex', 'gpt5.1-codex-mini', 'o3', 'o3-mini', 'o4-mini', etc.
 DEFAULT_MODEL=auto  # Claude picks best model for each task (recommended)
 ```
 
@@ -81,11 +81,13 @@ DEFAULT_MODEL=auto  # Claude picks best model for each task (recommended)
 
   | Provider | Canonical Models | Notable Aliases |
   |----------|-----------------|-----------------|
-  | OpenAI | `gpt-5`, `gpt-5-pro`, `gpt-5-mini`, `gpt-5-nano`, `gpt-5-codex`, `gpt-4.1`, `o3`, `o3-mini`, `o3-pro`, `o4-mini` | `gpt5`, `gpt5pro`, `mini`, `nano`, `codex`, `o3mini`, `o3pro`, `o4mini` |
+  | OpenAI | `gpt-5.1`, `gpt-5.1-codex`, `gpt-5.1-codex-mini`, `gpt-5`, `gpt-5-pro`, `gpt-5-mini`, `gpt-5-nano`, `gpt-5-codex`, `gpt-4.1`, `o3`, `o3-mini`, `o3-pro`, `o4-mini` | `gpt5.1`, `gpt-5.1`, `5.1`, `gpt5.1-codex`, `codex-5.1`, `codex-mini`, `gpt5`, `gpt5pro`, `mini`, `nano`, `codex`, `o3mini`, `o3pro`, `o4mini` |
   | Gemini | `gemini-2.5-pro`, `gemini-2.5-flash`, `gemini-2.0-flash`, `gemini-2.0-flash-lite` | `pro`, `gemini-pro`, `flash`, `flash-2.0`, `flashlite` |
   | X.AI | `grok-4`, `grok-3`, `grok-3-fast` | `grok`, `grok4`, `grok3`, `grok3fast`, `grokfast` |
   | OpenRouter | See `conf/openrouter_models.json` for the continually evolving catalogue | e.g., `opus`, `sonnet`, `flash`, `pro`, `mistral` |
   | Custom | User-managed entries such as `llama3.2` | Define your own aliases per entry |
+
+  Latest OpenAI entries (`gpt-5.1`, `gpt-5.1-codex`, `gpt-5.1-codex-mini`) mirror the official model cards released on November 13, 2025: all three expose 400K-token contexts with 128K-token outputs, reasoning-token support, and multimodal inputs. `gpt-5.1-codex` is Responses-only with streaming disabled, while the base `gpt-5.1` and Codex mini support streaming along with full code-generation flags. Update your manifests if you run custom deployments so these capability bits stay accurate.
 
   > **Tip:** Copy the JSON file you need, customise it, and point the corresponding `*_MODELS_CONFIG_PATH` environment variable to your version. This lets you enable or disable capabilities (JSON mode, function calling, temperature support, code generation) without editing Python.
 
@@ -105,7 +107,7 @@ The `allow_code_generation` capability enables models to generate complete, prod
 
 **When to Enable:**
 
-- **Enable for**: Models MORE capable than your primary CLI's model (e.g., GPT-5, GPT-5 Pro when using Claude Code with Sonnet 4.5)
+- **Enable for**: Models MORE capable than your primary CLI's model (e.g., GPT-5.1 Codex, GPT-5 Pro, GPT-5.1 when using Claude Code with Sonnet 4.5)
 - **Purpose**: Get complete implementations from a more powerful reasoning model that your primary CLI can then review and apply
 - **Use case**: Large-scale implementations, major refactoring, complete module creation
 
@@ -114,7 +116,7 @@ The `allow_code_generation` capability enables models to generate complete, prod
 1. Only enable for models significantly more capable than your primary CLI to ensure high-quality generated code
 2. The capability triggers structured code output (`<GENERATED-CODE>` blocks) for substantial implementation requests
 3. Minor code changes still use inline code blocks regardless of this setting
-4. Generated code is saved to `zen_generated.code` in the user's working directory
+4. Generated code is saved to `pal_generated.code` in the user's working directory
 5. Your CLI receives instructions to review and apply the generated code systematically
 
 **Example Configuration:**
@@ -141,15 +143,17 @@ The `allow_code_generation` capability enables models to generate complete, prod
 
 **Typical Workflow:**
 1. You ask your AI agent to implement a complex new feature using `chat` with a higher-reasoning model such as **gpt-5-pro**
-2. GPT-5-Pro generates structured implementation and shares the complete implementation with Zen
-3. Zen saves the code to `zen_generated.code` and asks AI agent to implement the plan
+2. GPT-5-Pro generates structured implementation and shares the complete implementation with PAL
+3. PAL saves the code to `pal_generated.code` and asks AI agent to implement the plan
 4. AI agent continues from the previous context, reads the file, applies the implementation
 
 ### Thinking Mode Configuration
 
 **Default Thinking Mode for ThinkDeep:**
 ```env
-# Only applies to models supporting extended thinking (e.g., Gemini 2.5 Pro)
+# Only applies to models supporting extended thinking (e.g., Gemini 3.0 Pro)
+# Starting with Gemini 3.0 Pro, `thinking level` should stick to `high`
+
 DEFAULT_THINKING_MODE_THINKDEEP=high
 
 # Available modes and token consumption:
@@ -169,7 +173,7 @@ Control which models can be used from each provider for cost control, compliance
 # Empty or unset = all models allowed (default)
 
 # OpenAI model restrictions
-OPENAI_ALLOWED_MODELS=o3-mini,o4-mini,mini
+OPENAI_ALLOWED_MODELS=gpt-5.1-codex-mini,gpt-5-mini,o3-mini,o4-mini,mini
 
 # Gemini model restrictions  
 GOOGLE_ALLOWED_MODELS=flash,pro
@@ -193,12 +197,17 @@ OPENROUTER_ALLOWED_MODELS=opus,sonnet,mistral
 OPENAI_ALLOWED_MODELS=o4-mini
 GOOGLE_ALLOWED_MODELS=flash
 
+# High-performance setup
+OPENAI_ALLOWED_MODELS=gpt-5.1-codex,gpt-5.1
+GOOGLE_ALLOWED_MODELS=pro
+
 # Single model standardization
 OPENAI_ALLOWED_MODELS=o4-mini
 GOOGLE_ALLOWED_MODELS=pro
 
 # Balanced selection
 GOOGLE_ALLOWED_MODELS=flash,pro
+OPENAI_ALLOWED_MODELS=gpt-5.1-codex-mini,gpt-5-mini,o4-mini
 XAI_ALLOWED_MODELS=grok,grok-3-fast
 ```
 
@@ -252,6 +261,8 @@ LOG_LEVEL=DEBUG  # Default: shows detailed operational messages
 DEFAULT_MODEL=auto
 GEMINI_API_KEY=your-gemini-key
 OPENAI_API_KEY=your-openai-key
+GOOGLE_ALLOWED_MODELS=flash,pro
+OPENAI_ALLOWED_MODELS=gpt-5.1-codex-mini,gpt-5-mini,o4-mini
 XAI_API_KEY=your-xai-key
 LOG_LEVEL=DEBUG
 CONVERSATION_TIMEOUT_HOURS=1
@@ -264,7 +275,7 @@ DEFAULT_MODEL=auto
 GEMINI_API_KEY=your-gemini-key
 OPENAI_API_KEY=your-openai-key
 GOOGLE_ALLOWED_MODELS=flash
-OPENAI_ALLOWED_MODELS=o4-mini
+OPENAI_ALLOWED_MODELS=gpt-5.1-codex-mini,o4-mini
 LOG_LEVEL=INFO
 CONVERSATION_TIMEOUT_HOURS=3
 ```
