@@ -7,7 +7,7 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-echo -e "${GREEN}=== Deploying Zen MCP Server ===${NC}"
+echo -e "${GREEN}=== Deploying PAL MCP Server ===${NC}"
 
 # Function to check if required environment variables are set
 check_env_vars() {
@@ -51,7 +51,7 @@ wait_for_health() {
     local delay=2
 
     while (( attempt <= max_attempts )); do
-        status=$(docker-compose ps -q zen-mcp | xargs docker inspect -f "{{.State.Health.Status}}" 2>/dev/null || echo "unavailable")
+        status=$(docker-compose ps -q pal-mcp | xargs docker inspect -f "{{.State.Health.Status}}" 2>/dev/null || echo "unavailable")
         if [[ "$status" == "healthy" ]]; then
             return 0
         fi
@@ -63,7 +63,7 @@ wait_for_health() {
 
     echo -e "${RED}Service failed to become healthy after $max_attempts attempts${NC}"
     echo -e "${YELLOW}Checking logs:${NC}"
-    docker-compose logs zen-mcp
+    docker-compose logs pal-mcp
     exit 1
 }
 
@@ -75,25 +75,25 @@ echo -e "${GREEN}Stopping existing containers...${NC}"
 docker-compose down
 
 # Start the services
-echo -e "${GREEN}Starting Zen MCP Server...${NC}"
+echo -e "${GREEN}Starting PAL MCP Server...${NC}"
 docker-compose up -d
 
 # Wait for health check
 echo -e "${GREEN}Waiting for service to be healthy...${NC}"
-timeout 60 bash -c 'while [[ "$(docker-compose ps -q zen-mcp | xargs docker inspect -f "{{.State.Health.Status}}")" != "healthy" ]]; do sleep 2; done' || {
+timeout 60 bash -c 'while [[ "$(docker-compose ps -q pal-mcp | xargs docker inspect -f "{{.State.Health.Status}}")" != "healthy" ]]; do sleep 2; done' || {
     wait_for_health
     echo -e "${RED}Service failed to become healthy${NC}"
     echo -e "${YELLOW}Checking logs:${NC}"
-    docker-compose logs zen-mcp
+    docker-compose logs pal-mcp
     exit 1
 }
 
-echo -e "${GREEN}✓ Zen MCP Server deployed successfully${NC}"
+echo -e "${GREEN}✓ PAL MCP Server deployed successfully${NC}"
 echo -e "${GREEN}Service Status:${NC}"
 docker-compose ps
 
 echo -e "${GREEN}=== Deployment Complete ===${NC}"
 echo -e "${YELLOW}Useful commands:${NC}"
-echo -e "  View logs: ${GREEN}docker-compose logs -f zen-mcp${NC}"
+echo -e "  View logs: ${GREEN}docker-compose logs -f pal-mcp${NC}"
 echo -e "  Stop service: ${GREEN}docker-compose down${NC}"
-echo -e "  Restart service: ${GREEN}docker-compose restart zen-mcp${NC}"
+echo -e "  Restart service: ${GREEN}docker-compose restart pal-mcp${NC}"

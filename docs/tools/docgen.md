@@ -32,7 +32,7 @@ Documentation generation excels with analytical models like Gemini Pro or O3, wh
 
 **Basic Usage:**
 ```
-"Use zen to generate documentation for the UserManager class"
+"Use pal to generate documentation for the UserManager class"
 "Document the authentication module with complexity analysis using gemini pro"
 "Add comprehensive documentation to all methods in src/payment_processor.py"
 ```

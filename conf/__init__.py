@@ -1,1 +1,1 @@
-"""Configuration data for Zen MCP Server."""
+"""Configuration data for PAL MCP Server."""

@@ -42,14 +42,6 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
         "max": 1.0,  # 100% of max - full thinking budget
     }
 
-    # Model-specific thinking token limits
-    MAX_THINKING_TOKENS = {
-        "gemini-2.0-flash": 24576,  # Same as 2.5 flash for consistency
-        "gemini-2.0-flash-lite": 0,  # No thinking support
-        "gemini-2.5-flash": 24576,  # Flash 2.5 thinking budget limit
-        "gemini-2.5-pro": 32768,  # Pro 2.5 thinking budget limit
-    }
-
     def __init__(self, api_key: str, **kwargs):
         """Initialize Gemini provider with API key and optional base URL."""
         self._ensure_registry()
@@ -124,7 +116,7 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
         prompt: str,
         model_name: str,
         system_prompt: Optional[str] = None,
-        temperature: float = 0.3,
+        temperature: float = 1.0,
         max_output_tokens: Optional[int] = None,
         thinking_mode: str = "medium",
         images: Optional[list[str]] = None,
@@ -181,6 +173,15 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
         # Create contents structure
         contents = [{"parts": parts}]
 
+        # Gemini 3 Pro Preview currently rejects medium thinking budgets; bump to high.
+        effective_thinking_mode = thinking_mode
+        if resolved_model_name == "gemini-3-pro-preview" and thinking_mode == "medium":
+            logger.debug(
+                "Overriding thinking mode 'medium' with 'high' for %s due to launch limitation",
+                resolved_model_name,
+            )
+            effective_thinking_mode = "high"
+
         # Prepare generation config
         generation_config = types.GenerateContentConfig(
             temperature=temperature,
@@ -192,12 +193,12 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
             generation_config.max_output_tokens = max_output_tokens
 
         # Add thinking configuration for models that support it
-        if capabilities.supports_extended_thinking and thinking_mode in self.THINKING_BUDGETS:
+        if capabilities.supports_extended_thinking and effective_thinking_mode in self.THINKING_BUDGETS:
             # Get model's max thinking tokens and calculate actual budget
             model_config = capability_map.get(resolved_model_name)
             if model_config and model_config.max_thinking_tokens > 0:
                 max_thinking_tokens = model_config.max_thinking_tokens
-                actual_thinking_budget = int(max_thinking_tokens * self.THINKING_BUDGETS[thinking_mode])
+                actual_thinking_budget = int(max_thinking_tokens * self.THINKING_BUDGETS[effective_thinking_mode])
                 generation_config.thinking_config = types.ThinkingConfig(thinking_budget=actual_thinking_budget)
 
         # Retry logic with progressive delays
@@ -287,7 +288,7 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
                 friendly_name="Gemini",
                 provider=ProviderType.GOOGLE,
                 metadata={
-                    "thinking_mode": thinking_mode if capabilities.supports_extended_thinking else None,
+                    "thinking_mode": effective_thinking_mode if capabilities.supports_extended_thinking else None,
                     "finish_reason": finish_reason_str,
                     "is_blocked_by_safety": is_blocked_by_safety,
                     "safety_feedback": safety_feedback_details,

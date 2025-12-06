@@ -33,7 +33,7 @@ CASSETTE_REPLAY_ID = "chat_codegen/gemini25_pro_calculator/mldev"
 @pytest.mark.asyncio
 @pytest.mark.no_mock_provider
 async def test_chat_codegen_saves_file(monkeypatch, tmp_path):
-    """Ensure Gemini 2.5 Pro responses create zen_generated.code when code is emitted."""
+    """Ensure Gemini 2.5 Pro responses create pal_generated.code when code is emitted."""
 
     CASSETTE_PATH.parent.mkdir(parents=True, exist_ok=True)
 
@@ -65,7 +65,7 @@ async def test_chat_codegen_saves_file(monkeypatch, tmp_path):
 
         working_dir = tmp_path / "codegen"
         working_dir.mkdir()
-        preexisting = working_dir / "zen_generated.code"
+        preexisting = working_dir / "pal_generated.code"
         preexisting.write_text("stale contents", encoding="utf-8")
 
         chat_tool = ChatTool()
@@ -102,7 +102,7 @@ async def test_chat_codegen_saves_file(monkeypatch, tmp_path):
     payload = json.loads(result[0].text)
     assert payload["status"] in {"success", "continuation_available"}
 
-    artifact_path = working_dir / "zen_generated.code"
+    artifact_path = working_dir / "pal_generated.code"
     assert artifact_path.exists()
     saved = artifact_path.read_text()
     assert "<GENERATED-CODE>" in saved

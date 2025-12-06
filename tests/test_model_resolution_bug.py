@@ -22,19 +22,21 @@ class TestModelResolutionBug:
         self.consensus_tool = ConsensusTool()
 
     def test_openrouter_registry_resolves_gemini_alias(self):
-        """Test that OpenRouter registry properly resolves 'gemini' to 'google/gemini-2.5-pro'."""
+        """Test that OpenRouter registry properly resolves 'gemini' to 'google/gemini-3-pro-preview'."""
         # Test the registry directly
         provider = OpenRouterProvider("test_key")
 
         # Test alias resolution
         resolved_model_name = provider._resolve_model_name("gemini")
         assert (
-            resolved_model_name == "google/gemini-2.5-pro"
-        ), f"Expected 'google/gemini-2.5-pro', got '{resolved_model_name}'"
+            resolved_model_name == "google/gemini-3-pro-preview"
+        ), f"Expected 'google/gemini-3-pro-preview', got '{resolved_model_name}'"
 
         # Test that it also works with 'pro' alias
         resolved_pro = provider._resolve_model_name("pro")
-        assert resolved_pro == "google/gemini-2.5-pro", f"Expected 'google/gemini-2.5-pro', got '{resolved_pro}'"
+        assert (
+            resolved_pro == "google/gemini-3-pro-preview"
+        ), f"Expected 'google/gemini-3-pro-preview', got '{resolved_pro}'"
 
     # DELETED: test_provider_registry_returns_openrouter_for_gemini
     # This test had a flawed mock setup - it mocked get_provider() but called get_provider_for_model().

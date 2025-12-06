@@ -1,7 +1,7 @@
 """
-Configuration and constants for Zen MCP Server
+Configuration and constants for PAL MCP Server
 
-This module centralizes all configuration settings for the Zen MCP Server.
+This module centralizes all configuration settings for the PAL MCP Server.
 It defines model configurations, token limits, temperature defaults, and other
 constants used throughout the application.
 
@@ -14,9 +14,9 @@ from utils.env import get_env
 # These values are used in server responses and for tracking releases
 # IMPORTANT: This is the single source of truth for version and author info
 # Semantic versioning: MAJOR.MINOR.PATCH
-__version__ = "9.1.3"
+__version__ = "9.4.2"
 # Last update date in ISO format
-__updated__ = "2025-10-22"
+__updated__ = "2025-12-05"
 # Primary maintainer
 __author__ = "Fahad Gilani"
 
@@ -43,21 +43,25 @@ IS_AUTO_MODE = DEFAULT_MODEL.lower() == "auto"
 
 
 # Temperature defaults for different tool types
+# NOTE: Gemini 3.0 Pro notes suggest temperature should be set at 1.0
+# in most cases. Lowering it can affect the models 'reasoning' abilities.
+# Newer models / inference stacks are able to handle their randomness better.
+
 # Temperature controls the randomness/creativity of model responses
 # Lower values (0.0-0.3) produce more deterministic, focused responses
 # Higher values (0.7-1.0) produce more creative, varied responses
 
 # TEMPERATURE_ANALYTICAL: Used for tasks requiring precision and consistency
 # Ideal for code review, debugging, and error analysis where accuracy is critical
-TEMPERATURE_ANALYTICAL = 0.2  # For code review, debugging
+TEMPERATURE_ANALYTICAL = 1.0  # For code review, debugging
 
 # TEMPERATURE_BALANCED: Middle ground for general conversations
 # Provides a good balance between consistency and helpful variety
-TEMPERATURE_BALANCED = 0.5  # For general chat
+TEMPERATURE_BALANCED = 1.0  # For general chat
 
 # TEMPERATURE_CREATIVE: Higher temperature for exploratory tasks
 # Used when brainstorming, exploring alternatives, or architectural discussions
-TEMPERATURE_CREATIVE = 0.7  # For architecture, deep thinking
+TEMPERATURE_CREATIVE = 1.0  # For architecture, deep thinking
 
 # Thinking Mode Defaults
 # DEFAULT_THINKING_MODE_THINKDEEP: Default thinking depth for extended reasoning tool

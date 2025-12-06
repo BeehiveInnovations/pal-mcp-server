@@ -39,7 +39,7 @@ class TestDockerMCPValidation:
         mock_run.return_value.returncode = 0
 
         # Standard Docker MCP command
-        cmd = ["docker", "run", "--rm", "-i", "--env-file", ".env", "zen-mcp-server:latest", "python", "server.py"]
+        cmd = ["docker", "run", "--rm", "-i", "--env-file", ".env", "pal-mcp-server:latest", "python", "server.py"]
 
         subprocess.run(cmd, capture_output=True)
         mock_run.assert_called_once_with(cmd, capture_output=True)

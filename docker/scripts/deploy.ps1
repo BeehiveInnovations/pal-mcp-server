@@ -24,7 +24,7 @@ function Write-ColorText {
     }
 }
 
-Write-ColorText "=== Deploying Zen MCP Server ===" -Color Green
+Write-ColorText "=== Deploying PAL MCP Server ===" -Color Green
 
 # Function to check if required environment variables are set
 function Test-EnvironmentVariables {
@@ -91,8 +91,8 @@ function Wait-ForHealth {
 
     while ($attempt -le $MaxAttempts) {
         try {
-            # Get container ID for zen-mcp service
-            $containerId = docker-compose ps -q zen-mcp
+            # Get container ID for pal-mcp service
+            $containerId = docker-compose ps -q pal-mcp
             if ([string]::IsNullOrWhiteSpace($containerId)) {
                 $status = "unavailable"
             } else {
@@ -119,7 +119,7 @@ function Wait-ForHealth {
 
     Write-ColorText "Service failed to become healthy after $MaxAttempts attempts" -Color Red
     Write-ColorText "Checking logs:" -Color Yellow
-    docker-compose logs zen-mcp
+    docker-compose logs pal-mcp
     return $false
 }
 
@@ -141,7 +141,7 @@ try {
 }
 
 # Start the services
-Write-ColorText "Starting Zen MCP Server..." -Color Green
+Write-ColorText "Starting PAL MCP Server..." -Color Green
 try {
     docker-compose up -d
     if ($LASTEXITCODE -ne 0) {
@@ -150,7 +150,7 @@ try {
 } catch {
     Write-ColorText "Error: Failed to start services" -Color Red
     Write-ColorText "Checking logs:" -Color Yellow
-    docker-compose logs zen-mcp
+    docker-compose logs pal-mcp
     exit 1
 }
 
@@ -165,7 +165,7 @@ if (!$SkipHealthCheck) {
     
     while ($elapsed -lt $timeout) {
         try {
-            $containerId = docker-compose ps -q zen-mcp
+            $containerId = docker-compose ps -q pal-mcp
             if (![string]::IsNullOrWhiteSpace($containerId)) {
                 $status = docker inspect -f "{{.State.Health.Status}}" $containerId 2>$null
                 if ($status -eq "healthy") {
@@ -186,26 +186,26 @@ if (!$SkipHealthCheck) {
         if (!(Wait-ForHealth)) {
             Write-ColorText "Service failed to become healthy" -Color Red
             Write-ColorText "Checking logs:" -Color Yellow
-            docker-compose logs zen-mcp
+            docker-compose logs pal-mcp
             exit 1
         }
     }
 }
 
-Write-ColorText "✓ Zen MCP Server deployed successfully" -Color Green
+Write-ColorText "✓ PAL MCP Server deployed successfully" -Color Green
 Write-ColorText "Service Status:" -Color Green
 docker-compose ps
 
 Write-ColorText "=== Deployment Complete ===" -Color Green
 Write-ColorText "Useful commands:" -Color Yellow
 Write-ColorText "  View logs: " -Color White -NoNewline
-Write-ColorText "docker-compose logs -f zen-mcp" -Color Green
+Write-ColorText "docker-compose logs -f pal-mcp" -Color Green
 
 Write-ColorText "  Stop service: " -Color White -NoNewline
 Write-ColorText "docker-compose down" -Color Green
 
 Write-ColorText "  Restart service: " -Color White -NoNewline
-Write-ColorText "docker-compose restart zen-mcp" -Color Green
+Write-ColorText "docker-compose restart pal-mcp" -Color Green
 
 Write-ColorText "  PowerShell logs: " -Color White -NoNewline
 Write-ColorText "Get-Content logs\mcp_server.log -Wait" -Color Green

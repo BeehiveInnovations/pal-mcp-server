@@ -1,5 +1,5 @@
 """
-Base models for Zen MCP tools.
+Base models for PAL MCP tools.
 
 This module contains the shared Pydantic models used across all tools,
 extracted to avoid circular imports and promote code reuse.
@@ -59,7 +59,7 @@ WORKFLOW_FIELD_DESCRIPTIONS = {
 
 class ToolRequest(BaseModel):
     """
-    Base request model for all Zen MCP tools.
+    Base request model for all PAL MCP tools.
 
     This model defines common fields that all tools accept, including
     model selection, temperature control, and conversation threading.

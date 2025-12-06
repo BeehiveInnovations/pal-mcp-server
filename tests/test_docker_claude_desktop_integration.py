@@ -22,7 +22,7 @@ class TestDockerClaudeDesktopIntegration:
         """Test MCP configuration for direct docker run"""
         config = {
             "mcpServers": {
-                "zen-mcp": {
+                "pal-mcp": {
                     "command": "docker",
                     "args": [
                         "run",
@@ -32,7 +32,7 @@ class TestDockerClaudeDesktopIntegration:
                         "/path/to/.env",
                         "-v",
                         "/path/to/logs:/app/logs",
-                        "zen-mcp-server:latest",
+                        "pal-mcp-server:latest",
                     ],
                 }
             }
@@ -40,10 +40,10 @@ class TestDockerClaudeDesktopIntegration:
 
         # Validate configuration structure
         assert "mcpServers" in config
-        assert "zen-mcp" in config["mcpServers"]
-        assert config["mcpServers"]["zen-mcp"]["command"] == "docker"
+        assert "pal-mcp" in config["mcpServers"]
+        assert config["mcpServers"]["pal-mcp"]["command"] == "docker"
 
-        args = config["mcpServers"]["zen-mcp"]["args"]
+        args = config["mcpServers"]["pal-mcp"]["args"]
         assert "run" in args
         assert "--rm" in args
         assert "-i" in args
@@ -53,27 +53,27 @@ class TestDockerClaudeDesktopIntegration:
         """Test MCP configuration for docker-compose run"""
         config = {
             "mcpServers": {
-                "zen-mcp": {
+                "pal-mcp": {
                     "command": "docker-compose",
-                    "args": ["-f", "/path/to/docker-compose.yml", "run", "--rm", "zen-mcp"],
+                    "args": ["-f", "/path/to/docker-compose.yml", "run", "--rm", "pal-mcp"],
                 }
             }
         }
 
         # Validate configuration structure
-        assert config["mcpServers"]["zen-mcp"]["command"] == "docker-compose"
+        assert config["mcpServers"]["pal-mcp"]["command"] == "docker-compose"
 
-        args = config["mcpServers"]["zen-mcp"]["args"]
+        args = config["mcpServers"]["pal-mcp"]["args"]
         assert "-f" in args
         assert "run" in args
         assert "--rm" in args
-        assert "zen-mcp" in args
+        assert "pal-mcp" in args
 
     def test_mcp_config_environment_variables(self):
         """Test MCP configuration with inline environment variables"""
         config = {
             "mcpServers": {
-                "zen-mcp": {
+                "pal-mcp": {
                     "command": "docker",
                     "args": [
                         "run",
@@ -83,13 +83,13 @@ class TestDockerClaudeDesktopIntegration:
                         "GEMINI_API_KEY=test_key",
                         "-e",
                         "LOG_LEVEL=INFO",
-                        "zen-mcp-server:latest",
+                        "pal-mcp-server:latest",
                     ],
                 }
             }
         }
 
-        args = config["mcpServers"]["zen-mcp"]["args"]
+        args = config["mcpServers"]["pal-mcp"]["args"]
 
         # Check that environment variables are properly formatted
         env_args = [arg for arg in args if arg.startswith("-e")]
@@ -103,23 +103,23 @@ class TestDockerClaudeDesktopIntegration:
         """Test Windows-specific path formatting"""
         windows_config = {
             "mcpServers": {
-                "zen-mcp": {
+                "pal-mcp": {
                     "command": "docker",
                     "args": [
                         "run",
                         "--rm",
                         "-i",
                         "--env-file",
-                        "C:/Users/User/zen-mcp-server/.env",
+                        "C:/Users/User/pal-mcp-server/.env",
                         "-v",
-                        "C:/Users/User/zen-mcp-server/logs:/app/logs",
-                        "zen-mcp-server:latest",
+                        "C:/Users/User/pal-mcp-server/logs:/app/logs",
+                        "pal-mcp-server:latest",
                     ],
                 }
             }
         }
 
-        args = windows_config["mcpServers"]["zen-mcp"]["args"]
+        args = windows_config["mcpServers"]["pal-mcp"]["args"]
 
         # Check Windows path format
         windows_paths = [arg for arg in args if arg.startswith("C:/")]
@@ -132,7 +132,7 @@ class TestDockerClaudeDesktopIntegration:
         """Test validation of MCP configuration"""
         # Valid configuration
         valid_config = {
-            "mcpServers": {"zen-mcp": {"command": "docker", "args": ["run", "--rm", "-i", "zen-mcp-server:latest"]}}
+            "mcpServers": {"pal-mcp": {"command": "docker", "args": ["run", "--rm", "-i", "pal-mcp-server:latest"]}}
         }
 
         # Validate JSON serialization
@@ -144,19 +144,19 @@ class TestDockerClaudeDesktopIntegration:
         """Test that MCP configuration supports stdio communication"""
         config = {
             "mcpServers": {
-                "zen-mcp": {
+                "pal-mcp": {
                     "command": "docker",
                     "args": [
                         "run",
                         "--rm",
                         "-i",  # Interactive mode for stdio
-                        "zen-mcp-server:latest",
+                        "pal-mcp-server:latest",
                     ],
                 }
             }
         }
 
-        args = config["mcpServers"]["zen-mcp"]["args"]
+        args = config["mcpServers"]["pal-mcp"]["args"]
 
         # Check for interactive mode
         assert "-i" in args, "Interactive mode required for stdio communication"
@@ -168,9 +168,9 @@ class TestDockerClaudeDesktopIntegration:
     def test_docker_image_reference(self):
         """Test that Docker image is properly referenced"""
         configs = [
-            {"image": "zen-mcp-server:latest"},
-            {"image": "zen-mcp-server:v1.0.0"},
-            {"image": "registry/zen-mcp-server:latest"},
+            {"image": "pal-mcp-server:latest"},
+            {"image": "pal-mcp-server:v1.0.0"},
+            {"image": "registry/pal-mcp-server:latest"},
         ]
 
         for config in configs:
@@ -185,9 +185,9 @@ class TestDockerClaudeDesktopIntegration:
         """Create temporary MCP configuration file"""
         config = {
             "mcpServers": {
-                "zen-mcp": {
+                "pal-mcp": {
                     "command": "docker",
-                    "args": ["run", "--rm", "-i", "--env-file", "/tmp/.env", "zen-mcp-server:latest"],
+                    "args": ["run", "--rm", "-i", "--env-file", "/tmp/.env", "pal-mcp-server:latest"],
                 }
             }
         }
@@ -206,7 +206,7 @@ class TestDockerClaudeDesktopIntegration:
             config = json.load(f)
 
         assert "mcpServers" in config
-        assert "zen-mcp" in config["mcpServers"]
+        assert "pal-mcp" in config["mcpServers"]
 
     def test_environment_file_integration(self):
         """Test integration with .env file"""
@@ -254,25 +254,25 @@ class TestDockerMCPErrorHandling:
         # This would test what happens when the image doesn't exist
         # In practice, Claude Desktop would show an error
         nonexistent_config = {
-            "mcpServers": {"zen-mcp": {"command": "docker", "args": ["run", "--rm", "-i", "nonexistent:latest"]}}
+            "mcpServers": {"pal-mcp": {"command": "docker", "args": ["run", "--rm", "-i", "nonexistent:latest"]}}
         }
 
         # Configuration should be valid even if image doesn't exist
-        assert "zen-mcp" in nonexistent_config["mcpServers"]
+        assert "pal-mcp" in nonexistent_config["mcpServers"]
 
     def test_invalid_env_file_path(self):
         """Test handling of invalid .env file path"""
         config_with_invalid_env = {
             "mcpServers": {
-                "zen-mcp": {
+                "pal-mcp": {
                     "command": "docker",
-                    "args": ["run", "--rm", "-i", "--env-file", "/nonexistent/.env", "zen-mcp-server:latest"],
+                    "args": ["run", "--rm", "-i", "--env-file", "/nonexistent/.env", "pal-mcp-server:latest"],
                 }
             }
         }
 
         # Configuration structure should still be valid
-        args = config_with_invalid_env["mcpServers"]["zen-mcp"]["args"]
+        args = config_with_invalid_env["mcpServers"]["pal-mcp"]["args"]
         assert "--env-file" in args
 
     def test_docker_permission_issues(self):
@@ -294,14 +294,14 @@ class TestDockerMCPErrorHandling:
         """Test Docker resource limit configurations"""
         config_with_limits = {
             "mcpServers": {
-                "zen-mcp": {
+                "pal-mcp": {
                     "command": "docker",
-                    "args": ["run", "--rm", "-i", "--memory=512m", "--cpus=1.0", "zen-mcp-server:latest"],
+                    "args": ["run", "--rm", "-i", "--memory=512m", "--cpus=1.0", "pal-mcp-server:latest"],
                 }
             }
         }
 
-        args = config_with_limits["mcpServers"]["zen-mcp"]["args"]
+        args = config_with_limits["mcpServers"]["pal-mcp"]["args"]
 
         # Check for resource limits
         memory_limit = any("--memory" in arg for arg in args)

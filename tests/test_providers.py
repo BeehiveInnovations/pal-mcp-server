@@ -209,6 +209,9 @@ class TestOpenAIProvider:
         assert provider.validate_model_name("o4-mini")
         assert provider.validate_model_name("o4mini")
         assert provider.validate_model_name("o4-mini")
+        assert provider.validate_model_name("gpt-5.1")
+        assert provider.validate_model_name("gpt-5.1-codex")
+        assert provider.validate_model_name("gpt-5.1-codex-mini")
         assert not provider.validate_model_name("gpt-4o")
         assert not provider.validate_model_name("invalid-model")
 
@@ -219,3 +222,20 @@ class TestOpenAIProvider:
         aliases = ["o3", "o3mini", "o3-mini", "o4-mini", "o4mini"]
         for alias in aliases:
             assert not provider.get_capabilities(alias).supports_extended_thinking
+
+    def test_gpt51_family_capabilities(self):
+        """Ensure GPT-5.1 family exposes correct capability flags."""
+        provider = OpenAIModelProvider(api_key="test-key")
+
+        base = provider.get_capabilities("gpt-5.1")
+        assert base.supports_streaming
+        assert base.allow_code_generation
+
+        codex = provider.get_capabilities("gpt-5.1-codex")
+        assert not codex.supports_streaming
+        assert codex.use_openai_response_api
+        assert codex.allow_code_generation
+
+        codex_mini = provider.get_capabilities("gpt-5.1-codex-mini")
+        assert codex_mini.supports_streaming
+        assert codex_mini.allow_code_generation

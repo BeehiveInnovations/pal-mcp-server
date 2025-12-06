@@ -1,6 +1,6 @@
 # Azure OpenAI Configuration
 
-Azure OpenAI support lets Zen MCP talk to GPT-4o, GPT-4.1, GPT-5, and o-series deployments that you expose through your Azure resource. This guide describes the configuration expected by the server: a couple of required environment variables plus a JSON manifest that lists every deployment you want to expose.
+Azure OpenAI support lets PAL MCP talk to GPT-4o, GPT-4.1, GPT-5, and o-series deployments that you expose through your Azure resource. This guide describes the configuration expected by the server: a couple of required environment variables plus a JSON manifest that lists every deployment you want to expose.
 
 ## 1. Required Environment Variables
 

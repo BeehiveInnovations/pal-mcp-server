@@ -3,9 +3,9 @@
   "comment2": "Run './run-server.sh' to set up the environment and get exact paths",
   "comment3": "Use './run-server.sh -c' to display the correct configuration",
   "mcpServers": {
-    "zen": {
-      "command": "/path/to/zen-mcp-server/.zen_venv/bin/python",
-      "args": ["/path/to/zen-mcp-server/server.py"]
+    "pal": {
+      "command": "/path/to/pal-mcp-server/.pal_venv/bin/python",
+      "args": ["/path/to/pal-mcp-server/server.py"]
     }
   }
 }

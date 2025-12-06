@@ -1,6 +1,6 @@
-# Adding Tools to Zen MCP Server
+# Adding Tools to PAL MCP Server
 
-Zen MCP tools are Python classes that inherit from the shared infrastructure in `tools/shared/base_tool.py`.
+PAL MCP tools are Python classes that inherit from the shared infrastructure in `tools/shared/base_tool.py`.
 Every tool must provide a request model (Pydantic), a system prompt, and the methods the base class marks as
 abstract. The quickest path to a working tool is to copy an existing implementation that matches your use case
 (`tools/chat.py` for simple request/response tools, `tools/consensus.py` or `tools/codereview.py` for workflows).
@@ -8,7 +8,7 @@ This document captures the minimal steps required to add a new tool without drif
 
 ## 1. Pick the Tool Architecture
 
-Zen supports two architectures, implemented in `tools/simple/base.py` and `tools/workflow/base.py`.
+PAL supports two architectures, implemented in `tools/simple/base.py` and `tools/workflow/base.py`.
 
 - **SimpleTool** (`SimpleTool`): single MCP call – request comes in, you build one prompt, call the model, return.
   The base class handles schema generation, conversation threading, file loading, temperature bounds, retries,
