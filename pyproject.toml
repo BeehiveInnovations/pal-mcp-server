@@ -9,6 +9,9 @@ dependencies = [
     "openai>=1.55.2",
     "pydantic>=2.0.0",
     "python-dotenv>=1.0.0",
+    "tiktoken>=0.5.0",  # OpenAI tokenizer for text token estimation
+    "imagesize>=1.4.0",  # Fast image dimension reading for token estimation
+    "pypdf>=3.0.0",  # PDF text extraction for token estimation
 ]
 
 [tool.setuptools.packages.find]
@@ -33,6 +36,17 @@ py-modules = ["server", "config"]
     "conf/gemini_models.json",
     "conf/xai_models.json",
     "conf/dial_models.json",
+]
+"conf/cli_clients" = [
+    "conf/cli_clients/claude.json",
+    "conf/cli_clients/codex.json",
+    "conf/cli_clients/gemini.json",
+]
+"systemprompts/clink" = [
+    "systemprompts/clink/codex_codereviewer.txt",
+    "systemprompts/clink/default.txt",
+    "systemprompts/clink/default_codereviewer.txt",
+    "systemprompts/clink/default_planner.txt",
 ]
 
 [project.scripts]

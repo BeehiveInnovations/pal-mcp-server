@@ -5,6 +5,11 @@ pydantic>=2.0.0
 python-dotenv>=1.0.0
 importlib-resources>=5.0.0; python_version<"3.9"
 
+# Token estimation dependencies
+tiktoken>=0.5.0  # OpenAI tokenizer for accurate text token counting
+imagesize>=1.4.0  # Fast image dimension reading for token estimation
+pypdf>=3.0.0  # PDF text extraction and page counting for accurate PDF token estimation
+
 # Development dependencies (install with pip install -r requirements-dev.txt)
 # pytest>=7.4.0
 # pytest-asyncio>=0.21.0

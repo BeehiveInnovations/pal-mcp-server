@@ -23,6 +23,18 @@ def test_openai_provider_retries_on_transient_error(monkeypatch):
 
     provider = OpenAIModelProvider(api_key="test-key")
 
+    # Force use of Chat API (not Responses API) for this test
+    mock_caps = SimpleNamespace(
+        use_openai_response_api=False,
+        supports_temperature=True,
+        get_effective_temperature=lambda temp: temp,
+    )
+    monkeypatch.setattr(
+        provider,
+        "get_capabilities",
+        lambda model_name: mock_caps,
+    )
+
     attempts = {"count": 0}
 
     def create_completion(**kwargs):
@@ -48,6 +60,18 @@ def test_openai_provider_bails_on_non_retryable_error(monkeypatch):
     monkeypatch.setattr("providers.base.time.sleep", lambda _: None)
 
     provider = OpenAIModelProvider(api_key="test-key")
+
+    # Force use of Chat API (not Responses API) for this test
+    mock_caps = SimpleNamespace(
+        use_openai_response_api=False,
+        supports_temperature=True,
+        get_effective_temperature=lambda temp: temp,
+    )
+    monkeypatch.setattr(
+        provider,
+        "get_capabilities",
+        lambda model_name: mock_caps,
+    )
 
     attempts = {"count": 0}
 

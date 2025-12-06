@@ -437,16 +437,14 @@ class SimpleTool(BaseTool):
             estimated_tokens = estimate_tokens(prompt)
             logger.debug(f"Prompt length: {len(prompt)} characters (~{estimated_tokens:,} tokens)")
 
-            # Resolve model capabilities for feature gating
-            supports_thinking = capabilities.supports_extended_thinking
-
             # Generate content with provider abstraction
+            # Note: Always pass thinking_mode to provider, let provider decide if/how to use it
             model_response = provider.generate_content(
                 prompt=prompt,
                 model_name=self._current_model_name,
                 system_prompt=system_prompt,
                 temperature=temperature,
-                thinking_mode=thinking_mode if supports_thinking else None,
+                thinking_mode=thinking_mode,
                 images=images if images else None,
             )
 
@@ -503,7 +501,7 @@ class SimpleTool(BaseTool):
                                 model_name=self._current_model_name,
                                 system_prompt=system_prompt,
                                 temperature=temperature,
-                                thinking_mode=thinking_mode if supports_thinking else None,
+                                thinking_mode=thinking_mode,
                                 images=images if images else None,
                             )
 

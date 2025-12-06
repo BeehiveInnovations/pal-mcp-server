@@ -6,8 +6,20 @@ from providers.shared import ModelCapabilities, ProviderType, RangeTemperatureCo
 
 
 def create_mock_provider(model_name="gemini-2.5-flash", context_window=1_048_576):
-    """Create a properly configured mock provider."""
-    mock_provider = Mock()
+    """Create a properly configured mock provider.
+
+    Uses spec to limit available methods - this ensures that hasattr() checks
+    for optional provider methods (like _calculate_text_tokens) return False,
+    allowing ModelContext to fall back to default token estimation logic.
+    """
+    mock_provider = Mock(
+        spec=[
+            "get_capabilities",
+            "get_provider_type",
+            "validate_model_name",
+            "generate_content",
+        ]
+    )
 
     # Set up capabilities
     mock_capabilities = ModelCapabilities(

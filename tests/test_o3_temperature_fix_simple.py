@@ -14,15 +14,23 @@ class TestO3TemperatureParameterFixSimple:
     """Simple test for O3 model parameter filtering."""
 
     @patch("utils.model_restrictions.get_restriction_service")
+    @patch("providers.openai_responses.OpenAI")
     @patch("providers.openai_compatible.OpenAI")
-    def test_o3_models_exclude_temperature_from_api_call(self, mock_openai_class, mock_restriction_service):
+    def test_o3_models_exclude_temperature_from_api_call(
+        self, mock_openai_class, mock_responses_class, mock_restriction_service
+    ):
         """Test that O3 models don't send temperature to the API."""
         # Mock restriction service to allow all models
         mock_service = Mock()
         mock_service.is_allowed.return_value = True
         mock_restriction_service.return_value = mock_service
 
-        # Setup mock client
+        # Mock Responses API client to raise error (force fallback to Chat API)
+        mock_responses_client = Mock()
+        mock_responses_client.responses.create.side_effect = RuntimeError("Model not supported in Responses API")
+        mock_responses_class.return_value = mock_responses_client
+
+        # Setup mock Chat API client
         mock_client = Mock()
         mock_openai_class.return_value = mock_client
 
@@ -111,15 +119,23 @@ class TestO3TemperatureParameterFixSimple:
         assert call_kwargs["model"] == "gpt-4.1-2025-04-14"
 
     @patch("utils.model_restrictions.get_restriction_service")
+    @patch("providers.openai_responses.OpenAI")
     @patch("providers.openai_compatible.OpenAI")
-    def test_o3_models_filter_unsupported_parameters(self, mock_openai_class, mock_restriction_service):
+    def test_o3_models_filter_unsupported_parameters(
+        self, mock_openai_class, mock_responses_class, mock_restriction_service
+    ):
         """Test that O3 models filter out top_p, frequency_penalty, etc."""
         # Mock restriction service to allow all models
         mock_service = Mock()
         mock_service.is_allowed.return_value = True
         mock_restriction_service.return_value = mock_service
 
-        # Setup mock client
+        # Mock Responses API client to raise error (force fallback to Chat API)
+        mock_responses_client = Mock()
+        mock_responses_client.responses.create.side_effect = RuntimeError("Model not supported in Responses API")
+        mock_responses_class.return_value = mock_responses_client
+
+        # Setup mock Chat API client
         mock_client = Mock()
         mock_openai_class.return_value = mock_client
 

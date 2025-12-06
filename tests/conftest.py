@@ -209,3 +209,59 @@ def disable_force_env_override(monkeypatch):
         yield
     finally:
         env_config.reload_env()
+
+
+@pytest.fixture(autouse=True)
+def mock_openai_clients_globally(request):
+    """Mock OpenAI clients globally to prevent HTTP client creation in unit tests.
+
+    This ensures that all unit tests are properly isolated and don't create
+    real network connections, even when providers are instantiated via registry.
+
+    Tests that need real OpenAI clients (e.g., cassette tests) should be marked
+    with @pytest.mark.no_mock_provider to skip this fixture.
+    """
+    # Skip mocking for tests that explicitly opt out
+    if hasattr(request, "node"):
+        marker = request.node.get_closest_marker("no_mock_provider")
+        if marker:
+            yield None
+            return
+
+        # Also skip for cassette-based tests (check if test uses openai_cassettes)
+        test_file = str(request.node.fspath) if hasattr(request, "node") and hasattr(request.node, "fspath") else ""
+        if "cassette" in test_file or "cross_model" in test_file or "_integration" in test_file:
+            yield None
+            return
+
+    from unittest.mock import MagicMock, patch
+
+    with (
+        patch("providers.openai_compatible.OpenAI") as mock_openai_compat,
+        patch("providers.openai_responses.OpenAI") as mock_openai_responses,
+    ):
+        # Create mock client instances
+        mock_compat_client = MagicMock()
+        mock_responses_client = MagicMock()
+
+        mock_openai_compat.return_value = mock_compat_client
+        mock_openai_responses.return_value = mock_responses_client
+
+        yield (mock_compat_client, mock_responses_client)
+
+
+@pytest.fixture(autouse=True)
+def cleanup_providers():
+    """Force garbage collection after each test to trigger __del__ cleanup."""
+    yield
+    # Force immediate garbage collection to clean up provider instances
+    import gc
+    import warnings
+
+    # Suppress ResourceWarnings during cleanup
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", ResourceWarning)
+        # Run garbage collection multiple times to ensure cleanup
+        gc.collect()
+        gc.collect()
+        gc.collect()

@@ -10,6 +10,8 @@ try:  # pragma: no cover - optional dependency
 except ImportError:  # pragma: no cover
     AzureOpenAI = None  # type: ignore[assignment]
 
+from config import OPENAI_IMAGE_DETAIL
+from utils import openai_token_estimator
 from utils.env import get_env, suppress_env_vars
 
 from .openai import OpenAIModelProvider
@@ -340,3 +342,58 @@ class AzureOpenAIProvider(OpenAICompatibleProvider):
                 return models
 
         return super()._parse_allowed_models()
+
+    # ------------------------------------------------------------------
+    # Token estimation (Azure uses OpenAI models)
+    # ------------------------------------------------------------------
+    def _calculate_text_tokens(self, model_name: str, content: str) -> int:
+        """Calculate text token count using OpenAI's tiktoken.
+
+        Azure OpenAI hosts OpenAI models, so we use OpenAI's token estimation.
+
+        Args:
+            model_name: The model to count tokens for
+            content: Text content
+
+        Returns:
+            Token count
+        """
+        return openai_token_estimator.calculate_text_tokens(model_name, content)
+
+    def estimate_tokens_for_files(self, model_name: str, files: list[dict], image_detail: str = None) -> int:
+        """Estimate token count for files using OpenAI's offline calculation.
+
+        Azure OpenAI hosts OpenAI models, so we use OpenAI's token estimation.
+
+        Supports:
+        - Text files: tiktoken with model-specific encodings
+        - Images:
+          * Tile-based (Main models: GPT-4o, GPT-4.1, GPT-5, o3, o4)
+          * Patch-based (Small models: mini/nano variants)
+        - PDF/Documents: Via Responses API (accurate with MediaBox and aspect ratio)
+
+        Args:
+            model_name: The model to estimate tokens for
+            files: List of file dicts with 'path' and 'mime_type' keys
+            image_detail: Detail level for images ("low", "high", or "auto").
+                          If None, uses module-level OPENAI_IMAGE_DETAIL configuration
+
+        Returns:
+            Estimated token count
+
+        Raises:
+            ValueError: If a file cannot be accessed or has an unsupported mime type
+        """
+        # Check if model uses Responses API (enables PDF/document support)
+        try:
+            capabilities = self.get_capabilities(model_name)
+            use_responses_api = getattr(capabilities, "use_openai_response_api", False)
+        except Exception:
+            use_responses_api = False
+
+        # Use explicit parameter or fall back to module-level config (PR 302 pattern)
+        detail = image_detail if image_detail is not None else OPENAI_IMAGE_DETAIL
+
+        return openai_token_estimator.estimate_tokens_for_files(
+            model_name, files, detail, use_responses_api=use_responses_api
+        )

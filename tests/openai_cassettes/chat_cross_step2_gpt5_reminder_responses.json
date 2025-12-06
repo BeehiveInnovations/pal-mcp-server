@@ -1,0 +1,94 @@
+{
+  "interactions": [
+    {
+      "request": {
+        "content": {
+          "input": [
+            {
+              "content": [
+                {
+                  "text": "\nYou are a senior engineering thought-partner collaborating with another AI agent. Your mission is to brainstorm, validate ideas,\nand offer well-reasoned second opinions on technical decisions when they are justified and practical.\n\nCRITICAL LINE NUMBER INSTRUCTIONS\nCode is presented with line number markers \"LINE\u2502 code\". These markers are for reference ONLY and MUST NOT be\nincluded in any code you generate. Always reference specific line numbers in your replies in order to locate\nexact positions if needed to point to exact locations. Include a very short code excerpt alongside for clarity.\nInclude context_start_text and context_end_text as backup references. Never include \"LINE\u2502\" markers in generated code\nsnippets.\n\nIF MORE INFORMATION IS NEEDED\nIf the agent is discussing specific code, functions, or project components that was not given as part of the context,\nand you need additional context (e.g., related files, configuration, dependencies, test files) to provide meaningful\ncollaboration, you MUST respond ONLY with this JSON format (and nothing else). Do NOT ask for the same file you've been\nprovided unless for some reason its content is missing or incomplete:\n{\n  \"status\": \"files_required_to_continue\",\n  \"mandatory_instructions\": \"<your critical instructions for the agent>\",\n  \"files_needed\": [\"[file name here]\", \"[or some folder/]\"]\n}\n\nSCOPE & FOCUS\n\u2022 Ground every suggestion in the project's current tech stack, languages, frameworks, and constraints.\n\u2022 Recommend new technologies or patterns ONLY when they provide clearly superior outcomes with minimal added complexity.\n\u2022 Avoid speculative, over-engineered, or unnecessarily abstract designs that exceed current project goals or needs.\n\u2022 Keep proposals practical and directly actionable within the existing architecture.\n\u2022 Overengineering is an anti-pattern \u2014 avoid solutions that introduce unnecessary abstraction, indirection, or\n  configuration in anticipation of complexity that does not yet exist, is not clearly justified by the current scope,\n  and may not arise in the foreseeable future.\n\nCOLLABORATION APPROACH\n1. Treat the collaborating agent as an equally senior peer. Stay on topic, avoid unnecessary praise or filler because mixing compliments with pushback can blur priorities, and conserve output tokens for substance.\n2. Engage deeply with the agent's input \u2013 extend, refine, and explore alternatives ONLY WHEN they are well-justified and materially beneficial.\n3. Examine edge cases, failure modes, and unintended consequences specific to the code / stack in use.\n4. Present balanced perspectives, outlining trade-offs and their implications.\n5. Challenge assumptions constructively; when a proposal undermines stated objectives or scope, push back respectfully with clear, goal-aligned reasoning.\n6. Provide concrete examples and actionable next steps that fit within scope. Prioritize direct, achievable outcomes.\n7. Ask targeted clarifying questions whenever objectives, constraints, or rationale feel ambiguous; do not speculate when details are uncertain.\n\nBRAINSTORMING GUIDELINES\n\u2022 Offer multiple viable strategies ONLY WHEN clearly beneficial within the current environment.\n\u2022 Suggest creative solutions that operate within real-world constraints, and avoid proposing major shifts unless truly warranted.\n\u2022 Surface pitfalls early, particularly those tied to the chosen frameworks, languages, design direction or choice.\n\u2022 Evaluate scalability, maintainability, and operational realities inside the existing architecture and current\nframework.\n\u2022 Reference industry best practices relevant to the technologies in use.\n\u2022 Communicate concisely and technically, assuming an experienced engineering audience.\n\nREMEMBER\nAct as a peer, not a lecturer. Avoid overcomplicating. Aim for depth over breadth, stay within project boundaries, and help the team\nreach sound, actionable decisions.\n",
+                  "type": "input_text"
+                }
+              ],
+              "role": "user",
+              "type": "message"
+            },
+            {
+              "content": [
+                {
+                  "text": "=== CONVERSATION HISTORY (CONTINUATION) ===\nThread: dbadc23e-c0f4-4853-982f-6c5bc722b5de\nTool: chat\nTurn 3/50\nYou are continuing this conversation thread from where it left off.\n\nPrevious conversation turns:\n\n--- Turn 1 (Agent using chat) ---\nPick a number between 1 and 10 and respond with JUST that number.\n\n--- Turn 2 (gemini-2.5-flash using chat via google) ---\n7\n\n---\n\nAGENT'S TURN: Evaluate this perspective alongside your analysis to form a comprehensive solution and continue with the user's request and task at hand.\n\n--- Turn 3 (Agent) ---\nRemind me, what number did you pick, respond with JUST that number.\n\n=== END CONVERSATION HISTORY ===\n\nIMPORTANT: You are continuing an existing conversation thread. Build upon the previous exchanges shown above,\nreference earlier points, and maintain consistency with what has been discussed.\n\nDO NOT repeat or summarize previous analysis, findings, or instructions that are already covered in the\nconversation history. Instead, provide only new insights, additional analysis, or direct answers to\nthe follow-up question / concerns / insights. Assume the user has read the prior conversation.\n\nThis is turn 4 of the conversation - use the conversation history above to provide a coherent continuation.\n\n=== NEW USER INPUT ===\n=== USER REQUEST ===\nRemind me, what number did you pick, respond with JUST that number.\n=== END REQUEST ===\n\nPlease provide a thoughtful, comprehensive response:",
+                  "type": "input_text"
+                }
+              ],
+              "role": "user",
+              "type": "message"
+            }
+          ],
+          "model": "gpt-5",
+          "reasoning": {
+            "effort": "medium"
+          },
+          "store": true
+        },
+        "headers": {
+          "accept": "application/json",
+          "accept-encoding": "gzip, deflate",
+          "authorization": "Bearer SANITIZED",
+          "connection": "keep-alive",
+          "content-length": "5690",
+          "content-type": "application/json",
+          "host": "api.openai.com",
+          "user-agent": "OpenAI/Python 2.6.1",
+          "x-stainless-arch": "x64",
+          "x-stainless-async": "false",
+          "x-stainless-lang": "python",
+          "x-stainless-os": "Linux",
+          "x-stainless-package-version": "2.6.1",
+          "x-stainless-read-timeout": "30.0",
+          "x-stainless-retry-count": "0",
+          "x-stainless-runtime": "CPython",
+          "x-stainless-runtime-version": "3.11.2"
+        },
+        "method": "POST",
+        "path": "/v1/responses",
+        "url": "https://api.openai.com/v1/responses"
+      },
+      "response": {
+        "content": {
+          "data": "ewogICJpZCI6ICJyZXNwXzAzNTdlNTU0MDRkNWEzNDUwMDY5MDNmZjJjN2NjNDgxOTZhZDczZDM1M2Y5M2IzODU5IiwKICAib2JqZWN0IjogInJlc3BvbnNlIiwKICAiY3JlYXRlZF9hdCI6IDE3NjE4Njk2MTIsCiAgInN0YXR1cyI6ICJjb21wbGV0ZWQiLAogICJiYWNrZ3JvdW5kIjogZmFsc2UsCiAgImJpbGxpbmciOiB7CiAgICAicGF5ZXIiOiAib3BlbmFpIgogIH0sCiAgImVycm9yIjogbnVsbCwKICAiaW5jb21wbGV0ZV9kZXRhaWxzIjogbnVsbCwKICAiaW5zdHJ1Y3Rpb25zIjogbnVsbCwKICAibWF4X291dHB1dF90b2tlbnMiOiBudWxsLAogICJtYXhfdG9vbF9jYWxscyI6IG51bGwsCiAgIm1vZGVsIjogImdwdC01LTIwMjUtMDgtMDciLAogICJvdXRwdXQiOiBbCiAgICB7CiAgICAgICJpZCI6ICJyc18wMzU3ZTU1NDA0ZDVhMzQ1MDA2OTAzZmYyZDI4NWM4MTk2YTczMGYxNGQ1ZTdjZGVhOSIsCiAgICAgICJ0eXBlIjogInJlYXNvbmluZyIsCiAgICAgICJzdW1tYXJ5IjogW10KICAgIH0sCiAgICB7CiAgICAgICJpZCI6ICJtc2dfMDM1N2U1NTQwNGQ1YTM0NTAwNjkwM2ZmMzA2MjZjODE5Njk5MjgxZDIwMzgxMTYwY2MiLAogICAgICAidHlwZSI6ICJtZXNzYWdlIiwKICAgICAgInN0YXR1cyI6ICJjb21wbGV0ZWQiLAogICAgICAiY29udGVudCI6IFsKICAgICAgICB7CiAgICAgICAgICAidHlwZSI6ICJvdXRwdXRfdGV4dCIsCiAgICAgICAgICAiYW5ub3RhdGlvbnMiOiBbXSwKICAgICAgICAgICJsb2dwcm9icyI6IFtdLAogICAgICAgICAgInRleHQiOiAiNyIKICAgICAgICB9CiAgICAgIF0sCiAgICAgICJyb2xlIjogImFzc2lzdGFudCIKICAgIH0KICBdLAogICJwYXJhbGxlbF90b29sX2NhbGxzIjogdHJ1ZSwKICAicHJldmlvdXNfcmVzcG9uc2VfaWQiOiBudWxsLAogICJwcm9tcHRfY2FjaGVfa2V5IjogbnVsbCwKICAicmVhc29uaW5nIjogewogICAgImVmZm9ydCI6ICJtZWRpdW0iLAogICAgInN1bW1hcnkiOiBudWxsCiAgfSwKICAic2FmZXR5X2lkZW50aWZpZXIiOiBudWxsLAogICJzZXJ2aWNlX3RpZXIiOiAiZGVmYXVsdCIsCiAgInN0b3JlIjogdHJ1ZSwKICAidGVtcGVyYXR1cmUiOiAxLjAsCiAgInRleHQiOiB7CiAgICAiZm9ybWF0IjogewogICAgICAidHlwZSI6ICJ0ZXh0IgogICAgfSwKICAgICJ2ZXJib3NpdHkiOiAibWVkaXVtIgogIH0sCiAgInRvb2xfY2hvaWNlIjogImF1dG8iLAogICJ0b29scyI6IFtdLAogICJ0b3BfbG9ncHJvYnMiOiAwLAogICJ0b3BfcCI6IDEuMCwKICAidHJ1bmNhdGlvbiI6ICJkaXNhYmxlZCIsCiAgInVzYWdlIjogewogICAgImlucHV0X3Rva2VucyI6IDEwNTUsCiAgICAiaW5wdXRfdG9rZW5zX2RldGFpbHMiOiB7CiAgICAgICJjYWNoZWRfdG9rZW5zIjogMAogICAgfSwKICAgICJvdXRwdXRfdG9rZW5zIjogMTk5LAogICAgIm91dHB1dF90b2tlbnNfZGV0YWlscyI6IHsKICAgICAgInJlYXNvbmluZ190b2tlbnMiOiAxOTIKICAgIH0sCiAgICAidG90YWxfdG9rZW5zIjogMTI1NAogIH0sCiAgInVzZXIiOiBudWxsLAogICJtZXRhZGF0YSI6IHt9Cn0=",
+          "encoding": "base64",
+          "size": 1541
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "996ef2759a61489a-LAX",
+          "connection": "keep-alive",
+          "content-encoding": "gzip",
+          "content-type": "application/json",
+          "date": "Fri, 31 Oct 2025 00:13:36 GMT",
+          "openai-organization": "dragonfsky",
+          "openai-processing-ms": "4308",
+          "openai-project": "proj_Jce7UddDF7F0VCqht04RQAmh",
+          "openai-version": "2020-10-01",
+          "server": "cloudflare",
+          "set-cookie": "__cf_bm=HGaCPnjarWKT.gi_dwq7s865ngfomcHLMq44R5kOjF0-(XXX) XXX-XXXX-0.0.0.0-vvhqb2erbJzW1QXppl6olh14LQng_Du1dW6qgIXiFXyYx1KspwLMN_e_iO7xkWKrtGwm8cR9yUSxyYDMqu5Yksv.MoFvDrAmbsR0bSmR95k; path=/; expires=Fri, 31-Oct-25 00:43:36 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=If8UEF46GnHtCrRO7KQ7FhbaE9S6yzBG8ojMwZdO810-176(XXX) XXX-XXXX-0.0.0.0-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "transfer-encoding": "chunked",
+          "x-content-type-options": "nosniff",
+          "x-envoy-upstream-service-time": "4315",
+          "x-ratelimit-limit-requests": "500",
+          "x-ratelimit-limit-tokens": "500000",
+          "x-ratelimit-remaining-requests": "499",
+          "x-ratelimit-remaining-tokens": "500000",
+          "x-ratelimit-reset-requests": "120ms",
+          "x-ratelimit-reset-tokens": "0s",
+          "x-request-id": "req_a07453754e664a778b7f1a19db83893e"
+        },
+        "reason_phrase": "OK",
+        "status_code": 200
+      }
+    }
+  ]
+}

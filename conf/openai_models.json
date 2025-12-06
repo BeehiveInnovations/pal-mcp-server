@@ -44,7 +44,9 @@
       "supports_images": true,
       "supports_temperature": true,
       "max_image_size_mb": 20.0,
-      "temperature_constraint": "fixed"
+      "temperature_constraint": "fixed",
+      "use_openai_response_api": true,
+      "default_reasoning_effort": "medium"
     },
     {
       "model_name": "gpt-5-pro",
@@ -90,7 +92,9 @@
       "supports_images": true,
       "supports_temperature": true,
       "max_image_size_mb": 20.0,
-      "temperature_constraint": "fixed"
+      "temperature_constraint": "fixed",
+      "use_openai_response_api": true,
+      "default_reasoning_effort": "low"
     },
     {
       "model_name": "gpt-5-nano",
@@ -112,7 +116,9 @@
       "supports_images": true,
       "supports_temperature": true,
       "max_image_size_mb": 20.0,
-      "temperature_constraint": "fixed"
+      "temperature_constraint": "fixed",
+      "use_openai_response_api": true,
+      "default_reasoning_effort": "low"
     },
     {
       "model_name": "o3",
@@ -129,7 +135,9 @@
       "supports_images": true,
       "supports_temperature": false,
       "max_image_size_mb": 20.0,
-      "temperature_constraint": "fixed"
+      "temperature_constraint": "fixed",
+      "use_openai_response_api": true,
+      "default_reasoning_effort": "medium"
     },
     {
       "model_name": "o3-mini",
@@ -149,7 +157,9 @@
       "supports_images": true,
       "supports_temperature": false,
       "max_image_size_mb": 20.0,
-      "temperature_constraint": "fixed"
+      "temperature_constraint": "fixed",
+      "use_openai_response_api": true,
+      "default_reasoning_effort": "low"
     },
     {
       "model_name": "o3-pro",
@@ -170,7 +180,8 @@
       "supports_temperature": false,
       "max_image_size_mb": 20.0,
       "use_openai_response_api": true,
-      "temperature_constraint": "fixed"
+      "temperature_constraint": "fixed",
+      "default_reasoning_effort": "high"
     },
     {
       "model_name": "o4-mini",
@@ -189,7 +200,9 @@
       "supports_images": true,
       "supports_temperature": false,
       "max_image_size_mb": 20.0,
-      "temperature_constraint": "fixed"
+      "temperature_constraint": "fixed",
+      "use_openai_response_api": true,
+      "default_reasoning_effort": "low"
     },
     {
       "model_name": "gpt-4.1",
@@ -208,7 +221,9 @@
       "supports_json_mode": true,
       "supports_images": true,
       "supports_temperature": true,
-      "max_image_size_mb": 20.0
+      "max_image_size_mb": 20.0,
+      "use_openai_response_api": true,
+      "default_reasoning_effort": "medium"
     },
     {
       "model_name": "gpt-5-codex",
@@ -231,7 +246,8 @@
       "supports_images": true,
       "supports_temperature": true,
       "max_image_size_mb": 20.0,
-      "use_openai_response_api": true
+      "use_openai_response_api": true,
+      "default_reasoning_effort": "medium"
     },
     {
       "model_name": "gpt-5.1",

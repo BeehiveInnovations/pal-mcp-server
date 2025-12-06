@@ -1,0 +1,94 @@
+{
+  "interactions": [
+    {
+      "request": {
+        "content": {
+          "input": [
+            {
+              "content": [
+                {
+                  "text": "\nROLE\nYou are an expert technical consultant providing consensus analysis on proposals, plans, and ideas. The agent will present you\nwith a technical proposition and your task is to deliver a structured, rigorous assessment that helps validate feasibility\nand implementation approaches.\n\nYour feedback carries significant weight - it may directly influence project decisions, future direction, and could have\nbroader impacts on scale, revenue, and overall scope. The questioner values your expertise immensely and relies on your\nanalysis to make informed decisions that affect their success.\n\nCRITICAL LINE NUMBER INSTRUCTIONS\nCode is presented with line number markers \"LINE\u2502 code\". These markers are for reference ONLY and MUST NOT be\nincluded in any code you generate. Always reference specific line numbers in your replies in order to locate\nexact positions if needed to point to exact locations. Include a very short code excerpt alongside for clarity.\nInclude context_start_text and context_end_text as backup references. Never include \"LINE\u2502\" markers in generated code\nsnippets.\n\nPERSPECTIVE FRAMEWORK\nSUPPORTIVE PERSPECTIVE WITH INTEGRITY\n\nYou are tasked with advocating FOR this proposal, but with CRITICAL GUARDRAILS:\n\nMANDATORY ETHICAL CONSTRAINTS:\n- This is NOT a debate for entertainment. You MUST act in good faith and in the best interest of the questioner\n- You MUST think deeply about whether supporting this idea is safe, sound, and passes essential requirements\n- You MUST be direct and unequivocal in saying \"this is a bad idea\" when it truly is\n- There must be at least ONE COMPELLING reason to be optimistic, otherwise DO NOT support it\n\nWHEN TO REFUSE SUPPORT (MUST OVERRIDE STANCE):\n- If the idea is fundamentally harmful to users, project, or stakeholders\n- If implementation would violate security, privacy, or ethical standards\n- If the proposal is technically infeasible within realistic constraints\n- If costs/risks dramatically outweigh any potential benefits\n\nYOUR SUPPORTIVE ANALYSIS SHOULD:\n- Identify genuine strengths and opportunities\n- Propose solutions to overcome legitimate challenges\n- Highlight synergies with existing systems\n- Suggest optimizations that enhance value\n- Present realistic implementation pathways\n\nRemember: Being \"for\" means finding the BEST possible version of the idea IF it has merit, not blindly supporting bad ideas.\n\nIF MORE INFORMATION IS NEEDED\nIMPORTANT: Only request files for TECHNICAL IMPLEMENTATION questions where you need to see actual code, architecture,\nor technical specifications. For business strategy, product decisions, or conceptual questions, provide analysis based\non the information given rather than requesting technical files.\n\nIf you need additional technical context (e.g., related files, system architecture, requirements, code snippets) to\nprovide thorough analysis of TECHNICAL IMPLEMENTATION details, you MUST ONLY respond with this exact JSON (and nothing else).\nDo NOT ask for the same file you've been provided unless for some reason its content is missing or incomplete:\n{\n  \"status\": \"files_required_to_continue\",\n  \"mandatory_instructions\": \"<your critical instructions for the agent>\",\n  \"files_needed\": [\"[file name here]\", \"[or some folder/]\"]\n}\n\nFor business strategy, product planning, or conceptual questions, proceed with analysis using your expertise and the\ncontext provided, even if specific technical details are not available.\n\nEVALUATION FRAMEWORK\nAssess the proposal across these critical dimensions. Your stance influences HOW you present findings, not WHETHER you\nacknowledge fundamental truths about feasibility, safety, or value:\n\n1. TECHNICAL FEASIBILITY\n   - Is this technically achievable with reasonable effort?\n   - What are the core technical dependencies and requirements?\n   - Are there any fundamental technical blockers?\n\n2. PROJECT SUITABILITY\n   - Does this fit the existing codebase architecture and patterns?\n   - Is it compatible with current technology stack and constraints?\n   - How well does it align with the project's technical direction?\n\n3. USER VALUE ASSESSMENT\n   - Will users actually want and use this feature?\n   - What concrete benefits does this provide?\n   - How does this compare to alternative solutions?\n\n4. IMPLEMENTATION COMPLEXITY\n   - What are the main challenges, risks, and dependencies?\n   - What is the estimated effort and timeline?\n   - What expertise and resources are required?\n\n5. ALTERNATIVE APPROACHES\n   - Are there simpler ways to achieve the same goals?\n   - What are the trade-offs between different approaches?\n   - Should we consider a different strategy entirely?\n\n6. INDUSTRY PERSPECTIVE\n   - How do similar products/companies handle this problem?\n   - What are current best practices and emerging patterns?\n   - Are there proven solutions or cautionary tales?\n\n7. LONG-TERM IMPLICATIONS\n   - Maintenance burden and technical debt considerations\n   - Scalability and performance implications\n   - Evolution and extensibility potential\n\nMANDATORY RESPONSE FORMAT\nYou MUST respond in exactly this Markdown structure. Do not deviate from this format:\n\n## Verdict\nProvide a single, clear sentence summarizing your overall assessment (e.g., \"Technically feasible but requires significant\ninfrastructure investment\", \"Strong user value proposition with manageable implementation risks\", \"Overly complex approach -\nrecommend simplified alternative\").\n\n## Analysis\nProvide detailed assessment addressing each point in the evaluation framework. Use clear reasoning and specific examples.\nBe thorough but concise. Address both strengths and weaknesses objectively.\n\n## Confidence Score\nProvide a numerical score from 1 (low confidence) to 10 (high confidence) followed by a brief justification explaining what\ndrives your confidence level and what uncertainties remain.\nFormat: \"X/10 - [brief justification]\"\nExample: \"7/10 - High confidence in technical feasibility assessment based on similar implementations, but uncertain about\nuser adoption without market validation data.\"\n\n## Key Takeaways\nProvide 3-5 bullet points highlighting the most critical insights, risks, or recommendations. These should be actionable\nand specific.\n\nQUALITY STANDARDS\n- Ground all insights in the current project's scope and constraints\n- Be honest about limitations and uncertainties\n- Focus on practical, implementable solutions rather than theoretical possibilities\n- Provide specific, actionable guidance rather than generic advice\n- Balance optimism with realistic risk assessment\n- Reference concrete examples and precedents when possible\n\nREMINDERS\n- Your assessment will be synthesized with other expert opinions by the agent\n- Aim to provide unique insights that complement other perspectives\n- If files are provided, reference specific technical details in your analysis\n- Maintain professional objectivity while being decisive in your recommendations\n- Keep your response concise - your entire reply must not exceed 850 tokens to ensure transport compatibility\n- CRITICAL: Your stance does NOT override your responsibility to provide truthful, ethical, and beneficial guidance\n- Bad ideas must be called out regardless of stance; good ideas must be acknowledged regardless of stance\n",
+                  "type": "input_text"
+                }
+              ],
+              "role": "user",
+              "type": "message"
+            },
+            {
+              "content": [
+                {
+                  "text": "Evaluate SwiftUI vs UIKit adoption and recommend ONE word (SwiftUI or UIKit).",
+                  "type": "input_text"
+                }
+              ],
+              "role": "user",
+              "type": "message"
+            }
+          ],
+          "model": "gpt-5",
+          "reasoning": {
+            "effort": "medium"
+          },
+          "store": true
+        },
+        "headers": {
+          "accept": "application/json",
+          "accept-encoding": "gzip, deflate",
+          "authorization": "Bearer SANITIZED",
+          "connection": "keep-alive",
+          "content-length": "7719",
+          "content-type": "application/json",
+          "host": "api.openai.com",
+          "user-agent": "OpenAI/Python 2.6.1",
+          "x-stainless-arch": "x64",
+          "x-stainless-async": "false",
+          "x-stainless-lang": "python",
+          "x-stainless-os": "Linux",
+          "x-stainless-package-version": "2.6.1",
+          "x-stainless-read-timeout": "30.0",
+          "x-stainless-retry-count": "0",
+          "x-stainless-runtime": "CPython",
+          "x-stainless-runtime-version": "3.11.2"
+        },
+        "method": "POST",
+        "path": "/v1/responses",
+        "url": "https://api.openai.com/v1/responses"
+      },
+      "response": {
+        "content": {
+          "data": "ewogICJpZCI6ICJyZXNwXzBmYTE3OWIyYTI5Yzc3YmEwMDY5MDNmZjQzMzQ5ODgxOTZiZjU2NjFhZmU0ZmEyYTNiIiwKICAib2JqZWN0IjogInJlc3BvbnNlIiwKICAiY3JlYXRlZF9hdCI6IDE3NjE4Njk2MzUsCiAgInN0YXR1cyI6ICJjb21wbGV0ZWQiLAogICJiYWNrZ3JvdW5kIjogZmFsc2UsCiAgImJpbGxpbmciOiB7CiAgICAicGF5ZXIiOiAib3BlbmFpIgogIH0sCiAgImVycm9yIjogbnVsbCwKICAiaW5jb21wbGV0ZV9kZXRhaWxzIjogbnVsbCwKICAiaW5zdHJ1Y3Rpb25zIjogbnVsbCwKICAibWF4X291dHB1dF90b2tlbnMiOiBudWxsLAogICJtYXhfdG9vbF9jYWxscyI6IG51bGwsCiAgIm1vZGVsIjogImdwdC01LTIwMjUtMDgtMDciLAogICJvdXRwdXQiOiBbCiAgICB7CiAgICAgICJpZCI6ICJyc18wZmExNzliMmEyOWM3N2JhMDA2OTAzZmY0M2MzZTQ4MTk2YjNmZTc5MzMwM2YwMmRmZSIsCiAgICAgICJ0eXBlIjogInJlYXNvbmluZyIsCiAgICAgICJzdW1tYXJ5IjogW10KICAgIH0sCiAgICB7CiAgICAgICJpZCI6ICJtc2dfMGZhMTc5YjJhMjljNzdiYTAwNjkwM2ZmNTM3YjhjODE5NmI1Y2Y2ZjNmMmIzODA5ZGQiLAogICAgICAidHlwZSI6ICJtZXNzYWdlIiwKICAgICAgInN0YXR1cyI6ICJjb21wbGV0ZWQiLAogICAgICAiY29udGVudCI6IFsKICAgICAgICB7CiAgICAgICAgICAidHlwZSI6ICJvdXRwdXRfdGV4dCIsCiAgICAgICAgICAiYW5ub3RhdGlvbnMiOiBbXSwKICAgICAgICAgICJsb2dwcm9icyI6IFtdLAogICAgICAgICAgInRleHQiOiAiIyMgVmVyZGljdFxuU3Ryb25nIHVzZXIgdmFsdWUgYW5kIGxvbmdcdTIwMTF0ZXJtIGFsaWdubWVudCBwb2ludCB0byBTd2lmdFVJIGFzIHRoZSBkZWZhdWx0IGNob2ljZSwgd2l0aCBwcmFnbWF0aWMgVUlLaXQgaW50ZXJvcCBmb3IgZ2FwczsgcmVjb21tZW5kYXRpb246IFN3aWZ0VUkuXG5cbiMjIEFuYWx5c2lzXG4xLiBURUNITklDQUwgRkVBU0lCSUxJVFlcbi0gQm90aCBhcmUgZmVhc2libGU7IFN3aWZ0VUkgaGFzIG1hdHVyZWQgc2lnbmlmaWNhbnRseSAocm9idXN0IE5hdmlnYXRpb25TdGFjaywgaW1wcm92ZWQgTGlzdHMvR3JpZHMsIGxheW91dCBzeXN0ZW0sIE9ic2VydmF0aW9uLCBTd2lmdERhdGEpIGFuZCBpbnRlcm9wZXJhdGVzIGNsZWFubHkgd2l0aCBVSUtpdCB2aWEgVUlIb3N0aW5nQ29udHJvbGxlci9VSVZpZXdSZXByZXNlbnRhYmxlLlxuLSBObyBmdW5kYW1lbnRhbCBibG9ja2VycyBmb3IgbW9zdCBhcHAgY2F0ZWdvcmllczsgZWRnZSBjYXNlcyBsaWtlIGhpZ2hseSBjdXN0b21pemVkIHRleHQsIGV4b3RpYyBnZXN0dXJlcywgb3IgdWx0cmFcdTIwMTFmaW5lIGxheW91dCBjb250cm9sIG1heSBzdGlsbCBiZSBlYXNpZXIgaW4gVUlLaXQgb3IgdmlhIENvcmUgQW5pbWF0aW9uL0NvcmUgVGV4dCBicmlkZ2VkIGludG8gU3dpZnRVSS5cblxuMi4gUFJPSkVDVCBTVUlUQUJJTElUWVxuLSBHcmVlbmZpZWxkIGFwcHMgdGFyZ2V0aW5nIGlPUyAxNSsgKGlkZWFsbHkgMTYvMTcrKSBmaXQgU3dpZnRVSSB3ZWxsOyBpdCBhbGlnbnMgd2l0aCBNVlZNIGFuZCBtdWx0aXBsYXRmb3JtIGdvYWxzIChpT1MsIGlQYWRPUywgd2F0Y2hPUywgbWFjT1MsIHZpc2lvbk9TKS5cbi0gRm9yIGV4aXN0aW5nIGxhcmdlIFVJS2l0IGNvZGViYXNlcywgYWRvcHQgU3dpZnRVSSBpbmNyZW1lbnRhbGx5IChuZXcgc2NyZWVucy9mZWF0dXJlcyBpbiBTd2lmdFVJLCBrZWVwIGZvdW5kYXRpb25zIGluIFVJS2l0KSB0byBhdm9pZCBkaXNydXB0aXZlIHJld3JpdGVzLlxuXG4zLiBVU0VSIFZBTFVFIEFTU0VTU01FTlRcbi0gRmFzdGVyIGl0ZXJhdGlvbiBhbmQgdmlzdWFsIHByZXZpZXdzIGVuYWJsZSB0aWdodGVyIFVYIGxvb3BzOyBidWlsdFx1MjAxMWluIGFjY2Vzc2liaWxpdHksIGR5bmFtaWMgdHlwZSwgYW5kIGxvY2FsaXphdGlvbiBzdXBwb3J0IGluY3JlYXNlIHF1YWxpdHkuXG4tIERlY2xhcmF0aXZlIGFuaW1hdGlvbnMgYW5kIGNvbnNpc3RlbmN5IGFjcm9zcyBwbGF0Zm9ybXMgZWxldmF0ZSBwZXJjZWl2ZWQgcG9saXNoLiBVc2VycyBiZW5lZml0IGluZGlyZWN0bHkgdGhyb3VnaCBxdWlja2VyIGZlYXR1cmUgZGVsaXZlcnkgYW5kIG1vcmUgY29uc2lzdGVudCBVSS5cblxuNC4gSU1QTEVNRU5UQVRJT04gQ09NUExFWElUWVxuLSBTd2lmdFVJIHJlZHVjZXMgYm9pbGVycGxhdGUgYnV0IGludHJvZHVjZXMgYSBsZWFybmluZyBjdXJ2ZSBhcm91bmQgZGF0YSBmbG93IChTdGF0ZS9PYnNlcnZlZC9PYmplY3QvRW52aXJvbm1lbnQpIGFuZCBuYXZpZ2F0aW9uIHBhdHRlcm5zLlxuLSBUb29saW5nIGlzIGdvb2QgYnV0IG5vdCBwZXJmZWN0OyBkZWJ1Z2dpbmcgdmlldyBkaWZmcyBhbmQgcGVyZm9ybWFuY2UgcmVncmVzc2lvbnMgKGUuZy4sIGxhcmdlIExpc3RzLCBjb21wbGV4IGxheW91dHMpIHJlcXVpcmVzIHByb2ZpbGluZy4gS2VlcCBVSUtpdCBmb3IgcHJvYmxlbWF0aWMgdmlld3MuXG4tIEVzdGltYXRlZCBlZmZvcnQ6IEdyZWVuZmllbGQgcmFtcCBpcyBtb2RlcmF0ZTsgaHlicmlkIG1pZ3JhdGlvbiBpcyBsb3dcdTIwMTFyaXNrIGlmIHNjb3BlZCB0byBuZXcgc3VyZmFjZXMuIFNraWxscyBuZWVkZWQ6IG1vZGVybiBTd2lmdCwgQ29tYmluZS9hc3luYywgU3dpZnRVSSBhcmNoaXRlY3R1cmUuXG5cbjUuIEFMVEVSTkFUSVZFIEFQUFJPQUNIRVNcbi0gSHlicmlkIHN0cmF0ZWd5OiBTd2lmdFVJIGZvciBtb3N0IFVJLCBVSUtpdCBmb3IgYWR2YW5jZWQgb3IgbGVnYWN5IGNvbXBvbmVudHMuIFRyYWRlXHUyMDExb2ZmOiB0d28gcGFyYWRpZ21zLCBidXQgbWluaW1hbCBvdmVyaGVhZCBkdWUgdG8gbWF0dXJlIGludGVyb3BlcmFiaWxpdHkuXG4tIElmIG1pbiBPUyA8IGlPUyAxMyBvciBoZWF2eSBjdXN0b20gcmVuZGVyaW5nIGRvbWluYXRlcywgVUlLaXQgcmVtYWlucyBwcmFnbWF0aWM7IG90aGVyd2lzZSBTd2lmdFVJIGRlbGl2ZXJzIGJldHRlciBsb25nXHUyMDExdGVybSBsZXZlcmFnZS5cblxuNi4gSU5EVVNUUlkgUEVSU1BFQ1RJVkVcbi0gQXBwbGVcdTIwMTlzIHBsYXRmb3JtIHJvYWRtYXAgaXMgU3dpZnRVSVx1MjAxMWZpcnN0IChlc3BlY2lhbGx5IHdhdGNoT1MgYW5kIHZpc2lvbk9TKSwgd2l0aCBvbmdvaW5nIEFQSSBzdXJmYWNlIGdyb3d0aCBlYWNoIHJlbGVhc2UuXG4tIE1hbnkgcHJvZHVjdGlvbiBhcHBzIHNoaXAgaHlicmlkIHN0YWNrcyB0byBiYWxhbmNlIHZlbG9jaXR5IGFuZCBjb250cm9sXHUyMDE0dGhpcyBwYXR0ZXJuIGlzIG5vdyBhIGJlc3QgcHJhY3RpY2UgcmF0aGVyIHRoYW4gYW4gZXhjZXB0aW9uLlxuXG43LiBMT05HLVRFUk0gSU1QTElDQVRJT05TXG4tIFN3aWZ0VUkgcG9zaXRpb25zIHRoZSBjb2RlYmFzZSBmb3IgZnV0dXJlIE9TIGZlYXR1cmVzLCBtdWx0aXBsYXRmb3JtIHJlYWNoLCBhbmQgZWFzaWVyIHRoZW1pbmcvZGVzaWduIHN5c3RlbSBldm9sdXRpb24uXG4tIE1haW50ZW5hbmNlIGJ1cmRlbiB0eXBpY2FsbHkgZHJvcHMgZHVlIHRvIGxlc3MgaW1wZXJhdGl2ZSBnbHVlOyBwZXJmb3JtYW5jZSBzY2FsZXMgd2VsbCB3aGVuIHZpZXdzIGFyZSBjb21wb3NlZCB0aG91Z2h0ZnVsbHkgYW5kIGxpc3RzIGFyZSBkaWZmXHUyMDExZnJpZW5kbHkuXG4tIFRlY2huaWNhbCBkZWJ0IHJpc2s6IG1pc3VzaW5nIHN0YXRlIG9yIG92ZXJcdTIwMTFuZXN0aW5nIHZpZXdzOyBtaXRpZ2F0ZSB3aXRoIGNsZWFyIGFyY2hpdGVjdHVyZSAoZmVhdHVyZSBtb2R1bGVzLCB1bmlkaXJlY3Rpb25hbCBkYXRhIGZsb3cpIGFuZCB2aWV3IG1vZGVsIHRlc3RpbmcuXG5cbiMjIENvbmZpZGVuY2UgU2NvcmVcbjcvMTAgLSBDb25maWRlbnQgaW4gZ2VuZXJhbCBndWlkYW5jZSBhbmQgaW5kdXN0cnkgdHJhamVjdG9yeSBmYXZvcmluZyBTd2lmdFVJOyBleGFjdCByZWNvbW1lbmRhdGlvbiBzdHJlbmd0aCBkZXBlbmRzIG9uIHlvdXIgT1Mgc3VwcG9ydCBmbG9vciwgZXhpc3RpbmcgVUlLaXQgaW52ZXN0bWVudCwgYW5kIHRlYW0gZXhwZXJ0aXNlLlxuXG4jIyBLZXkgVGFrZWF3YXlzXG4tIERlZmF1bHQgdG8gU3dpZnRVSSBmb3IgbmV3IGRldmVsb3BtZW50LCBlc3BlY2lhbGx5IGlmIHRhcmdldGluZyBpT1MgMTUvMTYrIGFuZCBhbnkgZnV0dXJlIG11bHRpcGxhdGZvcm0gYW1iaXRpb25zLlxuLSBVc2UgYSBoeWJyaWQgYXBwcm9hY2g6IGtlZXAgVUlLaXQgZm9yIHNwZWNpYWxpemVkIGNvbnRyb2xzIG9yIGxlZ2FjeSBzY3JlZW5zOyBicmlkZ2UgdmlhIFVJSG9zdGluZ0NvbnRyb2xsZXIvVUlWaWV3UmVwcmVzZW50YWJsZS5cbi0gUHJpb3JpdGl6ZSBzb2xpZCBzdGF0ZSBtYW5hZ2VtZW50IHBhdHRlcm5zIGFuZCBwZXJmb3JtYW5jZSBwcm9maWxpbmcgaW4gU3dpZnRVSSB0byBhdm9pZCBzdWJ0bGUgYnVncyBhbmQgbGF5b3V0IGluZWZmaWNpZW5jaWVzLlxuLSBJZiB5b3VyIGFwcCBtdXN0IHN1cHBvcnQgdmVyeSBvbGQgT1MgdmVyc2lvbnMgb3IgcmVsaWVzIG9uIGhpZ2hseSBiZXNwb2tlIHJlbmRlcmluZywgd2VpZ2ggcmV0YWluaW5nIG1vcmUgVUlLaXQgaW4gdGhlIHNob3J0IHRlcm0uXG4tIEVzdGFibGlzaCBtaWdyYXRpb24gZ3VhcmRyYWlsczogYWRvcHQgU3dpZnRVSSBmb3IgbmV0XHUyMDExbmV3IGZlYXR1cmVzLCBhdm9pZCByZXdyaXRlcywgYW5kIGluY3JlbWVudGFsbHkgcmVmYWN0b3IgaGlnaFx1MjAxMWltcGFjdCBzY3JlZW5zIGZpcnN0LiIKICAgICAgICB9CiAgICAgIF0sCiAgICAgICJyb2xlIjogImFzc2lzdGFudCIKICAgIH0KICBdLAogICJwYXJhbGxlbF90b29sX2NhbGxzIjogdHJ1ZSwKICAicHJldmlvdXNfcmVzcG9uc2VfaWQiOiBudWxsLAogICJwcm9tcHRfY2FjaGVfa2V5IjogbnVsbCwKICAicmVhc29uaW5nIjogewogICAgImVmZm9ydCI6ICJtZWRpdW0iLAogICAgInN1bW1hcnkiOiBudWxsCiAgfSwKICAic2FmZXR5X2lkZW50aWZpZXIiOiBudWxsLAogICJzZXJ2aWNlX3RpZXIiOiAiZGVmYXVsdCIsCiAgInN0b3JlIjogdHJ1ZSwKICAidGVtcGVyYXR1cmUiOiAxLjAsCiAgInRleHQiOiB7CiAgICAiZm9ybWF0IjogewogICAgICAidHlwZSI6ICJ0ZXh0IgogICAgfSwKICAgICJ2ZXJib3NpdHkiOiAibWVkaXVtIgogIH0sCiAgInRvb2xfY2hvaWNlIjogImF1dG8iLAogICJ0b29scyI6IFtdLAogICJ0b3BfbG9ncHJvYnMiOiAwLAogICJ0b3BfcCI6IDEuMCwKICAidHJ1bmNhdGlvbiI6ICJkaXNhYmxlZCIsCiAgInVzYWdlIjogewogICAgImlucHV0X3Rva2VucyI6IDE0MTYsCiAgICAiaW5wdXRfdG9rZW5zX2RldGFpbHMiOiB7CiAgICAgICJjYWNoZWRfdG9rZW5zIjogMAogICAgfSwKICAgICJvdXRwdXRfdG9rZW5zIjogMTYyMSwKICAgICJvdXRwdXRfdG9rZW5zX2RldGFpbHMiOiB7CiAgICAgICJyZWFzb25pbmdfdG9rZW5zIjogODMyCiAgICB9LAogICAgInRvdGFsX3Rva2VucyI6IDMwMzcKICB9LAogICJ1c2VyIjogbnVsbCwKICAibWV0YWRhdGEiOiB7fQp9",
+          "encoding": "base64",
+          "size": 5433
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "996ef3037a0e7c2a-LAX",
+          "connection": "keep-alive",
+          "content-encoding": "gzip",
+          "content-type": "application/json",
+          "date": "Fri, 31 Oct 2025 00:14:21 GMT",
+          "openai-organization": "dragonfsky",
+          "openai-processing-ms": "25940",
+          "openai-project": "proj_Jce7UddDF7F0VCqht04RQAmh",
+          "openai-version": "2020-10-01",
+          "server": "cloudflare",
+          "set-cookie": "__cf_bm=.hgWjEBUajCRI5FC1Q1.KFGepHrb3JaFr8M44G9gH6U-(XXX) XXX-XXXX-0.0.0.0-C6yM.5L4DAEFf0GPy_NrrM6nAjSePoaje0maZLGPJnHxWvoJ4evZIS24lNKzEV.Tlxe1UIAld1CNdQgk2ozPmPemeGpnJ7v2uu7VDRBIKog; path=/; expires=Fri, 31-Oct-25 00:44:21 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=aHo.NmVCiFRG53CU1pdEGYciGonkh6Ob53PAA.IYGzk-176(XXX) XXX-XXXX-0.0.0.0-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "transfer-encoding": "chunked",
+          "x-content-type-options": "nosniff",
+          "x-envoy-upstream-service-time": "25947",
+          "x-ratelimit-limit-requests": "500",
+          "x-ratelimit-limit-tokens": "500000",
+          "x-ratelimit-remaining-requests": "499",
+          "x-ratelimit-remaining-tokens": "498596",
+          "x-ratelimit-reset-requests": "120ms",
+          "x-ratelimit-reset-tokens": "168ms",
+          "x-request-id": "req_626c5c9c58b24d80a17d3e0eb8f4156d"
+        },
+        "reason_phrase": "OK",
+        "status_code": 200
+      }
+    }
+  ]
+}

@@ -17,8 +17,40 @@ from tools.chat import ChatTool
 # Directory for recorded HTTP interactions
 CASSETTE_DIR = Path(__file__).parent / "openai_cassettes"
 CASSETTE_DIR.mkdir(exist_ok=True)
-CASSETTE_PATH = CASSETTE_DIR / "chat_gpt5_moon_distance.json"
-CASSETTE_CONTINUATION_PATH = CASSETTE_DIR / "chat_gpt5_continuation.json"
+
+
+def get_cassette_for_model(base_name: str, model_name: str) -> Path:
+    """Dynamically select cassette based on model's API routing configuration.
+
+    This allows tests to automatically use the correct cassette depending on
+    whether the model routes to Chat API or Responses API, based on its
+    configuration in conf/openai_models.json.
+
+    Args:
+        base_name: Base cassette name (e.g., "chat_gpt5_moon_distance")
+        model_name: Model name to check routing for
+
+    Returns:
+        Path to appropriate cassette file:
+        - {base_name}_responses.json if model uses Responses API
+        - {base_name}.json if model uses Chat API
+    """
+    from providers.openai import OpenAIModelProvider
+
+    # Create provider to check model capabilities
+    provider = OpenAIModelProvider(api_key="dummy-key-for-check")
+    capabilities = provider.get_capabilities(model_name)
+
+    # Select cassette based on API routing
+    if capabilities.use_openai_response_api:
+        return CASSETTE_DIR / f"{base_name}_responses.json"
+    else:
+        return CASSETTE_DIR / f"{base_name}.json"
+
+
+# Dynamically select cassettes based on current model routing configuration
+CASSETTE_PATH = get_cassette_for_model("chat_gpt5_moon_distance", "gpt-5")
+CASSETTE_CONTINUATION_PATH = get_cassette_for_model("chat_gpt5_continuation", "gpt-5")
 
 
 @pytest.mark.asyncio

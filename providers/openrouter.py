@@ -2,6 +2,8 @@
 
 import logging
 
+from config import OPENAI_IMAGE_DETAIL
+from utils import openai_token_estimator
 from utils.env import get_env
 
 from .openai_compatible import OpenAICompatibleProvider
@@ -215,3 +217,102 @@ class OpenRouterProvider(OpenAICompatibleProvider):
 
             capabilities[model_name] = config
         return capabilities
+
+    # ------------------------------------------------------------------
+    # Token estimation with multi-provider routing
+    # ------------------------------------------------------------------
+
+    def _calculate_text_tokens(self, model_name: str, content: str) -> int:
+        """Route text token calculation to the appropriate provider estimator.
+
+        For OpenAI models (openai/*, gpt-*, o3*, o4*), uses openai_token_estimator.
+        For other models, falls back to simple character-based estimation.
+
+        Args:
+            model_name: Model name to calculate tokens for
+            content: Text content to count tokens for
+
+        Returns:
+            Estimated token count
+        """
+        if openai_token_estimator.is_openai_model(model_name):
+            return openai_token_estimator.calculate_text_tokens(model_name, content)
+
+        # Fallback for non-OpenAI models
+        return len(content) // 4
+
+    def _calculate_image_tokens(self, file_path: str, model_name: str, detail: str = None) -> int:
+        """Route image token calculation to the appropriate provider estimator.
+
+        For OpenAI models, uses accurate openai_token_estimator with tile-based calculation.
+        For other models, uses conservative fallback estimation.
+
+        Args:
+            file_path: Path to the image file
+            model_name: Model name to estimate tokens for
+            detail: Detail level ("LOW", "HIGH", or "AUTO").
+                    If None, uses module-level OPENAI_IMAGE_DETAIL configuration (PR 302 pattern)
+
+        Returns:
+            Estimated token count
+
+        Raises:
+            ValueError: If file cannot be accessed
+        """
+        if openai_token_estimator.is_openai_model(model_name):
+            # Use explicit parameter or fall back to module-level config (Gemini PR 302 pattern)
+            detail_value = detail if detail is not None else OPENAI_IMAGE_DETAIL
+            return openai_token_estimator.estimate_image_tokens(file_path, model_name, detail_value)
+
+        # Fallback for non-OpenAI models: conservative fixed estimate
+        return 1000
+
+    def estimate_tokens_for_files(self, model_name: str, files: list[dict], image_detail: str = None) -> int:
+        """Route file token estimation to the appropriate provider estimator.
+
+        For OpenAI models, uses accurate openai_token_estimator.
+        For other models, uses conservative file-size-based estimation.
+
+        Current Limitations:
+        - OpenRouter supports PDF through /chat/completions using type:"file" format
+        - However, programmatic PDF support via files parameter is not yet implemented
+        - PDF token estimation is available but actual PDF API calls require manual formatting
+        - Images are fully supported via the standard image format
+
+        Args:
+            model_name: Model name to estimate tokens for
+            files: List of file dicts with 'path' and 'mime_type' keys
+            image_detail: Detail level for images ("LOW", "HIGH", or "AUTO").
+                          If None, uses module-level OPENAI_IMAGE_DETAIL configuration (PR 302 pattern)
+
+        Returns:
+            Estimated token count
+
+        Raises:
+            UnsupportedContentTypeError: If PDF files are included (not yet supported)
+        """
+        if not files:
+            return 0
+
+        if openai_token_estimator.is_openai_model(model_name):
+            # Use explicit parameter or fall back to module-level config (Gemini PR 302 pattern)
+            detail = image_detail if image_detail is not None else OPENAI_IMAGE_DETAIL
+
+            # Note: use_responses_api=False because OpenRouter doesn't use /responses endpoint
+            # This will raise UnsupportedContentTypeError for PDFs, which is correct behavior
+            # until we implement OpenRouter's type:"file" format
+            return openai_token_estimator.estimate_tokens_for_files(model_name, files, detail, use_responses_api=False)
+
+        # Fallback for non-OpenAI models: use generic file estimation
+        from utils.file_utils import estimate_file_tokens
+
+        total = 0
+        for file_info in files:
+            file_path = file_info.get("path", "")
+            if file_path:
+                try:
+                    total += estimate_file_tokens(file_path)
+                except Exception as e:
+                    logging.warning("Failed to estimate tokens for %s: %s, using fallback", file_path, e, exc_info=True)
+                    total += 1000  # Conservative fallback
+        return total
