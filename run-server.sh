@@ -1231,6 +1231,26 @@ check_claude_cli_integration() {
     local python_cmd="$1"
     local server_path="$2"
 
+    # Check for native installed Claude CLI (not in PATH by default)
+    # Native installs:
+    #   - curl https://claude.ai/install.sh | bash -> ~/.local/bin/claude
+    #   - brew install --cask claude-code -> /opt/homebrew/bin/claude (Apple Silicon) or /usr/local/bin/claude (Intel)
+    if ! command -v claude &> /dev/null; then
+        local claude_paths=(
+            "$HOME/.local/bin"
+            "/opt/homebrew/bin"
+            "/usr/local/bin"
+        )
+        for dir in "${claude_paths[@]}"; do
+            if [[ -x "$dir/claude" ]]; then
+                print_info "Found native installed Claude CLI at $dir/claude"
+                export PATH="$dir:$PATH"
+                print_success "Added $dir to PATH"
+                break
+            fi
+        done
+    fi
+
     if ! command -v claude &> /dev/null; then
         echo ""
         print_warning "Claude CLI not found"
