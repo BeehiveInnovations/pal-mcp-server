@@ -1,5 +1,5 @@
 """
-Utility functions for Zen MCP Server
+Utility functions for PAL MCP Server
 """
 
 from .file_types import CODE_EXTENSIONS, FILE_CATEGORIES, PROGRAMMING_EXTENSIONS, TEXT_EXTENSIONS

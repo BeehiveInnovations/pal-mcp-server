@@ -21,7 +21,7 @@ function Write-ColorText {
     }
 }
 
-Write-ColorText "=== Building Zen MCP Server Docker Image ===" -Color Green
+Write-ColorText "=== Building PAL MCP Server Docker Image ===" -Color Green
 
 # Check if .env file exists
 if (!(Test-Path ".env")) {
@@ -49,7 +49,7 @@ try {
 
 # Verify the build
 Write-ColorText "Verifying build..." -Color Green
-$images = docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}\t{{.CreatedAt}}" | Select-String "zen-mcp-server"
+$images = docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}\t{{.CreatedAt}}" | Select-String "pal-mcp-server"
 
 if ($images) {
     Write-ColorText "✓ Docker image built successfully" -Color Green

@@ -1,13 +1,13 @@
 # Docker Deployment Guide
 
-This guide covers deploying Zen MCP Server using Docker and Docker Compose for production environments.
+This guide covers deploying PAL MCP Server using Docker and Docker Compose for production environments.
 
 ## Quick Start
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/BeehiveInnovations/zen-mcp-server.git
-   cd zen-mcp-server
+   git clone https://github.com/BeehiveInnovations/pal-mcp-server.git
+   cd pal-mcp-server
    ```
 
 2. **Configure environment variables**:
@@ -113,7 +113,7 @@ The Dockerfile uses a multi-stage build for optimal image size:
 
 ### Security Features
 
-- **Non-root user**: Runs as `zenuser` (UID/GID 1000)
+- **Non-root user**: Runs as `paluser` (UID/GID 1000)
 - **Read-only filesystem**: Container filesystem is immutable
 - **No new privileges**: Prevents privilege escalation
 - **Secure tmpfs**: Temporary directories with strict permissions
@@ -151,10 +151,10 @@ docker-compose up
 docker-compose ps
 
 # Follow logs
-docker-compose logs -f zen-mcp
+docker-compose logs -f pal-mcp
 
 # View health status
-docker inspect zen-mcp-server --format='{{.State.Health.Status}}'
+docker inspect pal-mcp-server --format='{{.State.Health.Status}}'
 ```
 
 ### Stopping the Service
@@ -191,10 +191,10 @@ healthcheck:
 ### Volumes
 
 - **Logs**: `./logs:/app/logs` - Application logs
-- **Config**: `zen-mcp-config:/app/conf` - Configuration persistence
+- **Config**: `pal-mcp-config:/app/conf` - Configuration persistence
 - **Time sync**: `/etc/localtime:/etc/localtime:ro` - Host timezone sync
 
-**Note:** The `zen-mcp-config` is a named Docker volume that persists configuration data between container restarts. All data placed in `/app/conf` inside the container is preserved thanks to this persistent volume. This applies to both `docker-compose run` and `docker-compose up` commands.
+**Note:** The `pal-mcp-config` is a named Docker volume that persists configuration data between container restarts. All data placed in `/app/conf` inside the container is preserved thanks to this persistent volume. This applies to both `docker-compose run` and `docker-compose up` commands.
 
 ### Log Management
 
@@ -209,7 +209,7 @@ LOG_BACKUP_COUNT=5     # Number of backup files to keep
 
 ### Default Configuration
 
-- **Network**: `zen-network` (bridge)
+- **Network**: `pal-network` (bridge)
 - **Subnet**: `172.20.0.0/16`
 - **Isolation**: Container runs in isolated network
 
@@ -230,10 +230,10 @@ ports:
 **1. Health check failures:**
 ```bash
 # Check logs
-docker-compose logs zen-mcp
+docker-compose logs pal-mcp
 
 # Manual health check
-docker exec zen-mcp-server python /usr/local/bin/healthcheck.py
+docker exec pal-mcp-server python /usr/local/bin/healthcheck.py
 ```
 
 **2. Permission errors:**
@@ -252,7 +252,7 @@ cat .env
 **4. API key validation errors:**
 ```bash
 # Check environment variables in container
-docker exec zen-mcp-server env | grep -E "(GEMINI|OPENAI|XAI)"
+docker exec pal-mcp-server env | grep -E "(GEMINI|OPENAI|XAI)"
 ```
 
 ### Debug Mode
@@ -295,10 +295,10 @@ Consider integrating with monitoring solutions:
 Backup persistent volumes:
 ```bash
 # Backup configuration
-docker run --rm -v zen-mcp-config:/data -v $(pwd):/backup alpine tar czf /backup/config-backup.tar.gz -C /data .
+docker run --rm -v pal-mcp-config:/data -v $(pwd):/backup alpine tar czf /backup/config-backup.tar.gz -C /data .
 
 # Restore configuration
-docker run --rm -v zen-mcp-config:/data -v $(pwd):/backup alpine tar xzf /backup/config-backup.tar.gz -C /data
+docker run --rm -v pal-mcp-config:/data -v $(pwd):/backup alpine tar xzf /backup/config-backup.tar.gz -C /data
 ```
 
 ## Performance Tuning
@@ -319,7 +319,7 @@ deploy:
 
 Monitor memory usage:
 ```bash
-docker stats zen-mcp-server
+docker stats pal-mcp-server
 ```
 
 Adjust Python memory settings if needed:
@@ -339,17 +339,17 @@ Configure Claude Desktop to use the containerized server. **Choose one of the co
 ```json
 {
   "mcpServers": {
-    "zen-mcp": {
+    "pal-mcp": {
       "command": "docker",
       "args": [
         "run",
         "--rm",
         "-i",
         "--env-file",
-        "/absolute/path/to/zen-mcp-server/.env",
+        "/absolute/path/to/pal-mcp-server/.env",
         "-v",
-        "/absolute/path/to/zen-mcp-server/logs:/app/logs",
-        "zen-mcp-server:latest"
+        "/absolute/path/to/pal-mcp-server/logs:/app/logs",
+        "pal-mcp-server:latest"
       ]
     }
   }
@@ -360,17 +360,17 @@ Configure Claude Desktop to use the containerized server. **Choose one of the co
 ```json
 {
   "mcpServers": {
-    "zen-mcp": {
+    "pal-mcp": {
       "command": "docker",
       "args": [
         "run",
         "--rm",
         "-i",
         "--env-file",
-        "C:/path/to/zen-mcp-server/.env",
+        "C:/path/to/pal-mcp-server/.env",
         "-v",
-        "C:/path/to/zen-mcp-server/logs:/app/logs",
-        "zen-mcp-server:latest"
+        "C:/path/to/pal-mcp-server/logs:/app/logs",
+        "pal-mcp-server:latest"
       ]
     }
   }
@@ -384,11 +384,11 @@ Configure Claude Desktop to use the containerized server. **Choose one of the co
 ```json
 {
   "mcpServers": {
-    "zen-mcp": {
+    "pal-mcp": {
       "command": "docker-compose",
       "args": [
-        "-f", "/absolute/path/to/zen-mcp-server/docker-compose.yml",
-        "run", "--rm", "zen-mcp"
+        "-f", "/absolute/path/to/pal-mcp-server/docker-compose.yml",
+        "run", "--rm", "pal-mcp"
       ]
     }
   }
@@ -402,7 +402,7 @@ Configure Claude Desktop to use the containerized server. **Choose one of the co
 ```json
 {
   "mcpServers": {
-    "zen-mcp": {
+    "pal-mcp": {
       "command": "docker",
       "args": [
         "run",
@@ -412,7 +412,7 @@ Configure Claude Desktop to use the containerized server. **Choose one of the co
         "-e", "LOG_LEVEL=INFO",
         "-e", "DEFAULT_MODEL=auto",
         "-v", "/path/to/logs:/app/logs",
-        "zen-mcp-server:latest"
+        "pal-mcp-server:latest"
       ]
     }
   }
@@ -422,10 +422,10 @@ Configure Claude Desktop to use the containerized server. **Choose one of the co
 ### Configuration Notes
 
 **Important notes:**
-- Replace `/absolute/path/to/zen-mcp-server` with the actual path to your project.
+- Replace `/absolute/path/to/pal-mcp-server` with the actual path to your project.
 - Always use forward slashes `/` for Docker volumes, even on Windows.
 - Ensure the `.env` file exists and contains your API keys.
-- **Persistent volumes**: Docker Compose options (Options 2) automatically use the `zen-mcp-config` named volume for persistent configuration storage.
+- **Persistent volumes**: Docker Compose options (Options 2) automatically use the `pal-mcp-config` named volume for persistent configuration storage.
 
 **Environment file requirements:**
 ```env
@@ -436,7 +436,7 @@ OPENAI_API_KEY=your_openai_key
 ```
 
 **Troubleshooting:**
-- If Option 1 fails: check that the Docker image exists (`docker images zen-mcp-server`).
+- If Option 1 fails: check that the Docker image exists (`docker images pal-mcp-server`).
 - If Option 2 fails: verify the compose file path and ensure the service is not already in use.
 - Permission issues: make sure the `logs` folder is writable.
 
@@ -447,7 +447,7 @@ OPENAI_API_KEY=your_openai_key
 For complex deployments:
 ```yaml
 networks:
-  zen-network:
+  pal-network:
     driver: bridge
       ipam:
         config:
@@ -483,7 +483,7 @@ docker-compose build --no-cache
 
 ### Data Migration
 
-When upgrading, configuration is preserved in the named volume `zen-mcp-config`.
+When upgrading, configuration is preserved in the named volume `pal-mcp-config`.
 
 For major version upgrades, check the [CHANGELOG](../CHANGELOG.md) for breaking changes.
 

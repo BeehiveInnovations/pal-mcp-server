@@ -1,12 +1,12 @@
 blank_issues_enabled: false
 contact_links:
   - name: 💬 General Discussion
-    url: https://github.com/BeehiveInnovations/zen-mcp-server/discussions
+    url: https://github.com/BeehiveInnovations/pal-mcp-server/discussions
     about: Ask questions, share ideas, or discuss usage patterns with the community
   - name: 📚 Documentation
-    url: https://github.com/BeehiveInnovations/zen-mcp-server/blob/main/README.md
+    url: https://github.com/BeehiveInnovations/pal-mcp-server/blob/main/README.md
     about: Check the README for setup instructions and usage examples
   - name: 🤝 Contributing Guide
-    url: https://github.com/BeehiveInnovations/zen-mcp-server/blob/main/CONTRIBUTING.md
+    url: https://github.com/BeehiveInnovations/pal-mcp-server/blob/main/CONTRIBUTING.md
     about: Learn how to contribute to the project
 

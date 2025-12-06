@@ -28,18 +28,18 @@ class TestDockerVolumePersistence:
         content = self.docker_compose_path.read_text()
 
         # Check for named volume definition
-        assert "zen-mcp-config:" in content, "zen-mcp-config volume must be defined"
+        assert "pal-mcp-config:" in content, "pal-mcp-config volume must be defined"
         assert "driver: local" in content, "Named volume must use local driver"
 
         # Check for volume mounts in service
         assert "./logs:/app/logs" in content, "Logs volume mount required"
-        assert "zen-mcp-config:/app/conf" in content, "Config volume mount required"
+        assert "pal-mcp-config:/app/conf" in content, "Config volume mount required"
 
     def test_persistent_volume_creation(self):
         """Test that persistent volumes are created correctly"""
         # This test checks that the volume configuration is valid
         # In a real environment, you might want to test actual volume creation
-        volume_name = "zen-mcp-config"
+        volume_name = "pal-mcp-config"
 
         # Mock Docker command to check volume exists
         with patch("subprocess.run") as mock_run:
@@ -84,7 +84,7 @@ class TestDockerVolumePersistence:
             "run",
             "--rm",
             "-v",
-            "zen-mcp-config:/data",
+            "pal-mcp-config:/data",
             "-v",
             "$(pwd):/backup",
             "alpine",
@@ -97,7 +97,7 @@ class TestDockerVolumePersistence:
         ]
 
         # Verify command structure is valid
-        assert "zen-mcp-config:/data" in backup_cmd
+        assert "pal-mcp-config:/data" in backup_cmd
         assert "tar" in backup_cmd
         assert "czf" in backup_cmd
 
@@ -139,7 +139,7 @@ class TestDockerVolumeIntegration:
         # Verify that docker-compose run inherits volume configuration
         # This is more of a configuration validation test
 
-        compose_run_cmd = ["docker-compose", "run", "--rm", "zen-mcp"]
+        compose_run_cmd = ["docker-compose", "run", "--rm", "pal-mcp"]
 
         # The command should work with the existing volume configuration
         assert "docker-compose" in compose_run_cmd

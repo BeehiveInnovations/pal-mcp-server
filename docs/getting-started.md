@@ -1,6 +1,6 @@
-# Getting Started with Zen MCP Server
+# Getting Started with PAL MCP Server
 
-This guide walks you through setting up the Zen MCP Server from scratch, including installation, configuration, and first usage.
+This guide walks you through setting up the PAL MCP Server from scratch, including installation, configuration, and first usage.
 
 ## Prerequisites
 
@@ -77,11 +77,11 @@ Choose your AI coding assistant and add the corresponding configuration:
 ```json
 {
   "mcpServers": {
-    "zen": {
+    "pal": {
       "command": "sh",
       "args": [
         "-c", 
-        "for p in $(which uvx 2>/dev/null) $HOME/.local/bin/uvx /opt/homebrew/bin/uvx /usr/local/bin/uvx uvx; do [ -x \"$p\" ] && exec \"$p\" --from git+https://github.com/BeehiveInnovations/zen-mcp-server.git zen-mcp-server; done; echo 'uvx not found' >&2; exit 1"
+        "for p in $(which uvx 2>/dev/null) $HOME/.local/bin/uvx /opt/homebrew/bin/uvx /usr/local/bin/uvx uvx; do [ -x \"$p\" ] && exec \"$p\" --from git+https://github.com/BeehiveInnovations/pal-mcp-server.git pal-mcp-server; done; echo 'uvx not found' >&2; exit 1"
       ],
       "env": {
         "PATH": "/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin:~/.local/bin",
@@ -98,11 +98,11 @@ Create `.mcp.json` in your project root:
 ```json
 {
   "mcpServers": {
-    "zen": {
+    "pal": {
       "command": "sh", 
       "args": [
         "-c",
-        "for p in $(which uvx 2>/dev/null) $HOME/.local/bin/uvx /opt/homebrew/bin/uvx /usr/local/bin/uvx uvx; do [ -x \"$p\" ] && exec \"$p\" --from git+https://github.com/BeehiveInnovations/zen-mcp-server.git zen-mcp-server; done; echo 'uvx not found' >&2; exit 1"
+        "for p in $(which uvx 2>/dev/null) $HOME/.local/bin/uvx /opt/homebrew/bin/uvx /usr/local/bin/uvx uvx; do [ -x \"$p\" ] && exec \"$p\" --from git+https://github.com/BeehiveInnovations/pal-mcp-server.git pal-mcp-server; done; echo 'uvx not found' >&2; exit 1"
       ],
       "env": {
         "PATH": "/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin:~/.local/bin",
@@ -119,11 +119,11 @@ Edit `~/.gemini/settings.json`:
 ```json
 {
   "mcpServers": {
-    "zen": {
+    "pal": {
       "command": "sh",
       "args": [
         "-c",
-        "for p in $(which uvx 2>/dev/null) $HOME/.local/bin/uvx /opt/homebrew/bin/uvx /usr/local/bin/uvx uvx; do [ -x \"$p\" ] && exec \"$p\" --from git+https://github.com/BeehiveInnovations/zen-mcp-server.git zen-mcp-server; done; echo 'uvx not found' >&2; exit 1"  
+        "for p in $(which uvx 2>/dev/null) $HOME/.local/bin/uvx /opt/homebrew/bin/uvx /usr/local/bin/uvx uvx; do [ -x \"$p\" ] && exec \"$p\" --from git+https://github.com/BeehiveInnovations/pal-mcp-server.git pal-mcp-server; done; echo 'uvx not found' >&2; exit 1"  
       ],
       "env": {
         "PATH": "/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin:~/.local/bin",
@@ -138,17 +138,17 @@ Edit `~/.gemini/settings.json`:
 Edit `~/.codex/config.toml`:
 
 ```toml
-[mcp_servers.zen]
+[mcp_servers.pal]
 command = "bash"
-args = ["-c", "for p in $(which uvx 2>/dev/null) $HOME/.local/bin/uvx /opt/homebrew/bin/uvx /usr/local/bin/uvx uvx; do [ -x \\\"$p\\\" ] && exec \\\"$p\\\" --from git+https://github.com/BeehiveInnovations/zen-mcp-server.git zen-mcp-server; done; echo 'uvx not found' >&2; exit 1"]
+args = ["-c", "for p in $(which uvx 2>/dev/null) $HOME/.local/bin/uvx /opt/homebrew/bin/uvx /usr/local/bin/uvx uvx; do [ -x \\\"$p\\\" ] && exec \\\"$p\\\" --from git+https://github.com/BeehiveInnovations/pal-mcp-server.git pal-mcp-server; done; echo 'uvx not found' >&2; exit 1"]
 tool_timeout_sec = 1200  # 20 minutes; added automatically by the setup script so upstream providers can respond
 
-[mcp_servers.zen.env]
+[mcp_servers.pal.env]
 PATH = "/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/bin"
 GEMINI_API_KEY = "your_api_key_here"
 ```
 
-Enable Codex's built-in web-search tool so Zen's `apilookup` instructions can execute successfully:
+Enable Codex's built-in web-search tool so PAL's `apilookup` instructions can execute successfully:
 
 ```toml
 [tools]
@@ -164,13 +164,13 @@ Create or edit `~/.qwen/settings.json`:
 ```json
 {
   "mcpServers": {
-    "zen": {
+    "pal": {
       "command": "bash",
       "args": [
         "-c",
-        "for p in $(which uvx 2>/dev/null) $HOME/.local/bin/uvx /opt/homebrew/bin/uvx /usr/local/bin/uvx uvx; do [ -x \"$p\" ] && exec \"$p\" --from git+https://github.com/BeehiveInnovations/zen-mcp-server.git zen-mcp-server; done; echo 'uvx not found' >&2; exit 1"
+        "for p in $(which uvx 2>/dev/null) $HOME/.local/bin/uvx /opt/homebrew/bin/uvx /usr/local/bin/uvx uvx; do [ -x \"$p\" ] && exec \"$p\" --from git+https://github.com/BeehiveInnovations/pal-mcp-server.git pal-mcp-server; done; echo 'uvx not found' >&2; exit 1"
       ],
-      "cwd": "/path/to/zen-mcp-server",
+      "cwd": "/path/to/pal-mcp-server",
       "env": {
         "PATH": "/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin:~/.local/bin",
         "GEMINI_API_KEY": "your_api_key_here"
@@ -189,13 +189,13 @@ Edit `~/.config/opencode/opencode.json`:
 {
   "$schema": "https://opencode.ai/config.json",
   "mcp": {
-    "zen": {
+    "pal": {
       "type": "local",
       "command": [
-        "/path/to/zen-mcp-server/.zen_venv/bin/python",
-        "/path/to/zen-mcp-server/server.py"
+        "/path/to/pal-mcp-server/.pal_venv/bin/python",
+        "/path/to/pal-mcp-server/server.py"
       ],
-      "cwd": "/path/to/zen-mcp-server",
+      "cwd": "/path/to/pal-mcp-server",
       "enabled": true,
       "environment": {
         "GEMINI_API_KEY": "your_api_key_here"
@@ -209,14 +209,14 @@ Add any other API keys you rely on (`OPENAI_API_KEY`, `OPENROUTER_API_KEY`, etc.
 
 #### IDE Clients (Cursor & VS Code)
 
-Zen works in GUI IDEs that speak MCP. The configuration mirrors the CLI examples above—point the client at the `uvx` launcher and set any required environment variables.
+PAL works in GUI IDEs that speak MCP. The configuration mirrors the CLI examples above—point the client at the `uvx` launcher and set any required environment variables.
 
 **Cursor IDE**
 
 1. Open Cursor → `Settings` (`Cmd+,`/`Ctrl+,`) → **Integrations › Model Context Protocol (MCP)**.
 2. Click **Add MCP Server** and supply the following values:
    - Command: `sh`
-   - Args: `-c` and `for p in $(which uvx 2>/dev/null) $HOME/.local/bin/uvx /opt/homebrew/bin/uvx /usr/local/bin/uvx uvx; do [ -x "$p" ] && exec "$p" --from git+https://github.com/BeehiveInnovations/zen-mcp-server.git zen-mcp-server; done; echo 'uvx not found' >&2; exit 1`
+   - Args: `-c` and `for p in $(which uvx 2>/dev/null) $HOME/.local/bin/uvx /opt/homebrew/bin/uvx /usr/local/bin/uvx uvx; do [ -x "$p" ] && exec "$p" --from git+https://github.com/BeehiveInnovations/pal-mcp-server.git pal-mcp-server; done; echo 'uvx not found' >&2; exit 1`
    - Environment (example):
      - `PATH=/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin:~/.local/bin`
      - `GEMINI_API_KEY=your_api_key_here`
@@ -232,7 +232,7 @@ Zen works in GUI IDEs that speak MCP. The configuration mirrors the CLI examples
    - Environment: add the API keys you need (e.g. `GEMINI_API_KEY`, `OPENAI_API_KEY`)
 4. Save the JSON snippet the extension generates. VS Code will reload the server automatically the next time you interact with Claude.
 
-👉 Pro tip: If you prefer a one-line command, replace the long loop with `uvx --from git+https://github.com/BeehiveInnovations/zen-mcp-server.git zen-mcp-server`—just make sure `uvx` is on your PATH for every client.
+👉 Pro tip: If you prefer a one-line command, replace the long loop with `uvx --from git+https://github.com/BeehiveInnovations/pal-mcp-server.git pal-mcp-server`—just make sure `uvx` is on your PATH for every client.
 
 **Benefits of uvx method:**
 - ✅ Zero manual setup required
@@ -244,8 +244,8 @@ Zen works in GUI IDEs that speak MCP. The configuration mirrors the CLI examples
 
 ```bash
 # Clone the repository
-git clone https://github.com/BeehiveInnovations/zen-mcp-server.git
-cd zen-mcp-server
+git clone https://github.com/BeehiveInnovations/pal-mcp-server.git
+cd pal-mcp-server
 
 # One-command setup (handles everything)
 ./run-server.sh
@@ -305,7 +305,7 @@ CUSTOM_MODEL_NAME=llama3.2                   # Default model name
 
 ## Prevent Client Timeouts
 
-Some MCP clients default to short timeouts and can disconnect from Zen during long tool runs. Configure each client with a generous ceiling (we recommend at least five minutes); the Zen setup script now writes a 20-minute tool timeout for Codex so upstream providers contacted by the server have time to respond.
+Some MCP clients default to short timeouts and can disconnect from PAL during long tool runs. Configure each client with a generous ceiling (we recommend at least five minutes); the PAL setup script now writes a 20-minute tool timeout for Codex so upstream providers contacted by the server have time to respond.
 
 ### Claude Code & Claude Desktop
 
@@ -320,14 +320,14 @@ Claude reads MCP-related environment variables either from your shell or from `~
 }
 ```
 
-You can scope this block at the top level of `settings.json` (applies to every session) or under a specific `mcpServers.<name>.env` entry if you only want it for Zen. The values are in milliseconds. Note: Claude’s SSE transport still enforces an internal ceiling of roughly five minutes; long-running HTTP/SSE servers may need retries until Anthropic ships their fix.
+You can scope this block at the top level of `settings.json` (applies to every session) or under a specific `mcpServers.<name>.env` entry if you only want it for PAL (the server name may still be `pal` while configurations catch up). The values are in milliseconds. Note: Claude’s SSE transport still enforces an internal ceiling of roughly five minutes; long-running HTTP/SSE servers may need retries until Anthropic ships their fix.
 
 ### Codex CLI
 
 Codex exposes per-server timeouts in `~/.codex/config.toml`. Add (or bump) these keys under `[[mcp_servers.<name>]]`:
 
 ```toml
-[mcp_servers.zen]
+[mcp_servers.pal]
 command = "..."
 args = ["..."]
 startup_timeout_sec = 300    # default is 10 seconds
@@ -343,9 +343,9 @@ Gemini uses a single `timeout` field per server inside `~/.gemini/settings.json`
 ```json
 {
   "mcpServers": {
-    "zen": {
+    "pal": {
       "command": "uvx",
-      "args": ["zen-mcp-server"],
+      "args": ["pal-mcp-server"],
       "timeout": 300000
     }
   }
@@ -364,62 +364,62 @@ Versions 0.2.1 and newer currently ignore values above ~60 seconds for some tran
 ### For Claude Desktop:
 1. Restart Claude Desktop
 2. Open a new conversation
-3. Try: `"Use zen to list available models"`
+3. Try: `"Use pal to list available models"`
 
 ### For Claude Code CLI:
 1. Exit any existing Claude session
 2. Run `claude` from your project directory  
-3. Try: `"Use zen to chat about Python best practices"`
+3. Try: `"Use pal to chat about Python best practices"`
 
 ### For Gemini CLI:
-**Note**: While Zen MCP connects to Gemini CLI, tool invocation isn't working correctly yet. See [Gemini CLI Setup](gemini-setup.md) for updates.
+**Note**: While PAL MCP connects to Gemini CLI, tool invocation isn't working correctly yet. See [Gemini CLI Setup](gemini-setup.md) for updates.
 
 ### For Qwen Code CLI:
 1. Restart the Qwen Code CLI if it's running (`qwen exit`).
-2. Run `qwen mcp list --scope user` and confirm `zen` shows `CONNECTED`.
-3. Try: `"/mcp"` to inspect available tools or `"Use zen to analyze this repo"`.
+2. Run `qwen mcp list --scope user` and confirm `pal` shows `CONNECTED`.
+3. Try: `"/mcp"` to inspect available tools or `"Use pal to analyze this repo"`.
 
 ### For OpenCode CLI:
 1. Restart OpenCode (or run `OpenCode: Reload Config`).
-2. Open **Settings › Tools › MCP** and confirm `zen` is enabled.
-3. Start a new chat and try: `"Use zen to list available models"`.
+2. Open **Settings › Tools › MCP** and confirm `pal` is enabled.
+3. Start a new chat and try: `"Use pal to list available models"`.
 
 ### For Codex CLI:
 1. Restart Codex CLI if running
 2. Open a new conversation
-3. Try: `"Use zen to list available models"`
+3. Try: `"Use pal to list available models"`
 
 ### Test Commands:
 ```
-"Use zen to list available models"
-"Chat with zen about the best approach for API design"
-"Use zen thinkdeep with gemini pro about scaling strategies"  
+"Use pal to list available models"
+"Chat with pal about the best approach for API design"
+"Use pal thinkdeep with gemini pro about scaling strategies"  
 "Debug this error with o3: [paste error]"
 ```
 
 **Note**: Codex CLI provides excellent MCP integration with automatic environment variable configuration when using the setup script.
 
-## Step 5: Start Using Zen
+## Step 5: Start Using PAL
 
 ### Basic Usage Patterns:
 
 **Let Claude pick the model:**
 ```
-"Use zen to analyze this code for security issues"
-"Debug this race condition with zen"
-"Plan the database migration with zen"
+"Use pal to analyze this code for security issues"
+"Debug this race condition with pal"
+"Plan the database migration with pal"
 ```
 
 **Specify the model:**
 ```  
-"Use zen with gemini pro to review this complex algorithm"
-"Debug with o3 using zen for logical analysis"
-"Get flash to quickly format this code via zen"
+"Use pal with gemini pro to review this complex algorithm"
+"Debug with o3 using pal for logical analysis"
+"Get flash to quickly format this code via pal"
 ```
 
 **Multi-model workflows:**
 ```
-"Use zen to get consensus from pro and o3 on this architecture"
+"Use pal to get consensus from pro and o3 on this architecture"
 "Code review with gemini, then precommit validation with o3"  
 "Analyze with flash, then deep dive with pro if issues found"
 ```
@@ -435,7 +435,7 @@ Versions 0.2.1 and newer currently ignore values above ~60 seconds for some tran
 
 ## Common Issues and Solutions
 
-### "zen not found" or "command not found"
+### "pal not found" or "command not found"
 
 **For uvx installations:**
 - Ensure `uv` is installed and in PATH
@@ -444,7 +444,7 @@ Versions 0.2.1 and newer currently ignore values above ~60 seconds for some tran
 
 **For clone installations:**
 - Run `./run-server.sh` again to verify setup
-- Check virtual environment: `which python` should show `.zen_venv/bin/python`
+- Check virtual environment: `which python` should show `.pal_venv/bin/python`
 
 ### API Key Issues
 
@@ -454,7 +454,7 @@ Versions 0.2.1 and newer currently ignore values above ~60 seconds for some tran
 - Check for extra spaces or quotes around keys
 
 **"Model not available":**
-- Run `"Use zen to list available models"` to see what's configured
+- Run `"Use pal to list available models"` to see what's configured
 - Check model restrictions in environment variables
 - Verify API key has access to requested models
 

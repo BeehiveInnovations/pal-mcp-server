@@ -35,7 +35,7 @@ Test generation excels with extended reasoning models like Gemini Pro or O3, whi
 
 **Basic Usage:**
 ```
-"Use zen to generate tests for User.login() method"
+"Use pal to generate tests for User.login() method"
 "Generate comprehensive tests for the sorting method in src/new_sort.py using o3"
 "Create tests for edge cases not already covered in our tests using gemini pro"
 ```

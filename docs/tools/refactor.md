@@ -35,13 +35,13 @@ The refactor tool excels with models that have large context windows like Gemini
 
 ```
 "Use gemini pro to decompose my_crazy_big_class.m into smaller extensions"
-"Using zen's refactor decompose the all_in_one_sync_code.swift into maintainable extensions"
+"Using pal's refactor decompose the all_in_one_sync_code.swift into maintainable extensions"
 ```
 
 💡**Example of a powerful prompt** to get the best out of both Claude + Flash's 1M Context: 
 ```
 "First, think about how the authentication module works, find related classes and find
- any code smells, then using zen's refactor ask flash to confirm your findings but ask 
+ any code smells, then using pal's refactor ask flash to confirm your findings but ask 
  it to find additional code smells and any other quick-wins and then fix these issues"
 ```
 

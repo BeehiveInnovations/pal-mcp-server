@@ -1,7 +1,7 @@
 """
-Configuration and constants for Zen MCP Server
+Configuration and constants for PAL MCP Server
 
-This module centralizes all configuration settings for the Zen MCP Server.
+This module centralizes all configuration settings for the PAL MCP Server.
 It defines model configurations, token limits, temperature defaults, and other
 constants used throughout the application.
 
@@ -14,9 +14,9 @@ from utils.env import get_env
 # These values are used in server responses and for tracking releases
 # IMPORTANT: This is the single source of truth for version and author info
 # Semantic versioning: MAJOR.MINOR.PATCH
-__version__ = "9.3.1"
+__version__ = "9.4.2"
 # Last update date in ISO format
-__updated__ = "2025-11-18"
+__updated__ = "2025-12-05"
 # Primary maintainer
 __author__ = "Fahad Gilani"
 

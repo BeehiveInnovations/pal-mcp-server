@@ -1,7 +1,7 @@
 {
   "_README": {
     "description": "Model metadata for OpenRouter-backed providers.",
-    "documentation": "https://github.com/BeehiveInnovations/zen-mcp-server/blob/main/docs/custom_models.md",
+    "documentation": "https://github.com/BeehiveInnovations/pal-mcp-server/blob/main/docs/custom_models.md",
     "usage": "Models listed here are exposed through OpenRouter. Aliases are case-insensitive.",
     "field_notes": "Matches providers/shared/model_capabilities.py.",
     "field_descriptions": {
@@ -110,7 +110,7 @@
       "model_name": "google/gemini-2.5-pro",
       "aliases": [
         "gemini-2.5",
-        "pro-2.5-openrouter",
+        "pro-2.5-openrouter"
       ],
       "context_window": 1048576,
       "max_output_tokens": 65536,

@@ -5,7 +5,7 @@ This test verifies that when using continuation_id without specifying a model,
 the system correctly retrieves and uses the model from the previous conversation
 turn instead of defaulting to DEFAULT_MODEL or the custom provider's default.
 
-Bug: https://github.com/BeehiveInnovations/zen-mcp-server/issues/111
+Bug: https://github.com/BeehiveInnovations/pal-mcp-server/issues/111
 """
 
 from unittest.mock import MagicMock, patch

@@ -102,7 +102,7 @@ class ClinkRegistry:
             env_path = Path(env_path_raw).expanduser()
             search_paths.append(env_path)
 
-        # 3. User overrides in ~/.zen/cli_clients
+        # 3. User overrides in ~/.pal/cli_clients
         search_paths.append(USER_CONFIG_DIR)
 
         seen: set[Path] = set()

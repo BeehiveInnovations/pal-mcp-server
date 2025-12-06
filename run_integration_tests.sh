@@ -1,19 +1,19 @@
 #!/bin/bash
 
-# Zen MCP Server - Run Integration Tests
+# PAL MCP Server - Run Integration Tests
 # This script runs integration tests that require API keys
 # Run this locally on your Mac to ensure everything works end-to-end
 
 set -e  # Exit on any error
 
-echo "🧪 Running Integration Tests for Zen MCP Server"
+echo "🧪 Running Integration Tests for PAL MCP Server"
 echo "=============================================="
 echo "These tests use real API calls with your configured keys"
 echo ""
 
 # Activate virtual environment
-if [[ -f ".zen_venv/bin/activate" ]]; then
-    source .zen_venv/bin/activate
+if [[ -f ".pal_venv/bin/activate" ]]; then
+    source .pal_venv/bin/activate
     echo "✅ Using virtual environment"
 else
     echo "❌ No virtual environment found!"

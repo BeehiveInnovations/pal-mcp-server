@@ -1,5 +1,5 @@
 """
-Core schema building functionality for Zen MCP tools.
+Core schema building functionality for PAL MCP tools.
 
 This module provides base schema generation functionality for simple tools.
 Workflow-specific schema building is located in workflow/schema_builders.py

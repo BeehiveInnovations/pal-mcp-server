@@ -1,7 +1,7 @@
 """
 Communication Simulator Tests Package
 
-This package contains individual test modules for the Zen MCP Communication Simulator.
+This package contains individual test modules for the PAL MCP Communication Simulator.
 Each test is in its own file for better organization and maintainability.
 """
 

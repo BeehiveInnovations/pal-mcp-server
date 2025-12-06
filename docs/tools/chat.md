@@ -26,7 +26,7 @@ word verdict in the end.
 
 * We ask Claude code to pick one of two frameworks, then `chat` with `gemini` to make a final decision
 * Gemini responds, confirming choice. We use `continuation` to ask another question using the same conversation thread
-* Gemini responds with explanation. We use continuation again, using `/zen:continue (MCP)` command the second time
+* Gemini responds with explanation. We use continuation again, using `/pal:continue (MCP)` command the second time
 
 <div style="center">
   
@@ -39,7 +39,7 @@ word verdict in the end.
 - **Collaborative thinking partner** for your analysis and planning
 - **Get second opinions** on your designs and approaches
 - **Brainstorm solutions** and explore alternatives together
-- **Structured code generation**: When using GPT-5.1 or Gemini 3.0 / 2.5 Pro, get complete, production-ready implementations saved to `zen_generated.code` for your CLI to review and apply
+- **Structured code generation**: When using GPT-5.1 or Gemini 3.0 / 2.5 Pro, get complete, production-ready implementations saved to `pal_generated.code` for your CLI to review and apply
 - **Validate your checklists** and implementation plans
 - **General development questions** and explanations
 - **Technology comparisons** and best practices
@@ -67,8 +67,8 @@ When using advanced reasoning models like **GPT-5 Pro** or **Gemini 3.0 Pro**, t
 ### How It Works
 
 1. You ask your AI agent to implement a complex new feature using `chat` with a higher-reasoning model such as **GPT-5 Pro** or **Gemini 3.0 Pro**
-2. The model generates structured implementation and shares the complete implementation with Zen
-3. Zen saves the code to `zen_generated.code` and asks AI agent to implement the plan
+2. The model generates structured implementation and shares the complete implementation with PAL
+3. PAL saves the code to `pal_generated.code` and asks AI agent to implement the plan
 4. AI agent continues from the previous context, reads the file, applies the implementation
 
 ### When Code Generation Activates
@@ -101,7 +101,7 @@ See the [Configuration Guide](../configuration.md#code-generation-capability) fo
 
 **Basic Development Chat:**
 ```
-"Chat with zen about the best approach for user authentication in my React app"
+"Chat with pal about the best approach for user authentication in my React app"
 ```
 
 **Technology Comparison:**

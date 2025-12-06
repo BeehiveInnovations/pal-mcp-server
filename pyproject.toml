@@ -1,6 +1,6 @@
 [project]
-name = "zen-mcp-server"
-version = "9.3.1"
+name = "pal-mcp-server"
+version = "9.4.2"
 description = "AI-powered MCP server with multiple model providers"
 requires-python = ">=3.9"
 dependencies = [
@@ -36,7 +36,7 @@ py-modules = ["server", "config"]
 ]
 
 [project.scripts]
-zen-mcp-server = "server:run"
+pal-mcp-server = "server:run"
 
 [tool.black]
 line-length = 120
@@ -51,7 +51,7 @@ extend-exclude = '''
   | \.mypy_cache
   | \.tox
   | \.venv
-  | \.zen_venv
+  | \.pal_venv
   | venv
   | _build
   | buck-out
@@ -68,7 +68,7 @@ force_grid_wrap = 0
 use_parentheses = true
 ensure_newline_before_comments = true
 line_length = 120
-skip_glob = ["venv/*", ".venv/*", ".zen_venv/*"]
+skip_glob = ["venv/*", ".venv/*", ".pal_venv/*"]
 
 [tool.ruff]
 target-version = "py39"

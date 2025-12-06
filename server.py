@@ -1,5 +1,5 @@
 """
-Zen MCP Server - Main server implementation
+PAL MCP Server - Main server implementation
 
 This module implements the core MCP (Model Context Protocol) server that provides
 AI-powered tools for code analysis, review, and assistance using multiple AI models.
@@ -152,17 +152,17 @@ except Exception as e:
 
 logger = logging.getLogger(__name__)
 
-# Log ZEN_MCP_FORCE_ENV_OVERRIDE configuration for transparency
+# Log PAL_MCP_FORCE_ENV_OVERRIDE configuration for transparency
 if env_override_enabled():
-    logger.info("ZEN_MCP_FORCE_ENV_OVERRIDE enabled - .env file values will override system environment variables")
+    logger.info("PAL_MCP_FORCE_ENV_OVERRIDE enabled - .env file values will override system environment variables")
     logger.debug("Environment override prevents conflicts between different AI tools passing cached API keys")
 else:
-    logger.debug("ZEN_MCP_FORCE_ENV_OVERRIDE disabled - system environment variables take precedence")
+    logger.debug("PAL_MCP_FORCE_ENV_OVERRIDE disabled - system environment variables take precedence")
 
 
 # Create the MCP server instance with a unique name identifier
 # This name is used by MCP clients to identify and connect to this specific server
-server: Server = Server("zen-server")
+server: Server = Server("pal-server")
 
 
 # Constants for tool filtering
@@ -370,7 +370,7 @@ PROMPT_TEMPLATES = {
     "version": {
         "name": "version",
         "description": "Show server version and system information",
-        "template": "Show Zen MCP Server version",
+        "template": "Show PAL MCP Server version",
     },
 }
 
@@ -1293,7 +1293,7 @@ async def handle_list_prompts() -> list[Prompt]:
     """
     List all available prompts for CLI Code shortcuts.
 
-    This handler returns prompts that enable shortcuts like /zen:thinkdeeper.
+    This handler returns prompts that enable shortcuts like /pal:thinkdeeper.
     We automatically generate prompts from all tools (1:1 mapping) plus add
     a few marketing aliases with richer templates for commonly used tools.
 
@@ -1343,7 +1343,7 @@ async def handle_get_prompt(name: str, arguments: dict[str, Any] = None) -> GetP
     """
     Get prompt details and generate the actual prompt text.
 
-    This handler is called when a user invokes a prompt (e.g., /zen:thinkdeeper or /zen:chat:gpt5).
+    This handler is called when a user invokes a prompt (e.g., /pal:thinkdeeper or /pal:chat:gpt5).
     It generates the appropriate text that CLI will then use to call the
     underlying tool.
 
@@ -1365,14 +1365,14 @@ async def handle_get_prompt(name: str, arguments: dict[str, Any] = None) -> GetP
 
     # Handle special "continue" case
     if name.lower() == "continue":
-        # This is "/zen:continue" - use chat tool as default for continuation
+        # This is "/pal:continue" - use chat tool as default for continuation
         tool_name = "chat"
         template_info = {
             "name": "continue",
             "description": "Continue the previous conversation",
             "template": "Continue the conversation",
         }
-        logger.debug("Using /zen:continue - defaulting to chat tool")
+        logger.debug("Using /pal:continue - defaulting to chat tool")
     else:
         # Find the corresponding tool by checking prompt names
         tool_name = None
@@ -1420,7 +1420,7 @@ async def handle_get_prompt(name: str, arguments: dict[str, Any] = None) -> GetP
 
     # Generate tool call instruction
     if name.lower() == "continue":
-        # "/zen:continue" case
+        # "/pal:continue" case
         tool_instruction = (
             f"Continue the previous conversation using the {tool_name} tool. "
             "CRITICAL: You MUST provide the continuation_id from the previous response to maintain conversation context. "
@@ -1461,7 +1461,7 @@ async def main():
     configure_providers()
 
     # Log startup message
-    logger.info("Zen MCP Server starting up...")
+    logger.info("PAL MCP Server starting up...")
     logger.info(f"Log level: {log_level}")
 
     # Note: MCP client info will be logged during the protocol handshake
@@ -1487,7 +1487,7 @@ async def main():
     if IS_AUTO_MODE:
         handshake_instructions = (
             "When the user names a specific model (e.g. 'use chat with gpt5'), send that exact model in the tool call. "
-            "When no model is mentioned, first use the `listmodels` tool from zen to obtain available models to choose the best one from."
+            "When no model is mentioned, first use the `listmodels` tool from PAL to obtain available models to choose the best one from."
         )
     else:
         handshake_instructions = (
@@ -1502,7 +1502,7 @@ async def main():
             read_stream,
             write_stream,
             InitializationOptions(
-                server_name="zen",
+                server_name="PAL",
                 server_version=__version__,
                 instructions=handshake_instructions,
                 capabilities=ServerCapabilities(
@@ -1514,7 +1514,7 @@ async def main():
 
 
 def run():
-    """Console script entry point for zen-mcp-server."""
+    """Console script entry point for pal-mcp-server."""
     try:
         asyncio.run(main())
     except KeyboardInterrupt:

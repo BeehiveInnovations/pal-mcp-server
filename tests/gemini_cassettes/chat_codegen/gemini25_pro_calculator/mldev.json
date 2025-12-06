@@ -26,7 +26,7 @@
               "temperature": 1.0,
               "candidateCount": 1,
               "thinkingConfig": {
-                "thinkingBudget": 10813
+                "thinking_budget": 10813
               }
             }
           }

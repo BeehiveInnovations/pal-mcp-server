@@ -1,5 +1,5 @@
 """
-Tool implementations for Zen MCP Server
+Tool implementations for PAL MCP Server
 """
 
 from .analyze import AnalyzeTool

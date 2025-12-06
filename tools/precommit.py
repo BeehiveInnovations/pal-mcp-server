@@ -552,7 +552,7 @@ class PrecommitTool(WorkflowTool):
             expert_analysis_used: True if expert analysis was successfully executed
         """
         base_message = (
-            "PRE-COMMIT VALIDATION IS COMPLETE. You may delete any `zen_precommit.changeset` created. You MUST now summarize "
+            "PRE-COMMIT VALIDATION IS COMPLETE. You may delete any `pal_precommit.changeset` created. You MUST now summarize "
             "and present ALL validation results, identified issues with their severity levels, and exact commit recommendations. "
             "Clearly state whether the changes are ready for commit or require fixes first. Provide concrete, actionable guidance for "
             "any issues that need resolution—make it easy for a developer to understand exactly what needs to be "
@@ -617,7 +617,7 @@ class PrecommitTool(WorkflowTool):
                     "You are on step 1 of MAXIMUM 2 steps. CRITICAL: Gather and save the complete git changeset NOW. "
                     "MANDATORY ACTIONS:\\n"
                     + "\\n".join(f"{i+1}. {action}" for i, action in enumerate(required_actions))
-                    + "\\n\\nMANDATORY: The changeset may be large. You MUST save the required changeset as a 'zen_precommit.changeset' file "
+                    + "\\n\\nMANDATORY: The changeset may be large. You MUST save the required changeset as a 'pal_precommit.changeset' file "
                     "(replacing any existing one) in your work directory and include the FULL absolute path in relevant_files (exclude any "
                     "binary files). ONLY include the code changes, no extra commentary."
                     "Set next_step_required=True and step_number=2 for the next call."
@@ -659,7 +659,7 @@ class PrecommitTool(WorkflowTool):
                     f"MANDATORY: call {self.get_name()} tool immediately again, and set next_step_required=False to "
                     f"trigger external validation NOW. "
                     f"MANDATORY: Include the entire changeset! The changeset may be large. You MUST save the required "
-                    f"changeset as a 'zen_precommit.changeset' file (replacing any existing one) in your work directory "
+                    f"changeset as a 'pal_precommit.changeset' file (replacing any existing one) in your work directory "
                     f"and include the FULL absolute path in relevant_files so the expert can access the complete changeset. "
                     f"ONLY include the code changes, no extra commentary."
                 )
@@ -678,7 +678,7 @@ class PrecommitTool(WorkflowTool):
                 # About to complete - ensure changeset is saved
                 next_steps = (
                     "Completing validation and proceeding to expert analysis. "
-                    "MANDATORY: Save the complete git changeset as a 'zen_precommit.changeset' file "
+                    "MANDATORY: Save the complete git changeset as a 'pal_precommit.changeset' file "
                     "in your work directory and include the FULL absolute path in relevant_files."
                 )
             else:
@@ -704,7 +704,7 @@ class PrecommitTool(WorkflowTool):
             elif not request.next_step_required and request.precommit_type == "external":
                 next_steps = (
                     "Completing validation. "
-                    "MANDATORY: Save complete git changeset as 'zen_precommit.changeset' file and include path in relevant_files, "
+                    "MANDATORY: Save complete git changeset as 'pal_precommit.changeset' file and include path in relevant_files, "
                     "excluding any binary files."
                 )
             else:

@@ -1,5 +1,5 @@
 """
-Simple tools for Zen MCP.
+Simple tools for PAL MCP.
 
 Simple tools follow a basic request → AI model → response pattern.
 They inherit from SimpleTool which provides streamlined functionality

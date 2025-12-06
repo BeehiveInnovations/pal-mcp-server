@@ -3,11 +3,11 @@
   "comment2": "Run './run-server.sh' in WSL to set up the environment and get exact paths",
   "comment3": "Use './run-server.sh -c' to display the correct configuration",
   "mcpServers": {
-    "zen": {
+    "pal": {
       "command": "wsl.exe",
       "args": [
-        "/path/to/zen-mcp-server/.zen_venv/bin/python",
-        "/path/to/zen-mcp-server/server.py"
+        "/path/to/pal-mcp-server/.pal_venv/bin/python",
+        "/path/to/pal-mcp-server/server.py"
       ]
     }
   }

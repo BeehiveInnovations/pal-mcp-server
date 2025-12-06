@@ -58,7 +58,7 @@ class TestPipDetectionFix:
         # Test case for Git Bash on Windows and non-interactive Linux shells
         with tempfile.TemporaryDirectory() as temp_dir:
             # Create mock virtual environment structure
-            venv_path = Path(temp_dir) / ".zen_venv"
+            venv_path = Path(temp_dir) / ".pal_venv"
             bin_path = venv_path / "bin"
             bin_path.mkdir(parents=True)
 

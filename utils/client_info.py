@@ -286,8 +286,8 @@ def log_client_info(server: Any, logger_instance: Optional[logging.Logger] = Non
 #
 #     # Customize response based on client
 #     if client_name == "Claude":
-#         response = f"Hello from Zen MCP Server to {client_name}!"
+#         response = f"Hello from PAL MCP Server to {client_name}!"
 #     elif client_name == "Gemini":
-#         response = f"Greetings {client_name}, welcome to Zen MCP Server!"
+#         response = f"Greetings {client_name}, welcome to PAL MCP Server!"
 #     else:
 #         response = f"Welcome {client_name}!"
