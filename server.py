@@ -842,14 +842,41 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[TextCon
             raise ToolExecutionError(error_output.model_dump_json())
 
         # Create model context with resolved model and option
-        model_context = ModelContext(model_name, model_option)
-        arguments["_model_context"] = model_context
-        arguments["_resolved_model_name"] = model_name
-        logger.debug(
-            f"Model context created for {model_name} with {model_context.capabilities.context_window} token capacity"
-        )
-        if model_option:
-            logger.debug(f"Model option stored in context: '{model_option}'")
+        try:
+            model_context = ModelContext(model_name, model_option)
+            arguments["_model_context"] = model_context
+            arguments["_resolved_model_name"] = model_name
+            # Trigger capabilities validation and cache
+            _ = model_context.capabilities
+            logger.debug(
+                f"Model context created for {model_name} with {model_context.capabilities.context_window} token capacity"
+            )
+            if model_option:
+                logger.debug(f"Model option stored in context: '{model_option}'")
+        except ValueError as exc:
+            # Handle validation errors (e.g., restricted models, invalid format)
+            logger.error(f"Model context validation failed for '{model_name}': {exc}")
+            error_output = ToolOutput(
+                status="error",
+                content=str(exc),
+                content_type="text",
+                metadata={"tool_name": name, "requested_model": model_name},
+            )
+            raise ToolExecutionError(error_output.model_dump_json()) from exc
+        except Exception as exc:
+            # Handle unexpected errors (e.g., provider failures, SDK errors)
+            logger.exception("Model context setup failed for %s", model_name)
+            error_message = (
+                f"Unable to initialize model context for '{model_name}'. "
+                "Please choose a different model or check provider configuration."
+            )
+            error_output = ToolOutput(
+                status="error",
+                content=error_message,
+                content_type="text",
+                metadata={"tool_name": name, "requested_model": model_name},
+            )
+            raise ToolExecutionError(error_output.model_dump_json()) from exc
 
         # EARLY FILE SIZE VALIDATION AT MCP BOUNDARY
         # Check file sizes before tool execution using resolved model
