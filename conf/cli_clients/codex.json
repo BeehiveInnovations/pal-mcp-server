@@ -18,6 +18,10 @@
     "codereviewer": {
       "prompt_path": "systemprompts/clink/codex_codereviewer.txt",
       "role_args": []
+    },
+    "codegen": {
+      "prompt_path": "systemprompts/clink/default_codegen.txt",
+      "role_args": []
     }
   }
 }
