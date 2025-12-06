@@ -429,7 +429,14 @@ class ModelProviderRegistry:
             return first_available_model
 
         # Ultimate fallback if no providers have models
-        logging.warning("No models available from any provider, using default fallback")
+        # Provide actionable guidance for users with custom endpoints
+        registered_providers = [p.value for p in cls.PROVIDER_PRIORITY_ORDER if cls.get_provider(p)]
+        logging.warning(
+            f"No models available from any provider. "
+            f"Registered providers: {registered_providers or 'none'}. "
+            f"If using CUSTOM_API_URL, set CUSTOM_MODEL_NAME to enable auto mode. "
+            f"Falling back to 'gemini-2.5-flash' (may fail without GEMINI_API_KEY)."
+        )
         return "gemini-2.5-flash"
 
     @classmethod
