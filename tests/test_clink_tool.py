@@ -60,7 +60,13 @@ def test_registry_lists_roles():
     assert "default" in roles
     assert "default" in registry.list_roles("codex")
     codex_client = registry.get_client("codex")
-    assert codex_client.config_args == ["--json", "--dangerously-bypass-approvals-and-sandbox"]
+    # Verify codex uses --enable web_search_request (not --search which is unsupported by exec)
+    assert codex_client.config_args == [
+        "--json",
+        "--dangerously-bypass-approvals-and-sandbox",
+        "--enable",
+        "web_search_request",
+    ]
 
 
 @pytest.mark.asyncio
