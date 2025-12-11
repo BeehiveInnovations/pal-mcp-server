@@ -3,8 +3,8 @@
 X.AI GROK Model Tests
 
 Tests that verify X.AI GROK functionality including:
-- Model alias resolution (grok, grok3, grokfast map to actual GROK models)
-- GROK-3 and GROK-3-fast models work correctly
+- Model alias resolution (grok maps to Grok 4)
+- GROK-4 and GROK-4.1 Fast Reasoning models work correctly
 - Conversation continuity works with GROK models
 - API integration and response validation
 """
@@ -63,75 +63,44 @@ class XAIModelsTest(BaseSimulatorTest):
             if continuation_id:
                 self.logger.info(f"  ✅ Got continuation_id: {continuation_id}")
 
-            # Test 2: Direct grok-3 model name
-            self.logger.info("  2: Testing direct model name (grok-3)")
+            # Test 2: Direct grok-4.1-fast model name
+            self.logger.info("  2: Testing direct model name (grok-4.1-fast)")
 
             response2, _ = self.call_mcp_tool(
                 "chat",
                 {
-                    "prompt": "Say 'Hello from GROK-3!' and nothing else.",
-                    "model": "grok-3",
+                    "prompt": "Say 'Hello from GROK-4.1 Fast!' and nothing else.",
+                    "model": "grok-4.1-fast",
                     "temperature": 0.1,
                 },
             )
 
             if not response2:
-                self.logger.error("  ❌ Direct GROK-3 model test failed")
+                self.logger.error("  ❌ Direct GROK-4.1-fast model test failed")
                 return False
 
-            self.logger.info("  ✅ Direct GROK-3 model call completed")
+            self.logger.info("  ✅ Direct GROK-4.1-fast model call completed")
 
-            # Test 3: grok-3-fast model
-            self.logger.info("  3: Testing GROK-3-fast model")
+            # Test 3: grok-4.1-fast-reasoning alias
+            self.logger.info("  3: Testing 'grok-4.1-fast-reasoning' alias")
 
             response3, _ = self.call_mcp_tool(
                 "chat",
                 {
-                    "prompt": "Say 'Hello from GROK-3-fast!' and nothing else.",
-                    "model": "grok-3-fast",
+                    "prompt": "Say 'Hello from GROK-4.1 Fast Reasoning alias!' and nothing else.",
+                    "model": "grok-4.1-fast-reasoning",
                     "temperature": 0.1,
                 },
             )
 
             if not response3:
-                self.logger.error("  ❌ GROK-3-fast model test failed")
+                self.logger.error("  ❌ GROK-4.1-fast-reasoning alias test failed")
                 return False
 
-            self.logger.info("  ✅ GROK-3-fast model call completed")
+            self.logger.info("  ✅ GROK-4.1-fast-reasoning alias call completed")
 
-            # Test 4: Shorthand aliases
-            self.logger.info("  4: Testing shorthand aliases (grok3, grokfast)")
-
-            response4, _ = self.call_mcp_tool(
-                "chat",
-                {
-                    "prompt": "Say 'Hello from grok3 alias!' and nothing else.",
-                    "model": "grok3",
-                    "temperature": 0.1,
-                },
-            )
-
-            if not response4:
-                self.logger.error("  ❌ grok3 alias test failed")
-                return False
-
-            response5, _ = self.call_mcp_tool(
-                "chat",
-                {
-                    "prompt": "Say 'Hello from grokfast alias!' and nothing else.",
-                    "model": "grokfast",
-                    "temperature": 0.1,
-                },
-            )
-
-            if not response5:
-                self.logger.error("  ❌ grokfast alias test failed")
-                return False
-
-            self.logger.info("  ✅ Shorthand aliases work correctly")
-
-            # Test 5: Conversation continuity with GROK models
-            self.logger.info("  5: Testing conversation continuity with GROK")
+            # Test 4: Conversation continuity with GROK models
+            self.logger.info("  4: Testing conversation continuity with GROK")
 
             response6, new_continuation_id = self.call_mcp_tool(
                 "chat",
@@ -167,8 +136,8 @@ class XAIModelsTest(BaseSimulatorTest):
             else:
                 self.logger.warning("  ⚠️  Model may not have remembered the number")
 
-            # Test 6: Validate X.AI API usage from logs
-            self.logger.info("  6: Validating X.AI API usage in logs")
+            # Test 5: Validate X.AI API usage from logs
+            self.logger.info("  5: Validating X.AI API usage in logs")
             logs = self.get_recent_server_logs()
 
             # Check for X.AI API calls

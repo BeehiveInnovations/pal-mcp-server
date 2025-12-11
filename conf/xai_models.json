@@ -5,7 +5,7 @@
     "usage": "Models listed here are exposed directly through the X.AI provider. Aliases are case-insensitive.",
     "field_notes": "Matches providers/shared/model_capabilities.py.",
     "field_descriptions": {
-      "model_name": "The model identifier (e.g., 'grok-4', 'grok-3-fast')",
+      "model_name": "The model identifier (e.g., 'grok-4', 'grok-4.1-fast')",
       "aliases": "Array of short names users can type instead of the full model name",
       "context_window": "Total number of tokens the model can process (input + output combined)",
       "max_output_tokens": "Maximum number of tokens the model can generate in a single response",
@@ -46,42 +46,27 @@
       "max_image_size_mb": 20.0
     },
     {
-      "model_name": "grok-3",
-      "friendly_name": "X.AI (Grok 3)",
+      "model_name": "grok-4-1-fast-reasoning",
+      "friendly_name": "X.AI (Grok 4.1 Fast Reasoning)",
       "aliases": [
-        "grok3"
+        "grok-4.1",
+        "grok-4-1",
+        "grok-4.1-fast-reasoning",
+        "grok-4.1-fast-reasoning-latest",
+        "grok-4.1-fast"
       ],
-      "intelligence_score": 13,
-      "description": "GROK-3 (131K context) - Advanced reasoning model from X.AI, excellent for complex analysis",
-      "context_window": 131072,
-      "max_output_tokens": 131072,
-      "supports_extended_thinking": false,
+      "intelligence_score": 15,
+      "description": "GROK-4.1 Fast Reasoning (2M context) - High-performance multimodal reasoning model with function calling",
+      "context_window": 2000000,
+      "max_output_tokens": 2000000,
+      "supports_extended_thinking": true,
       "supports_system_prompts": true,
       "supports_streaming": true,
       "supports_function_calling": true,
-      "supports_json_mode": false,
-      "supports_images": false,
-      "supports_temperature": true
-    },
-    {
-      "model_name": "grok-3-fast",
-      "friendly_name": "X.AI (Grok 3 Fast)",
-      "aliases": [
-        "grok3fast",
-        "grokfast",
-        "grok3-fast"
-      ],
-      "intelligence_score": 12,
-      "description": "GROK-3 Fast (131K context) - Higher performance variant, faster processing but more expensive",
-      "context_window": 131072,
-      "max_output_tokens": 131072,
-      "supports_extended_thinking": false,
-      "supports_system_prompts": true,
-      "supports_streaming": true,
-      "supports_function_calling": true,
-      "supports_json_mode": false,
-      "supports_images": false,
-      "supports_temperature": true
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0
     }
   ]
 }

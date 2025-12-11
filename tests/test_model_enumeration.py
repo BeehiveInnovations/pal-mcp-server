@@ -161,7 +161,7 @@ class TestModelEnumeration:
             ("grok", False),  # X.AI - not available without API key
             ("gemini-2.5-flash", False),  # Full Gemini name - not available without API key
             ("o4-mini", False),  # OpenAI variant - not available without API key
-            ("grok-3-fast", False),  # X.AI variant - not available without API key
+            ("grok-4.1-fast", False),  # X.AI variant - not available without API key
         ],
     )
     def test_specific_native_models_only_with_api_keys(self, model_name, should_exist):
