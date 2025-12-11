@@ -124,6 +124,16 @@ class ModelProviderRegistry:
                 provider_kwargs["base_url"] = gemini_base_url
                 logging.info(f"Initialized Gemini provider with custom endpoint: {gemini_base_url}")
             provider = provider_class(**provider_kwargs)
+        elif provider_type == ProviderType.OPENAI:
+            # For OpenAI, check if custom base URL is configured
+            if not api_key:
+                return None
+            openai_base_url = get_env("OPENAI_BASE_URL")
+            provider_kwargs = {"api_key": api_key}
+            if openai_base_url:
+                provider_kwargs["base_url"] = openai_base_url
+                logging.info(f"Initialized OpenAI provider with custom endpoint: {openai_base_url}")
+            provider = provider_class(**provider_kwargs)
         elif provider_type == ProviderType.AZURE:
             if not api_key:
                 return None
