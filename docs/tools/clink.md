@@ -73,13 +73,26 @@ clink with gemini with planner role to map out our microservices migration strat
 Use clink codereviewer role to review auth.py for security issues
 ```
 
+**Code Generator Role** - Structured code generation for substantial implementations
+```
+clink with gemini codegen to create a REST API module with authentication and CRUD operations
+```
+
+The `codegen` role outputs complete, working code using a structured format with `<GENERATED-CODE>` tags, making it ideal for:
+- Creating new features from scratch with multiple files
+- Major refactoring across large sections of code
+- Implementing new modules, components, or subsystems
+- Large-scale updates affecting substantial portions of the codebase
+
+Generated code includes step-by-step instructions, complete implementations (no placeholders), and a summary conclusion with testing recommendations.
+
 You can make your own custom roles in `conf/cli_clients/` or tweak any of the shipped presets.
 
 ## Tool Parameters
 
 - `prompt`: Your question or task for the external CLI (required)
 - `cli_name`: Which CLI to use - `gemini` (default), `claude`, `codex`, or add your own in `conf/cli_clients/`
-- `role`: Preset role - `default`, `planner`, `codereviewer` (default: `default`)
+- `role`: Preset role - `default`, `planner`, `codereviewer`, `codegen` (default: `default`)
 - `files`: Optional file paths for context (references only, CLI opens files itself)
 - `images`: Optional image paths for visual context
 - `continuation_id`: Continue previous clink conversations
@@ -99,6 +112,21 @@ clink to gemini codereviewer: Review payment_service.py for race conditions and 
 **Codex Code Review:**
 ```
 "clink with codex cli and perform a full code review using the codereview role"
+```
+
+**Code Generation with Gemini:**
+```
+clink with gemini codegen to implement a user authentication module with JWT tokens, password hashing, and session management
+```
+
+**Complex Feature Implementation:**
+```
+clink with codex codegen to create a complete payment processing system with Stripe integration, webhook handling, and transaction logging
+```
+
+**Major Refactoring:**
+```
+clink with claude codegen to refactor the database layer from SQLAlchemy to async SQLModel with proper migrations
 ```
 
 **Quick Research Question:**
