@@ -39,7 +39,7 @@ A straightforward rubric that mirrors typical provider tiers:
 
 | Intelligence | Guidance                                                                                  |
 |--------------|-------------------------------------------------------------------------------------------|
-| 18–19 | Frontier reasoning models (Gemini 3.0 Pro, Gemini 2.5 Pro, GPT‑5.1 Codex, GPT‑5.1, GPT‑5) |
+| 18–19 | Frontier reasoning models (Gemini 3.0 Pro, Gemini 2.5 Pro, GPT‑5.1 Codex, GPT‑5.2 Pro, GPT‑5.2, GPT‑5) |
 | 15–17 | Strong general models with large context (O3 Pro, DeepSeek R1)                            |
 | 12–14 | Balanced assistants (Claude Opus/Sonnet, Mistral Large)                                   |
 | 9–11  | Fast distillations (Gemini Flash, GPT-5 Mini, Mistral medium)                             |

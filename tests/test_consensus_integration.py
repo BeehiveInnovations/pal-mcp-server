@@ -20,7 +20,7 @@ CASSETTE_DIR.mkdir(exist_ok=True)
 # Mapping of OpenAI model names to their cassette files
 CONSENSUS_CASSETTES = {
     "gpt-5": CASSETTE_DIR / "consensus_step1_gpt5_for.json",
-    "gpt-5.1": CASSETTE_DIR / "consensus_step1_gpt51_for.json",
+    "gpt-5.2": CASSETTE_DIR / "consensus_step1_gpt52_for.json",
 }
 
 GEMINI_REPLAY_DIR = Path(__file__).parent / "gemini_cassettes"
@@ -32,11 +32,11 @@ GEMINI_REPLAY_PATH = GEMINI_REPLAY_DIR / "consensus" / "step2_gemini25_flash_aga
 @pytest.mark.integration
 @pytest.mark.asyncio
 @pytest.mark.no_mock_provider
-@pytest.mark.parametrize("openai_model", ["gpt-5", "gpt-5.1"])
+@pytest.mark.parametrize("openai_model", ["gpt-5", "gpt-5.2"])
 async def test_consensus_multi_model_consultations(monkeypatch, openai_model):
     """Exercise ConsensusTool against OpenAI model (supporting) and gemini-2.5-flash (critical).
 
-    Tests both gpt-5 and gpt-5.1 to ensure regression coverage for both model families.
+    Tests both gpt-5 and gpt-5.2 to ensure regression coverage for both model families.
     """
 
     # Get the cassette path for this model

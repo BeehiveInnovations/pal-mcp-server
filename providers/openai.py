@@ -119,9 +119,9 @@ class OpenAIModelProvider(RegistryBackedProviderMixin, OpenAICompatibleProvider)
             preferred = find_first(
                 [
                     "gpt-5.1-codex",
-                    "gpt-5.1",
+                    "gpt-5.2",
                     "gpt-5-codex",
-                    "gpt-5-pro",
+                    "gpt-5.2-pro",
                     "o3-pro",
                     "gpt-5",
                     "o3",
@@ -131,10 +131,10 @@ class OpenAIModelProvider(RegistryBackedProviderMixin, OpenAICompatibleProvider)
 
         elif category == ToolModelCategory.FAST_RESPONSE:
             # Prefer fast, cost-efficient models
-            # GPT-5.1 models for speed, GPT-5.1-Codex after (premium pricing but cached)
+            # GPT-5.2 models for speed, GPT-5.1-Codex after (premium pricing but cached)
             preferred = find_first(
                 [
-                    "gpt-5.1",
+                    "gpt-5.2",
                     "gpt-5.1-codex-mini",
                     "gpt-5",
                     "gpt-5-mini",
@@ -147,14 +147,14 @@ class OpenAIModelProvider(RegistryBackedProviderMixin, OpenAICompatibleProvider)
 
         else:  # BALANCED or default
             # Prefer balanced performance/cost models
-            # Include GPT-5.1 family for latest capabilities
+            # Include GPT-5.2 family for latest capabilities
             preferred = find_first(
                 [
-                    "gpt-5.1",
+                    "gpt-5.2",
                     "gpt-5.1-codex",
                     "gpt-5",
                     "gpt-5-codex",
-                    "gpt-5-pro",
+                    "gpt-5.2-pro",
                     "gpt-5-mini",
                     "o4-mini",
                     "o3-mini",

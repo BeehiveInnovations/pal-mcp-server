@@ -228,10 +228,10 @@ Some integration tests maintain cassettes for multiple model variants to ensure 
 
 ### Consensus Tool Cassettes
 
-The `test_consensus_integration.py` test uses parameterized fixtures to test both `gpt-5` and `gpt-5.1` models:
+The `test_consensus_integration.py` test uses parameterized fixtures to test both `gpt-5` and `gpt-5.2` models:
 
 - `tests/openai_cassettes/consensus_step1_gpt5_for.json` - Cassette for gpt-5 model
-- `tests/openai_cassettes/consensus_step1_gpt51_for.json` - Cassette for gpt-5.1 model
+- `tests/openai_cassettes/consensus_step1_gpt52_for.json` - Cassette for gpt-5.2 model
 
 **When updating consensus cassettes:**
 
@@ -249,9 +249,9 @@ rm tests/openai_cassettes/consensus_step1_gpt5_for.json
 # Run the test with real API key (it will record for gpt-5)
 OPENAI_API_KEY="your-real-key" python -m pytest tests/test_consensus_integration.py::test_consensus_multi_model_consultations[gpt-5] -v
 
-# Or for gpt-5.1
-rm tests/openai_cassettes/consensus_step1_gpt51_for.json
-OPENAI_API_KEY="your-real-key" python -m pytest tests/test_consensus_integration.py::test_consensus_multi_model_consultations[gpt-5.1] -v
+# Or for gpt-5.2
+rm tests/openai_cassettes/consensus_step1_gpt52_for.json
+OPENAI_API_KEY="your-real-key" python -m pytest tests/test_consensus_integration.py::test_consensus_multi_model_consultations[gpt-5.2] -v
 ```
 
 This dual-coverage approach ensures that both model families continue to work correctly as the codebase evolves.

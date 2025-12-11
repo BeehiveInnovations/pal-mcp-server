@@ -29,7 +29,7 @@ You need at least one API key. Choose based on your needs:
 
 **OpenAI:**
 - Visit [OpenAI Platform](https://platform.openai.com/api-keys)
-- Generate an API key for GPT-5.1, GPT-5.1-Codex, GPT-5, O3 access
+- Generate an API key for GPT-5.2, GPT-5.1-Codex, GPT-5, O3 access
 
 **X.AI (Grok):**
 - Visit [X.AI Console](https://console.x.ai/)
@@ -287,7 +287,7 @@ Add your API keys (at least one required):
 ```env
 # Choose your providers (at least one required)
 GEMINI_API_KEY=your-gemini-api-key-here      # For Gemini models  
-OPENAI_API_KEY=your-openai-api-key-here      # For GPT-5.1, GPT-5.1-Codex, O3
+OPENAI_API_KEY=your-openai-api-key-here      # For GPT-5.2, GPT-5.1-Codex, O3
 XAI_API_KEY=your-xai-api-key-here            # For Grok models
 OPENROUTER_API_KEY=your-openrouter-key       # For multiple models
 
@@ -514,7 +514,7 @@ DEFAULT_MODEL=auto
 GEMINI_API_KEY=your-key
 OPENAI_API_KEY=your-key
 GOOGLE_ALLOWED_MODELS=pro
-OPENAI_ALLOWED_MODELS=gpt-5.1-codex,gpt-5.1
+OPENAI_ALLOWED_MODELS=gpt-5.1-codex,gpt-5.2
 ```
 
 ### Local-First Setup

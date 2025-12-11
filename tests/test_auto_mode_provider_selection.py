@@ -99,8 +99,8 @@ class TestAutoModeProviderSelection:
 
             # Should select appropriate OpenAI models based on new preference order
             assert extended_reasoning == "gpt-5.1-codex"  # GPT-5.1 Codex prioritized for extended reasoning
-            assert fast_response == "gpt-5.1"  # gpt-5.1 comes first in fast response preference
-            assert balanced == "gpt-5.1"  # gpt-5.1 for balanced
+            assert fast_response == "gpt-5.2"  # gpt-5.2 comes first in fast response preference
+            assert balanced == "gpt-5.2"  # gpt-5.2 for balanced
 
         finally:
             # Restore original environment

@@ -17,7 +17,7 @@
       "max_image_size_mb": "Maximum total size in MB for all images combined (capped at 40MB max for custom models)",
       "supports_temperature": "Whether the model accepts temperature parameter in API calls (set to false for O3/O4 reasoning models)",
       "temperature_constraint": "Type of temperature constraint: 'fixed' (fixed value), 'range' (continuous range), 'discrete' (specific values), or omit for default range",
-      "use_openai_response_api": "Set to true when the model must use the /responses endpoint (reasoning models like GPT-5 Pro). Leave false/omit for standard chat completions.",
+      "use_openai_response_api": "Set to true when the model must use the /responses endpoint (reasoning models like GPT-5.2 Pro). Leave false/omit for standard chat completions.",
       "default_reasoning_effort": "Default reasoning effort level for models that support it (e.g., 'low', 'medium', 'high'). Omit if not applicable.",
       "description": "Human-readable description of the model",
       "intelligence_score": "1-20 human rating used as the primary signal for auto-mode model ordering",
@@ -47,14 +47,16 @@
       "temperature_constraint": "fixed"
     },
     {
-      "model_name": "gpt-5-pro",
-      "friendly_name": "OpenAI (GPT-5 Pro)",
+      "model_name": "gpt-5.2-pro",
+      "friendly_name": "OpenAI (GPT-5.2 Pro)",
       "aliases": [
+        "gpt5.2-pro",
+        "gpt5.2pro",
         "gpt5pro",
         "gpt5-pro"
       ],
       "intelligence_score": 18,
-      "description": "GPT-5 Pro (400K context, 272K output) - Very advanced, reasoning model",
+      "description": "GPT-5.2 Pro (400K context, 272K output) - Very advanced, reasoning model",
       "context_window": 400000,
       "max_output_tokens": 272000,
       "supports_extended_thinking": true,
@@ -234,15 +236,18 @@
       "use_openai_response_api": true
     },
     {
-      "model_name": "gpt-5.1",
-      "friendly_name": "OpenAI (GPT-5.1)",
+      "model_name": "gpt-5.2",
+      "friendly_name": "OpenAI (GPT-5.2)",
       "aliases": [
+        "gpt5.2",
+        "gpt-5.2",
+        "5.2",
         "gpt5.1",
         "gpt-5.1",
         "5.1"
       ],
       "intelligence_score": 18,
-      "description": "GPT-5.1 (400K context, 128K output) - Flagship reasoning model with configurable thinking effort and vision support.",
+      "description": "GPT-5.2 (400K context, 128K output) - Flagship reasoning model with configurable thinking effort and vision support.",
       "context_window": 400000,
       "max_output_tokens": 128000,
       "supports_extended_thinking": true,

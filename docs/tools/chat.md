@@ -39,7 +39,7 @@ word verdict in the end.
 - **Collaborative thinking partner** for your analysis and planning
 - **Get second opinions** on your designs and approaches
 - **Brainstorm solutions** and explore alternatives together
-- **Structured code generation**: When using GPT-5.1 or Gemini 3.0 / 2.5 Pro, get complete, production-ready implementations saved to `pal_generated.code` for your CLI to review and apply
+- **Structured code generation**: When using GPT-5.2 or Gemini 3.0 / 2.5 Pro, get complete, production-ready implementations saved to `pal_generated.code` for your CLI to review and apply
 - **Validate your checklists** and implementation plans
 - **General development questions** and explanations
 - **Technology comparisons** and best practices
@@ -52,7 +52,7 @@ word verdict in the end.
 ## Tool Parameters
 
 - `prompt`: Your question or discussion topic (required)
-- `model`: auto|pro|flash|flash-2.0|flashlite|o3|o3-mini|o4-mini|gpt4.1|gpt5.1|gpt5.1-codex|gpt5.1-codex-mini|gpt5|gpt5-mini|gpt5-nano (default: server default)
+- `model`: auto|pro|flash|flash-2.0|flashlite|o3|o3-mini|o4-mini|gpt4.1|gpt5.2|gpt5.1-codex|gpt5.1-codex-mini|gpt5|gpt5-mini|gpt5-nano (default: server default)
 - `absolute_file_paths`: Optional absolute file or directory paths for additional context
 - `images`: Optional images for visual context (absolute paths)
 - `working_directory_absolute_path`: **Required** - Absolute path to an existing directory where generated code artifacts will be saved
@@ -62,11 +62,11 @@ word verdict in the end.
 
 ## Structured Code Generation
 
-When using advanced reasoning models like **GPT-5 Pro** or **Gemini 3.0 Pro**, the chat tool can generate complete, production-ready code implementations in a structured format.
+When using advanced reasoning models like **GPT-5.2 Pro** or **Gemini 3.0 Pro**, the chat tool can generate complete, production-ready code implementations in a structured format.
 
 ### How It Works
 
-1. You ask your AI agent to implement a complex new feature using `chat` with a higher-reasoning model such as **GPT-5 Pro** or **Gemini 3.0 Pro**
+1. You ask your AI agent to implement a complex new feature using `chat` with a higher-reasoning model such as **GPT-5.2 Pro** or **Gemini 3.0 Pro**
 2. The model generates structured implementation and shares the complete implementation with PAL
 3. PAL saves the code to `pal_generated.code` and asks AI agent to implement the plan
 4. AI agent continues from the previous context, reads the file, applies the implementation
@@ -85,7 +85,7 @@ For minor changes (small tweaks, bug fixes, algorithm improvements), the model r
 ### Example Usage
 
 ```
-chat with gpt-5-pro and ask it to make me a standalone, classic version of the
+chat with gpt-5.2-pro and ask it to make me a standalone, classic version of the
 Pacman game using pygame that I can run from the commandline. Give me a single
 script to execute in the end with any / all dependencies setup for me. 
 Do everything using pygame, we have no external resources / images / audio at

@@ -17,7 +17,7 @@
       "max_image_size_mb": "Maximum total size in MB for all images combined (capped at 40MB max for custom models)",
       "supports_temperature": "Whether the model accepts temperature parameter in API calls (set to false for O3/O4 reasoning models)",
       "temperature_constraint": "Type of temperature constraint: 'fixed' (fixed value), 'range' (continuous range), 'discrete' (specific values), or omit for default range",
-      "use_openai_response_api": "Set to true when the model must use the /responses endpoint (reasoning models like GPT-5 Pro). Leave false/omit for standard chat completions.",
+      "use_openai_response_api": "Set to true when the model must use the /responses endpoint (reasoning models like GPT-5.2 Pro). Leave false/omit for standard chat completions.",
       "default_reasoning_effort": "Default reasoning effort level for models that support it (e.g., 'low', 'medium', 'high'). Omit if not applicable.",
       "description": "Human-readable description of the model",
       "intelligence_score": "1-20 human rating used as the primary signal for auto-mode model ordering",
