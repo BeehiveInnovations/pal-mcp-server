@@ -191,7 +191,7 @@ class TestXAIProvider:
         # grok-4 should NOT be allowed
         assert provider.validate_model_name("grok-4") is False
 
-    @patch.dict(os.environ, {"XAI_ALLOWED_MODELS": "grok,grok-4.1-fast"})
+    @patch.dict(os.environ, {"XAI_ALLOWED_MODELS": "grok,grok-4,grok-4.1-fast,grok-4-1-fast-reasoning"})
     def test_both_shorthand_and_full_name_allowed(self):
         """Test that aliases and canonical names can be allowed together."""
         # Clear cached restriction service
@@ -201,10 +201,11 @@ class TestXAIProvider:
 
         provider = XAIModelProvider("test-key")
 
-        # Both shorthand and full name should be allowed
-        assert provider.validate_model_name("grok") is True  # Resolves to grok-4
-        assert provider.validate_model_name("grok-4") is True
-        assert provider.validate_model_name("grok-4.1-fast") is True
+        # Both shorthand and full name should be allowed when explicitly listed
+        assert provider.validate_model_name("grok") is True  # Alias explicitly allowed
+        assert provider.validate_model_name("grok-4") is True  # Canonical name explicitly allowed
+        assert provider.validate_model_name("grok-4.1-fast") is True  # Alias explicitly allowed
+        assert provider.validate_model_name("grok-4-1-fast-reasoning") is True  # Canonical name explicitly allowed
 
     @patch.dict(os.environ, {"XAI_ALLOWED_MODELS": ""})
     def test_empty_restrictions_allows_all(self):
