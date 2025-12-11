@@ -128,7 +128,7 @@ and review into consideration to aid with its final pre-commit review.
 For best results when using [Claude Code](https://claude.ai/code):  
 
 - **Sonnet 4.5** - All agentic work and orchestration
-- **Gemini 3.0 Pro** OR **GPT-5.2-Pro** - Deep thinking, additional code reviews, debugging and validations, pre-commit analysis
+- **Gemini 3.0 Pro** OR **GPT-5.2 / Pro** - Deep thinking, additional code reviews, debugging and validations, pre-commit analysis
 </details>
 
 <details>
@@ -136,7 +136,7 @@ For best results when using [Claude Code](https://claude.ai/code):
 
 For best results when using [Codex CLI](https://developers.openai.com/codex/cli):  
 
-- **GPT-5 Codex Medium** - All agentic work and orchestration
+- **GPT-5.2 Codex Medium** - All agentic work and orchestration
 - **Gemini 3.0 Pro** OR **GPT-5.2-Pro** - Deep thinking, additional code reviews, debugging and validations, pre-commit analysis
 </details>
 
