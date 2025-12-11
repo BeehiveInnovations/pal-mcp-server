@@ -719,7 +719,7 @@ function Install-Dependencies {
             foreach ($file in $requirementsFiles) {
                 Write-Info "Installing from $file with uv..."
                 $uv = (Get-Command uv -ErrorAction Stop).Source
-                $arguments = @('pip', 'install', '-r', $file, '--python', $PythonPath)
+                $arguments = @('pip', 'install', '-r', $file, '--python', "`"$PythonPath`"")
                 $proc = Start-Process -FilePath $uv -ArgumentList $arguments -NoNewWindow -Wait -PassThru
 
                 if ($proc.ExitCode -ne 0) { 
