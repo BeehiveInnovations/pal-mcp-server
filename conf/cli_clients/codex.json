@@ -3,7 +3,8 @@
   "command": "codex",
   "additional_args": [
     "--json",
-    "--dangerously-bypass-approvals-and-sandbox"
+    "--dangerously-bypass-approvals-and-sandbox",
+    "--skip-git-repo-check"
   ],
   "env": {},
   "roles": {
