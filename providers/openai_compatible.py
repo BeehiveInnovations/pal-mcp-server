@@ -421,8 +421,16 @@ class OpenAICompatibleProvider(ModelProvider):
             "model": model_name,
             "input": input_messages,
             "reasoning": {"effort": effort},
-            "store": True,
         }
+
+        # Only include store parameter for providers that support it.
+        # OpenRouter's /responses endpoint rejects store:true via Zod validation (Issue #348).
+        # This is an endpoint-level limitation, not model-specific, so we omit for all
+        # OpenRouter /responses calls. If OpenRouter later supports store, revisit this logic.
+        if self.get_provider_type() != ProviderType.OPENROUTER:
+            completion_params["store"] = True
+        else:
+            logging.debug(f"Omitting 'store' parameter for OpenRouter provider (model: {model_name})")
 
         # Add max tokens if specified (using max_completion_tokens for responses endpoint)
         if max_output_tokens:
