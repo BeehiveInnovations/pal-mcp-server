@@ -392,33 +392,6 @@ class SecauditTool(WorkflowTool):
                 "enum": ["exploring", "low", "medium", "high", "very_high", "almost_certain", "certain"],
                 "description": SECAUDIT_WORKFLOW_FIELD_DESCRIPTIONS["confidence"],
             },
-            "issues_found": {
-                "type": "array",
-                "items": {
-                    "type": "object",
-                    "properties": {
-                        "severity": {
-                            "type": "string",
-                            "enum": ["critical", "high", "medium", "low"],
-                            "description": "Severity level of the issue",
-                        },
-                        "description": {
-                            "type": "string",
-                            "description": "Description of the issue found",
-                        },
-                        "location": {
-                            "type": "string",
-                            "description": "File path or code location where the issue was found",
-                        },
-                        "suggestion": {
-                            "type": "string",
-                            "description": "Suggested fix or remediation",
-                        },
-                    },
-                    "required": ["severity", "description"],
-                },
-                "description": SECAUDIT_WORKFLOW_FIELD_DESCRIPTIONS["issues_found"],
-            },
             "images": {
                 "type": "array",
                 "items": {"type": "string"},
