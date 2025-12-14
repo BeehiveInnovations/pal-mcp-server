@@ -381,8 +381,8 @@ DISABLED_TOOLS=
 - **[Context revival](docs/context-revival.md)** - Continue conversations even after context resets
 
 **Model Support**
-- **Multiple providers** - Gemini, OpenAI, Azure, X.AI, OpenRouter, DIAL, Ollama
-- **Latest models** - GPT-5, Gemini 3.0 Pro, O3, Grok-4, local Llama
+- **Multiple providers** - Gemini, OpenAI, Azure, AWS Bedrock, X.AI, OpenRouter, DIAL, Ollama
+- **Latest models** - GPT-5, Gemini 3.0 Pro, O3, Claude 4.5 (Bedrock), Grok-4, local Llama
 - **[Thinking modes](docs/advanced-usage.md#thinking-modes)** - Control reasoning depth vs cost
 - **Vision support** - Analyze images, diagrams, screenshots
 
