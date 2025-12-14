@@ -201,33 +201,6 @@ class PrecommitTool(WorkflowTool):
                 "default": "external",
                 "description": PRECOMMIT_WORKFLOW_FIELD_DESCRIPTIONS["precommit_type"],
             },
-            "issues_found": {
-                "type": "array",
-                "items": {
-                    "type": "object",
-                    "properties": {
-                        "severity": {
-                            "type": "string",
-                            "enum": ["critical", "high", "medium", "low"],
-                            "description": "Severity level of the issue",
-                        },
-                        "description": {
-                            "type": "string",
-                            "description": "Description of the issue found",
-                        },
-                        "location": {
-                            "type": "string",
-                            "description": "File path or code location where the issue was found",
-                        },
-                        "suggestion": {
-                            "type": "string",
-                            "description": "Suggested fix or remediation",
-                        },
-                    },
-                    "required": ["severity", "description"],
-                },
-                "description": PRECOMMIT_WORKFLOW_FIELD_DESCRIPTIONS["issues_found"],
-            },
             "images": {
                 "type": "array",
                 "items": {"type": "string"},

@@ -222,33 +222,6 @@ class AnalyzeTool(WorkflowTool):
                 "items": {"type": "string"},
                 "description": ANALYZE_WORKFLOW_FIELD_DESCRIPTIONS["images"],
             },
-            "issues_found": {
-                "type": "array",
-                "items": {
-                    "type": "object",
-                    "properties": {
-                        "severity": {
-                            "type": "string",
-                            "enum": ["critical", "high", "medium", "low"],
-                            "description": "Severity level of the issue",
-                        },
-                        "description": {
-                            "type": "string",
-                            "description": "Description of the issue found",
-                        },
-                        "location": {
-                            "type": "string",
-                            "description": "File path or code location where the issue was found",
-                        },
-                        "suggestion": {
-                            "type": "string",
-                            "description": "Suggested fix or remediation",
-                        },
-                    },
-                    "required": ["severity", "description"],
-                },
-                "description": "Issues or concerns identified during analysis, each with severity level (critical, high, medium, low)",
-            },
             "analysis_type": {
                 "type": "string",
                 "enum": ["architecture", "performance", "security", "quality", "general"],
