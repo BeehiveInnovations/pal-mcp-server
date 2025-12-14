@@ -247,7 +247,29 @@ of the evidence, even when it strongly points in one direction.""",
             },
             "model_responses": {
                 "type": "array",
-                "items": {"type": "object"},
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "model": {
+                            "type": "string",
+                            "description": "Model name that provided this response",
+                        },
+                        "stance": {
+                            "type": "string",
+                            "enum": ["for", "against", "neutral"],
+                            "description": "The stance this model was given",
+                        },
+                        "response": {
+                            "type": "string",
+                            "description": "The model's response content",
+                        },
+                        "timestamp": {
+                            "type": "string",
+                            "description": "When the response was received",
+                        },
+                    },
+                    "required": ["model", "response"],
+                },
                 "description": CONSENSUS_WORKFLOW_FIELD_DESCRIPTIONS["model_responses"],
             },
             "images": {
