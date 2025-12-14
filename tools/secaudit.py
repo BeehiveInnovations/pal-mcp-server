@@ -392,11 +392,6 @@ class SecauditTool(WorkflowTool):
                 "enum": ["exploring", "low", "medium", "high", "very_high", "almost_certain", "certain"],
                 "description": SECAUDIT_WORKFLOW_FIELD_DESCRIPTIONS["confidence"],
             },
-            "issues_found": {
-                "type": "array",
-                "items": {"type": "object"},
-                "description": SECAUDIT_WORKFLOW_FIELD_DESCRIPTIONS["issues_found"],
-            },
             "images": {
                 "type": "array",
                 "items": {"type": "string"},

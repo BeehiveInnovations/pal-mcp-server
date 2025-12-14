@@ -200,11 +200,6 @@ class CodeReviewTool(WorkflowTool):
                 "default": "external",
                 "description": CODEREVIEW_WORKFLOW_FIELD_DESCRIPTIONS.get("review_validation_type", ""),
             },
-            "issues_found": {
-                "type": "array",
-                "items": {"type": "object"},
-                "description": CODEREVIEW_WORKFLOW_FIELD_DESCRIPTIONS["issues_found"],
-            },
             "images": {
                 "type": "array",
                 "items": {"type": "string"},

@@ -226,7 +226,30 @@ class RefactorTool(WorkflowTool):
             },
             "issues_found": {
                 "type": "array",
-                "items": {"type": "object"},
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "severity": {
+                            "type": "string",
+                            "enum": ["critical", "high", "medium", "low"],
+                            "description": "Severity level of the issue",
+                        },
+                        "type": {
+                            "type": "string",
+                            "enum": ["codesmells", "decompose", "modernize", "organization"],
+                            "description": "Type of refactoring opportunity",
+                        },
+                        "description": {
+                            "type": "string",
+                            "description": "Description of the refactoring opportunity",
+                        },
+                        "location": {
+                            "type": "string",
+                            "description": "File path or code location",
+                        },
+                    },
+                    "required": ["severity", "description"],
+                },
                 "description": REFACTOR_FIELD_DESCRIPTIONS["issues_found"],
             },
             "images": {
