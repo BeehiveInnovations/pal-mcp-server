@@ -477,7 +477,7 @@ def configure_providers():
 
     # Check for custom API endpoint (Ollama, vLLM, etc.)
     custom_url = get_env("CUSTOM_API_URL")
-    if custom_url:
+    if custom_url and custom_url != "your_custom_api_url_here":
         # IMPORTANT: Always read CUSTOM_API_KEY even if empty
         # - Some providers (vLLM, LM Studio, enterprise APIs) require authentication
         # - Others (Ollama) work without authentication (empty key)
