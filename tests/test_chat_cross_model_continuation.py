@@ -17,7 +17,20 @@ from tools.chat import ChatTool
 
 CASSETTE_DIR = Path(__file__).parent / "openai_cassettes"
 CASSETTE_DIR.mkdir(exist_ok=True)
-OPENAI_CASSETTE_PATH = CASSETTE_DIR / "chat_cross_step2_gpt5_reminder.json"
+
+
+def get_cassette_for_model(base_name: str, model_name: str) -> Path:
+    """Dynamically select cassette based on model's API routing configuration."""
+    from providers.openai import OpenAIModelProvider
+
+    provider = OpenAIModelProvider(api_key="dummy-key-for-check")
+    capabilities = provider.get_capabilities(model_name)
+
+    if capabilities.use_openai_response_api:
+        return CASSETTE_DIR / f"{base_name}_responses.json"
+    else:
+        return CASSETTE_DIR / f"{base_name}.json"
+
 
 GEMINI_CASSETTE_DIR = Path(__file__).parent / "gemini_cassettes"
 GEMINI_CASSETTE_DIR.mkdir(exist_ok=True)
@@ -70,9 +83,14 @@ async def test_chat_cross_model_continuation(monkeypatch, tmp_path):
         "MISTRAL_API_KEY",
         "CUSTOM_API_KEY",
         "CUSTOM_API_URL",
+        "GEMINI_BASE_URL",  # Ensure standard Gemini API is used for cassettes
+        "OPENAI_BASE_URL",  # Ensure standard OpenAI API is used for cassettes
+        "LOCALE",  # Ensure English prompts match cassette recordings
     ]
 
-    recording_mode = not OPENAI_CASSETTE_PATH.exists() or not GEMINI_REPLAY_PATH.exists()
+    # Check if cassettes exist (dynamically determine OpenAI cassette path)
+    openai_cassette_path = get_cassette_for_model("chat_cross_step2_gpt5_reminder", "gpt-5")
+    recording_mode = not openai_cassette_path.exists() or not GEMINI_REPLAY_PATH.exists()
     if recording_mode:
         openai_key = env_updates["OPENAI_API_KEY"].strip()
         gemini_key = env_updates["GEMINI_API_KEY"].strip()
@@ -172,13 +190,15 @@ async def test_chat_cross_model_continuation(monkeypatch, tmp_path):
             m.delenv(key, raising=False)
 
         ModelProviderRegistry.reset_for_testing()
+
+        # Inject transport BEFORE provider registration to ensure monkeypatch is applied
+        inject_transport(monkeypatch, openai_cassette_path)
+
         from providers.gemini import GeminiModelProvider
         from providers.openai import OpenAIModelProvider
 
         ModelProviderRegistry.register_provider(ProviderType.OPENAI, OpenAIModelProvider)
         ModelProviderRegistry.register_provider(ProviderType.GOOGLE, GeminiModelProvider)
-
-        inject_transport(monkeypatch, OPENAI_CASSETTE_PATH)
 
         chat_tool = ChatTool()
         step2_args = {
@@ -199,6 +219,6 @@ async def test_chat_cross_model_continuation(monkeypatch, tmp_path):
         recalled_number = _extract_number(step2_data["content"])
         assert recalled_number == chosen_number
 
-    assert OPENAI_CASSETTE_PATH.exists()
+    assert openai_cassette_path.exists()
 
     ModelProviderRegistry.reset_for_testing()

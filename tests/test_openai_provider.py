@@ -3,6 +3,8 @@
 import os
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from providers.openai import OpenAIModelProvider
 from providers.shared import ProviderType
 
@@ -31,6 +33,9 @@ class TestOpenAIProvider:
         assert provider.api_key == "test-key"
         assert provider.get_provider_type() == ProviderType.OPENAI
         assert provider.base_url == "https://api.openai.com/v1"
+        # Verify OpenAIResponsesProvider is properly initialized
+        assert provider.responses_provider is not None
+        assert provider.responses_provider.__class__.__name__ == "OpenAIResponsesProvider"
 
     def test_initialization_with_custom_url(self):
         """Test provider initialization with custom base URL."""
@@ -197,104 +202,101 @@ class TestOpenAIProvider:
 
         This is the CRITICAL test that was missing - verifying that aliases
         like 'mini' get resolved to 'o4-mini' before being sent to OpenAI API.
+
+        Note: gpt-4.1 uses Responses API, so we mock responses.create
         """
-        # Set up mock OpenAI client
+        # Set up mock OpenAI client for Responses API
         mock_client = MagicMock()
         mock_openai_class.return_value = mock_client
 
-        # Mock the completion response
+        # Mock the Responses API response
         mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = "Test response"
-        mock_response.choices[0].finish_reason = "stop"
+        mock_response.output_text = "Test response"
         mock_response.model = "gpt-4.1-2025-04-14"  # API returns the resolved model name
         mock_response.id = "test-id"
-        mock_response.created = 1234567890
+        mock_response.created_at = 1234567890
         mock_response.usage = MagicMock()
-        mock_response.usage.prompt_tokens = 10
-        mock_response.usage.completion_tokens = 5
-        mock_response.usage.total_tokens = 15
+        mock_response.usage.input_tokens = 10
+        mock_response.usage.output_tokens = 5
 
-        mock_client.chat.completions.create.return_value = mock_response
+        mock_client.responses.create.return_value = mock_response
 
         provider = OpenAIModelProvider("test-key")
 
-        # Call generate_content with alias 'gpt4.1' (resolves to gpt-4.1, supports temperature)
+        # Call generate_content with alias 'gpt4.1' (resolves to gpt-4.1, uses Responses API)
         result = provider.generate_content(
             prompt="Test prompt",
             model_name="gpt4.1",
-            temperature=1.0,  # This should be resolved to "gpt-4.1"
+            temperature=1.0,
         )
 
-        # Verify the API was called with the RESOLVED model name
-        mock_client.chat.completions.create.assert_called_once()
-        call_kwargs = mock_client.chat.completions.create.call_args[1]
+        # Verify the Responses API was called with the RESOLVED model name
+        mock_client.responses.create.assert_called_once()
+        call_kwargs = mock_client.responses.create.call_args[1]
 
         # CRITICAL ASSERTION: The API should receive "gpt-4.1", not "gpt4.1"
         assert call_kwargs["model"] == "gpt-4.1", f"Expected 'gpt-4.1' but API received '{call_kwargs['model']}'"
-
-        # Verify other parameters (gpt-4.1 supports temperature unlike O3/O4 models)
-        assert call_kwargs["temperature"] == 1.0
-        assert len(call_kwargs["messages"]) == 1
-        assert call_kwargs["messages"][0]["role"] == "user"
-        assert call_kwargs["messages"][0]["content"] == "Test prompt"
 
         # Verify response
         assert result.content == "Test response"
         assert result.model_name == "gpt-4.1"  # Should be the resolved name
 
-    @patch("providers.openai_compatible.OpenAI")
+    @patch("providers.openai_responses.OpenAI")
     def test_generate_content_other_aliases(self, mock_openai_class):
-        """Test other alias resolutions in generate_content."""
-        # Set up mock
+        """Test other alias resolutions in generate_content.
+
+        Note: o3-mini and o4-mini use Responses API, so we mock responses.create
+        """
+        # Set up mock for Responses API
         mock_client = MagicMock()
         mock_openai_class.return_value = mock_client
         mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = "Test response"
-        mock_response.choices[0].finish_reason = "stop"
+        mock_response.output_text = "Test response"
+        mock_response.id = "test-id"
+        mock_response.created_at = 1234567890
         mock_response.usage = MagicMock()
-        mock_response.usage.prompt_tokens = 10
-        mock_response.usage.completion_tokens = 5
-        mock_response.usage.total_tokens = 15
-        mock_client.chat.completions.create.return_value = mock_response
+        mock_response.usage.input_tokens = 10
+        mock_response.usage.output_tokens = 5
+        mock_client.responses.create.return_value = mock_response
 
         provider = OpenAIModelProvider("test-key")
 
-        # Test o3mini -> o3-mini
+        # Test o3mini -> o3-mini (Responses API)
         mock_response.model = "o3-mini"
         provider.generate_content(prompt="Test", model_name="o3mini", temperature=1.0)
-        call_kwargs = mock_client.chat.completions.create.call_args[1]
+        call_kwargs = mock_client.responses.create.call_args[1]
         assert call_kwargs["model"] == "o3-mini"
 
-        # Test o4mini -> o4-mini
+        # Test o4mini -> o4-mini (Responses API)
         mock_response.model = "o4-mini"
         provider.generate_content(prompt="Test", model_name="o4mini", temperature=1.0)
-        call_kwargs = mock_client.chat.completions.create.call_args[1]
+        call_kwargs = mock_client.responses.create.call_args[1]
         assert call_kwargs["model"] == "o4-mini"
 
-    @patch("providers.openai_compatible.OpenAI")
+    @patch("providers.openai_responses.OpenAI")
     def test_generate_content_no_alias_passthrough(self, mock_openai_class):
-        """Test that full model names pass through unchanged."""
-        # Set up mock
+        """Test that full model names pass through unchanged.
+
+        Note: o3-mini uses Responses API, so we mock responses.create
+        """
+        # Set up mock for Responses API
         mock_client = MagicMock()
         mock_openai_class.return_value = mock_client
         mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = "Test response"
-        mock_response.choices[0].finish_reason = "stop"
+        mock_response.output_text = "Test response"
         mock_response.model = "o3-mini"
+        mock_response.id = "test-id"
+        mock_response.created_at = 1234567890
         mock_response.usage = MagicMock()
-        mock_response.usage.prompt_tokens = 10
-        mock_response.usage.completion_tokens = 5
-        mock_response.usage.total_tokens = 15
-        mock_client.chat.completions.create.return_value = mock_response
+        mock_response.usage.input_tokens = 10
+        mock_response.usage.output_tokens = 5
+        mock_client.responses.create.return_value = mock_response
 
         provider = OpenAIModelProvider("test-key")
 
         # Test full model name passes through unchanged (use o3-mini since o3-pro has special handling)
         provider.generate_content(prompt="Test", model_name="o3-mini", temperature=1.0)
-        call_kwargs = mock_client.chat.completions.create.call_args[1]
+        call_kwargs = mock_client.responses.create.call_args[1]
         assert call_kwargs["model"] == "o3-mini"  # Should be unchanged
 
     def test_extended_thinking_capabilities(self):
@@ -323,10 +325,10 @@ class TestOpenAIProvider:
         # Invalid models should not validate, treat as unsupported
         assert not provider.validate_model_name("invalid-model")
 
-    @patch("providers.openai_compatible.OpenAI")
+    @patch("providers.openai_responses.OpenAI")
     def test_o3_pro_routes_to_responses_endpoint(self, mock_openai_class):
         """Test that o3-pro model routes to the /v1/responses endpoint (mock test)."""
-        # Set up mock for OpenAI client responses endpoint
+        # Set up mock for OpenAI Responses API client
         mock_client = MagicMock()
         mock_openai_class.return_value = mock_client
 
@@ -337,9 +339,8 @@ class TestOpenAIProvider:
         mock_response.id = "test-id"
         mock_response.created_at = 1234567890
         mock_response.usage = MagicMock()
-        mock_response.usage.prompt_tokens = 10
-        mock_response.usage.completion_tokens = 5
-        mock_response.usage.total_tokens = 15
+        mock_response.usage.input_tokens = 10
+        mock_response.usage.output_tokens = 5
 
         mock_client.responses.create.return_value = mock_response
 
@@ -362,7 +363,10 @@ class TestOpenAIProvider:
 
     @patch("providers.openai_compatible.OpenAI")
     def test_non_o3_pro_uses_chat_completions(self, mock_openai_class):
-        """Test that non-o3-pro models use the standard chat completions endpoint."""
+        """Test that models without use_openai_response_api use chat completions.
+
+        Note: Using gpt-4o which doesn't have use_openai_response_api set
+        """
         # Set up mock
         mock_client = MagicMock()
         mock_openai_class.return_value = mock_client
@@ -370,7 +374,7 @@ class TestOpenAIProvider:
         mock_response.choices = [MagicMock()]
         mock_response.choices[0].message.content = "Test response"
         mock_response.choices[0].finish_reason = "stop"
-        mock_response.model = "o3-mini"
+        mock_response.model = "gpt-4o"
         mock_response.id = "test-id"
         mock_response.created = 1234567890
         mock_response.usage = MagicMock()
@@ -381,12 +385,131 @@ class TestOpenAIProvider:
 
         provider = OpenAIModelProvider("test-key")
 
-        # Generate content with o3-mini (not o3-pro)
-        result = provider.generate_content(prompt="Test prompt", model_name="o3-mini", temperature=1.0)
+        # Mock validate_model_name to allow gpt-4o regardless of restrictions
+        provider.validate_model_name = MagicMock(return_value=True)
+
+        # Generate content with gpt-4o (uses Chat API)
+        result = provider.generate_content(prompt="Test prompt", model_name="gpt-4o", temperature=1.0)
 
         # Verify chat.completions.create was called
         mock_client.chat.completions.create.assert_called_once()
 
         # Verify the response
         assert result.content == "Test response"
-        assert result.model_name == "o3-mini"
+        assert result.model_name == "gpt-4o"
+
+    @patch("providers.openai_responses.OpenAI")
+    @patch("providers.openai_compatible.OpenAI")
+    def test_responses_api_fallback_to_chat(self, mock_chat_openai, mock_responses_openai):
+        """Test automatic fallback from Responses API to Chat API when model not supported.
+
+        Critical test for graceful degradation: when a model is configured with
+        use_openai_response_api=true but the API returns a model error, should
+        automatically fallback to Chat Completions API instead of failing.
+        """
+        # Setup Responses API to fail with model error
+        mock_responses_client = MagicMock()
+        mock_responses_openai.return_value = mock_responses_client
+        mock_responses_client.responses.create.side_effect = Exception("Model 'test-model' not found")
+
+        # Setup Chat API to succeed
+        mock_chat_client = MagicMock()
+        mock_chat_openai.return_value = mock_chat_client
+        mock_chat_response = MagicMock()
+        mock_chat_response.choices = [MagicMock()]
+        mock_chat_response.choices[0].message.content = "Chat API response"
+        mock_chat_response.choices[0].finish_reason = "stop"
+        mock_chat_response.model = "test-model"
+        mock_chat_response.id = "test-id"
+        mock_chat_response.created = 1234567890
+        mock_chat_response.usage = MagicMock()
+        mock_chat_response.usage.prompt_tokens = 10
+        mock_chat_response.usage.completion_tokens = 5
+        mock_chat_response.usage.total_tokens = 15
+        mock_chat_client.chat.completions.create.return_value = mock_chat_response
+
+        provider = OpenAIModelProvider("test-key")
+
+        # Mock a model with use_openai_response_api=true
+        mock_capabilities = MagicMock()
+        mock_capabilities.use_openai_response_api = True
+        provider.get_capabilities = MagicMock(return_value=mock_capabilities)
+
+        # Generate content - should try Responses, fail, then fallback to Chat
+        result = provider.generate_content(
+            prompt="Test prompt",
+            model_name="test-model",
+            temperature=1.0,
+        )
+
+        # Verify Responses API was tried first
+        mock_responses_client.responses.create.assert_called_once()
+
+        # Verify fallback to Chat API succeeded
+        mock_chat_client.chat.completions.create.assert_called_once()
+        assert result.content == "Chat API response"
+        assert result.model_name == "test-model"
+
+    def test_file_attachment_requires_responses_api(self):
+        """Test that file attachments require Responses API support.
+
+        Critical validation: when user provides file attachments but the model
+        doesn't support Responses API, should raise a clear error message with
+        recommendations, not silently fail or ignore the files.
+        """
+        provider = OpenAIModelProvider("test-key")
+
+        # Mock a model without Responses API support
+        mock_capabilities = MagicMock()
+        mock_capabilities.use_openai_response_api = False
+        provider.get_capabilities = MagicMock(return_value=mock_capabilities)
+
+        # Try to generate content with files - should raise ValueError
+        with pytest.raises(ValueError) as exc_info:
+            provider.generate_content(
+                prompt="Analyze this document",
+                model_name="gpt-4o",
+                files=["/path/to/document.pdf"],
+            )
+
+        # Verify error message is helpful
+        error_msg = str(exc_info.value)
+        assert "does not support file attachments" in error_msg
+        assert "Responses API" in error_msg
+        assert "gpt-5" in error_msg or "o3-pro" in error_msg  # Should suggest supported models
+
+    @patch("utils.openai_token_estimator.calculate_text_tokens")
+    @patch("utils.openai_token_estimator.estimate_image_tokens")
+    @patch("utils.openai_token_estimator.estimate_tokens_for_files")
+    def test_token_estimation_delegation(self, mock_estimate_files, mock_estimate_image, mock_calculate_text):
+        """Test that provider correctly delegates to openai_token_estimator utility.
+
+        Verifies the delegation pattern: provider methods (_calculate_text_tokens,
+        _calculate_image_tokens, estimate_tokens_for_files) should act as thin
+        wrappers that delegate to the shared openai_token_estimator module.
+        """
+        # Setup mocks
+        mock_calculate_text.return_value = 15
+        mock_estimate_image.return_value = 255
+        mock_estimate_files.return_value = 500
+
+        provider = OpenAIModelProvider("test-key")
+
+        # Test text token calculation delegation
+        text_tokens = provider._calculate_text_tokens("gpt-4o", "Hello world")
+        assert text_tokens == 15
+        mock_calculate_text.assert_called_once_with("gpt-4o", "Hello world")
+
+        # Test image token estimation delegation
+        image_tokens = provider._calculate_image_tokens("/path/image.jpg", "gpt-4o", "high")
+        assert image_tokens == 255
+        mock_estimate_image.assert_called_once_with("/path/image.jpg", "gpt-4o", "high")
+
+        # Test file token estimation delegation
+        files = [{"path": "/path/file.txt", "mime_type": "text/plain"}]
+        file_tokens = provider.estimate_tokens_for_files("gpt-4o", files, "high")
+        assert file_tokens == 500
+        # Should pass through all parameters including use_responses_api flag
+        call_args = mock_estimate_files.call_args
+        assert call_args[0] == ("gpt-4o", files, "high")
+        assert "use_responses_api" in call_args[1]

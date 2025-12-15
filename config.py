@@ -63,6 +63,23 @@ TEMPERATURE_BALANCED = 1.0  # For general chat
 # Used when brainstorming, exploring alternatives, or architectural discussions
 TEMPERATURE_CREATIVE = 1.0  # For architecture, deep thinking
 
+# OpenAI Image/PDF Detail Level
+# OPENAI_IMAGE_DETAIL: Controls the accuracy vs speed tradeoff for token estimation
+# of images and PDFs in OpenAI models.
+#
+# Valid configuration values:
+#   "HIGH"   - (default) Accurate tile-based calculation following OpenAI's official formula
+#              Uses precise aspect ratio and tiling for images/PDFs. Recommended.
+#   "LOW"    - Fast fixed ~85 tokens per image. Less accurate but saves computation.
+#   "AUTO"   - Conservative estimation using HIGH (future: will calculate range)
+#
+# Impact:
+#   - Images: Tile-based (~85-2000+ tokens) vs fixed 85 tokens
+#   - PDFs: Accurate per-page calculation vs fixed estimate
+#
+# Reference: https://platform.openai.com/docs/guides/images-vision
+OPENAI_IMAGE_DETAIL = get_env("OPENAI_IMAGE_DETAIL", "HIGH") or "HIGH"
+
 # Thinking Mode Defaults
 # DEFAULT_THINKING_MODE_THINKDEEP: Default thinking depth for extended reasoning tool
 # Higher modes use more computational budget but provide deeper analysis

@@ -385,109 +385,6 @@ class OpenAICompatibleProvider(ModelProvider):
 
         return content
 
-    def _generate_with_responses_endpoint(
-        self,
-        model_name: str,
-        messages: list,
-        temperature: float,
-        max_output_tokens: Optional[int] = None,
-        capabilities: Optional[ModelCapabilities] = None,
-        **kwargs,
-    ) -> ModelResponse:
-        """Generate content using the /v1/responses endpoint for reasoning models."""
-        # Convert messages to the correct format for responses endpoint
-        input_messages = []
-
-        for message in messages:
-            role = message.get("role", "")
-            content = message.get("content", "")
-
-            if role == "system":
-                # For o3-pro, system messages should be handled carefully to avoid policy violations
-                # Instead of prefixing with "System:", we'll include the system content naturally
-                input_messages.append({"role": "user", "content": [{"type": "input_text", "text": content}]})
-            elif role == "user":
-                input_messages.append({"role": "user", "content": [{"type": "input_text", "text": content}]})
-            elif role == "assistant":
-                input_messages.append({"role": "assistant", "content": [{"type": "output_text", "text": content}]})
-
-        # Prepare completion parameters for responses endpoint
-        # Based on OpenAI documentation, use nested reasoning object for responses endpoint
-        effort = "medium"
-        if capabilities and capabilities.default_reasoning_effort:
-            effort = capabilities.default_reasoning_effort
-
-        completion_params = {
-            "model": model_name,
-            "input": input_messages,
-            "reasoning": {"effort": effort},
-            "store": True,
-        }
-
-        # Add max tokens if specified (using max_completion_tokens for responses endpoint)
-        if max_output_tokens:
-            completion_params["max_completion_tokens"] = max_output_tokens
-
-        # For responses endpoint, we only add parameters that are explicitly supported
-        # Remove unsupported chat completion parameters that may cause API errors
-
-        # Retry logic with progressive delays
-        max_retries = 4
-        retry_delays = [1, 3, 5, 8]
-        attempt_counter = {"value": 0}
-
-        def _attempt() -> ModelResponse:
-            attempt_counter["value"] += 1
-            import json
-
-            sanitized_params = self._sanitize_for_logging(completion_params)
-            logging.info(
-                f"o3-pro API request (sanitized): {json.dumps(sanitized_params, indent=2, ensure_ascii=False)}"
-            )
-
-            response = self.client.responses.create(**completion_params)
-
-            content = self._safe_extract_output_text(response)
-
-            usage = None
-            if hasattr(response, "usage"):
-                usage = self._extract_usage(response)
-            elif hasattr(response, "input_tokens") and hasattr(response, "output_tokens"):
-                input_tokens = getattr(response, "input_tokens", 0) or 0
-                output_tokens = getattr(response, "output_tokens", 0) or 0
-                usage = {
-                    "input_tokens": input_tokens,
-                    "output_tokens": output_tokens,
-                    "total_tokens": input_tokens + output_tokens,
-                }
-
-            return ModelResponse(
-                content=content,
-                usage=usage,
-                model_name=model_name,
-                friendly_name=self.FRIENDLY_NAME,
-                provider=self.get_provider_type(),
-                metadata={
-                    "model": getattr(response, "model", model_name),
-                    "id": getattr(response, "id", ""),
-                    "created": getattr(response, "created_at", 0),
-                    "endpoint": "responses",
-                },
-            )
-
-        try:
-            return self._run_with_retries(
-                operation=_attempt,
-                max_attempts=max_retries,
-                delays=retry_delays,
-                log_prefix="responses endpoint",
-            )
-        except Exception as exc:
-            attempts = max(attempt_counter["value"], 1)
-            error_msg = f"responses endpoint error after {attempts} attempt{'s' if attempts > 1 else ''}: {exc}"
-            logging.error(error_msg)
-            raise RuntimeError(error_msg) from exc
-
     def generate_content(
         self,
         prompt: str,
@@ -600,28 +497,6 @@ class OpenAICompatibleProvider(ModelProvider):
                 if not supports_sampling and key in ["top_p", "frequency_penalty", "presence_penalty", "stream"]:
                     continue  # Skip unsupported parameters for reasoning models
                 completion_params[key] = value
-
-        # Check if this model needs the Responses API endpoint
-        # Prefer capability metadata; fall back to static map when capabilities unavailable
-        use_responses_api = False
-        if capabilities is not None:
-            use_responses_api = getattr(capabilities, "use_openai_response_api", False)
-        else:
-            static_capabilities = self.get_all_model_capabilities().get(resolved_model)
-            if static_capabilities is not None:
-                use_responses_api = getattr(static_capabilities, "use_openai_response_api", False)
-
-        if use_responses_api:
-            # These models require the /v1/responses endpoint for stateful context
-            # If it fails, we should not fall back to chat/completions
-            return self._generate_with_responses_endpoint(
-                model_name=resolved_model,
-                messages=messages,
-                temperature=temperature,
-                max_output_tokens=max_output_tokens,
-                capabilities=capabilities,
-                **kwargs,
-            )
 
         # Retry logic with progressive delays
         max_retries = 4  # Total of 4 attempts

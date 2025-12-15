@@ -17,6 +17,7 @@ import base64
 import hashlib
 import json
 import logging
+import re
 from pathlib import Path
 from typing import Any, Optional
 
@@ -328,9 +329,15 @@ class ReplayTransport(httpx.MockTransport):
         return f"{request.method}:{request.url.path}:{content_hash}"
 
     def _is_o3_model_request(self, content_dict: dict) -> bool:
-        """Check if this is an o3 model request."""
-        model = content_dict.get("model", "")
-        return model.startswith("o3")
+        """
+        Check if this request should use semantic matching (Responses API models).
+        Historically only o3; extend to gpt-5 family, o4 family, and gpt-4.1,
+        which all route to /v1/responses and carry volatile system/context blocks.
+        """
+        model = (content_dict.get("model", "") or "").lower()
+        return (
+            model.startswith("o3") or model.startswith("o4") or model.startswith("gpt-5") or model.startswith("gpt-4.1")
+        )
 
     def _extract_semantic_fields(self, content_dict: dict) -> dict:
         """Extract only semantic fields for matching, ignoring volatile prompts.
@@ -366,8 +373,18 @@ class ReplayTransport(httpx.MockTransport):
                         if len(parts) > 1:
                             user_question = parts[1].split("=== END REQUEST ===")[0].strip()
                             semantic["user_question"] = user_question
-                    else:
-                        semantic["user_question"] = last_text
+                            return semantic
+                    # Fallback: extract the next line following the last Agent turn
+                    try:
+                        m = re.search(r"---\s*Turn\s*\d+\s*\(Agent\)\s*---\s*\n([^\n]+)", last_text)
+                        if m:
+                            semantic["user_question"] = m.group(1).strip()
+                            return semantic
+                    except Exception:
+                        pass
+
+                    # Last resort: include the entire text (brittle)
+                    semantic["user_question"] = last_text
 
         return semantic
 
