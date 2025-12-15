@@ -28,7 +28,9 @@ class OpenAIModelProvider(RegistryBackedProviderMixin, OpenAICompatibleProvider)
     def __init__(self, api_key: str, **kwargs):
         """Initialize OpenAI provider with API key."""
         self._ensure_registry()
-        # Set default OpenAI base URL, allow override for regions/custom endpoints
+        # Set default OpenAI base URL if not provided
+        # Custom base URL can be passed via kwargs from registry.py
+        # which reads OPENAI_BASE_URL environment variable
         kwargs.setdefault("base_url", "https://api.openai.com/v1")
         super().__init__(api_key, **kwargs)
         self._invalidate_capability_cache()
