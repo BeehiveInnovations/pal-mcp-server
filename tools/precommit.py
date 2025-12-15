@@ -201,11 +201,6 @@ class PrecommitTool(WorkflowTool):
                 "default": "external",
                 "description": PRECOMMIT_WORKFLOW_FIELD_DESCRIPTIONS["precommit_type"],
             },
-            "issues_found": {
-                "type": "array",
-                "items": {"type": "object"},
-                "description": PRECOMMIT_WORKFLOW_FIELD_DESCRIPTIONS["issues_found"],
-            },
             "images": {
                 "type": "array",
                 "items": {"type": "string"},

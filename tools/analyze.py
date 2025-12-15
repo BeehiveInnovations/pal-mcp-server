@@ -222,11 +222,6 @@ class AnalyzeTool(WorkflowTool):
                 "items": {"type": "string"},
                 "description": ANALYZE_WORKFLOW_FIELD_DESCRIPTIONS["images"],
             },
-            "issues_found": {
-                "type": "array",
-                "items": {"type": "object"},
-                "description": "Issues or concerns identified during analysis, each with severity level (critical, high, medium, low)",
-            },
             "analysis_type": {
                 "type": "string",
                 "enum": ["architecture", "performance", "security", "quality", "general"],
