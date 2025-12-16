@@ -352,3 +352,71 @@ class TestXAIProvider:
         provider.generate_content(prompt="Test", model_name="grok-4.1-fast", temperature=0.7)
         call_kwargs = mock_client.chat.completions.create.call_args[1]
         assert call_kwargs["model"] == "grok-4-1-fast-reasoning"
+
+    def test_get_preferred_model_empty_list(self):
+        """Test get_preferred_model returns None for empty allowed_models."""
+        from tools.models import ToolModelCategory
+
+        provider = XAIModelProvider("test-key")
+        assert provider.get_preferred_model(ToolModelCategory.BALANCED, []) is None
+        assert provider.get_preferred_model(ToolModelCategory.EXTENDED_REASONING, []) is None
+        assert provider.get_preferred_model(ToolModelCategory.FAST_RESPONSE, []) is None
+
+    def test_get_preferred_model_extended_reasoning(self):
+        """Test get_preferred_model for EXTENDED_REASONING category."""
+        from tools.models import ToolModelCategory
+
+        provider = XAIModelProvider("test-key")
+
+        # Prefers PRIMARY_MODEL first
+        allowed = ["grok-4-1-fast-reasoning", "grok-4", "grok-code-fast-1"]
+        assert provider.get_preferred_model(ToolModelCategory.EXTENDED_REASONING, allowed) == "grok-4-1-fast-reasoning"
+
+        # Falls back to FALLBACK_MODEL
+        allowed = ["grok-4", "grok-code-fast-1"]
+        assert provider.get_preferred_model(ToolModelCategory.EXTENDED_REASONING, allowed) == "grok-4"
+
+        # Falls back to first available if neither preferred model available
+        allowed = ["grok-code-fast-1", "some-other-model"]
+        assert provider.get_preferred_model(ToolModelCategory.EXTENDED_REASONING, allowed) == "grok-code-fast-1"
+
+    def test_get_preferred_model_fast_response(self):
+        """Test get_preferred_model for FAST_RESPONSE category."""
+        from tools.models import ToolModelCategory
+
+        provider = XAIModelProvider("test-key")
+
+        # Prefers PRIMARY_MODEL first
+        allowed = ["grok-4-1-fast-reasoning", "grok-4"]
+        assert provider.get_preferred_model(ToolModelCategory.FAST_RESPONSE, allowed) == "grok-4-1-fast-reasoning"
+
+        # Falls back to FALLBACK_MODEL
+        allowed = ["grok-4", "grok-code-fast-1"]
+        assert provider.get_preferred_model(ToolModelCategory.FAST_RESPONSE, allowed) == "grok-4"
+
+    def test_get_preferred_model_balanced(self):
+        """Test get_preferred_model for BALANCED category includes CODE_MODEL."""
+        from tools.models import ToolModelCategory
+
+        provider = XAIModelProvider("test-key")
+
+        # Prefers PRIMARY_MODEL first
+        allowed = ["grok-4-1-fast-reasoning", "grok-4", "grok-code-fast-1"]
+        assert provider.get_preferred_model(ToolModelCategory.BALANCED, allowed) == "grok-4-1-fast-reasoning"
+
+        # Falls back to FALLBACK_MODEL
+        allowed = ["grok-4", "grok-code-fast-1"]
+        assert provider.get_preferred_model(ToolModelCategory.BALANCED, allowed) == "grok-4"
+
+        # Falls back to CODE_MODEL for BALANCED category
+        allowed = ["grok-code-fast-1", "some-other-model"]
+        assert provider.get_preferred_model(ToolModelCategory.BALANCED, allowed) == "grok-code-fast-1"
+
+        # CODE_MODEL is NOT a fallback for other categories
+        allowed = ["grok-code-fast-1", "some-other-model"]
+        assert (
+            provider.get_preferred_model(ToolModelCategory.EXTENDED_REASONING, allowed) == "grok-code-fast-1"
+        )  # first in list
+        assert (
+            provider.get_preferred_model(ToolModelCategory.FAST_RESPONSE, allowed) == "grok-code-fast-1"
+        )  # first in list

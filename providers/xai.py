@@ -29,6 +29,7 @@ class XAIModelProvider(RegistryBackedProviderMixin, OpenAICompatibleProvider):
     # Canonical model identifiers used for category routing.
     PRIMARY_MODEL = "grok-4-1-fast-reasoning"
     FALLBACK_MODEL = "grok-4"
+    CODE_MODEL = "grok-code-fast-1"
 
     def __init__(self, api_key: str, **kwargs):
         """Initialize X.AI provider with API key."""
@@ -57,29 +58,15 @@ class XAIModelProvider(RegistryBackedProviderMixin, OpenAICompatibleProvider):
         if not allowed_models:
             return None
 
-        if category == ToolModelCategory.EXTENDED_REASONING:
-            # Prefer Grok 4.1 Fast Reasoning for advanced tasks
-            if self.PRIMARY_MODEL in allowed_models:
-                return self.PRIMARY_MODEL
-            if self.FALLBACK_MODEL in allowed_models:
-                return self.FALLBACK_MODEL
-            return allowed_models[0]
+        preferred_order = [self.PRIMARY_MODEL, self.FALLBACK_MODEL]
+        if category == ToolModelCategory.BALANCED:
+            preferred_order.append(self.CODE_MODEL)
 
-        elif category == ToolModelCategory.FAST_RESPONSE:
-            # Prefer Grok 4.1 Fast Reasoning for speed as well (latest fast SKU).
-            if self.PRIMARY_MODEL in allowed_models:
-                return self.PRIMARY_MODEL
-            if self.FALLBACK_MODEL in allowed_models:
-                return self.FALLBACK_MODEL
-            return allowed_models[0]
+        for model in preferred_order:
+            if model in allowed_models:
+                return model
 
-        else:  # BALANCED or default
-            # Prefer Grok 4.1 Fast Reasoning for balanced use.
-            if self.PRIMARY_MODEL in allowed_models:
-                return self.PRIMARY_MODEL
-            if self.FALLBACK_MODEL in allowed_models:
-                return self.FALLBACK_MODEL
-            return allowed_models[0]
+        return allowed_models[0]
 
 
 # Load registry data at import time
