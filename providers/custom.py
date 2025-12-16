@@ -1,8 +1,12 @@
 """Custom API provider implementation."""
 
 import logging
+from typing import TYPE_CHECKING
 
 from utils.env import get_env
+
+if TYPE_CHECKING:
+    from tools.models import ToolModelCategory
 
 from .openai_compatible import OpenAICompatibleProvider
 from .registries.custom import CustomEndpointModelRegistry
@@ -78,13 +82,26 @@ class CustomProvider(OpenAICompatibleProvider):
 
         super().__init__(api_key, base_url=base_url, **kwargs)
 
-        # Initialize model registry
+        # Initialize model registry (injection of CUSTOM_MODEL_NAME is handled
+        # automatically by CustomEndpointModelRegistry.__init__)
         if CustomProvider._registry is None:
             CustomProvider._registry = CustomEndpointModelRegistry()
             # Log loaded models and aliases only on first load
             models = self._registry.list_models()
             aliases = self._registry.list_aliases()
             logging.info(f"Custom provider loaded {len(models)} models with {len(aliases)} aliases")
+
+    # ------------------------------------------------------------------
+    # Testing utilities
+    # ------------------------------------------------------------------
+    @classmethod
+    def reset_registry(cls) -> None:
+        """Reset the shared registry singleton for testing.
+
+        This should be called in test teardown to prevent state pollution
+        between tests when CUSTOM_MODEL_NAME changes.
+        """
+        cls._registry = None
 
     # ------------------------------------------------------------------
     # Capability surface
@@ -115,6 +132,40 @@ class CustomProvider(OpenAICompatibleProvider):
         """Identify this provider for restriction and logging logic."""
 
         return ProviderType.CUSTOM
+
+    def get_preferred_model(self, category: "ToolModelCategory", allowed_models: list[str]) -> str | None:
+        """Get preferred model for Custom provider.
+
+        When CUSTOM_MODEL_NAME is configured, prioritize it over other models
+        in the allowed list. This ensures users get the model they explicitly
+        requested rather than relying on alphabetical ordering.
+
+        Note: Unlike other providers, CustomProvider ignores the category parameter
+        because users who set CUSTOM_MODEL_NAME explicitly want that specific model,
+        regardless of the task type. They may only have this one model available.
+
+        Args:
+            category: The tool category requiring a model (ignored for custom provider)
+            allowed_models: Pre-filtered list of models allowed by restrictions
+
+        Returns:
+            CUSTOM_MODEL_NAME if configured and available, None otherwise
+        """
+        custom_model = (get_env("CUSTOM_MODEL_NAME", "") or "").strip()
+        if not custom_model:
+            return None
+
+        if custom_model in allowed_models:
+            logging.debug(f"Custom provider preferring user-specified model: {custom_model}")
+            return custom_model
+
+        # User configured CUSTOM_MODEL_NAME but it's not in allowed_models
+        # This could be due to case mismatch, typo, or restrictions
+        logging.warning(
+            f"CUSTOM_MODEL_NAME '{custom_model}' is configured but not found in "
+            f"allowed models ({allowed_models}). Check spelling/case or restrictions."
+        )
+        return None
 
     # ------------------------------------------------------------------
     # Registry helpers
