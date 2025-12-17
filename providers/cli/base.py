@@ -106,6 +106,32 @@ class CLIModelProvider(ModelProvider):
             Dict mapping model names to their ModelCapabilities
         """
 
+    def _get_cli_specific_args(
+        self,
+        temperature: float | None = None,
+        max_output_tokens: int | None = None,
+        thinking_mode: str | None = None,
+        **kwargs,
+    ) -> list[str]:
+        """Convert model parameters to CLI-specific command-line arguments.
+
+        Override in subclasses to map parameters to CLI-specific flags.
+        For example, Gemini CLI might use --temperature while Claude CLI
+        might use a different flag name.
+
+        Args:
+            temperature: Model temperature setting (0.0-1.0)
+            max_output_tokens: Maximum tokens to generate
+            thinking_mode: Thinking/reasoning mode setting
+            **kwargs: Additional provider-specific parameters
+
+        Returns:
+            List of CLI argument strings (e.g., ['--temperature', '0.7'])
+        """
+        # Default implementation returns empty list - subclasses override
+        # to provide CLI-specific argument mapping
+        return []
+
     def get_all_model_capabilities(self) -> dict[str, ModelCapabilities]:
         """Return all supported model capabilities."""
         return self._model_capabilities
@@ -228,27 +254,27 @@ class CLIModelProvider(ModelProvider):
         # Create agent and execute
         agent = create_agent(self._client)
 
-        # Extract files and images from cli_params
-        # Note: BaseCLIAgent.run() only accepts: role, prompt, system_prompt, files, images
-        # Other params (temperature, thinking_mode, max_output_tokens, etc.) are not supported
-        # by the CLI agent and must be filtered out to avoid TypeError
+        # Extract files, images, and model parameters from cli_params
         cli_params.pop("role", None)  # Remove role to avoid conflict with role_config
         files = cli_params.pop("files", [])
         images = cli_params.pop("images", [])
 
-        # Warn about ignored parameters that CLI providers don't support
-        ignored_params = []
-        if cli_params.get("temperature") not in (None, 0.3):
-            ignored_params.append(f"temperature={cli_params.get('temperature')}")
-        if cli_params.get("thinking_mode") is not None:
-            ignored_params.append(f"thinking_mode={cli_params.get('thinking_mode')}")
-        if cli_params.get("max_output_tokens") is not None:
-            ignored_params.append(f"max_output_tokens={cli_params.get('max_output_tokens')}")
-        if ignored_params:
-            logger.warning(
-                f"CLI provider '{self.cli_name}' does not support dynamic model parameters. "
-                f"Ignoring: {', '.join(ignored_params)}"
-            )
+        # Extract model parameters for CLI flag conversion
+        temperature = cli_params.pop("temperature", None)
+        max_output_tokens = cli_params.pop("max_output_tokens", None)
+        thinking_mode = cli_params.pop("thinking_mode", None)
+
+        # Convert model parameters to CLI-specific arguments
+        # Subclasses override _get_cli_specific_args() to provide mappings
+        additional_args = self._get_cli_specific_args(
+            temperature=temperature,
+            max_output_tokens=max_output_tokens,
+            thinking_mode=thinking_mode,
+            **cli_params,
+        )
+
+        if additional_args:
+            logger.debug(f"CLI provider '{self.cli_name}' using additional args: {additional_args}")
 
         try:
             result = await agent.run(
@@ -257,6 +283,7 @@ class CLIModelProvider(ModelProvider):
                 system_prompt=system_prompt_arg,
                 files=files,
                 images=images,
+                additional_args=additional_args,
             )
         except CLIAgentError as exc:
             raise RuntimeError(f"CLI '{self.cli_name}' execution failed: {exc}") from exc

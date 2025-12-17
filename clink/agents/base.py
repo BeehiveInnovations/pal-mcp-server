@@ -60,12 +60,13 @@ class BaseCLIAgent:
         system_prompt: str | None = None,
         files: Sequence[str],
         images: Sequence[str],
+        additional_args: Sequence[str] | None = None,
     ) -> AgentOutput:
         # Files and images are already embedded into the prompt by the tool; they are
         # accepted here only to keep parity with SimpleTool callers.
         _ = (files, images)
         # The runner simply executes the configured CLI command for the selected role.
-        command = self._build_command(role=role, system_prompt=system_prompt)
+        command = self._build_command(role=role, system_prompt=system_prompt, additional_args=additional_args)
         env = self._build_environment()
 
         # Resolve executable path for cross-platform compatibility (especially Windows)
@@ -190,11 +191,21 @@ class BaseCLIAgent:
             output_file_content=output_file_content,
         )
 
-    def _build_command(self, *, role: ResolvedCLIRole, system_prompt: str | None) -> list[str]:
+    def _build_command(
+        self,
+        *,
+        role: ResolvedCLIRole,
+        system_prompt: str | None,
+        additional_args: Sequence[str] | None = None,
+    ) -> list[str]:
         base = list(self.client.executable)
         base.extend(self.client.internal_args)
         base.extend(self.client.config_args)
         base.extend(role.role_args)
+
+        # Append any additional CLI arguments (e.g., --temperature, --max-output-tokens)
+        if additional_args:
+            base.extend(additional_args)
 
         return base
 
