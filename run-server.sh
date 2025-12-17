@@ -1138,18 +1138,15 @@ check_api_keys() {
     fi
 
     # Check for CLI tools (OAuth authenticated, no API keys needed)
-    if command -v gemini &> /dev/null; then
-        print_success "Gemini CLI detected (OAuth - no API key needed)"
-        has_cli=true
-    fi
-    if command -v claude &> /dev/null; then
-        print_success "Claude CLI detected (OAuth - no API key needed)"
-        has_cli=true
-    fi
-    if command -v codex &> /dev/null; then
-        print_success "Codex CLI detected (OAuth - no API key needed)"
-        has_cli=true
-    fi
+    local cli_tools=("gemini:Gemini" "claude:Claude" "codex:Codex")
+    for cli_entry in "${cli_tools[@]}"; do
+        local cli_name="${cli_entry%%:*}"
+        local cli_display="${cli_entry#*:}"
+        if command -v "$cli_name" &> /dev/null; then
+            print_success "$cli_display CLI detected (OAuth - no API key needed)"
+            has_cli=true
+        fi
+    done
 
     if [[ "$has_key" == false && "$has_cli" == false ]]; then
         print_warning "No API keys or CLI tools found!"

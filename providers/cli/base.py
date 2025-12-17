@@ -11,7 +11,9 @@ import asyncio
 import logging
 import shutil
 from abc import abstractmethod
-from typing import Any, Optional
+from collections.abc import Awaitable, Callable
+from concurrent.futures import ThreadPoolExecutor
+from typing import Any, Optional, TypeVar
 
 from clink import get_registry
 from clink.agents import create_agent
@@ -20,6 +22,8 @@ from providers.base import ModelProvider
 from providers.shared import ModelCapabilities, ModelResponse
 
 logger = logging.getLogger(__name__)
+
+T = TypeVar("T")
 
 
 class CLIModelProvider(ModelProvider):
@@ -132,6 +136,8 @@ class CLIModelProvider(ModelProvider):
             ValueError: If model is not supported
             RuntimeError: If CLI execution fails
         """
+        self.validate_parameters(model_name, temperature)
+
         # Validate model
         resolved_model = self._resolve_model_name(model_name)
         if not self.validate_model_name(resolved_model):
@@ -146,18 +152,29 @@ class CLIModelProvider(ModelProvider):
         if max_output_tokens:
             cli_params["max_output_tokens"] = max_output_tokens
 
-        # Run async execution in sync context
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
-        result = loop.run_until_complete(
-            self._execute_cli(prompt, system_prompt, role_name, resolved_model, cli_params)
+        result = self._run_coroutine_sync(
+            lambda: self._execute_cli(prompt, system_prompt, role_name, resolved_model, cli_params)
         )
 
         return result
+
+    def _run_coroutine_sync(self, coro_factory: Callable[[], Awaitable[T]]) -> T:
+        """Run an async coroutine from sync code safely.
+
+        This provider is called from both sync and async code paths. When an event
+        loop is already running in the current thread, we cannot call
+        ``run_until_complete``. In that case we execute the coroutine on a fresh
+        event loop in a dedicated thread.
+        """
+
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            return asyncio.run(coro_factory())
+
+        with ThreadPoolExecutor(max_workers=1, thread_name_prefix="pal-cli-provider") as executor:
+            future = executor.submit(lambda: asyncio.run(coro_factory()))
+            return future.result()
 
     async def _execute_cli(
         self,
@@ -189,18 +206,41 @@ class CLIModelProvider(ModelProvider):
             logger.warning(f"Role '{role_name}' not found for '{self.cli_name}', " f"falling back to 'default' role.")
             role_config = self._client.get_role("default")
 
+        role_prompt_text = ""
+        try:
+            role_prompt_text = role_config.prompt_path.read_text(encoding="utf-8").strip()
+        except Exception as exc:  # pragma: no cover - defensive against unexpected filesystem issues
+            logger.warning("Failed to read role prompt for %s/%s: %s", self.cli_name, role_config.name, exc)
+
+        user_system_prompt = (system_prompt or "").strip()
+        system_prompt_parts = [part for part in (role_prompt_text, user_system_prompt) if part]
+        effective_system_prompt = "\n\n".join(system_prompt_parts) if system_prompt_parts else None
+
+        runner_name = (self._client.runner or self._client.name).lower()
+        prompt_text = prompt
+        system_prompt_arg = effective_system_prompt
+        if effective_system_prompt and runner_name != "claude":
+            # For CLIs without a system prompt flag, embed system prompt text into
+            # the user prompt so behavior remains consistent across runners.
+            prompt_text = f"{effective_system_prompt}\n\n{prompt}"
+            system_prompt_arg = None
+
         # Create agent and execute
         agent = create_agent(self._client)
 
-        # Note: The clink agent.run() may not support model/temperature params
-        # directly. We pass them as kwargs and let clink handle what it supports.
+        # Extract files and images from cli_params, pass remaining as kwargs
+        # Note: The clink agent.run() may not support all params - it will use what it can
+        cli_params.pop("role", None)  # Remove role to avoid conflict with role_config
+        files = cli_params.pop("files", [])
+        images = cli_params.pop("images", [])
         try:
             result = await agent.run(
                 role=role_config,
-                prompt=prompt,
-                system_prompt=system_prompt,
-                files=[],
-                images=[],
+                prompt=prompt_text,
+                system_prompt=system_prompt_arg,
+                files=files,
+                images=images,
+                **cli_params,
             )
         except CLIAgentError as exc:
             raise RuntimeError(f"CLI '{self.cli_name}' execution failed: {exc}") from exc
@@ -283,8 +323,8 @@ def is_cli_available(cli_name: str) -> bool:
         return True
     except KeyError:
         return False
-    except Exception as e:
-        logger.warning(f"Unexpected error checking clink config for {cli_name}: {e}")
+    except (OSError, ValueError, TypeError) as e:
+        logger.warning(f"Error checking clink config for {cli_name}: {e}")
         return False
 
 
@@ -294,8 +334,4 @@ def get_available_cli_tools() -> list[str]:
     Returns:
         List of CLI names that are installed and configured
     """
-    available = []
-    for cli_name in ["gemini", "claude", "codex"]:
-        if is_cli_available(cli_name):
-            available.append(cli_name)
-    return available
+    return [cli_name for cli_name in ["gemini", "claude", "codex"] if is_cli_available(cli_name)]

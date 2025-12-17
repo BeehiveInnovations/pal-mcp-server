@@ -379,11 +379,11 @@ def configure_providers():
     """
     Configure and validate AI providers based on available API keys.
 
-    This function checks for API keys and registers the appropriate providers.
-    At least one valid API key (Gemini or OpenAI) is required.
+    This function checks for configured API keys and/or locally installed CLI tools and registers the
+    appropriate providers.
 
     Raises:
-        ValueError: If no valid API keys are found or conflicting configurations detected
+        ValueError: If no usable provider configuration is found or conflicting configurations detected
     """
     # Log environment variable status for debugging
     logger.debug("Checking environment variables for API keys...")
@@ -502,18 +502,16 @@ def configure_providers():
     # Check for CLI-based providers (OAuth authenticated, no API keys needed)
     # These use locally installed CLI tools that authenticate via OAuth
     cli_providers_detected = []
-    if is_cli_available("gemini"):
-        cli_providers_detected.append("Gemini CLI")
-        has_cli_providers = True
-        logger.info("Gemini CLI detected - using OAuth authentication (no API key needed)")
-    if is_cli_available("claude"):
-        cli_providers_detected.append("Claude CLI")
-        has_cli_providers = True
-        logger.info("Claude CLI detected - using OAuth authentication (no API key needed)")
-    if is_cli_available("codex"):
-        cli_providers_detected.append("Codex CLI")
-        has_cli_providers = True
-        logger.info("Codex CLI detected - using OAuth authentication (no API key needed)")
+    cli_configs = [
+        ("gemini", "Gemini CLI", ProviderType.GEMINI_CLI, GeminiCLIProvider),
+        ("claude", "Claude CLI", ProviderType.CLAUDE_CLI, ClaudeCLIProvider),
+        ("codex", "Codex CLI", ProviderType.CODEX_CLI, CodexCLIProvider),
+    ]
+    for cli_name, display_name, _, _ in cli_configs:
+        if is_cli_available(cli_name):
+            cli_providers_detected.append(display_name)
+            has_cli_providers = True
+            logger.info(f"{display_name} detected - using OAuth authentication (no API key needed)")
 
     if cli_providers_detected:
         valid_providers.extend(cli_providers_detected)
@@ -558,18 +556,11 @@ def configure_providers():
 
     # 3. CLI-based providers (OAuth authenticated, no API keys needed)
     if has_cli_providers:
-        if is_cli_available("gemini"):
-            ModelProviderRegistry.register_provider(ProviderType.GEMINI_CLI, GeminiCLIProvider)
-            registered_providers.append(ProviderType.GEMINI_CLI.value)
-            logger.debug(f"Registered provider: {ProviderType.GEMINI_CLI.value}")
-        if is_cli_available("claude"):
-            ModelProviderRegistry.register_provider(ProviderType.CLAUDE_CLI, ClaudeCLIProvider)
-            registered_providers.append(ProviderType.CLAUDE_CLI.value)
-            logger.debug(f"Registered provider: {ProviderType.CLAUDE_CLI.value}")
-        if is_cli_available("codex"):
-            ModelProviderRegistry.register_provider(ProviderType.CODEX_CLI, CodexCLIProvider)
-            registered_providers.append(ProviderType.CODEX_CLI.value)
-            logger.debug(f"Registered provider: {ProviderType.CODEX_CLI.value}")
+        for cli_name, _, provider_type, provider_class in cli_configs:
+            if is_cli_available(cli_name):
+                ModelProviderRegistry.register_provider(provider_type, provider_class)
+                registered_providers.append(provider_type.value)
+                logger.debug(f"Registered provider: {provider_type.value}")
 
     # 4. OpenRouter last (catch-all for everything else)
     if has_openrouter:

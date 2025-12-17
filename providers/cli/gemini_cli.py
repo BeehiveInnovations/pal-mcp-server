@@ -22,9 +22,11 @@ class GeminiCLIProvider(CLIModelProvider):
 
     The Gemini CLI supports:
     - Multiple Gemini models (flash, pro, etc.)
-    - File and image processing
+    - Text-based prompts and responses
     - Web search integration
     - JSON output format
+
+    Note: Image input is not supported through the CLI interface.
     """
 
     FRIENDLY_NAME = "Gemini CLI"
