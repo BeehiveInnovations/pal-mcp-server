@@ -228,11 +228,28 @@ class CLIModelProvider(ModelProvider):
         # Create agent and execute
         agent = create_agent(self._client)
 
-        # Extract files and images from cli_params, pass remaining as kwargs
-        # Note: The clink agent.run() may not support all params - it will use what it can
+        # Extract files and images from cli_params
+        # Note: BaseCLIAgent.run() only accepts: role, prompt, system_prompt, files, images
+        # Other params (temperature, thinking_mode, max_output_tokens, etc.) are not supported
+        # by the CLI agent and must be filtered out to avoid TypeError
         cli_params.pop("role", None)  # Remove role to avoid conflict with role_config
         files = cli_params.pop("files", [])
         images = cli_params.pop("images", [])
+
+        # Warn about ignored parameters that CLI providers don't support
+        ignored_params = []
+        if cli_params.get("temperature") not in (None, 0.3):
+            ignored_params.append(f"temperature={cli_params.get('temperature')}")
+        if cli_params.get("thinking_mode") is not None:
+            ignored_params.append(f"thinking_mode={cli_params.get('thinking_mode')}")
+        if cli_params.get("max_output_tokens") is not None:
+            ignored_params.append(f"max_output_tokens={cli_params.get('max_output_tokens')}")
+        if ignored_params:
+            logger.warning(
+                f"CLI provider '{self.cli_name}' does not support dynamic model parameters. "
+                f"Ignoring: {', '.join(ignored_params)}"
+            )
+
         try:
             result = await agent.run(
                 role=role_config,
@@ -240,7 +257,6 @@ class CLIModelProvider(ModelProvider):
                 system_prompt=system_prompt_arg,
                 files=files,
                 images=images,
-                **cli_params,
             )
         except CLIAgentError as exc:
             raise RuntimeError(f"CLI '{self.cli_name}' execution failed: {exc}") from exc
