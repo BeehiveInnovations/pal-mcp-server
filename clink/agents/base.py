@@ -62,6 +62,23 @@ class BaseCLIAgent:
         images: Sequence[str],
         additional_args: Sequence[str] | None = None,
     ) -> AgentOutput:
+        """Execute the CLI command and return parsed output.
+
+        Args:
+            role: The resolved CLI role configuration.
+            prompt: The prompt text to send to the CLI via stdin.
+            system_prompt: Optional system prompt for CLIs that support it.
+            files: File paths to include (embedded in prompt by caller).
+            images: Image paths to include (embedded in prompt by caller).
+            additional_args: Optional sequence of additional command-line arguments
+                to pass to the CLI executable (e.g., ['--temperature', '0.7']).
+
+        Returns:
+            AgentOutput containing the parsed response and execution metadata.
+
+        Raises:
+            CLIAgentError: If the CLI fails, times out, or output cannot be parsed.
+        """
         # Files and images are already embedded into the prompt by the tool; they are
         # accepted here only to keep parity with SimpleTool callers.
         _ = (files, images)
@@ -198,6 +215,17 @@ class BaseCLIAgent:
         system_prompt: str | None,
         additional_args: Sequence[str] | None = None,
     ) -> list[str]:
+        """Build the CLI command with all arguments.
+
+        Args:
+            role: The resolved CLI role configuration.
+            system_prompt: Optional system prompt (handling is CLI-specific).
+            additional_args: Optional sequence of additional command-line arguments
+                to pass to the CLI executable.
+
+        Returns:
+            List of command-line arguments ready for subprocess execution.
+        """
         base = list(self.client.executable)
         base.extend(self.client.internal_args)
         base.extend(self.client.config_args)

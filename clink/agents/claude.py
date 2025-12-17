@@ -20,6 +20,17 @@ class ClaudeAgent(BaseCLIAgent):
         system_prompt: str | None,
         additional_args: Sequence[str] | None = None,
     ) -> list[str]:
+        """Build Claude CLI command with system prompt injection support.
+
+        Args:
+            role: The resolved CLI role configuration.
+            system_prompt: Optional system prompt injected via --append-system-prompt.
+            additional_args: Optional sequence of additional command-line arguments
+                to pass to the CLI executable.
+
+        Returns:
+            List of command-line arguments ready for subprocess execution.
+        """
         command = list(self.client.executable)
         command.extend(self.client.internal_args)
         command.extend(self.client.config_args)
