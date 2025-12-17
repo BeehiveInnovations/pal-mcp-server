@@ -82,6 +82,19 @@ def test_error_listing_respects_env_restrictions(monkeypatch, reset_registry):
     except ModuleNotFoundError:
         pass
 
+    # Mock CLI tool availability so CLI providers don't interfere with this test
+    # We mock shutil.which in the cli.base module to return None for CLI tools
+    from providers.cli import base as cli_base
+
+    original_which = cli_base.shutil.which
+
+    def mock_which(cmd):
+        if cmd in ("gemini", "claude", "codex"):
+            return None
+        return original_which(cmd)
+
+    monkeypatch.setattr(cli_base.shutil, "which", mock_which)
+
     monkeypatch.setenv("GOOGLE_ALLOWED_MODELS", "gemini-2.5-pro")
     monkeypatch.setenv("OPENAI_ALLOWED_MODELS", "gpt-5.2")
     monkeypatch.setenv("OPENROUTER_ALLOWED_MODELS", "gpt5nano")
@@ -166,6 +179,19 @@ def test_error_listing_without_restrictions_shows_full_catalog(monkeypatch, rese
         monkeypatch.setattr(dotenv, "dotenv_values", lambda *_args, **_kwargs: {"PAL_MCP_FORCE_ENV_OVERRIDE": "false"})
     except ModuleNotFoundError:
         pass
+
+    # Mock CLI tool availability so CLI providers don't interfere with this test
+    # We mock shutil.which in the cli.base module to return None for CLI tools
+    from providers.cli import base as cli_base
+
+    original_which = cli_base.shutil.which
+
+    def mock_which(cmd):
+        if cmd in ("gemini", "claude", "codex"):
+            return None
+        return original_which(cmd)
+
+    monkeypatch.setattr(cli_base.shutil, "which", mock_which)
 
     for var in (
         "GOOGLE_ALLOWED_MODELS",

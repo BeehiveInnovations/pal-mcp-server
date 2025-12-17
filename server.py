@@ -393,6 +393,12 @@ def configure_providers():
         logger.debug(f"  {key}: {'[PRESENT]' if value else '[MISSING]'}")
     from providers import ModelProviderRegistry
     from providers.azure_openai import AzureOpenAIProvider
+    from providers.cli import (
+        ClaudeCLIProvider,
+        CodexCLIProvider,
+        GeminiCLIProvider,
+        is_cli_available,
+    )
     from providers.custom import CustomProvider
     from providers.dial import DIALModelProvider
     from providers.gemini import GeminiModelProvider
@@ -406,6 +412,7 @@ def configure_providers():
     has_native_apis = False
     has_openrouter = False
     has_custom = False
+    has_cli_providers = False
 
     # Check for Gemini API key
     gemini_key = get_env("GEMINI_API_KEY")
@@ -492,6 +499,25 @@ def configure_providers():
         else:
             logger.debug("No custom API key provided (using unauthenticated access)")
 
+    # Check for CLI-based providers (OAuth authenticated, no API keys needed)
+    # These use locally installed CLI tools that authenticate via OAuth
+    cli_providers_detected = []
+    if is_cli_available("gemini"):
+        cli_providers_detected.append("Gemini CLI")
+        has_cli_providers = True
+        logger.info("Gemini CLI detected - using OAuth authentication (no API key needed)")
+    if is_cli_available("claude"):
+        cli_providers_detected.append("Claude CLI")
+        has_cli_providers = True
+        logger.info("Claude CLI detected - using OAuth authentication (no API key needed)")
+    if is_cli_available("codex"):
+        cli_providers_detected.append("Codex CLI")
+        has_cli_providers = True
+        logger.info("Codex CLI detected - using OAuth authentication (no API key needed)")
+
+    if cli_providers_detected:
+        valid_providers.extend(cli_providers_detected)
+
     # Register providers in priority order:
     # 1. Native APIs first (most direct and efficient)
     registered_providers = []
@@ -530,7 +556,22 @@ def configure_providers():
         registered_providers.append(ProviderType.CUSTOM.value)
         logger.debug(f"Registered provider: {ProviderType.CUSTOM.value}")
 
-    # 3. OpenRouter last (catch-all for everything else)
+    # 3. CLI-based providers (OAuth authenticated, no API keys needed)
+    if has_cli_providers:
+        if is_cli_available("gemini"):
+            ModelProviderRegistry.register_provider(ProviderType.GEMINI_CLI, GeminiCLIProvider)
+            registered_providers.append(ProviderType.GEMINI_CLI.value)
+            logger.debug(f"Registered provider: {ProviderType.GEMINI_CLI.value}")
+        if is_cli_available("claude"):
+            ModelProviderRegistry.register_provider(ProviderType.CLAUDE_CLI, ClaudeCLIProvider)
+            registered_providers.append(ProviderType.CLAUDE_CLI.value)
+            logger.debug(f"Registered provider: {ProviderType.CLAUDE_CLI.value}")
+        if is_cli_available("codex"):
+            ModelProviderRegistry.register_provider(ProviderType.CODEX_CLI, CodexCLIProvider)
+            registered_providers.append(ProviderType.CODEX_CLI.value)
+            logger.debug(f"Registered provider: {ProviderType.CODEX_CLI.value}")
+
+    # 4. OpenRouter last (catch-all for everything else)
     if has_openrouter:
         ModelProviderRegistry.register_provider(ProviderType.OPENROUTER, OpenRouterProvider)
         registered_providers.append(ProviderType.OPENROUTER.value)
@@ -543,13 +584,14 @@ def configure_providers():
     # Require at least one valid provider
     if not valid_providers:
         raise ValueError(
-            "At least one API configuration is required. Please set either:\n"
-            "- GEMINI_API_KEY for Gemini models\n"
-            "- OPENAI_API_KEY for OpenAI models\n"
-            "- XAI_API_KEY for X.AI GROK models\n"
-            "- DIAL_API_KEY for DIAL models\n"
-            "- OPENROUTER_API_KEY for OpenRouter (multiple models)\n"
-            "- CUSTOM_API_URL for local models (Ollama, vLLM, etc.)"
+            "At least one provider configuration is required. Please either:\n"
+            "- Install a CLI tool (gemini, claude, codex) for OAuth-based access (no API keys needed)\n"
+            "- Set GEMINI_API_KEY for Gemini models\n"
+            "- Set OPENAI_API_KEY for OpenAI models\n"
+            "- Set XAI_API_KEY for X.AI GROK models\n"
+            "- Set DIAL_API_KEY for DIAL models\n"
+            "- Set OPENROUTER_API_KEY for OpenRouter (multiple models)\n"
+            "- Set CUSTOM_API_URL for local models (Ollama, vLLM, etc.)"
         )
 
     logger.info(f"Available providers: {', '.join(valid_providers)}")
@@ -558,6 +600,8 @@ def configure_providers():
     priority_info = []
     if has_native_apis:
         priority_info.append("Native APIs (Gemini, OpenAI)")
+    if has_cli_providers:
+        priority_info.append("CLI providers (OAuth)")
     if has_custom:
         priority_info.append("Custom endpoints")
     if has_openrouter:

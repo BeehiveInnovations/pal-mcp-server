@@ -310,12 +310,22 @@ class TestConfigureProvidersFunction:
 
     def test_configure_providers_no_valid_keys(self):
         """Test configure_providers raises error when no valid API keys."""
+        # Mock CLI tool availability so they don't interfere with this test
+        from providers.cli import base as cli_base
         from server import configure_providers
 
-        with patch.dict(
-            os.environ,
-            {"GEMINI_API_KEY": "", "OPENAI_API_KEY": "", "OPENROUTER_API_KEY": "", "CUSTOM_API_URL": ""},
-            clear=True,
-        ):
-            with pytest.raises(ValueError, match="At least one API configuration is required"):
-                configure_providers()
+        original_which = cli_base.shutil.which
+
+        def mock_which(cmd):
+            if cmd in ("gemini", "claude", "codex"):
+                return None
+            return original_which(cmd)
+
+        with patch.object(cli_base.shutil, "which", mock_which):
+            with patch.dict(
+                os.environ,
+                {"GEMINI_API_KEY": "", "OPENAI_API_KEY": "", "OPENROUTER_API_KEY": "", "CUSTOM_API_URL": ""},
+                clear=True,
+            ):
+                with pytest.raises(ValueError, match="At least one provider configuration is required"):
+                    configure_providers()
