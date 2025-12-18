@@ -361,8 +361,8 @@ class TestFileUtilsLineNumbers:
             if "│" in line:
                 pipe_pos = line.find("│")
                 # For large files, should be 5-character width plus pipe
-                assert line[pipe_pos - 1].isdigit(), f"Line {i+1} format issue: {line}"
-                assert line[pipe_pos + 1] == " ", f"Line {i+1} format issue: {line}"
+                assert line[pipe_pos - 1].isdigit(), f"Line {i + 1} format issue: {line}"
+                assert line[pipe_pos + 1] == " ", f"Line {i + 1} format issue: {line}"
 
     def test_line_numbers_boundary_conditions(self):
         """Test line numbering at boundary conditions (9999 vs 10000 lines)"""

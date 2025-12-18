@@ -36,7 +36,7 @@ def sanitize_cassette(cassette_path: Path, backup: bool = True) -> bool:
 
         # Create backup if requested
         if backup:
-            backup_path = cassette_path.with_suffix(f'.backup-{datetime.now().strftime("%Y%m%d-%H%M%S")}.json')
+            backup_path = cassette_path.with_suffix(f".backup-{datetime.now().strftime('%Y%m%d-%H%M%S')}.json")
             shutil.copy2(cassette_path, backup_path)
             print(f"📦 Backup created: {backup_path}")
 

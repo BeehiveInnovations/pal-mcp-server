@@ -123,6 +123,25 @@
       "intelligence_score": 18
     },
     {
+      "model_name": "google/gemini-3-flash-preview",
+      "aliases": [
+        "flash",
+        "flash3",
+        "gemini3-flash",
+        "gemini-flash",
+        "flash-openrouter"
+      ],
+      "context_window": 1048576,
+      "max_output_tokens": 65536,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 20.0,
+      "description": "Google's Gemini 3 Flash via OpenRouter - Pro-level reasoning with Flash latency",
+      "intelligence_score": 17
+    },
+    {
       "model_name": "google/gemini-2.5-pro",
       "aliases": [
         "gemini-2.5",
@@ -142,8 +161,9 @@
     {
       "model_name": "google/gemini-2.5-flash",
       "aliases": [
-        "flash",
-        "gemini-flash"
+        "flash2.5",
+        "flash-2.5",
+        "flash2.5-openrouter"
       ],
       "context_window": 1048576,
       "max_output_tokens": 65536,

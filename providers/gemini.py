@@ -194,7 +194,8 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
 
         # Add thinking configuration for models that support it
         if capabilities.supports_extended_thinking and effective_thinking_mode in self.THINKING_BUDGETS:
-            # Get model's max thinking tokens and calculate actual budget
+            # All Gemini models (2.x and 3.x) use thinkingBudget parameter (integer) with current SDK
+            # Note: The SDK may add thinkingLevel support in the future for Gemini 3 models
             model_config = capability_map.get(resolved_model_name)
             if model_config and model_config.max_thinking_tokens > 0:
                 max_thinking_tokens = model_config.max_thinking_tokens
@@ -472,8 +473,18 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
 
         # Helper to find best model from candidates
         def find_best(candidates: list[str]) -> Optional[str]:
-            """Return best model from candidates (sorted for consistency)."""
-            return sorted(candidates, reverse=True)[0] if candidates else None
+            """Return best model from candidates, preferring canonical names."""
+            if not candidates:
+                return None
+
+            # Prefer canonical model names (contain 'preview' or 'flash-lite') over aliases
+            # Sort by: (is_canonical, intelligence_score, name) descending
+            def sort_key(m: str) -> tuple:
+                is_canonical = "preview" in m or m.endswith("-lite")
+                score = capability_map[m].intelligence_score if m in capability_map else 0
+                return (is_canonical, score, m)
+
+            return sorted(candidates, key=sort_key, reverse=True)[0]
 
         if category == ToolModelCategory.EXTENDED_REASONING:
             # For extended reasoning, prefer models with thinking support

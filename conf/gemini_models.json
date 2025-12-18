@@ -49,6 +49,30 @@
       "max_image_size_mb": 32.0
     },
     {
+      "model_name": "gemini-3-flash-preview",
+      "friendly_name": "Gemini 3 Flash Preview",
+      "aliases": [
+        "flash",
+        "flash3",
+        "gemini-3-flash",
+        "gemini-flash"
+      ],
+      "intelligence_score": 17,
+      "description": "Pro-level reasoning with Flash latency (1M context) - Everyday tasks, agentic coding, multimodal understanding",
+      "context_window": 1048576,
+      "max_output_tokens": 65536,
+      "max_thinking_tokens": 32768,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "allow_code_generation": false,
+      "max_image_size_mb": 20.0
+    },
+    {
       "model_name": "gemini-2.5-pro",
       "friendly_name": "Gemini Pro 2.5",
       "aliases": [
@@ -113,8 +137,9 @@
       "model_name": "gemini-2.5-flash",
       "friendly_name": "Gemini (Flash 2.5)",
       "aliases": [
-        "flash",
-        "flash2.5"
+        "flash2.5",
+        "flash-2.5",
+        "gemini-2.5-flash"
       ],
       "intelligence_score": 10,
       "description": "Ultra-fast (1M context) - Quick analysis, simple queries, rapid iterations",

@@ -8,7 +8,6 @@ Tests that verify the system correctly falls back to OpenRouter when:
 - Auto mode correctly selects OpenRouter models
 """
 
-
 from .base_test import BaseSimulatorTest
 
 
