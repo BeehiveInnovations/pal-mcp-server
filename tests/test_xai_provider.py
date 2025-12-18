@@ -205,6 +205,7 @@ class TestXAIProvider:
         assert capabilities.supports_function_calling is True
         assert capabilities.supports_json_mode is True
         assert capabilities.supports_images is True
+        assert capabilities.allow_code_generation is False
 
         # Test temperature range
         assert capabilities.temperature_constraint.min_temp == 0.0
@@ -232,6 +233,7 @@ class TestXAIProvider:
         assert capabilities.supports_function_calling is True
         assert capabilities.supports_json_mode is True
         assert capabilities.supports_images is False
+        assert capabilities.allow_code_generation is False
 
         # Test temperature range
         assert capabilities.temperature_constraint.min_temp == 0.0
@@ -253,6 +255,7 @@ class TestXAIProvider:
         assert capabilities.supports_function_calling is True
         assert capabilities.supports_json_mode is True
         assert capabilities.supports_images is True
+        assert capabilities.allow_code_generation is False
 
         # Test temperature range
         assert capabilities.temperature_constraint.min_temp == 0.0
@@ -280,6 +283,7 @@ class TestXAIProvider:
         assert capabilities.supports_function_calling is True
         assert capabilities.supports_json_mode is True
         assert capabilities.supports_images is False
+        assert capabilities.allow_code_generation is False
 
         # Test temperature range
         assert capabilities.temperature_constraint.min_temp == 0.0
@@ -377,7 +381,7 @@ class TestXAIProvider:
         # grok-4-fast should be blocked by restrictions
         assert provider.validate_model_name("grok-4-fast") is False
 
-    @patch.dict(os.environ, {"XAI_ALLOWED_MODELS": "grok,grok-4-fast"})
+    @patch.dict(os.environ, {"XAI_API_KEY": "test-key", "XAI_ALLOWED_MODELS": "grok,grok-4-fast"})
     def test_multiple_model_restrictions(self):
         """Test multiple models in restrictions."""
         # Clear cached restriction service
