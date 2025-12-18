@@ -46,7 +46,7 @@ class InMemoryStorage:
         self._cleanup_thread.start()
 
         logger.info(
-            f"In-memory storage initialized with {timeout_hours}h timeout, cleanup every {self._cleanup_interval//60}m"
+            f"In-memory storage initialized with {timeout_hours}h timeout, cleanup every {self._cleanup_interval // 60}m"
         )
 
     def set_with_ttl(self, key: str, ttl_seconds: int, value: str) -> None:

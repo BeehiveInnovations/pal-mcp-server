@@ -291,7 +291,9 @@ class TestXAIProvider:
 
         # Call generate_content with alias 'grok'
         result = provider.generate_content(
-            prompt="Test prompt", model_name="grok", temperature=0.7  # This should be resolved to "grok-4"
+            prompt="Test prompt",
+            model_name="grok",
+            temperature=0.7,  # This should be resolved to "grok-4"
         )
 
         # Verify the API was called with the RESOLVED model name

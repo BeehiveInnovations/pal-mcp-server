@@ -376,14 +376,14 @@ class DebugIssueTool(WorkflowTool):
             next_steps = (
                 f"STOP! Do NOT call {self.get_name()} again yet. Based on your findings, you've identified potential areas "
                 f"but need concrete evidence. MANDATORY ACTIONS before calling {self.get_name()} step {step_number + 1}:\n"
-                + "\n".join(f"{i+1}. {action}" for i, action in enumerate(required_actions))
+                + "\n".join(f"{i + 1}. {action}" for i, action in enumerate(required_actions))
                 + f"\n\nOnly call {self.get_name()} again with step_number: {step_number + 1} AFTER "
                 + "completing these investigations."
             )
         elif confidence in ["medium", "high", "very_high"]:
             next_steps = (
                 f"WAIT! Your hypothesis needs verification. DO NOT call {self.get_name()} immediately. REQUIRED ACTIONS:\n"
-                + "\n".join(f"{i+1}. {action}" for i, action in enumerate(required_actions))
+                + "\n".join(f"{i + 1}. {action}" for i, action in enumerate(required_actions))
                 + f"\n\nREMEMBER: If you cannot find concrete evidence of a bug causing the reported symptoms, "
                 f"'no bug found' is a valid conclusion. Consider suggesting discussion with your thought partner "
                 f"or engineering assistant for clarification. Document findings with specific file:line references, "
@@ -392,7 +392,7 @@ class DebugIssueTool(WorkflowTool):
         elif confidence == "almost_certain":
             next_steps = (
                 "ALMOST CERTAIN - Prepare for final analysis. REQUIRED ACTIONS:\n"
-                + "\n".join(f"{i+1}. {action}" for i, action in enumerate(required_actions))
+                + "\n".join(f"{i + 1}. {action}" for i, action in enumerate(required_actions))
                 + "\n\nIMPORTANT: You're almost certain about the root cause. If you have NOT found the bug with "
                 "100% certainty, consider setting next_step_required=false to invoke expert analysis. The expert "
                 "can validate your hypotheses and provide additional insights. If you ARE 100% certain and have "

@@ -509,14 +509,14 @@ class AnalyzeTool(WorkflowTool):
             next_steps = (
                 f"STOP! Do NOT call {self.get_name()} again yet. Based on your findings, you've identified areas that need "
                 f"deeper analysis. MANDATORY ACTIONS before calling {self.get_name()} step {step_number + 1}:\\n"
-                + "\\n".join(f"{i+1}. {action}" for i, action in enumerate(required_actions))
+                + "\\n".join(f"{i + 1}. {action}" for i, action in enumerate(required_actions))
                 + f"\\n\\nOnly call {self.get_name()} again with step_number: {step_number + 1} AFTER "
                 + "completing these analysis tasks."
             )
         else:
             next_steps = (
                 f"WAIT! Your analysis needs final verification. DO NOT call {self.get_name()} immediately. REQUIRED ACTIONS:\\n"
-                + "\\n".join(f"{i+1}. {action}" for i, action in enumerate(required_actions))
+                + "\\n".join(f"{i + 1}. {action}" for i, action in enumerate(required_actions))
                 + f"\\n\\nREMEMBER: Ensure you have identified all significant architectural insights and strategic "
                 f"opportunities across all areas. Document findings with specific file references and "
                 f"code examples where applicable, then call {self.get_name()} with step_number: {step_number + 1}."

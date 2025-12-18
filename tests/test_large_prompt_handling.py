@@ -405,7 +405,6 @@ class TestLargePromptHandling:
             patch.object(tool, "get_model_provider") as mock_get_provider,
             patch("utils.model_context.ModelContext") as mock_model_context_class,
         ):
-
             mock_provider = create_mock_provider(model_name="gemini-2.5-flash", context_window=1_048_576)
             mock_provider.generate_content.return_value.content = "Success"
             mock_get_provider.return_value = mock_provider

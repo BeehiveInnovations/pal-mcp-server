@@ -115,10 +115,32 @@ class TestGeminiProvider:
         provider = GeminiModelProvider(api_key="test-key")
 
         assert provider.validate_model_name("flash")
+        assert provider.validate_model_name("flash2.5")
         assert provider.validate_model_name("pro")
 
+        # flash now points to Gemini 3 Flash Preview
         capabilities = provider.get_capabilities("flash")
-        assert capabilities.model_name == "gemini-2.5-flash"
+        assert capabilities.model_name == "gemini-3-flash-preview"
+
+        # flash2.5 points to Gemini 2.5 Flash (legacy)
+        capabilities_25 = provider.get_capabilities("flash2.5")
+        assert capabilities_25.model_name == "gemini-2.5-flash"
+
+    def test_get_capabilities_gemini_3_flash(self):
+        """Test getting Gemini 3 Flash model capabilities"""
+        provider = GeminiModelProvider(api_key="test-key")
+
+        capabilities = provider.get_capabilities("gemini-3-flash-preview")
+
+        assert capabilities.provider == ProviderType.GOOGLE
+        assert capabilities.model_name == "gemini-3-flash-preview"
+        assert capabilities.context_window == 1_048_576
+        assert capabilities.max_output_tokens == 65536
+        assert capabilities.supports_extended_thinking
+        assert capabilities.supports_images
+        assert capabilities.supports_function_calling
+        assert capabilities.supports_json_mode
+        assert capabilities.intelligence_score == 17
 
     @patch("google.genai.Client")
     def test_generate_content(self, mock_client_class):

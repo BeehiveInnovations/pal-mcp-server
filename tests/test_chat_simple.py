@@ -163,9 +163,9 @@ class TestChatTool:
         tool._model_context = SimpleNamespace(capabilities=SimpleNamespace(allow_code_generation=True))
 
         response = (
-            "Intro text before code.\n"
-            "<GENERATED-CODE>print('only-once')</GENERATED-CODE>\n"
-            "Closing thoughts after code."
+            "Intro text before code.\n<GENERATED-CODE>"
+            "print('only-once')"
+            "</GENERATED-CODE>\nClosing thoughts after code."
         )
 
         request = ChatRequest(prompt="Test", working_directory_absolute_path=str(tmp_path))

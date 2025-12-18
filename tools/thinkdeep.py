@@ -272,7 +272,7 @@ additional insights or alternative perspectives.
 
 ANALYSIS SCOPE:
 - Problem Context: {self._get_problem_context(request)}
-- Focus Areas: {', '.join(self._get_focus_areas(request))}
+- Focus Areas: {", ".join(self._get_focus_areas(request))}
 - Investigation Confidence: {request.confidence}
 - Steps Completed: {request.step_number} of {request.total_steps}
 
@@ -280,7 +280,7 @@ THINKING SUMMARY:
 {request.findings}
 
 KEY INSIGHTS AND CONTEXT:
-{', '.join(request.relevant_context) if request.relevant_context else 'No specific context identified'}
+{", ".join(request.relevant_context) if request.relevant_context else "No specific context identified"}
 
 VALIDATION OBJECTIVES:
 1. Assess the depth and quality of the thinking process

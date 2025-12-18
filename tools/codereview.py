@@ -567,7 +567,7 @@ class CodeReviewTool(WorkflowTool):
                     "next_steps": (
                         "You are on step 1 of MAXIMUM 2 steps for continuation. CRITICAL: Quickly review the code NOW. "
                         "MANDATORY ACTIONS:\\n"
-                        + "\\n".join(f"{i+1}. {action}" for i, action in enumerate(required_actions))
+                        + "\\n".join(f"{i + 1}. {action}" for i, action in enumerate(required_actions))
                         + "\\n\\nSet next_step_required=True and step_number=2 for the next call to trigger expert analysis."
                     )
                 }
@@ -576,14 +576,14 @@ class CodeReviewTool(WorkflowTool):
                 next_steps = (
                     "Continuing previous conversation with internal validation only. The analysis will build "
                     "upon the prior findings without external model validation. REQUIRED ACTIONS:\\n"
-                    + "\\n".join(f"{i+1}. {action}" for i, action in enumerate(required_actions))
+                    + "\\n".join(f"{i + 1}. {action}" for i, action in enumerate(required_actions))
                 )
             else:
                 # Normal flow for new reviews
                 next_steps = (
                     f"MANDATORY: DO NOT call the {self.get_name()} tool again immediately. You MUST first examine "
                     f"the code files thoroughly using appropriate tools. CRITICAL AWARENESS: You need to:\\n"
-                    + "\\n".join(f"{i+1}. {action}" for i, action in enumerate(required_actions))
+                    + "\\n".join(f"{i + 1}. {action}" for i, action in enumerate(required_actions))
                     + f"\\n\\nOnly call {self.get_name()} again AFTER completing your investigation. "
                     f"When you call {self.get_name()} next time, use step_number: {step_number + 1} "
                     f"and report specific files examined, issues found, and code quality assessments discovered."
@@ -613,7 +613,7 @@ class CodeReviewTool(WorkflowTool):
                 next_steps = (
                     f"STOP! Do NOT call {self.get_name()} again yet. You are on step 2 of {request.total_steps} minimum required steps. "
                     f"MANDATORY ACTIONS before calling {self.get_name()} step {step_number + 1}:\\n"
-                    + "\\n".join(f"{i+1}. {action}" for i, action in enumerate(required_actions))
+                    + "\\n".join(f"{i + 1}. {action}" for i, action in enumerate(required_actions))
                     + f"\\n\\nRemember: You MUST set next_step_required=True until step {request.total_steps}. "
                     + f"Only call {self.get_name()} again with step_number: {step_number + 1} AFTER completing these code review tasks."
                 )
@@ -629,7 +629,7 @@ class CodeReviewTool(WorkflowTool):
                 # Later steps - final verification
                 next_steps = (
                     f"WAIT! Your code review needs final verification. DO NOT call {self.get_name()} immediately. REQUIRED ACTIONS:\\n"
-                    + "\\n".join(f"{i+1}. {action}" for i, action in enumerate(required_actions))
+                    + "\\n".join(f"{i + 1}. {action}" for i, action in enumerate(required_actions))
                     + f"\\n\\nREMEMBER: Ensure you have identified all significant issues across all severity levels and "
                     f"verified the completeness of your review. Document findings with specific file references and "
                     f"line numbers where applicable, then call {self.get_name()} with step_number: {step_number + 1}."
