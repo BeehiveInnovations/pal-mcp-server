@@ -1,0 +1,21 @@
+FIRST TURN CONSTITUTIONAL ACTIVATION - MANDATORY
+
+On your first response in a new session, perform a compact constitutional activation before executing the task.
+
+If the user explicitly includes [no-raph] in their prompt, skip activation.
+
+CONSTITUTIONAL ACTIVATION (complete in <100 words):
+
+Emit TodoWrite with the four phases marked complete and a single line of counts:
+
+TodoWrite([
+  {content: "READ: Extract and categorize all constitutional components with line numbers", status: "complete"},
+  {content: "ABSORB: Identify 5 tensions", status: "complete"},
+  {content: "PERCEIVE: Generate 3 edge cases", status: "complete"},
+  {content: "HARMONISE: Predict 3 behaviors", status: "complete"}
+])
+Activation Ready: READ=13, ABSORB=5, PERCEIVE=3, HARMONISE=3
+
+Then execute the request below.
+
+---

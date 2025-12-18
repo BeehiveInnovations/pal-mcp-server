@@ -1,22 +1,374 @@
 {
   "name": "gemini",
   "command": "gemini",
-  "additional_args": [
-    "--yolo"
-  ],
+  "additional_args": [],
   "env": {},
   "roles": {
+    "critical-engineer": {
+      "prompt_path": "systemprompts/clink/critical-engineer.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "critical-design-validator": {
+      "prompt_path": "systemprompts/clink/critical-design-validator.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "critical-implementation-validator": {
+      "prompt_path": "systemprompts/clink/critical-implementation-validator.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "requirements-steward": {
+      "prompt_path": "systemprompts/clink/requirements-steward.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "security-specialist": {
+      "prompt_path": "systemprompts/clink/security-specialist.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "coherence-oracle": {
+      "prompt_path": "systemprompts/clink/coherence-oracle.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "test-methodology-guardian": {
+      "prompt_path": "systemprompts/clink/test-methodology-guardian.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "universal-test-engineer": {
+      "prompt_path": "systemprompts/clink/universal-test-engineer.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "test-infrastructure-steward": {
+      "prompt_path": "systemprompts/clink/test-infrastructure-steward.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "build-plan-checker": {
+      "prompt_path": "systemprompts/clink/build-plan-checker.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "code-review-specialist": {
+      "prompt_path": "systemprompts/clink/code-review-specialist.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "quality-observer": {
+      "prompt_path": "systemprompts/clink/quality-observer.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "validator": {
+      "prompt_path": "systemprompts/clink/validator.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "blind-assessor": {
+      "prompt_path": "systemprompts/clink/blind-assessor.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "north-star-architect": {
+      "prompt_path": "systemprompts/clink/north-star-architect.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "technical-architect": {
+      "prompt_path": "systemprompts/clink/technical-architect.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "design-architect": {
+      "prompt_path": "systemprompts/clink/design-architect.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "visual-architect": {
+      "prompt_path": "systemprompts/clink/visual-architect.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "workspace-architect": {
+      "prompt_path": "systemprompts/clink/workspace-architect.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "completion-architect": {
+      "prompt_path": "systemprompts/clink/completion-architect.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "implementation-lead": {
+      "prompt_path": "systemprompts/clink/implementation-lead.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "principal-engineer": {
+      "prompt_path": "systemprompts/clink/principal-engineer.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "error-architect": {
+      "prompt_path": "systemprompts/clink/error-architect.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "error-architect-surface": {
+      "prompt_path": "systemprompts/clink/error-architect-surface.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "directory-curator": {
+      "prompt_path": "systemprompts/clink/directory-curator.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "surveyor": {
+      "prompt_path": "systemprompts/clink/surveyor.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "research-analyst": {
+      "prompt_path": "systemprompts/clink/research-analyst.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "research-curator": {
+      "prompt_path": "systemprompts/clink/research-curator.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "ho-liaison": {
+      "prompt_path": "systemprompts/clink/ho-liaison.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "ideator": {
+      "prompt_path": "systemprompts/clink/ideator.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "ideator-catalyst": {
+      "prompt_path": "systemprompts/clink/ideator-catalyst.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "idea-clarifier": {
+      "prompt_path": "systemprompts/clink/idea-clarifier.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "synthesizer": {
+      "prompt_path": "systemprompts/clink/synthesizer.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "edge-optimizer": {
+      "prompt_path": "systemprompts/clink/edge-optimizer.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "complexity-guard": {
+      "prompt_path": "systemprompts/clink/complexity-guard.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "octave-specialist": {
+      "prompt_path": "systemprompts/clink/octave-specialist.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "octave-validator": {
+      "prompt_path": "systemprompts/clink/octave-validator.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "semantic-optimizer": {
+      "prompt_path": "systemprompts/clink/semantic-optimizer.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "documentation-compressor": {
+      "prompt_path": "systemprompts/clink/documentation-compressor.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "compression-fidelity-validator": {
+      "prompt_path": "systemprompts/clink/compression-fidelity-validator.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "hestai-doc-steward": {
+      "prompt_path": "systemprompts/clink/hestai-doc-steward.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "task-decomposer": {
+      "prompt_path": "systemprompts/clink/task-decomposer.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "task-decomposer-validator": {
+      "prompt_path": "systemprompts/clink/task-decomposer-validator.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "smartsuite-expert": {
+      "prompt_path": "systemprompts/clink/smartsuite-expert.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "supabase-expert": {
+      "prompt_path": "systemprompts/clink/supabase-expert.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "skills-expert": {
+      "prompt_path": "systemprompts/clink/skills-expert.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "subagent-creator": {
+      "prompt_path": "systemprompts/clink/subagent-creator.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "solution-steward": {
+      "prompt_path": "systemprompts/clink/solution-steward.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
+    "vibe-coder": {
+      "prompt_path": "systemprompts/clink/vibe-coder.txt",
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
+    },
     "default": {
       "prompt_path": "systemprompts/clink/default.txt",
-      "role_args": []
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
     },
     "planner": {
       "prompt_path": "systemprompts/clink/default_planner.txt",
-      "role_args": []
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
     },
     "codereviewer": {
       "prompt_path": "systemprompts/clink/default_codereviewer.txt",
-      "role_args": []
+      "role_args": [
+        "--model",
+        "gemini-3-pro-preview"
+      ]
     }
-  }
+  },
+  "_generated_by": "scripts/generate_client_configs.py",
+  "_tier_mapping_version": "1.0.0"
 }

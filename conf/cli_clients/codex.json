@@ -1,6 +1,7 @@
 {
   "name": "codex",
   "command": "codex",
+  "timeout_seconds": 900,
   "additional_args": [
     "--json",
     "--dangerously-bypass-approvals-and-sandbox",
@@ -9,6 +10,206 @@
   ],
   "env": {},
   "roles": {
+    "critical-engineer": {
+      "prompt_path": "systemprompts/clink/critical-engineer.txt",
+      "role_args": []
+    },
+    "critical-design-validator": {
+      "prompt_path": "systemprompts/clink/critical-design-validator.txt",
+      "role_args": []
+    },
+    "critical-implementation-validator": {
+      "prompt_path": "systemprompts/clink/critical-implementation-validator.txt",
+      "role_args": []
+    },
+    "requirements-steward": {
+      "prompt_path": "systemprompts/clink/requirements-steward.txt",
+      "role_args": []
+    },
+    "security-specialist": {
+      "prompt_path": "systemprompts/clink/security-specialist.txt",
+      "role_args": []
+    },
+    "coherence-oracle": {
+      "prompt_path": "systemprompts/clink/coherence-oracle.txt",
+      "role_args": []
+    },
+    "test-methodology-guardian": {
+      "prompt_path": "systemprompts/clink/test-methodology-guardian.txt",
+      "role_args": []
+    },
+    "universal-test-engineer": {
+      "prompt_path": "systemprompts/clink/universal-test-engineer.txt",
+      "role_args": []
+    },
+    "test-infrastructure-steward": {
+      "prompt_path": "systemprompts/clink/test-infrastructure-steward.txt",
+      "role_args": []
+    },
+    "build-plan-checker": {
+      "prompt_path": "systemprompts/clink/build-plan-checker.txt",
+      "role_args": []
+    },
+    "code-review-specialist": {
+      "prompt_path": "systemprompts/clink/code-review-specialist.txt",
+      "role_args": []
+    },
+    "quality-observer": {
+      "prompt_path": "systemprompts/clink/quality-observer.txt",
+      "role_args": []
+    },
+    "validator": {
+      "prompt_path": "systemprompts/clink/validator.txt",
+      "role_args": []
+    },
+    "blind-assessor": {
+      "prompt_path": "systemprompts/clink/blind-assessor.txt",
+      "role_args": []
+    },
+    "north-star-architect": {
+      "prompt_path": "systemprompts/clink/north-star-architect.txt",
+      "role_args": []
+    },
+    "technical-architect": {
+      "prompt_path": "systemprompts/clink/technical-architect.txt",
+      "role_args": []
+    },
+    "design-architect": {
+      "prompt_path": "systemprompts/clink/design-architect.txt",
+      "role_args": []
+    },
+    "visual-architect": {
+      "prompt_path": "systemprompts/clink/visual-architect.txt",
+      "role_args": []
+    },
+    "workspace-architect": {
+      "prompt_path": "systemprompts/clink/workspace-architect.txt",
+      "role_args": []
+    },
+    "completion-architect": {
+      "prompt_path": "systemprompts/clink/completion-architect.txt",
+      "role_args": []
+    },
+    "implementation-lead": {
+      "prompt_path": "systemprompts/clink/implementation-lead.txt",
+      "role_args": []
+    },
+    "principal-engineer": {
+      "prompt_path": "systemprompts/clink/principal-engineer.txt",
+      "role_args": []
+    },
+    "error-architect": {
+      "prompt_path": "systemprompts/clink/error-architect.txt",
+      "role_args": []
+    },
+    "error-architect-surface": {
+      "prompt_path": "systemprompts/clink/error-architect-surface.txt",
+      "role_args": []
+    },
+    "directory-curator": {
+      "prompt_path": "systemprompts/clink/directory-curator.txt",
+      "role_args": []
+    },
+    "surveyor": {
+      "prompt_path": "systemprompts/clink/surveyor.txt",
+      "role_args": []
+    },
+    "research-analyst": {
+      "prompt_path": "systemprompts/clink/research-analyst.txt",
+      "role_args": []
+    },
+    "research-curator": {
+      "prompt_path": "systemprompts/clink/research-curator.txt",
+      "role_args": []
+    },
+    "ho-liaison": {
+      "prompt_path": "systemprompts/clink/ho-liaison.txt",
+      "role_args": []
+    },
+    "ideator": {
+      "prompt_path": "systemprompts/clink/ideator.txt",
+      "role_args": []
+    },
+    "ideator-catalyst": {
+      "prompt_path": "systemprompts/clink/ideator-catalyst.txt",
+      "role_args": []
+    },
+    "idea-clarifier": {
+      "prompt_path": "systemprompts/clink/idea-clarifier.txt",
+      "role_args": []
+    },
+    "synthesizer": {
+      "prompt_path": "systemprompts/clink/synthesizer.txt",
+      "role_args": []
+    },
+    "edge-optimizer": {
+      "prompt_path": "systemprompts/clink/edge-optimizer.txt",
+      "role_args": []
+    },
+    "complexity-guard": {
+      "prompt_path": "systemprompts/clink/complexity-guard.txt",
+      "role_args": []
+    },
+    "octave-specialist": {
+      "prompt_path": "systemprompts/clink/octave-specialist.txt",
+      "role_args": []
+    },
+    "octave-validator": {
+      "prompt_path": "systemprompts/clink/octave-validator.txt",
+      "role_args": []
+    },
+    "semantic-optimizer": {
+      "prompt_path": "systemprompts/clink/semantic-optimizer.txt",
+      "role_args": []
+    },
+    "documentation-compressor": {
+      "prompt_path": "systemprompts/clink/documentation-compressor.txt",
+      "role_args": []
+    },
+    "compression-fidelity-validator": {
+      "prompt_path": "systemprompts/clink/compression-fidelity-validator.txt",
+      "role_args": []
+    },
+    "hestai-doc-steward": {
+      "prompt_path": "systemprompts/clink/hestai-doc-steward.txt",
+      "role_args": []
+    },
+    "task-decomposer": {
+      "prompt_path": "systemprompts/clink/task-decomposer.txt",
+      "role_args": []
+    },
+    "task-decomposer-validator": {
+      "prompt_path": "systemprompts/clink/task-decomposer-validator.txt",
+      "role_args": []
+    },
+    "smartsuite-expert": {
+      "prompt_path": "systemprompts/clink/smartsuite-expert.txt",
+      "role_args": []
+    },
+    "supabase-expert": {
+      "prompt_path": "systemprompts/clink/supabase-expert.txt",
+      "role_args": []
+    },
+    "skills-expert": {
+      "prompt_path": "systemprompts/clink/skills-expert.txt",
+      "role_args": []
+    },
+    "subagent-creator": {
+      "prompt_path": "systemprompts/clink/subagent-creator.txt",
+      "role_args": []
+    },
+    "system-steward": {
+      "prompt_path": "systemprompts/clink/system-steward.txt",
+      "role_args": []
+    },
+    "solution-steward": {
+      "prompt_path": "systemprompts/clink/solution-steward.txt",
+      "role_args": []
+    },
+    "vibe-coder": {
+      "prompt_path": "systemprompts/clink/vibe-coder.txt",
+      "role_args": []
+    },
     "default": {
       "prompt_path": "systemprompts/clink/default.txt",
       "role_args": []
@@ -21,5 +222,7 @@
       "prompt_path": "systemprompts/clink/codex_codereviewer.txt",
       "role_args": []
     }
-  }
+  },
+  "_generated_by": "scripts/generate_client_configs.py",
+  "_tier_mapping_version": "1.0.0"
 }
