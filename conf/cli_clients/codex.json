@@ -3,11 +3,10 @@
   "command": "codex",
   "timeout_seconds": 900,
   "additional_args": [
-    "--model",
-    "gpt-5.2",
     "--json",
     "--dangerously-bypass-approvals-and-sandbox",
-    "--skip-git-repo-check"
+    "--enable",
+    "web_search_request"
   ],
   "env": {},
   "roles": {
