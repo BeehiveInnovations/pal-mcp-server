@@ -3,23 +3,389 @@
   "command": "claude",
   "additional_args": [
     "--permission-mode",
-    "acceptEdits",
-    "--model",
-    "sonnet"
+    "bypassPermissions"
   ],
   "env": {},
   "roles": {
+    "holistic-orchestrator": {
+      "prompt_path": "systemprompts/clink/holistic-orchestrator.txt",
+      "role_args": [
+        "--model",
+        "opus"
+      ]
+    },
+    "critical-engineer": {
+      "prompt_path": "systemprompts/clink/critical-engineer.txt",
+      "role_args": [
+        "--model",
+        "opus"
+      ]
+    },
+    "critical-design-validator": {
+      "prompt_path": "systemprompts/clink/critical-design-validator.txt",
+      "role_args": [
+        "--model",
+        "opus"
+      ]
+    },
+    "critical-implementation-validator": {
+      "prompt_path": "systemprompts/clink/critical-implementation-validator.txt",
+      "role_args": [
+        "--model",
+        "opus"
+      ]
+    },
+    "requirements-steward": {
+      "prompt_path": "systemprompts/clink/requirements-steward.txt",
+      "role_args": [
+        "--model",
+        "opus"
+      ]
+    },
+    "security-specialist": {
+      "prompt_path": "systemprompts/clink/security-specialist.txt",
+      "role_args": [
+        "--model",
+        "opus"
+      ]
+    },
+    "coherence-oracle": {
+      "prompt_path": "systemprompts/clink/coherence-oracle.txt",
+      "role_args": [
+        "--model",
+        "opus"
+      ]
+    },
+    "test-methodology-guardian": {
+      "prompt_path": "systemprompts/clink/test-methodology-guardian.txt",
+      "role_args": [
+        "--model",
+        "opus"
+      ]
+    },
+    "universal-test-engineer": {
+      "prompt_path": "systemprompts/clink/universal-test-engineer.txt",
+      "role_args": [
+        "--model",
+        "opus"
+      ]
+    },
+    "test-infrastructure-steward": {
+      "prompt_path": "systemprompts/clink/test-infrastructure-steward.txt",
+      "role_args": [
+        "--model",
+        "sonnet"
+      ]
+    },
+    "build-plan-checker": {
+      "prompt_path": "systemprompts/clink/build-plan-checker.txt",
+      "role_args": [
+        "--model",
+        "opus"
+      ]
+    },
+    "code-review-specialist": {
+      "prompt_path": "systemprompts/clink/code-review-specialist.txt",
+      "role_args": [
+        "--model",
+        "sonnet"
+      ]
+    },
+    "quality-observer": {
+      "prompt_path": "systemprompts/clink/quality-observer.txt",
+      "role_args": [
+        "--model",
+        "haiku"
+      ]
+    },
+    "validator": {
+      "prompt_path": "systemprompts/clink/validator.txt",
+      "role_args": [
+        "--model",
+        "sonnet"
+      ]
+    },
+    "blind-assessor": {
+      "prompt_path": "systemprompts/clink/blind-assessor.txt",
+      "role_args": [
+        "--model",
+        "sonnet"
+      ]
+    },
+    "north-star-architect": {
+      "prompt_path": "systemprompts/clink/north-star-architect.txt",
+      "role_args": [
+        "--model",
+        "opus"
+      ]
+    },
+    "technical-architect": {
+      "prompt_path": "systemprompts/clink/technical-architect.txt",
+      "role_args": [
+        "--model",
+        "sonnet"
+      ]
+    },
+    "design-architect": {
+      "prompt_path": "systemprompts/clink/design-architect.txt",
+      "role_args": [
+        "--model",
+        "sonnet"
+      ]
+    },
+    "visual-architect": {
+      "prompt_path": "systemprompts/clink/visual-architect.txt",
+      "role_args": [
+        "--model",
+        "sonnet"
+      ]
+    },
+    "workspace-architect": {
+      "prompt_path": "systemprompts/clink/workspace-architect.txt",
+      "role_args": [
+        "--model",
+        "sonnet"
+      ]
+    },
+    "completion-architect": {
+      "prompt_path": "systemprompts/clink/completion-architect.txt",
+      "role_args": [
+        "--model",
+        "opus"
+      ]
+    },
+    "implementation-lead": {
+      "prompt_path": "systemprompts/clink/implementation-lead.txt",
+      "role_args": [
+        "--model",
+        "sonnet"
+      ]
+    },
+    "principal-engineer": {
+      "prompt_path": "systemprompts/clink/principal-engineer.txt",
+      "role_args": [
+        "--model",
+        "sonnet"
+      ]
+    },
+    "error-architect": {
+      "prompt_path": "systemprompts/clink/error-architect.txt",
+      "role_args": [
+        "--model",
+        "opus"
+      ]
+    },
+    "error-architect-surface": {
+      "prompt_path": "systemprompts/clink/error-architect-surface.txt",
+      "role_args": [
+        "--model",
+        "sonnet"
+      ]
+    },
+    "directory-curator": {
+      "prompt_path": "systemprompts/clink/directory-curator.txt",
+      "role_args": [
+        "--model",
+        "sonnet"
+      ]
+    },
+    "surveyor": {
+      "prompt_path": "systemprompts/clink/surveyor.txt",
+      "role_args": [
+        "--model",
+        "haiku"
+      ]
+    },
+    "research-analyst": {
+      "prompt_path": "systemprompts/clink/research-analyst.txt",
+      "role_args": [
+        "--model",
+        "haiku"
+      ]
+    },
+    "research-curator": {
+      "prompt_path": "systemprompts/clink/research-curator.txt",
+      "role_args": [
+        "--model",
+        "haiku"
+      ]
+    },
+    "ho-liaison": {
+      "prompt_path": "systemprompts/clink/ho-liaison.txt",
+      "role_args": [
+        "--model",
+        "haiku"
+      ]
+    },
+    "ideator": {
+      "prompt_path": "systemprompts/clink/ideator.txt",
+      "role_args": [
+        "--model",
+        "haiku"
+      ]
+    },
+    "ideator-catalyst": {
+      "prompt_path": "systemprompts/clink/ideator-catalyst.txt",
+      "role_args": [
+        "--model",
+        "haiku"
+      ]
+    },
+    "idea-clarifier": {
+      "prompt_path": "systemprompts/clink/idea-clarifier.txt",
+      "role_args": [
+        "--model",
+        "haiku"
+      ]
+    },
+    "synthesizer": {
+      "prompt_path": "systemprompts/clink/synthesizer.txt",
+      "role_args": [
+        "--model",
+        "opus"
+      ]
+    },
+    "edge-optimizer": {
+      "prompt_path": "systemprompts/clink/edge-optimizer.txt",
+      "role_args": [
+        "--model",
+        "opus"
+      ]
+    },
+    "complexity-guard": {
+      "prompt_path": "systemprompts/clink/complexity-guard.txt",
+      "role_args": [
+        "--model",
+        "haiku"
+      ]
+    },
+    "octave-specialist": {
+      "prompt_path": "systemprompts/clink/octave-specialist.txt",
+      "role_args": [
+        "--model",
+        "sonnet"
+      ]
+    },
+    "octave-validator": {
+      "prompt_path": "systemprompts/clink/octave-validator.txt",
+      "role_args": [
+        "--model",
+        "sonnet"
+      ]
+    },
+    "semantic-optimizer": {
+      "prompt_path": "systemprompts/clink/semantic-optimizer.txt",
+      "role_args": [
+        "--model",
+        "sonnet"
+      ]
+    },
+    "documentation-compressor": {
+      "prompt_path": "systemprompts/clink/documentation-compressor.txt",
+      "role_args": [
+        "--model",
+        "sonnet"
+      ]
+    },
+    "compression-fidelity-validator": {
+      "prompt_path": "systemprompts/clink/compression-fidelity-validator.txt",
+      "role_args": [
+        "--model",
+        "sonnet"
+      ]
+    },
+    "hestai-doc-steward": {
+      "prompt_path": "systemprompts/clink/hestai-doc-steward.txt",
+      "role_args": [
+        "--model",
+        "opus"
+      ]
+    },
+    "task-decomposer": {
+      "prompt_path": "systemprompts/clink/task-decomposer.txt",
+      "role_args": [
+        "--model",
+        "sonnet"
+      ]
+    },
+    "task-decomposer-validator": {
+      "prompt_path": "systemprompts/clink/task-decomposer-validator.txt",
+      "role_args": [
+        "--model",
+        "sonnet"
+      ]
+    },
+    "smartsuite-expert": {
+      "prompt_path": "systemprompts/clink/smartsuite-expert.txt",
+      "role_args": [
+        "--model",
+        "sonnet"
+      ]
+    },
+    "supabase-expert": {
+      "prompt_path": "systemprompts/clink/supabase-expert.txt",
+      "role_args": [
+        "--model",
+        "sonnet"
+      ]
+    },
+    "skills-expert": {
+      "prompt_path": "systemprompts/clink/skills-expert.txt",
+      "role_args": [
+        "--model",
+        "sonnet"
+      ]
+    },
+    "subagent-creator": {
+      "prompt_path": "systemprompts/clink/subagent-creator.txt",
+      "role_args": [
+        "--model",
+        "sonnet"
+      ]
+    },
+    "system-steward": {
+      "prompt_path": "systemprompts/clink/system-steward.txt",
+      "role_args": [
+        "--model",
+        "haiku"
+      ]
+    },
+    "solution-steward": {
+      "prompt_path": "systemprompts/clink/solution-steward.txt",
+      "role_args": [
+        "--model",
+        "sonnet"
+      ]
+    },
+    "vibe-coder": {
+      "prompt_path": "systemprompts/clink/vibe-coder.txt",
+      "role_args": [
+        "--model",
+        "sonnet"
+      ]
+    },
     "default": {
       "prompt_path": "systemprompts/clink/default.txt",
-      "role_args": []
+      "role_args": [
+        "--model",
+        "haiku"
+      ]
     },
     "planner": {
       "prompt_path": "systemprompts/clink/default_planner.txt",
-      "role_args": []
+      "role_args": [
+        "--model",
+        "haiku"
+      ]
     },
     "codereviewer": {
       "prompt_path": "systemprompts/clink/default_codereviewer.txt",
-      "role_args": []
+      "role_args": [
+        "--model",
+        "haiku"
+      ]
     }
-  }
+  },
+  "_generated_by": "scripts/generate_client_configs.py",
+  "_tier_mapping_version": "1.0.0"
 }
