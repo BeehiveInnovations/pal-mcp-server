@@ -1,7 +1,9 @@
 {
   "name": "gemini",
   "command": "gemini",
-  "additional_args": [],
+  "additional_args": [
+    "--yolo"
+  ],
   "env": {},
   "roles": {
     "critical-engineer": {
