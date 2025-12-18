@@ -1,12 +1,19 @@
 """Tests for X.AI provider implementation."""
 
+import json
 import os
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from providers.shared import ProviderType
 from providers.xai import XAIModelProvider
+
+# Load XAI models config for dynamic test generation
+_XAI_MODELS_PATH = Path(__file__).parent.parent / "conf" / "xai_models.json"
+with open(_XAI_MODELS_PATH) as f:
+    _XAI_MODELS_CONFIG = json.load(f)
 
 
 class TestXAIProvider:
@@ -70,39 +77,23 @@ class TestXAIProvider:
     def test_model_validation_all_aliases(self):
         """Test that ALL aliases defined in xai_models.json are valid.
 
-        This ensures comprehensive validation coverage of every alias.
+        Dynamically loads aliases from config to stay in sync automatically.
         """
         provider = XAIModelProvider("test-key")
 
-        # All aliases from xai_models.json should be valid
-        all_aliases = [
-            # grok-4 aliases
-            "grok4",
-            # grok-4-1-fast-reasoning aliases
-            "grok",
-            "grok-4.1",
-            "grok-4-1",
-            "grok-4.1-fast-reasoning",
-            "grok-4.1-fast-reasoning-latest",
-            "grok-4.1-fast",
-            "grok-4-1-fast",
-            # grok-4-1-fast-non-reasoning aliases
-            "grok-4.1-fast-non-reasoning",
-            "grok-4-1-fast-non-reasoning-latest",
-            # grok-4-fast aliases
-            "grok-4-fast-reasoning",
-            "grok-4-fast-reasoning-latest",
-            "grok4fast",
-            # grok-4-fast-non-reasoning aliases
-            "grok-4-fast-non-reasoning-latest",
-            # grok-code-fast-1 aliases
-            "grok-code-fast",
-            "grok-code-fast-1-0825",
-            "grokcodefast",
-        ]
+        # Dynamically extract all aliases from the config
+        for model in _XAI_MODELS_CONFIG["models"]:
+            model_name = model["model_name"]
+            aliases = model.get("aliases", [])
 
-        for alias in all_aliases:
-            assert provider.validate_model_name(alias) is True, f"Alias '{alias}' should be valid"
+            # Canonical model name should be valid
+            assert provider.validate_model_name(model_name) is True, f"Canonical model '{model_name}' should be valid"
+
+            # All aliases should be valid
+            for alias in aliases:
+                assert (
+                    provider.validate_model_name(alias) is True
+                ), f"Alias '{alias}' for model '{model_name}' should be valid"
 
     def test_resolve_model_name(self):
         """Test model name resolution."""
@@ -128,46 +119,24 @@ class TestXAIProvider:
     def test_resolve_model_name_all_aliases(self):
         """Test that ALL aliases defined in xai_models.json resolve correctly.
 
-        This ensures comprehensive coverage of every alias defined in the config.
+        Dynamically loads aliases from config to stay in sync automatically.
         """
         provider = XAIModelProvider("test-key")
 
-        # grok-4 aliases
-        assert provider._resolve_model_name("grok4") == "grok-4"
+        # Dynamically test all aliases resolve to their canonical model name
+        for model in _XAI_MODELS_CONFIG["models"]:
+            model_name = model["model_name"]
+            aliases = model.get("aliases", [])
 
-        # grok-4-1-fast-reasoning aliases (includes default 'grok' alias)
-        assert provider._resolve_model_name("grok") == "grok-4-1-fast-reasoning"
-        assert provider._resolve_model_name("grok-4.1") == "grok-4-1-fast-reasoning"
-        assert provider._resolve_model_name("grok-4-1") == "grok-4-1-fast-reasoning"
-        assert provider._resolve_model_name("grok-4.1-fast-reasoning") == "grok-4-1-fast-reasoning"
-        assert provider._resolve_model_name("grok-4.1-fast-reasoning-latest") == "grok-4-1-fast-reasoning"
-        assert provider._resolve_model_name("grok-4.1-fast") == "grok-4-1-fast-reasoning"
-        assert provider._resolve_model_name("grok-4-1-fast") == "grok-4-1-fast-reasoning"
+            # Canonical model name should pass through unchanged
+            assert (
+                provider._resolve_model_name(model_name) == model_name
+            ), f"Canonical model '{model_name}' should resolve to itself"
 
-        # grok-4-1-fast-non-reasoning aliases
-        assert provider._resolve_model_name("grok-4.1-fast-non-reasoning") == "grok-4-1-fast-non-reasoning"
-        assert provider._resolve_model_name("grok-4-1-fast-non-reasoning-latest") == "grok-4-1-fast-non-reasoning"
-
-        # grok-4-fast aliases
-        assert provider._resolve_model_name("grok-4-fast-reasoning") == "grok-4-fast"
-        assert provider._resolve_model_name("grok-4-fast-reasoning-latest") == "grok-4-fast"
-        assert provider._resolve_model_name("grok4fast") == "grok-4-fast"
-
-        # grok-4-fast-non-reasoning aliases
-        assert provider._resolve_model_name("grok-4-fast-non-reasoning-latest") == "grok-4-fast-non-reasoning"
-
-        # grok-code-fast-1 aliases
-        assert provider._resolve_model_name("grok-code-fast") == "grok-code-fast-1"
-        assert provider._resolve_model_name("grok-code-fast-1-0825") == "grok-code-fast-1"
-        assert provider._resolve_model_name("grokcodefast") == "grok-code-fast-1"
-
-        # Canonical model names should pass through unchanged
-        assert provider._resolve_model_name("grok-4") == "grok-4"
-        assert provider._resolve_model_name("grok-4-1-fast-reasoning") == "grok-4-1-fast-reasoning"
-        assert provider._resolve_model_name("grok-4-1-fast-non-reasoning") == "grok-4-1-fast-non-reasoning"
-        assert provider._resolve_model_name("grok-4-fast") == "grok-4-fast"
-        assert provider._resolve_model_name("grok-4-fast-non-reasoning") == "grok-4-fast-non-reasoning"
-        assert provider._resolve_model_name("grok-code-fast-1") == "grok-code-fast-1"
+            # All aliases should resolve to the canonical model name
+            for alias in aliases:
+                resolved = provider._resolve_model_name(alias)
+                assert resolved == model_name, f"Alias '{alias}' should resolve to '{model_name}', got '{resolved}'"
 
     def test_get_capabilities_grok4(self):
         """Test getting model capabilities for GROK-4."""
