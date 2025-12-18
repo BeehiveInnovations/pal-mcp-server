@@ -194,8 +194,8 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
 
         # Add thinking configuration for models that support it
         if capabilities.supports_extended_thinking and effective_thinking_mode in self.THINKING_BUDGETS:
-            # All Gemini models (2.x and 3.x) use thinkingBudget parameter (integer) with current SDK
-            # Note: The SDK may add thinkingLevel support in the future for Gemini 3 models
+            # Current SDK accepts an integer thinking_budget for models that support extended thinking.
+            # If the SDK adds alternative thinking controls in the future, this logic may need updating.
             model_config = capability_map.get(resolved_model_name)
             if model_config and model_config.max_thinking_tokens > 0:
                 max_thinking_tokens = model_config.max_thinking_tokens
@@ -477,10 +477,12 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
             if not candidates:
                 return None
 
-            # Prefer canonical model names (contain 'preview' or 'flash-lite') over aliases
+            # Prefer canonical model names over aliases by checking against the registry.
             # Sort by: (is_canonical, intelligence_score, name) descending
+            canonical_names = set(self.list_models(include_aliases=False, respect_restrictions=False))
+
             def sort_key(m: str) -> tuple:
-                is_canonical = "preview" in m or m.endswith("-lite")
+                is_canonical = m in canonical_names
                 score = capability_map[m].intelligence_score if m in capability_map else 0
                 return (is_canonical, score, m)
 
