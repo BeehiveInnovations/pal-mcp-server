@@ -2,14 +2,15 @@
 
 ## Current Phase
 **Branch:** agent-port
-**Commit:** da75024 (chore(config): sync clink client configurations with hestai-mcp-server)
-**Status:** Clink client configuration synchronization complete; PR created with configuration changes
+**Commit:** c0adca8 (docs(setup): add comprehensive worktree configuration and protection guide)
+**Status:** Worktree isolation and branch protection hooks fully documented; guardrails in place for safe multi-remote workflow
 
 ## Recent Achievements
+- ✓ Documented branch protection hooks (prepare-commit-msg, pre-push) preventing commits/pushes to main
+- ✓ Created WORKTREE-SETUP.md with comprehensive protection guide and configuration instructions
+- ✓ Established remote configuration pattern: origin → fork, upstream → original repo
+- ✓ Documented safe PR creation workflow with --repo flag and emergency bypass procedures
 - ✓ Synchronized clink client configurations (claude, codex, gemini) between agent-port and hestai-mcp-server
-- ✓ Established client configuration consistency across development environments  
-- ✓ Created session documentation for configuration synchronization workflow
-- ✓ PR creation for infrastructure configuration changes to main branch
 
 ## Active Work
 - Quality gates pending: lint, typecheck, test (scheduled)
@@ -23,35 +24,30 @@
 
 ## Key Context
 
+### Worktree Protection & Isolation Pattern (c0adca8)
+The agent-port worktree implements **multi-layer isolation** protecting main branch and safe multi-remote workflow:
+
+**Branch Protection Hooks:**
+- `prepare-commit-msg`: Prevents accidental commits on main branch
+- `pre-push`: Blocks pushes to main/upstream branches, allows feature branch pushes
+
+**Remote Configuration:**
+- `origin` → fork (safe push destination, PR source)
+- `upstream` → original repo (pull-only, automatic updates)
+- Workflow: feature on agent-port → automatic upstream pulls → PR via --repo flag
+
+**Why This Architecture:**
+- Developers can't accidentally push to production (main)
+- Automatic synchronization with upstream maintains context currency
+- Safe multi-remote workflow scales across team
+- Documentation in WORKTREE-SETUP.md enables new developers to replicate pattern
+
 ### Configuration Synchronization Pattern
-Synchronized three CLI client configuration files enabling consistent delegation:
-
-1. **conf/cli_clients/claude.json** → 50+ specialized HestAI agent roles
-   - Model-specific routing: opus (critical decisions), sonnet (tactical), haiku (routine)
-   - Permission mode: acceptEdits → bypassPermissions
-   - All HestAI agent types with system prompt paths
-
-2. **conf/cli_clients/codex.json** → 46+ role mappings for Codex CLI
-   - gpt-5.2 model with sandbox bypass
-   - Full specialized agent support
-
-3. **conf/cli_clients/gemini.json** → Comprehensive Gemini role configuration
-   - gemini-3-pro-preview model for all agent types
-   - Consistent role structure across providers
-
-### Architectural Insight: Worktree-Based Remote Configuration
-The agent-port worktree serves as **isolated testing ground** for infrastructure changes before distribution:
-- Changes tested in worktree (da75024 on agent-port branch)
-- Remote configuration verified through clink delegation
-- PR created to main branch after validation
-- Three-location model (global ~/.claude/, HestAI hub, project isolation) protects production systems
-
-### Why This Matters
-Clink configurations enable:
-- Role-based model selection across multiple AI providers
-- Consistent system prompt routing from all external CLI clients
-- Support for HestAI's multi-agent architecture without monolithic coupling
-- Remote configuration isolation pattern: develop in worktree → test via clink → merge to main
+Three CLI client configurations (claude, codex, gemini) provide consistent role-based model delegation:
+- 50+ specialized HestAI agent roles mapped across providers
+- Model-specific routing: opus (critical decisions), sonnet (tactical), haiku (routine)
+- System prompt paths enable infrastructure-as-code configuration
+- Synchronized between worktree testing and main branch distribution
 
 ## Files Modified
 - conf/cli_clients/claude.json (3 → 391 lines)
