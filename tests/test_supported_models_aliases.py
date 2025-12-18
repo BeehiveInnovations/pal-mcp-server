@@ -84,18 +84,19 @@ class TestSupportedModelsAliases:
             assert isinstance(config.aliases, list), f"{model_name} aliases must be a list"
 
         # Test specific aliases
-        assert "grok" in provider.MODEL_CAPABILITIES["grok-4"].aliases
+        # 'grok' now defaults to cost-efficient grok-4-1-fast-reasoning
+        assert "grok" in provider.MODEL_CAPABILITIES["grok-4-1-fast-reasoning"].aliases
         assert "grok4" in provider.MODEL_CAPABILITIES["grok-4"].aliases
         assert "grok-4.1-fast-reasoning" in provider.MODEL_CAPABILITIES["grok-4-1-fast-reasoning"].aliases
 
         # Test alias resolution
-        assert provider._resolve_model_name("grok") == "grok-4"
+        assert provider._resolve_model_name("grok") == "grok-4-1-fast-reasoning"  # cost-efficient default
         assert provider._resolve_model_name("grok4") == "grok-4"
         assert provider._resolve_model_name("grok-4.1-fast-reasoning") == "grok-4-1-fast-reasoning"
         assert provider._resolve_model_name("grok-4.1-fast-reasoning-latest") == "grok-4-1-fast-reasoning"
 
         # Test case insensitive resolution
-        assert provider._resolve_model_name("Grok") == "grok-4"
+        assert provider._resolve_model_name("Grok") == "grok-4-1-fast-reasoning"  # cost-efficient default
         assert provider._resolve_model_name("GROK-4.1-FAST-REASONING") == "grok-4-1-fast-reasoning"
 
     def test_dial_provider_aliases(self):
