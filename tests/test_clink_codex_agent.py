@@ -15,8 +15,26 @@ class DummyProcess:
         self._stderr = stderr
         self.returncode = returncode
 
-    async def communicate(self, _input):
+    async def communicate(self, _input=None):
         return self._stdout, self._stderr
+
+
+class BlockingProcess:
+    def __init__(self) -> None:
+        self.returncode = None
+        self.killed = False
+        self.started = asyncio.Event()
+        self._done = asyncio.Event()
+
+    async def communicate(self, _input=None):
+        self.started.set()
+        await self._done.wait()
+        return b"", b""
+
+    def kill(self) -> None:
+        self.killed = True
+        self.returncode = -9
+        self._done.set()
 
 
 @pytest.fixture()
@@ -73,3 +91,27 @@ async def test_codex_agent_propagates_invalid_json(monkeypatch, codex_agent):
 
     with pytest.raises(CLIAgentError):
         await _run_agent_with_process(monkeypatch, agent, role, process)
+
+
+@pytest.mark.asyncio
+async def test_codex_agent_kills_process_on_cancel(monkeypatch, codex_agent):
+    agent, role = codex_agent
+    process = BlockingProcess()
+
+    async def fake_create_subprocess_exec(*_args, **_kwargs):
+        return process
+
+    def fake_which(executable_name):
+        return f"/usr/bin/{executable_name}"
+
+    monkeypatch.setattr(asyncio, "create_subprocess_exec", fake_create_subprocess_exec)
+    monkeypatch.setattr(shutil, "which", fake_which)
+
+    task = asyncio.create_task(agent.run(role=role, prompt="do something", files=[], images=[]))
+    await process.started.wait()
+    task.cancel()
+
+    with pytest.raises(asyncio.CancelledError):
+        await task
+
+    assert process.killed is True

@@ -130,6 +130,7 @@ try:
 
     # Create a special logger for MCP activity tracking with size-based rotation
     mcp_logger = logging.getLogger("mcp_activity")
+    mcp_logger.handlers.clear()
     mcp_file_handler = RotatingFileHandler(
         log_dir / "mcp_activity.log",
         maxBytes=10 * 1024 * 1024,  # 20MB max file size

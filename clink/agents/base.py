@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import os
 import shlex
@@ -138,14 +139,29 @@ class BaseCLIAgent:
         except FileNotFoundError as exc:
             raise CLIAgentError(f"Executable not found for CLI '{self.client.name}': {exc}") from exc
 
+        self._logger.debug("CLI process started (pid=%s)", getattr(process, "pid", None))
+
         try:
             stdout_bytes, stderr_bytes = await asyncio.wait_for(
                 process.communicate(prompt.encode("utf-8")),
                 timeout=self.client.timeout_seconds,
             )
+        except asyncio.CancelledError:
+            self._logger.info(
+                "CLI '%s' cancelled - terminating subprocess (pid=%s)",
+                self.client.name,
+                getattr(process, "pid", None),
+            )
+            with contextlib.suppress(ProcessLookupError):
+                process.kill()
+            with contextlib.suppress(Exception):
+                await asyncio.wait_for(asyncio.shield(process.communicate()), timeout=5)
+            raise
         except asyncio.TimeoutError as exc:
-            process.kill()
-            await process.communicate()
+            with contextlib.suppress(ProcessLookupError):
+                process.kill()
+            with contextlib.suppress(Exception):
+                await asyncio.wait_for(asyncio.shield(process.communicate()), timeout=5)
             raise CLIAgentError(
                 f"CLI '{self.client.name}' timed out after {self.client.timeout_seconds} seconds",
                 returncode=None,
