@@ -312,8 +312,8 @@ function Clear-PythonCache {
         Get-ChildItem -Path . -Recurse -Filter "*.pyc" -ErrorAction SilentlyContinue | Remove-Item -Force
         
         # Remove __pycache__ directories
-        Get-ChildItem -Path . -Recurse -Name "__pycache__" -Directory -ErrorAction SilentlyContinue | 
-        ForEach-Object { Remove-Item -Path $_ -Recurse -Force }
+        Get-ChildItem -Path . -Recurse -Filter "__pycache__" -Directory -ErrorAction SilentlyContinue |
+        ForEach-Object { Remove-Item -Path $_.FullName -Recurse -Force }
         
         Write-Success "Python cache cleared"
     }
@@ -1764,7 +1764,7 @@ function Test-QwenCliIntegration {
                     $cwdMatches = ([string]::IsNullOrEmpty($cwdValue) -or $cwdValue -eq $scriptDir)
 
                     if ($commandMatches -and $argsMatches -and $cwdMatches) {
-                        $configStatus = $legacyRemoved ? "cleanup" : "match"
+                        $configStatus = if ($legacyRemoved) { "cleanup" } else { "match" }
                     }
                     else {
                         $configStatus = "mismatch"
