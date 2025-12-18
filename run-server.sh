@@ -1108,9 +1108,10 @@ migrate_env_file() {
     echo "  (Backup saved as .env.backup_*)"
 }
 
-# Check API keys and warn if missing (non-blocking)
+# Check API keys and CLI tools (non-blocking)
 check_api_keys() {
     local has_key=false
+    local has_cli=false
     local api_keys=(
         "GEMINI_API_KEY:your_gemini_api_key_here"
         "OPENAI_API_KEY:your_openai_api_key_here"
@@ -1136,19 +1137,39 @@ check_api_keys() {
         has_key=true
     fi
 
-    if [[ "$has_key" == false ]]; then
-        print_warning "No API keys found in .env!"
+    # Check for CLI tools (OAuth authenticated, no API keys needed)
+    local cli_tools=("gemini:Gemini" "claude:Claude" "codex:Codex")
+    for cli_entry in "${cli_tools[@]}"; do
+        local cli_name="${cli_entry%%:*}"
+        local cli_display="${cli_entry#*:}"
+        if command -v "$cli_name" &> /dev/null; then
+            print_success "$cli_display CLI detected (OAuth - no API key needed)"
+            has_cli=true
+        fi
+    done
+
+    if [[ "$has_key" == false && "$has_cli" == false ]]; then
+        print_warning "No API keys or CLI tools found!"
         echo ""
-        echo "The Python development environment will be set up, but you won't be able to use the MCP server until you add API keys."
+        echo "The Python development environment will be set up, but you won't be able to use the MCP server"
+        echo "until you either add API keys OR install a CLI tool (gemini, claude, codex)."
         echo ""
-        echo "To add API keys, edit .env and add at least one:"
+        echo "Option 1: Install a CLI tool (OAuth authenticated, no API keys needed):"
+        echo "  - Gemini CLI: npm install -g @google/gemini-cli && gemini"
+        echo "  - Claude CLI: brew install claude or npm install -g @anthropic/claude-code"
+        echo "  - Codex CLI: npm install -g @openai/codex"
+        echo ""
+        echo "Option 2: Add API keys to .env:"
         echo "  GEMINI_API_KEY=your-actual-key"
         echo "  OPENAI_API_KEY=your-actual-key"
         echo "  XAI_API_KEY=your-actual-key"
         echo "  DIAL_API_KEY=your-actual-key"
         echo "  OPENROUTER_API_KEY=your-actual-key"
         echo ""
-        print_info "You can continue with development setup and add API keys later."
+        print_info "You can continue with development setup and add API keys or CLI tools later."
+        echo ""
+    elif [[ "$has_cli" == true && "$has_key" == false ]]; then
+        print_info "Using CLI tools for model access (no API keys required)"
         echo ""
     fi
 

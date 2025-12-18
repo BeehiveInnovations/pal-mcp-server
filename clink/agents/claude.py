@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 from clink.models import ResolvedCLIRole
 from clink.parsers.base import ParserError
 
@@ -11,7 +13,24 @@ from .base import AgentOutput, BaseCLIAgent
 class ClaudeAgent(BaseCLIAgent):
     """Claude CLI agent with system-prompt injection support."""
 
-    def _build_command(self, *, role: ResolvedCLIRole, system_prompt: str | None) -> list[str]:
+    def _build_command(
+        self,
+        *,
+        role: ResolvedCLIRole,
+        system_prompt: str | None,
+        additional_args: Sequence[str] | None = None,
+    ) -> list[str]:
+        """Build Claude CLI command with system prompt injection support.
+
+        Args:
+            role: The resolved CLI role configuration.
+            system_prompt: Optional system prompt injected via --append-system-prompt.
+            additional_args: Optional sequence of additional command-line arguments
+                to pass to the CLI executable.
+
+        Returns:
+            List of command-line arguments ready for subprocess execution.
+        """
         command = list(self.client.executable)
         command.extend(self.client.internal_args)
         command.extend(self.client.config_args)
@@ -20,6 +39,11 @@ class ClaudeAgent(BaseCLIAgent):
             command.extend(["--append-system-prompt", system_prompt])
 
         command.extend(role.role_args)
+
+        # Append any additional CLI arguments (e.g., --temperature, --max-output-tokens)
+        if additional_args:
+            command.extend(additional_args)
+
         return command
 
     def _recover_from_error(

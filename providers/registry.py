@@ -34,13 +34,17 @@ class ModelProviderRegistry:
     _instance = None
 
     # Provider priority order for model selection
-    # Native APIs first, then custom endpoints, then catch-all providers
+    # Native APIs first, then CLI providers, then custom endpoints, then catch-all
     PROVIDER_PRIORITY_ORDER = [
         ProviderType.GOOGLE,  # Direct Gemini access
         ProviderType.OPENAI,  # Direct OpenAI access
         ProviderType.AZURE,  # Azure-hosted OpenAI deployments
         ProviderType.XAI,  # Direct X.AI GROK access
         ProviderType.DIAL,  # DIAL unified API access
+        # CLI-based providers (OAuth authenticated, no API key needed)
+        ProviderType.GEMINI_CLI,  # Gemini CLI tool
+        ProviderType.CLAUDE_CLI,  # Claude Code CLI tool
+        ProviderType.CODEX_CLI,  # Codex CLI tool
         ProviderType.CUSTOM,  # Local/self-hosted models
         ProviderType.OPENROUTER,  # Catch-all for cloud models
     ]
@@ -139,6 +143,18 @@ class ModelProviderRegistry:
                 azure_endpoint=azure_endpoint,
                 api_version=azure_version,
             )
+        elif provider_type in {
+            ProviderType.GEMINI_CLI,
+            ProviderType.CLAUDE_CLI,
+            ProviderType.CODEX_CLI,
+        }:
+            # CLI providers don't need API keys - they use OAuth via the CLI tool
+            try:
+                provider = provider_class()
+            except RuntimeError as e:
+                # CLI tool not installed or not configured
+                logging.debug(f"CLI provider {provider_type.value} not available: {e}")
+                return None
         else:
             if not api_key:
                 return None
@@ -155,9 +171,10 @@ class ModelProviderRegistry:
         """Get provider instance for a specific model name.
 
         Provider priority order:
-        1. Native APIs (GOOGLE, OPENAI) - Most direct and efficient
-        2. CUSTOM - For local/private models with specific endpoints
-        3. OPENROUTER - Catch-all for cloud models via unified API
+        1. Native APIs (GOOGLE, OPENAI, AZURE, XAI, DIAL) - Most direct and efficient
+        2. CLI providers (GEMINI_CLI, CLAUDE_CLI, CODEX_CLI) - OAuth authenticated local CLIs
+        3. CUSTOM - For local/private models with specific endpoints
+        4. OPENROUTER - Catch-all for cloud models via unified API
 
         Args:
             model_name: Name of the model (e.g., "gemini-2.5-flash", "gpt5")
