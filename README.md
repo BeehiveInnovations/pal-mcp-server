@@ -11,11 +11,11 @@
 
 ### Your CLI + Multiple Models = Your AI Dev Team
 
-**Use the 🤖 CLI you love:**  
+**Use the 🤖 CLI you love:**
 [Claude Code](https://www.anthropic.com/claude-code) · [Gemini CLI](https://github.com/google-gemini/gemini-cli) · [Codex CLI](https://github.com/openai/codex) · [Qwen Code CLI](https://qwenlm.github.io/qwen-code-docs/) · [Cursor](https://cursor.com) · _and more_
 
-**With multiple models within a single prompt:**  
-Gemini · OpenAI · Anthropic · Grok · Azure · Ollama · OpenRouter · DIAL · On-Device Model
+**With multiple models within a single prompt:**
+Gemini · OpenAI · DeepSeek · Anthropic · Grok · Azure · Ollama · OpenRouter · DIAL · On-Device Model
 
 </div>
 
@@ -128,7 +128,7 @@ and review into consideration to aid with its final pre-commit review.
 For best results when using [Claude Code](https://claude.ai/code):  
 
 - **Sonnet 4.5** - All agentic work and orchestration
-- **Gemini 3.0 Pro** OR **GPT-5.2 / Pro** - Deep thinking, additional code reviews, debugging and validations, pre-commit analysis
+- **Gemini 3.0 Pro** OR **GPT-5-Pro** - Deep thinking, additional code reviews, debugging and validations, pre-commit analysis
 </details>
 
 <details>
@@ -136,8 +136,8 @@ For best results when using [Claude Code](https://claude.ai/code):
 
 For best results when using [Codex CLI](https://developers.openai.com/codex/cli):  
 
-- **GPT-5.2 Codex Medium** - All agentic work and orchestration
-- **Gemini 3.0 Pro** OR **GPT-5.2-Pro** - Deep thinking, additional code reviews, debugging and validations, pre-commit analysis
+- **GPT-5 Codex Medium** - All agentic work and orchestration
+- **Gemini 3.0 Pro** OR **GPT-5-Pro** - Deep thinking, additional code reviews, debugging and validations, pre-commit analysis
 </details>
 
 ## Quick Start (5 minutes)
@@ -148,6 +148,7 @@ For best results when using [Codex CLI](https://developers.openai.com/codex/cli)
 - **[OpenRouter](https://openrouter.ai/)** - Access multiple models with one API
 - **[Gemini](https://makersuite.google.com/app/apikey)** - Google's latest models
 - **[OpenAI](https://platform.openai.com/api-keys)** - O3, GPT-5 series
+- **[DeepSeek](https://platform.deepseek.com/)** - DeepSeek V3.1 models
 - **[Azure OpenAI](https://learn.microsoft.com/azure/ai-services/openai/)** - Enterprise deployments of GPT-4o, GPT-4.1, GPT-5 family
 - **[X.AI](https://console.x.ai/)** - Grok models
 - **[DIAL](https://dialx.ai/)** - Vendor-agnostic model access
@@ -178,6 +179,7 @@ cd pal-mcp-server
       "env": {
         "PATH": "/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin:~/.local/bin",
         "GEMINI_API_KEY": "your-key-here",
+        "DEEPSEEK_API_KEY": "your-deepseek-key-here",
         "DISABLED_TOOLS": "analyze,refactor,testgen,secaudit,docgen,tracer",
         "DEFAULT_MODEL": "auto"
       }
@@ -185,6 +187,10 @@ cd pal-mcp-server
   }
 }
 ```
+
+**Option C: Claude Code Agent Skills** (standalone mode)
+
+Skills are standalone executables that run without MCP server - see [Skills Mode](#-claude-code-agent-skills) section below.
 
 **3. Start Using!**
 ```
@@ -208,7 +214,7 @@ PAL activates any provider that has credentials in your `.env`. See `.env.exampl
 
 **Collaboration & Planning** *(Enabled by default)*
 - **[`clink`](docs/tools/clink.md)** - Bridge requests to external AI CLIs (Gemini planner, codereviewer, etc.)
-- **[`chat`](docs/tools/chat.md)** - Brainstorm ideas, get second opinions, validate approaches. With capable models (GPT-5.2 Pro, Gemini 3.0 Pro), generates complete code / implementation
+- **[`chat`](docs/tools/chat.md)** - Brainstorm ideas, get second opinions, validate approaches. With capable models (GPT-5 Pro, Gemini 3.0 Pro), generates complete code / implementation
 - **[`thinkdeep`](docs/tools/thinkdeep.md)** - Extended reasoning, edge case analysis, alternative perspectives
 - **[`planner`](docs/tools/planner.md)** - Break down complex projects into structured, actionable plans
 - **[`consensus`](docs/tools/consensus.md)** - Get expert opinions from multiple AI models with stance steering
@@ -278,6 +284,8 @@ DISABLED_TOOLS=
         // API configuration
         "GEMINI_API_KEY": "your-gemini-key",
         "OPENAI_API_KEY": "your-openai-key",
+        "DEEPSEEK_API_KEY": "your-deepseek-key",
+        "DEEPSEEK_BASE_URL": "https://api.deepseek.com",  // Optional custom endpoint
         "OPENROUTER_API_KEY": "your-openrouter-key",
         
         // Logging and performance
@@ -381,8 +389,8 @@ DISABLED_TOOLS=
 - **[Context revival](docs/context-revival.md)** - Continue conversations even after context resets
 
 **Model Support**
-- **Multiple providers** - Gemini, OpenAI, Azure, X.AI, OpenRouter, DIAL, Ollama
-- **Latest models** - GPT-5, Gemini 3.0 Pro, O3, Grok-4, local Llama
+- **Multiple providers** - Gemini, OpenAI, DeepSeek, Azure, X.AI, OpenRouter, DIAL, Ollama
+- **Latest models** - GPT-5, Gemini 3.0 Pro, O3, DeepSeek V3.1, Grok-4, local Llama
 - **[Thinking modes](docs/advanced-usage.md#thinking-modes)** - Control reasoning depth vs cost
 - **Vision support** - Analyze images, diagrams, screenshots
 
@@ -414,6 +422,42 @@ DISABLED_TOOLS=
 
 👉 **[Advanced Usage Guide](docs/advanced-usage.md)** for complex workflows, model configuration, and power-user features
 
+## 🎯 Claude Code Agent Skills
+
+PAL also supports **Claude Code Agent Skills** - standalone executables that can be invoked directly by Claude Code without running the MCP server.
+
+**Why Skills?** Reduces token overhead - tool descriptions are only loaded when invoked, not always present in your context window.
+
+**Shared Conversation Memory:** Skills use SQLite (`~/.pal_mcp/sessions.db`) to persist conversations across invocations, enabling multi-turn workflows just like MCP mode.
+
+### Installation
+
+**Requirements:** Python 3.10+, macOS/Linux, [Claude Code](https://www.anthropic.com/claude-code) installed
+
+```bash
+git clone https://github.com/BeehiveInnovations/pal-mcp-server.git
+cd pal-mcp-server
+
+# Install all 17 skills to ~/.claude/skills/
+./install-skills.sh
+
+# Or install specific skills
+./install-skills.sh pal-chat pal-thinkdeep pal-codereview
+
+# Update: re-run to overwrite existing skills
+./install-skills.sh
+```
+
+Skills use the same environment variables as MCP mode (`GEMINI_API_KEY`, `OPENAI_API_KEY`, etc.).
+
+**Verify installation:**
+```
+# In Claude Code, try:
+"Use pal-chat to say hello with gemini flash"
+```
+
+> **Note:** This is an **experimental implementation** - interfaces may change. Feedback welcome on [#346](https://github.com/BeehiveInnovations/pal-mcp-server/issues/346).
+
 ## Quick Links
 
 **📖 Documentation**
@@ -443,6 +487,7 @@ Built with the power of **Multi-Model AI** collaboration 🤝
 - [Claude Code](https://claude.ai/code)
 - [Gemini](https://ai.google.dev/)
 - [OpenAI](https://openai.com/)
+- [DeepSeek](https://platform.deepseek.com/)
 - [Azure OpenAI](https://learn.microsoft.com/azure/ai-services/openai/)
 
 ### Star History
