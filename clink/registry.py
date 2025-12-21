@@ -169,6 +169,8 @@ class ClinkRegistry:
             roles=roles,
             output_to_file=output_to_file,
             working_dir=working_dir,
+            thinking_mode_flag_template=raw.thinking_mode_flag_template,
+            execution_mode_flag_template=raw.execution_mode_flag_template,
         )
 
     def _resolve_executable(

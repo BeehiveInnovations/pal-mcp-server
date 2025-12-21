@@ -60,12 +60,19 @@ class BaseCLIAgent:
         system_prompt: str | None = None,
         files: Sequence[str],
         images: Sequence[str],
+        thinking_mode: str | None = None,
+        execution_mode: str | None = None,
     ) -> AgentOutput:
         # Files and images are already embedded into the prompt by the tool; they are
         # accepted here only to keep parity with SimpleTool callers.
         _ = (files, images)
         # The runner simply executes the configured CLI command for the selected role.
-        command = self._build_command(role=role, system_prompt=system_prompt)
+        command = self._build_command(
+            role=role,
+            system_prompt=system_prompt,
+            thinking_mode=thinking_mode,
+            execution_mode=execution_mode,
+        )
         env = self._build_environment()
 
         # Resolve executable path for cross-platform compatibility (especially Windows)
@@ -190,11 +197,64 @@ class BaseCLIAgent:
             output_file_content=output_file_content,
         )
 
-    def _build_command(self, *, role: ResolvedCLIRole, system_prompt: str | None) -> list[str]:
+    def _build_command(
+        self,
+        *,
+        role: ResolvedCLIRole,
+        system_prompt: str | None,
+        thinking_mode: str | None = None,
+        execution_mode: str | None = None,
+    ) -> list[str]:
         base = list(self.client.executable)
         base.extend(self.client.internal_args)
         base.extend(self.client.config_args)
         base.extend(role.role_args)
+
+        # Inject dynamic flags if templates are defined for the client
+        # Security: Token-safe substitution to prevent argument injection
+        if thinking_mode and self.client.thinking_mode_flag_template:
+            try:
+                # Pre-tokenize the template to avoid splitting user-controlled values
+                template_tokens = shlex.split(self.client.thinking_mode_flag_template)
+                for token in template_tokens:
+                    if token == "$value":
+                        # User value as single argv element (prevents injection)
+                        base.append(thinking_mode)
+                    elif "$value" in token:
+                        # Replace $value within token without splitting
+                        base.append(token.replace("$value", thinking_mode))
+                    else:
+                        base.append(token)
+            except Exception:
+                # Log as warning (not debug) since this affects CLI behavior
+                self._logger.warning(
+                    "Failed to render thinking_mode flag template '%s' with value '%s'",
+                    self.client.thinking_mode_flag_template,
+                    thinking_mode,
+                    exc_info=True,
+                )
+
+        if execution_mode and self.client.execution_mode_flag_template:
+            try:
+                # Pre-tokenize the template to avoid splitting user-controlled values
+                template_tokens = shlex.split(self.client.execution_mode_flag_template)
+                for token in template_tokens:
+                    if token == "$value":
+                        # User value as single argv element (prevents injection)
+                        base.append(execution_mode)
+                    elif "$value" in token:
+                        # Replace $value within token without splitting
+                        base.append(token.replace("$value", execution_mode))
+                    else:
+                        base.append(token)
+            except Exception:
+                # Log as warning (not debug) since this affects CLI behavior
+                self._logger.warning(
+                    "Failed to render execution_mode flag template '%s' with value '%s'",
+                    self.client.execution_mode_flag_template,
+                    execution_mode,
+                    exc_info=True,
+                )
 
         return base
 
