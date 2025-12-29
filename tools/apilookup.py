@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from pydantic import Field
 
@@ -81,7 +81,7 @@ class LookupTool(SimpleTool):
             "This tool searches authoritative sources (official docs, GitHub, package registries) to ensure up-to-date accuracy."
         )
 
-    def get_annotations(self) -> Optional[dict[str, Any]]:
+    def get_annotations(self) -> dict[str, Any] | None:
         """Return tool annotations indicating this searches external sources."""
         return self._ANNOTATIONS
 

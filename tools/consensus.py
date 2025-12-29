@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from pydantic import Field, model_validator
 
@@ -155,7 +155,7 @@ class ConsensusTool(WorkflowTool):
             "Consults multiple models with different stances to synthesize comprehensive recommendations."
         )
 
-    def get_annotations(self) -> Optional[dict[str, Any]]:
+    def get_annotations(self) -> dict[str, Any] | None:
         """Return tool annotations indicating this is a read-only consensus analysis tool."""
         return self._ANNOTATIONS
 
