@@ -145,6 +145,8 @@ class TracerTool(WorkflowTool):
     both precision tracing (execution flow) and dependencies tracing (structural relationships).
     """
 
+    _ANNOTATIONS: dict[str, Any] = {"readOnlyHint": True}
+
     def __init__(self):
         super().__init__()
         self.initial_request = None
@@ -162,7 +164,7 @@ class TracerTool(WorkflowTool):
 
     def get_annotations(self) -> Optional[dict[str, Any]]:
         """Return tool annotations indicating this is a read-only code tracing tool."""
-        return {"readOnlyHint": True}
+        return self._ANNOTATIONS
 
     def get_system_prompt(self) -> str:
         return TRACER_PROMPT

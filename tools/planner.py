@@ -119,6 +119,8 @@ class PlannerTool(WorkflowTool):
     - Self-contained operation (no expert analysis)
     """
 
+    _ANNOTATIONS: dict[str, Any] = {"readOnlyHint": True}
+
     def __init__(self):
         super().__init__()
         self.branches = {}
@@ -135,7 +137,7 @@ class PlannerTool(WorkflowTool):
 
     def get_annotations(self) -> Optional[dict[str, Any]]:
         """Return tool annotations indicating this is a read-only planning tool."""
-        return {"readOnlyHint": True}
+        return self._ANNOTATIONS
 
     def get_system_prompt(self) -> str:
         return PLANNER_PROMPT

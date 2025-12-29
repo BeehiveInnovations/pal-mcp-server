@@ -103,6 +103,7 @@ class TestGenTool(WorkflowTool):
     """
 
     __test__ = False  # Prevent pytest from collecting this class as a test
+    _ANNOTATIONS: dict[str, Any] = {"readOnlyHint": True}
 
     def __init__(self):
         super().__init__()
@@ -120,7 +121,7 @@ class TestGenTool(WorkflowTool):
 
     def get_annotations(self) -> Optional[dict[str, Any]]:
         """Return tool annotations indicating this is a read-only test generation tool."""
-        return {"readOnlyHint": True}
+        return self._ANNOTATIONS
 
     def get_system_prompt(self) -> str:
         return TESTGEN_PROMPT

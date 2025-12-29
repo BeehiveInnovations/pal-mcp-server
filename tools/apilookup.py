@@ -70,6 +70,8 @@ SEARCH STRATEGY (MAXIMUM 2-4 SEARCHES TOTAL FOR THIS MISSION - THEN STOP):
 class LookupTool(SimpleTool):
     """Simple tool that wraps user queries with API lookup instructions."""
 
+    _ANNOTATIONS: dict[str, Any] = {"readOnlyHint": True, "openWorldHint": True}
+
     def get_name(self) -> str:
         return "apilookup"
 
@@ -81,7 +83,7 @@ class LookupTool(SimpleTool):
 
     def get_annotations(self) -> Optional[dict[str, Any]]:
         """Return tool annotations indicating this searches external sources."""
-        return {"readOnlyHint": True, "openWorldHint": True}
+        return self._ANNOTATIONS
 
     def get_system_prompt(self) -> str:
         return ""

@@ -95,6 +95,8 @@ class DocgenTool(WorkflowTool):
     - Modern documentation style appropriate for the language/platform
     """
 
+    _ANNOTATIONS: dict[str, Any] = {"readOnlyHint": True}
+
     def __init__(self):
         super().__init__()
         self.initial_request = None
@@ -111,7 +113,7 @@ class DocgenTool(WorkflowTool):
 
     def get_annotations(self) -> Optional[dict[str, Any]]:
         """Return tool annotations indicating this is a read-only documentation tool."""
-        return {"readOnlyHint": True}
+        return self._ANNOTATIONS
 
     def get_system_prompt(self) -> str:
         return DOCGEN_PROMPT

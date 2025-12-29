@@ -49,6 +49,8 @@ class ChallengeTool(SimpleTool):
     transforms the input prompt into a structured critical thinking challenge.
     """
 
+    _ANNOTATIONS: dict[str, Any] = {"readOnlyHint": True}
+
     def get_name(self) -> str:
         return "challenge"
 
@@ -60,7 +62,7 @@ class ChallengeTool(SimpleTool):
 
     def get_annotations(self) -> Optional[dict[str, Any]]:
         """Return tool annotations indicating this is a read-only analysis tool."""
-        return {"readOnlyHint": True}
+        return self._ANNOTATIONS
 
     def get_system_prompt(self) -> str:
         # Challenge tool doesn't need a system prompt since it doesn't call AI

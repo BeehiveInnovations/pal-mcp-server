@@ -125,6 +125,8 @@ class CodeReviewTool(WorkflowTool):
     including security audits, performance analysis, architectural review, and maintainability assessment.
     """
 
+    _ANNOTATIONS: dict[str, Any] = {"readOnlyHint": True}
+
     def __init__(self):
         super().__init__()
         self.initial_request = None
@@ -142,7 +144,7 @@ class CodeReviewTool(WorkflowTool):
 
     def get_annotations(self) -> Optional[dict[str, Any]]:
         """Return tool annotations indicating this is a read-only code review tool."""
-        return {"readOnlyHint": True}
+        return self._ANNOTATIONS
 
     def get_system_prompt(self) -> str:
         return CODEREVIEW_PROMPT
