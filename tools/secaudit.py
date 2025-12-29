@@ -126,6 +126,8 @@ class SecauditTool(WorkflowTool):
     security-specific capabilities.
     """
 
+    _ANNOTATIONS: dict[str, Any] = {"readOnlyHint": True}
+
     def __init__(self):
         super().__init__()
         self.initial_request = None
@@ -142,6 +144,10 @@ class SecauditTool(WorkflowTool):
             "Use for OWASP Top 10 analysis, compliance evaluation, threat modeling, and security architecture review. "
             "Guides through structured security investigation with expert validation."
         )
+
+    def get_annotations(self) -> Optional[dict[str, Any]]:
+        """Return tool annotations indicating this is a read-only security audit tool."""
+        return self._ANNOTATIONS
 
     def get_system_prompt(self) -> str:
         """Return the system prompt for expert security analysis."""

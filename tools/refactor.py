@@ -149,6 +149,8 @@ class RefactorTool(WorkflowTool):
     opportunities, and organization improvements.
     """
 
+    _ANNOTATIONS: dict[str, Any] = {"readOnlyHint": True}
+
     def __init__(self):
         super().__init__()
         self.initial_request = None
@@ -163,6 +165,10 @@ class RefactorTool(WorkflowTool):
             "Use for code smell detection, decomposition planning, modernization, and maintainability improvements. "
             "Guides through structured analysis with expert validation."
         )
+
+    def get_annotations(self) -> Optional[dict[str, Any]]:
+        """Return tool annotations indicating this is a read-only refactoring analysis tool."""
+        return self._ANNOTATIONS
 
     def get_system_prompt(self) -> str:
         return REFACTOR_PROMPT

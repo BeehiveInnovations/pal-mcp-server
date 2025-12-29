@@ -126,6 +126,8 @@ class PrecommitTool(WorkflowTool):
     multi-repository analysis, security review, performance validation, and integration testing.
     """
 
+    _ANNOTATIONS: dict[str, Any] = {"readOnlyHint": True}
+
     def __init__(self):
         super().__init__()
         self.initial_request = None
@@ -140,6 +142,10 @@ class PrecommitTool(WorkflowTool):
             "Use for multi-repository validation, security review, change impact assessment, and completeness verification. "
             "Guides through structured investigation with expert analysis."
         )
+
+    def get_annotations(self) -> Optional[dict[str, Any]]:
+        """Return tool annotations indicating this is a read-only validation tool."""
+        return self._ANNOTATIONS
 
     def get_system_prompt(self) -> str:
         return PRECOMMIT_PROMPT

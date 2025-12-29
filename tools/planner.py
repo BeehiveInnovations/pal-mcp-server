@@ -21,7 +21,7 @@ architectural decisions, and breaking down large problems into manageable steps.
 """
 
 import logging
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Optional
 
 from pydantic import Field, field_validator
 
@@ -119,6 +119,8 @@ class PlannerTool(WorkflowTool):
     - Self-contained operation (no expert analysis)
     """
 
+    _ANNOTATIONS: dict[str, Any] = {"readOnlyHint": True}
+
     def __init__(self):
         super().__init__()
         self.branches = {}
@@ -132,6 +134,10 @@ class PlannerTool(WorkflowTool):
             "Use for complex project planning, system design, migration strategies, and architectural decisions. "
             "Builds plans incrementally with deep reflection for complex scenarios."
         )
+
+    def get_annotations(self) -> Optional[dict[str, Any]]:
+        """Return tool annotations indicating this is a read-only planning tool."""
+        return self._ANNOTATIONS
 
     def get_system_prompt(self) -> str:
         return PLANNER_PROMPT

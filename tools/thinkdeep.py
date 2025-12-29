@@ -108,6 +108,7 @@ class ThinkDeepTool(WorkflowTool):
         "Use for architecture decisions, complex bugs, performance challenges, and security analysis. "
         "Provides systematic hypothesis testing, evidence-based investigation, and expert validation."
     )
+    _ANNOTATIONS: dict[str, Any] = {"readOnlyHint": True}
 
     def __init__(self):
         """Initialize the ThinkDeep workflow tool"""
@@ -122,6 +123,10 @@ class ThinkDeepTool(WorkflowTool):
     def get_description(self) -> str:
         """Return the tool description"""
         return self.description
+
+    def get_annotations(self) -> Optional[dict[str, Any]]:
+        """Return tool annotations indicating this is a read-only deep thinking tool."""
+        return self._ANNOTATIONS
 
     def get_model_category(self) -> "ToolModelCategory":
         """Return the model category for this tool"""

@@ -135,6 +135,8 @@ class ConsensusTool(WorkflowTool):
     and finally synthesizes all perspectives into a unified recommendation.
     """
 
+    _ANNOTATIONS: dict[str, Any] = {"readOnlyHint": True}
+
     def __init__(self):
         super().__init__()
         self.initial_prompt: str | None = None
@@ -152,6 +154,10 @@ class ConsensusTool(WorkflowTool):
             "Use for complex decisions, architectural choices, feature proposals, and technology evaluations. "
             "Consults multiple models with different stances to synthesize comprehensive recommendations."
         )
+
+    def get_annotations(self) -> dict[str, Any] | None:
+        """Return tool annotations indicating this is a read-only consensus analysis tool."""
+        return self._ANNOTATIONS
 
     def get_system_prompt(self) -> str:
         # For the CLI agent's initial analysis, use a neutral version of the consensus prompt

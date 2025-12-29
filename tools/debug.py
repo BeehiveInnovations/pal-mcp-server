@@ -110,6 +110,8 @@ class DebugIssueTool(WorkflowTool):
     including race conditions, memory leaks, performance issues, and integration problems.
     """
 
+    _ANNOTATIONS: dict[str, Any] = {"readOnlyHint": True}
+
     def __init__(self):
         super().__init__()
         self.initial_issue = None
@@ -123,6 +125,10 @@ class DebugIssueTool(WorkflowTool):
             "Use for complex bugs, mysterious errors, performance issues, race conditions, memory leaks, and integration problems. "
             "Guides through structured investigation with hypothesis testing and expert analysis."
         )
+
+    def get_annotations(self) -> Optional[dict[str, Any]]:
+        """Return tool annotations indicating this is a read-only debugging tool."""
+        return self._ANNOTATIONS
 
     def get_system_prompt(self) -> str:
         return DEBUG_ISSUE_PROMPT

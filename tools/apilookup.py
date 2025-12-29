@@ -70,6 +70,8 @@ SEARCH STRATEGY (MAXIMUM 2-4 SEARCHES TOTAL FOR THIS MISSION - THEN STOP):
 class LookupTool(SimpleTool):
     """Simple tool that wraps user queries with API lookup instructions."""
 
+    _ANNOTATIONS: dict[str, Any] = {"readOnlyHint": True, "openWorldHint": True}
+
     def get_name(self) -> str:
         return "apilookup"
 
@@ -78,6 +80,10 @@ class LookupTool(SimpleTool):
             "Use this tool automatically when you need current API/SDK documentation, latest version info, breaking changes, deprecations, migration guides, or official release notes. "
             "This tool searches authoritative sources (official docs, GitHub, package registries) to ensure up-to-date accuracy."
         )
+
+    def get_annotations(self) -> dict[str, Any] | None:
+        """Return tool annotations indicating this searches external sources."""
+        return self._ANNOTATIONS
 
     def get_system_prompt(self) -> str:
         return ""

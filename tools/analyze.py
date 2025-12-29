@@ -140,6 +140,8 @@ class AnalyzeTool(WorkflowTool):
     including architectural review, performance analysis, security assessment, and maintainability evaluation.
     """
 
+    _ANNOTATIONS: dict[str, Any] = {"readOnlyHint": True}
+
     def __init__(self):
         super().__init__()
         self.initial_request = None
@@ -154,6 +156,10 @@ class AnalyzeTool(WorkflowTool):
             "Use for architecture, performance, maintainability, and pattern analysis. "
             "Guides through structured code review and strategic planning."
         )
+
+    def get_annotations(self) -> Optional[dict[str, Any]]:
+        """Return tool annotations indicating this is a read-only analysis tool."""
+        return self._ANNOTATIONS
 
     def get_system_prompt(self) -> str:
         return ANALYZE_PROMPT
