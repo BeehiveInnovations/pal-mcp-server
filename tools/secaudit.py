@@ -143,6 +143,10 @@ class SecauditTool(WorkflowTool):
             "Guides through structured security investigation with expert validation."
         )
 
+    def get_annotations(self) -> Optional[dict[str, Any]]:
+        """Return tool annotations indicating this is a read-only security audit tool."""
+        return {"readOnlyHint": True}
+
     def get_system_prompt(self) -> str:
         """Return the system prompt for expert security analysis."""
         return SECAUDIT_PROMPT

@@ -124,6 +124,10 @@ class DebugIssueTool(WorkflowTool):
             "Guides through structured investigation with hypothesis testing and expert analysis."
         )
 
+    def get_annotations(self) -> Optional[dict[str, Any]]:
+        """Return tool annotations indicating this is a read-only debugging tool."""
+        return {"readOnlyHint": True}
+
     def get_system_prompt(self) -> str:
         return DEBUG_ISSUE_PROMPT
 

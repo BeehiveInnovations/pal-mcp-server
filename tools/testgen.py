@@ -118,6 +118,10 @@ class TestGenTool(WorkflowTool):
             "Be specific about scope - target particular components rather than testing everything."
         )
 
+    def get_annotations(self) -> Optional[dict[str, Any]]:
+        """Return tool annotations indicating this is a read-only test generation tool."""
+        return {"readOnlyHint": True}
+
     def get_system_prompt(self) -> str:
         return TESTGEN_PROMPT
 

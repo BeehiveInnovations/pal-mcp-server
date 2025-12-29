@@ -109,6 +109,10 @@ class DocgenTool(WorkflowTool):
             "Analyzes code structure and patterns to create thorough documentation."
         )
 
+    def get_annotations(self) -> Optional[dict[str, Any]]:
+        """Return tool annotations indicating this is a read-only documentation tool."""
+        return {"readOnlyHint": True}
+
     def get_system_prompt(self) -> str:
         return DOCGEN_PROMPT
 

@@ -164,6 +164,10 @@ class RefactorTool(WorkflowTool):
             "Guides through structured analysis with expert validation."
         )
 
+    def get_annotations(self) -> Optional[dict[str, Any]]:
+        """Return tool annotations indicating this is a read-only refactoring analysis tool."""
+        return {"readOnlyHint": True}
+
     def get_system_prompt(self) -> str:
         return REFACTOR_PROMPT
 

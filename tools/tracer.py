@@ -160,6 +160,10 @@ class TracerTool(WorkflowTool):
             "Supports precision mode (execution flow) and dependencies mode (structural relationships)."
         )
 
+    def get_annotations(self) -> Optional[dict[str, Any]]:
+        """Return tool annotations indicating this is a read-only code tracing tool."""
+        return {"readOnlyHint": True}
+
     def get_system_prompt(self) -> str:
         return TRACER_PROMPT
 

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Optional
 
 from pydantic import Field
 
@@ -78,6 +78,10 @@ class LookupTool(SimpleTool):
             "Use this tool automatically when you need current API/SDK documentation, latest version info, breaking changes, deprecations, migration guides, or official release notes. "
             "This tool searches authoritative sources (official docs, GitHub, package registries) to ensure up-to-date accuracy."
         )
+
+    def get_annotations(self) -> Optional[dict[str, Any]]:
+        """Return tool annotations indicating this searches external sources."""
+        return {"readOnlyHint": True, "openWorldHint": True}
 
     def get_system_prompt(self) -> str:
         return ""

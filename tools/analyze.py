@@ -155,6 +155,10 @@ class AnalyzeTool(WorkflowTool):
             "Guides through structured code review and strategic planning."
         )
 
+    def get_annotations(self) -> Optional[dict[str, Any]]:
+        """Return tool annotations indicating this is a read-only analysis tool."""
+        return {"readOnlyHint": True}
+
     def get_system_prompt(self) -> str:
         return ANALYZE_PROMPT
 

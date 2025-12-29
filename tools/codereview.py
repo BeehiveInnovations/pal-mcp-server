@@ -140,6 +140,10 @@ class CodeReviewTool(WorkflowTool):
             "Guides through structured investigation to ensure thoroughness."
         )
 
+    def get_annotations(self) -> Optional[dict[str, Any]]:
+        """Return tool annotations indicating this is a read-only code review tool."""
+        return {"readOnlyHint": True}
+
     def get_system_prompt(self) -> str:
         return CODEREVIEW_PROMPT
 

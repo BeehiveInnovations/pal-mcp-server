@@ -123,6 +123,10 @@ class ThinkDeepTool(WorkflowTool):
         """Return the tool description"""
         return self.description
 
+    def get_annotations(self) -> Optional[dict[str, Any]]:
+        """Return tool annotations indicating this is a read-only deep thinking tool."""
+        return {"readOnlyHint": True}
+
     def get_model_category(self) -> "ToolModelCategory":
         """Return the model category for this tool"""
         from tools.models import ToolModelCategory

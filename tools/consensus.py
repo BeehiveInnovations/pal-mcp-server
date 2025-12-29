@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Optional
 
 from pydantic import Field, model_validator
 
@@ -152,6 +152,10 @@ class ConsensusTool(WorkflowTool):
             "Use for complex decisions, architectural choices, feature proposals, and technology evaluations. "
             "Consults multiple models with different stances to synthesize comprehensive recommendations."
         )
+
+    def get_annotations(self) -> Optional[dict[str, Any]]:
+        """Return tool annotations indicating this is a read-only consensus analysis tool."""
+        return {"readOnlyHint": True}
 
     def get_system_prompt(self) -> str:
         # For the CLI agent's initial analysis, use a neutral version of the consensus prompt

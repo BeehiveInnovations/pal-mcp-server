@@ -141,6 +141,10 @@ class PrecommitTool(WorkflowTool):
             "Guides through structured investigation with expert analysis."
         )
 
+    def get_annotations(self) -> Optional[dict[str, Any]]:
+        """Return tool annotations indicating this is a read-only validation tool."""
+        return {"readOnlyHint": True}
+
     def get_system_prompt(self) -> str:
         return PRECOMMIT_PROMPT
 
