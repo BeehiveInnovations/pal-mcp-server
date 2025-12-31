@@ -314,4 +314,3 @@ class TestClientNameMappings:
         """默认友好名称应该是非空字符串"""
         assert isinstance(DEFAULT_FRIENDLY_NAME, str)
         assert len(DEFAULT_FRIENDLY_NAME) > 0
-
