@@ -75,7 +75,7 @@ class TestGetFriendlyName:
         assert get_friendly_name(client_name) == "Gemini"
 
     @pytest.mark.parametrize(
-        "client_name,expected",
+        ("client_name", "expected"),
         [
             ("cursor", "Cursor"),
             ("vscode", "VS Code"),
@@ -102,7 +102,7 @@ class TestGetFriendlyName:
         assert get_friendly_name(client_name) == DEFAULT_FRIENDLY_NAME
 
     @pytest.mark.parametrize(
-        "client_name,expected",
+        ("client_name", "expected"),
         [
             ("CLAUDE", "Claude"),
             ("GEMINI", "Gemini"),
@@ -114,7 +114,7 @@ class TestGetFriendlyName:
         assert get_friendly_name(client_name) == expected
 
     @pytest.mark.parametrize(
-        "client_name,expected",
+        ("client_name", "expected"),
         [
             ("my-claude-extension", "Claude"),
             ("gemini-custom-build", "Gemini"),
