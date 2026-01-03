@@ -472,6 +472,43 @@
       "intelligence_score": 16
     },
     {
+      "model_name": "moonshotai/kimi-k2-thinking",
+      "aliases": [
+        "kimi",
+        "kimi-k2",
+        "kimi-thinking",
+        "kimi-k2-thinking"
+      ],
+      "context_window": 262144,
+      "max_output_tokens": 65536,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": false,
+      "max_image_size_mb": 0.0,
+      "allow_code_generation": true,
+      "description": "MoonshotAI Kimi K2 Thinking via OpenRouter (262K context)",
+      "intelligence_score": 15
+    },
+    {
+      "model_name": "z-ai/glm-4.7",
+      "aliases": [
+        "glm",
+        "glm-4.7",
+        "glm47"
+      ],
+      "context_window": 202752,
+      "max_output_tokens": 65535,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": false,
+      "max_image_size_mb": 0.0,
+      "allow_code_generation": true,
+      "description": "Z.AI GLM 4.7 via OpenRouter (202,752 context)",
+      "intelligence_score": 13
+    },
+    {
       "model_name": "x-ai/grok-4",
       "aliases": [
         "grok-4",
