@@ -15,3 +15,4 @@ class ProviderType(Enum):
     OPENROUTER = "openrouter"
     CUSTOM = "custom"
     DIAL = "dial"
+    CLI = "cli"  # External CLI tools (Gemini CLI, Claude Code, Codex CLI)

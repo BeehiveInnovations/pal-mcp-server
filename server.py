@@ -393,6 +393,7 @@ def configure_providers():
         logger.debug(f"  {key}: {'[PRESENT]' if value else '[MISSING]'}")
     from providers import ModelProviderRegistry
     from providers.azure_openai import AzureOpenAIProvider
+    from providers.cli_provider import CLIProvider
     from providers.custom import CustomProvider
     from providers.dial import DIALModelProvider
     from providers.gemini import GeminiModelProvider
@@ -406,6 +407,7 @@ def configure_providers():
     has_native_apis = False
     has_openrouter = False
     has_custom = False
+    has_cli = False
 
     # Check for Gemini API key
     gemini_key = get_env("GEMINI_API_KEY")
@@ -492,6 +494,23 @@ def configure_providers():
         else:
             logger.debug("No custom API key provided (using unauthenticated access)")
 
+    # Check for CLI tools (Gemini CLI, Claude Code, Codex)
+    try:
+        from clink import get_registry as get_clink_registry
+
+        clink_registry = get_clink_registry()
+        cli_clients = clink_registry.list_clients()
+        if cli_clients:
+            valid_providers.append(f"CLI ({', '.join(cli_clients)})")
+            has_cli = True
+            logger.info(f"CLI tools available: {', '.join(cli_clients)}")
+        else:
+            logger.debug("No CLI clients configured in clink")
+    except ImportError:
+        logger.debug("Clink module not available - CLI provider disabled")
+    except Exception as exc:
+        logger.debug(f"Failed to check CLI availability: {exc}")
+
     # Register providers in priority order:
     # 1. Native APIs first (most direct and efficient)
     registered_providers = []
@@ -518,7 +537,13 @@ def configure_providers():
             registered_providers.append(ProviderType.DIAL.value)
             logger.debug(f"Registered provider: {ProviderType.DIAL.value}")
 
-    # 2. Custom provider second (for local/private models)
+    # 2. CLI provider (for external CLI tools like Gemini CLI, Claude Code, Codex)
+    if has_cli:
+        ModelProviderRegistry.register_provider(ProviderType.CLI, CLIProvider)
+        registered_providers.append(ProviderType.CLI.value)
+        logger.debug(f"Registered provider: {ProviderType.CLI.value}")
+
+    # 4. Custom provider (for local/private models)
     if has_custom:
         # Factory function that creates CustomProvider with proper parameters
         def custom_provider_factory(api_key=None):
@@ -530,7 +555,7 @@ def configure_providers():
         registered_providers.append(ProviderType.CUSTOM.value)
         logger.debug(f"Registered provider: {ProviderType.CUSTOM.value}")
 
-    # 3. OpenRouter last (catch-all for everything else)
+    # 5. OpenRouter last (catch-all for everything else)
     if has_openrouter:
         ModelProviderRegistry.register_provider(ProviderType.OPENROUTER, OpenRouterProvider)
         registered_providers.append(ProviderType.OPENROUTER.value)

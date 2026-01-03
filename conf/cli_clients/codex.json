@@ -5,7 +5,9 @@
     "--json",
     "--dangerously-bypass-approvals-and-sandbox",
     "--enable",
-    "web_search_request"
+    "web_search_request",
+    "--model",
+    "gpt-5.2-codex"
   ],
   "env": {},
   "roles": {

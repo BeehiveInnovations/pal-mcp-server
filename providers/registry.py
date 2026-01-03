@@ -36,6 +36,7 @@ class ModelProviderRegistry:
     # Provider priority order for model selection
     # Native APIs first, then custom endpoints, then catch-all providers
     PROVIDER_PRIORITY_ORDER = [
+        ProviderType.CLI,  # External CLI tools (Gemini CLI, Claude Code, Codex) - highest priority for cli: models
         ProviderType.GOOGLE,  # Direct Gemini access
         ProviderType.OPENAI,  # Direct OpenAI access
         ProviderType.AZURE,  # Azure-hosted OpenAI deployments
@@ -95,6 +96,28 @@ class ModelProviderRegistry:
 
         # Get provider class or factory function
         provider_class = instance._providers[provider_type]
+
+        # For CLI providers, initialize without API key requirement
+        if provider_type == ProviderType.CLI:
+            try:
+                from clink import get_registry as get_clink_registry
+
+                clink_registry = get_clink_registry()
+                if not clink_registry.list_clients():
+                    logging.debug("No CLI clients configured – skipping CLI provider")
+                    return None
+
+                from .cli_provider import CLIProvider
+
+                provider = CLIProvider()
+                instance._initialized_providers[provider_type] = provider
+                return provider
+            except ImportError as exc:
+                logging.warning("CLI provider dependencies not available: %s", exc)
+                return None
+            except Exception as exc:
+                logging.warning("Failed to initialize CLI provider: %s", exc)
+                return None
 
         # For custom providers, handle special initialization requirements
         if provider_type == ProviderType.CUSTOM:
@@ -339,6 +362,7 @@ class ModelProviderRegistry:
             ProviderType.OPENROUTER: "OPENROUTER_API_KEY",
             ProviderType.CUSTOM: "CUSTOM_API_KEY",  # Can be empty for providers that don't need auth
             ProviderType.DIAL: "DIAL_API_KEY",
+            ProviderType.CLI: None,  # CLI provider doesn't need API key
         }
 
         env_var = key_mapping.get(provider_type)

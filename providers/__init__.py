@@ -2,6 +2,7 @@
 
 from .azure_openai import AzureOpenAIProvider
 from .base import ModelProvider
+from .cli_provider import CLIProvider
 from .gemini import GeminiModelProvider
 from .openai import OpenAIModelProvider
 from .openai_compatible import OpenAICompatibleProvider
@@ -15,6 +16,7 @@ __all__ = [
     "ModelCapabilities",
     "ModelProviderRegistry",
     "AzureOpenAIProvider",
+    "CLIProvider",
     "GeminiModelProvider",
     "OpenAIModelProvider",
     "OpenAICompatibleProvider",
