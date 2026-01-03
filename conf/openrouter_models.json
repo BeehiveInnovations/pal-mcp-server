@@ -498,7 +498,7 @@
         "glm47"
       ],
       "context_window": 202752,
-      "max_output_tokens": 65535,
+      "max_output_tokens": 65536,
       "supports_extended_thinking": false,
       "supports_json_mode": true,
       "supports_function_calling": true,
