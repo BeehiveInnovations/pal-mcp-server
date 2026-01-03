@@ -9,6 +9,7 @@ if TYPE_CHECKING:
 
 from google import genai
 from google.genai import types
+from openai import OpenAI
 
 from utils.env import get_env
 from utils.image_utils import validate_image
@@ -47,10 +48,15 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
         self._ensure_registry()
         super().__init__(api_key, **kwargs)
         self._client = None
+        self._openai_client = None  # For OpenAI-compatible mode
         self._token_counters = {}  # Cache for token counting
         self._base_url = kwargs.get("base_url", None)  # Optional custom endpoint
         self._timeout_override = self._resolve_http_timeout()
         self._invalidate_capability_cache()
+
+        # Detect if we should use OpenAI-compatible mode
+        # Check if base_url ends with /v1 or if GEMINI_USE_OPENAI_COMPATIBLE is set
+        self._use_openai_compatible = self._should_use_openai_compatible()
 
     # ------------------------------------------------------------------
     # Capability surface
@@ -107,6 +113,43 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
 
         return None
 
+    def _should_use_openai_compatible(self) -> bool:
+        """Detect if we should use OpenAI-compatible API format instead of Google native format.
+
+        Returns True if:
+        1. GEMINI_USE_OPENAI_COMPATIBLE environment variable is set to 'true'
+        2. OR base_url is set and ends with '/v1' (indicating OpenAI-compatible endpoint)
+        """
+        # Check explicit environment variable
+        use_openai_env = get_env("GEMINI_USE_OPENAI_COMPATIBLE", "").lower()
+        if use_openai_env == "true":
+            logger.info("Using OpenAI-compatible mode for Gemini (GEMINI_USE_OPENAI_COMPATIBLE=true)")
+            return True
+
+        # Auto-detect based on base_url ending with /v1
+        if self._base_url and self._base_url.rstrip("/").endswith("/v1"):
+            logger.info(f"Auto-detected OpenAI-compatible endpoint from base_url: {self._base_url}")
+            return True
+
+        return False
+
+    @property
+    def openai_client(self):
+        """Lazy initialization of OpenAI client for OpenAI-compatible mode."""
+        if not self._use_openai_compatible:
+            raise RuntimeError(
+                "Attempted to access openai_client when not in OpenAI-compatible mode. "
+                "This indicates a programming error in the provider logic."
+            )
+
+        if self._openai_client is None:
+            timeout = self._timeout_override if self._timeout_override is not None else 60.0
+            self._openai_client = OpenAI(api_key=self.api_key, base_url=self._base_url, timeout=timeout)
+            logger.debug(
+                "Initialized OpenAI-compatible client for Gemini with base_url=%s timeout=%s", self._base_url, timeout
+            )
+        return self._openai_client
+
     # ------------------------------------------------------------------
     # Request execution
     # ------------------------------------------------------------------
@@ -138,6 +181,20 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
         Returns:
             ModelResponse: Contains the generated content, token usage stats, model metadata, and safety information
         """
+        # If using OpenAI-compatible mode, delegate to OpenAI client
+        if self._use_openai_compatible:
+            return self._generate_content_openai_compatible(
+                prompt=prompt,
+                model_name=model_name,
+                system_prompt=system_prompt,
+                temperature=temperature,
+                max_output_tokens=max_output_tokens,
+                thinking_mode=thinking_mode,
+                images=images,
+                **kwargs,
+            )
+
+        # Otherwise, use Google native API (existing logic)
         # Validate parameters and fetch capabilities
         self.validate_parameters(model_name, temperature)
         capabilities = self.get_capabilities(model_name)
@@ -307,6 +364,128 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
             error_msg = (
                 f"Gemini API error for model {resolved_model_name} after {attempts} attempt"
                 f"{'s' if attempts > 1 else ''}: {exc}"
+            )
+            raise RuntimeError(error_msg) from exc
+
+    def _generate_content_openai_compatible(
+        self,
+        prompt: str,
+        model_name: str,
+        system_prompt: Optional[str] = None,
+        temperature: float = 0.3,
+        max_output_tokens: Optional[int] = None,
+        thinking_mode: str = "medium",
+        images: Optional[list[str]] = None,
+        **kwargs,
+    ) -> ModelResponse:
+        """Generate content using OpenAI-compatible API format.
+
+        This method is used when GEMINI_BASE_URL points to an OpenAI-compatible proxy
+        instead of Google's native Gemini API.
+
+        Args:
+            prompt: The main user prompt/query to send to the model
+            model_name: Canonical model name or its alias
+            system_prompt: Optional system instructions
+            temperature: Controls randomness in generation
+            max_output_tokens: Optional maximum number of tokens to generate
+            thinking_mode: Thinking budget level (currently ignored in OpenAI-compatible mode)
+            images: Optional list of image paths (currently ignored in OpenAI-compatible mode)
+            **kwargs: Additional keyword arguments
+
+        Returns:
+            ModelResponse: Contains the generated content and token usage stats
+        """
+        self.validate_parameters(model_name, temperature)
+        resolved_model_name = self._resolve_model_name(model_name)
+
+        # Warn about ignored parameters
+        if images:
+            logger.warning(
+                "Images are not supported in OpenAI-compatible mode for Gemini. "
+                "The 'images' parameter will be ignored."
+            )
+        if thinking_mode and thinking_mode != "medium":
+            logger.warning(
+                f"thinking_mode='{thinking_mode}' is not supported in OpenAI-compatible mode for Gemini. "
+                "This parameter will be ignored."
+            )
+
+        # Prepare messages for OpenAI-compatible API
+        messages = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": prompt})
+
+        # Prepare API parameters
+        api_params = {
+            "model": resolved_model_name,
+            "messages": messages,
+            "temperature": temperature,
+        }
+
+        if max_output_tokens:
+            api_params["max_tokens"] = max_output_tokens
+
+        # Make API call with retry logic
+        max_retries = 4
+        retry_delays = [1, 3, 5, 8]
+        attempt_counter = {"value": 0}
+
+        def _attempt() -> ModelResponse:
+            attempt_counter["value"] += 1
+            response = self.openai_client.chat.completions.create(**api_params)
+
+            # Validate response has choices
+            if not response.choices or len(response.choices) == 0:
+                raise RuntimeError(
+                    f"API returned empty choices for model {resolved_model_name}. "
+                    "This may indicate a server error or invalid request."
+                )
+
+            # Extract content and usage
+            choice = response.choices[0]
+            content = choice.message.content if choice.message and choice.message.content else ""
+            finish_reason = choice.finish_reason if choice.finish_reason else "unknown"
+
+            # Extract token usage with defaults (using input_tokens/output_tokens for consistency)
+            usage = {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+            }
+            if response.usage:
+                usage = {
+                    "input_tokens": response.usage.prompt_tokens or 0,
+                    "output_tokens": response.usage.completion_tokens or 0,
+                    "total_tokens": response.usage.total_tokens or 0,
+                }
+
+            return ModelResponse(
+                content=content,
+                usage=usage,
+                model_name=resolved_model_name,
+                friendly_name="Gemini",
+                provider=ProviderType.GOOGLE,
+                metadata={
+                    "mode": "openai_compatible",
+                    "base_url": self._base_url,
+                    "finish_reason": finish_reason,
+                },
+            )
+
+        try:
+            return self._run_with_retries(
+                operation=_attempt,
+                max_attempts=max_retries,
+                delays=retry_delays,
+                log_prefix=f"Gemini OpenAI-compatible API ({resolved_model_name})",
+            )
+        except Exception as exc:
+            attempts = max(attempt_counter["value"], 1)
+            error_msg = (
+                f"Gemini OpenAI-compatible API error for model {resolved_model_name} "
+                f"after {attempts} attempt{'s' if attempts > 1 else ''}: {exc}"
             )
             raise RuntimeError(error_msg) from exc
 
