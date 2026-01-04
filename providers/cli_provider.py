@@ -16,7 +16,7 @@ from __future__ import annotations
 import asyncio
 import concurrent.futures
 import logging
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Optional
 
 from .base import ModelProvider
 from .shared import ModelCapabilities, ModelResponse, ProviderType
@@ -243,13 +243,13 @@ class CLIProvider(ModelProvider):
 
     def _execute_cli_sync(
         self,
-        client_config: "ResolvedCLIClient",
-        role_config: "ResolvedCLIRole",
+        client_config: ResolvedCLIClient,
+        role_config: ResolvedCLIRole,
         prompt: str,
         system_prompt: Optional[str],
         files: list[str],
         images: list[str],
-    ) -> "AgentOutput":
+    ) -> AgentOutput:
         """Execute CLI command synchronously using thread pool.
 
         This method bridges the async CLI execution with the sync Provider interface.
@@ -275,13 +275,13 @@ class CLIProvider(ModelProvider):
 
     def _run_async_agent(
         self,
-        client_config: "ResolvedCLIClient",
-        role_config: "ResolvedCLIRole",
+        client_config: ResolvedCLIClient,
+        role_config: ResolvedCLIRole,
         prompt: str,
         system_prompt: Optional[str],
         files: list[str],
         images: list[str],
-    ) -> "AgentOutput":
+    ) -> AgentOutput:
         """Run async CLI agent in a new event loop.
 
         This runs in a separate thread to avoid blocking the main event loop.

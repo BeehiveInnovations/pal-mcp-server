@@ -11,15 +11,18 @@ Consensus Tool
     │
     ▼ models: [{model: "cli:gemini"}, {model: "cli:claude"}]
     │
-Provider Registry
-    │
-    ▼ get_provider_for_model("cli:gemini")
-    │
-CLIProvider (新增)
-    │
-    ▼ generate_content() → agent.run()
-    │
-External CLI Process (免费)
+    ▼ asyncio.gather() ─── CONCURRENT EXECUTION ───
+    │                 │                           │
+Provider Registry  Provider Registry         Provider Registry
+    │                 │                           │
+CLIProvider       CLIProvider               CLIProvider
+    │                 │                           │
+External CLI      External CLI              External CLI
+(gemini)          (claude)                  (codex)
+    │                 │                           │
+    └─────────────────┴───────────────────────────┘
+                      │
+              All responses returned together
 ```
 
 ## Progress Tracker
@@ -118,6 +121,22 @@ consensus(
 | 别名格式 | `cli-claude`, `cli-gemini-planner` | 也可使用 |
 
 ## Changelog
+
+### 2026-01-04 - Concurrent Execution & Stance Default Fix
+
+**Concurrent Execution:**
+- [x] Changed from sequential to CONCURRENT model consultation using `asyncio.gather()`
+- [x] All models are now consulted in parallel for faster results
+- [x] Single tool call returns all model responses (no more multi-step workflow)
+- [x] Proper exception handling for concurrent tasks
+
+**Stance Default Behavior:**
+- [x] Fixed schema description to clarify that unspecified stance defaults to 'neutral'
+- [x] Removed misleading example that suggested assigning different stances
+- [x] Models without explicit stance now remain neutral (not auto-assigned for/against)
+
+**Files Modified:**
+- `tools/consensus.py` - Added `asyncio` import, rewrote `execute_workflow()` for concurrency
 
 ### 2025-01-04 - Implementation Complete & Tested
 
