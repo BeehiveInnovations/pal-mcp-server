@@ -720,6 +720,8 @@ class BaseWorkflowMixin(ABC):
             if not request.next_step_required:
                 response_data = await self.handle_work_completion(response_data, request, arguments)
             else:
+                # Allow tools to inject custom logic at intermediate steps (e.g., expert analysis)
+                response_data = await self.handle_intermediate_step(response_data, request, arguments)
                 # Force CLI to work before calling tool again
                 response_data = self.handle_work_continuation(response_data, request)
 
@@ -1364,6 +1366,35 @@ class BaseWorkflowMixin(ABC):
         # Generate step guidance
         response_data["next_steps"] = self.get_step_guidance_message(request)
 
+        return response_data
+
+    async def handle_intermediate_step(self, response_data: dict, request, arguments: dict) -> dict:
+        """
+        Hook for custom logic at intermediate steps (next_step_required=True).
+
+        This method is called before handle_work_continuation, allowing tools to inject
+        custom logic such as expert analysis, validation, or other operations that need
+        to happen at specific intermediate workflow steps.
+
+        By default, this is a no-op. Tools can override this method to implement
+        step-specific behavior.
+
+        Args:
+            response_data: The response data being built for this step
+            request: The workflow request object
+            arguments: The original arguments passed to execute_workflow
+
+        Returns:
+            Updated response_data dictionary
+
+        Example:
+            async def handle_intermediate_step(self, response_data, request, arguments):
+                if request.step_number == 2:
+                    expert_analysis = await self._call_expert_analysis(arguments, request)
+                    response_data["expert_analysis"] = expert_analysis
+                return response_data
+        """
+        # Default implementation is a no-op
         return response_data
 
     def _update_consolidated_findings(self, step_data: dict):
