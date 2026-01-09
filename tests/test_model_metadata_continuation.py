@@ -20,7 +20,7 @@ from utils.model_context import ModelContext
 class TestModelMetadataContinuation:
     """Test model metadata preservation during conversation continuation."""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_model_preserved_from_previous_turn(self):
         """Test that model is correctly retrieved from previous conversation turn."""
         # Create a thread with a turn that has a specific model
@@ -58,7 +58,7 @@ class TestModelMetadataContinuation:
                 model_context = ModelContext.from_arguments(enhanced_args)
                 assert model_context.model_name == "deepseek-r1-8b"
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_reconstruct_thread_context_preserves_model(self):
         """Test that reconstruct_thread_context preserves model from previous turn."""
         # Create thread with assistant turn
@@ -86,7 +86,7 @@ class TestModelMetadataContinuation:
                 # Verify model was retrieved from thread
                 assert enhanced_args.get("model") == "o3-mini"
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_multiple_turns_uses_last_assistant_model(self):
         """Test that with multiple turns, the last assistant turn's model is used."""
         thread_id = create_thread("chat", {"prompt": "analyze this"})
@@ -118,7 +118,7 @@ class TestModelMetadataContinuation:
                 # Should use the most recent assistant model
                 assert enhanced_args.get("model") == "o3"
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_no_previous_assistant_turn_defaults(self):
         """Test behavior when there's no previous assistant turn."""
         # Save and set DEFAULT_MODEL for test
@@ -175,7 +175,7 @@ class TestModelMetadataContinuation:
             importlib.reload(config)
             importlib.reload(utils.model_context)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_explicit_model_overrides_previous_turn(self):
         """Test that explicitly specifying a model overrides the previous turn's model."""
         thread_id = create_thread("chat", {"prompt": "test"})
@@ -202,7 +202,7 @@ class TestModelMetadataContinuation:
                 # Should keep the explicit model
                 assert enhanced_args.get("model") == "o3"
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_thread_chain_model_preservation(self):
         """Test model preservation across thread chains (parent-child relationships)."""
         # Create parent thread

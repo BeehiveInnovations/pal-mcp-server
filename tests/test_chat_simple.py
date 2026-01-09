@@ -100,7 +100,7 @@ class TestChatTool:
 
             assert f"'{config.DEFAULT_MODEL}'" in schema["description"]
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_prompt_preparation(self):
         """Test that prompt preparation works correctly"""
         request = ChatRequest(
@@ -281,7 +281,7 @@ class TestChatRequestModel:
         description = CHAT_FIELD_DESCRIPTIONS["working_directory_absolute_path"].lower()
         assert "existing directory" in description
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_working_directory_absolute_path_must_exist(self, tmp_path):
         """Chat tool should reject non-existent working directories."""
         tool = ChatTool()

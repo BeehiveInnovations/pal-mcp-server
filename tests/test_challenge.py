@@ -78,7 +78,7 @@ class TestChallengeTool:
         with pytest.raises(ValidationError):
             ChallengeRequest()
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_execute_success(self):
         """Test successful execution of challenge tool"""
         arguments = {"prompt": "All software bugs are caused by syntax errors"}
@@ -106,7 +106,7 @@ class TestChallengeTool:
         assert "flaws, gaps, or misleading points" in challenge_prompt
         assert "thoughtful analysis" in challenge_prompt
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_execute_error_handling(self):
         """Test error handling in execute method"""
         # Test with invalid arguments (non-dict)
@@ -162,7 +162,7 @@ class TestChallengeTool:
         required = self.tool.get_required_fields()
         assert required == ["prompt"]
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_not_used_methods(self):
         """Test that methods not used by challenge tool work correctly"""
         request = ChallengeRequest(prompt="test")
@@ -183,7 +183,7 @@ class TestChallengeTool:
         # Should handle quotes properly
         assert special_prompt in wrapped
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_unicode_support(self):
         """Test that tool handles unicode characters correctly"""
         unicode_prompt = "软件开发中最重要的是写代码，测试不重要 🚀"

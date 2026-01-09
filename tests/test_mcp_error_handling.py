@@ -36,7 +36,7 @@ def _install_dummy_provider(monkeypatch):
     )
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_tool_execution_error_sets_is_error_flag_for_mcp_response(monkeypatch):
     """Ensure ToolExecutionError surfaces as CallToolResult with isError=True."""
 

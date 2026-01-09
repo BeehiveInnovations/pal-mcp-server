@@ -61,7 +61,7 @@ async def _run_agent_with_process(monkeypatch, agent, role, process, *, system_p
     )
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_claude_agent_injects_system_prompt(monkeypatch, claude_agent):
     agent, role = claude_agent
     stdout_payload = json.dumps(
@@ -82,7 +82,7 @@ async def test_claude_agent_injects_system_prompt(monkeypatch, claude_agent):
     assert process.stdin_data.decode().startswith("Respond with 42")
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_claude_agent_recovers_error_payload(monkeypatch, claude_agent):
     agent, role = claude_agent
     stdout_payload = json.dumps(
@@ -102,7 +102,7 @@ async def test_claude_agent_recovers_error_payload(monkeypatch, claude_agent):
     assert result.parsed.metadata["is_error"] is True
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_claude_agent_propagates_unparseable_output(monkeypatch, claude_agent):
     agent, role = claude_agent
     process = DummyProcess(stdout=b"", returncode=1)

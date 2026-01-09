@@ -238,7 +238,7 @@ class TestImageSupportIntegration:
             if large_image_path and os.path.exists(large_image_path):
                 os.unlink(large_image_path)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_chat_tool_execution_with_images(self):
         """Test that ChatTool can execute with images parameter using real provider resolution."""
         import importlib

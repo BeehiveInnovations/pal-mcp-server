@@ -2,12 +2,16 @@
 
 from .azure_openai import AzureOpenAIProvider
 from .base import ModelProvider
+from .custom import CustomProvider
+from .dial import DIALModelProvider
 from .gemini import GeminiModelProvider
 from .openai import OpenAIModelProvider
 from .openai_compatible import OpenAICompatibleProvider
 from .openrouter import OpenRouterProvider
 from .registry import ModelProviderRegistry
+from .saia import SAIAProvider
 from .shared import ModelCapabilities, ModelResponse
+from .xai import XAIModelProvider
 
 __all__ = [
     "ModelProvider",
@@ -15,8 +19,12 @@ __all__ = [
     "ModelCapabilities",
     "ModelProviderRegistry",
     "AzureOpenAIProvider",
+    "CustomProvider",
+    "DIALModelProvider",
     "GeminiModelProvider",
     "OpenAIModelProvider",
     "OpenAICompatibleProvider",
     "OpenRouterProvider",
+    "SAIAProvider",
+    "XAIModelProvider",
 ]

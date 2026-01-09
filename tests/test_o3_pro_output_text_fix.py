@@ -33,7 +33,7 @@ cassette_dir = Path(__file__).parent / "openai_cassettes"
 cassette_dir.mkdir(exist_ok=True)
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 class TestO3ProOutputTextFix:
     """Test o3-pro response parsing fix using respx for HTTP recording/replay."""
 

@@ -30,7 +30,7 @@ CASSETTE_PATH = CASSETTE_DIR / "gemini25_pro_calculator" / "mldev.json"
 CASSETTE_REPLAY_ID = "chat_codegen/gemini25_pro_calculator/mldev"
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 @pytest.mark.no_mock_provider
 async def test_chat_codegen_saves_file(monkeypatch, tmp_path):
     """Ensure Gemini 2.5 Pro responses create pal_generated.code when code is emitted."""

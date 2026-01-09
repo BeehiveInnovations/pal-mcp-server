@@ -137,7 +137,7 @@ class TestAutoMode:
                 os.environ.pop("DEFAULT_MODEL", None)
             importlib.reload(config)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_auto_mode_requires_model_parameter(self, tmp_path):
         """Test that auto mode enforces model parameter"""
         # Save original
@@ -171,7 +171,7 @@ class TestAutoMode:
                 os.environ.pop("DEFAULT_MODEL", None)
             importlib.reload(config)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_unavailable_model_error_message(self):
         """Test that unavailable model shows helpful error with available models using real integration testing"""
         # Save original environment

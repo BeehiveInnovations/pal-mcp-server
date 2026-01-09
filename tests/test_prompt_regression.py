@@ -55,7 +55,7 @@ class TestPromptIntegration:
     """Integration test suite for normal prompt handling with real API calls."""
 
     @pytest.mark.integration
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_chat_normal_prompt(self):
         """Test chat tool with normal prompt using real API."""
         skip_if_no_custom_api()
@@ -77,7 +77,7 @@ class TestPromptIntegration:
         assert len(output["content"]) > 0
 
     @pytest.mark.integration
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_chat_with_files(self):
         """Test chat tool with absolute_file_paths parameter using real API."""
         skip_if_no_custom_api()
@@ -119,7 +119,7 @@ if __name__ == "__main__":
             os.unlink(temp_file)
 
     @pytest.mark.integration
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_thinkdeep_normal_analysis(self):
         """Test thinkdeep tool with normal analysis using real API."""
         skip_if_no_custom_api()
@@ -146,7 +146,7 @@ if __name__ == "__main__":
         assert output["status"] in ["calling_expert_analysis", "analysis_complete", "pause_for_investigation"]
 
     @pytest.mark.integration
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_codereview_normal_review(self):
         """Test codereview tool with workflow inputs using real API."""
         skip_if_no_custom_api()
@@ -203,7 +203,7 @@ def main():
     # refactored to use a self-investigation pattern instead of accepting prompt/error_context fields.
     # The new debug tool requires fields like: step, step_number, total_steps, next_step_required, findings
 
-    # @pytest.mark.asyncio
+    # @pytest.mark.anyio
     # async def test_debug_normal_error(self, mock_model_response):
     #     """Test debug tool with normal error description."""
     #     tool = DebugIssueTool()
@@ -232,7 +232,7 @@ def main():
     #         assert "Root cause" in output["content"]
 
     @pytest.mark.integration
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_analyze_normal_question(self):
         """Test analyze tool with normal question using real API."""
         skip_if_no_custom_api()
@@ -290,7 +290,7 @@ class UserController:
             os.unlink(temp_file)
 
     @pytest.mark.integration
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_empty_optional_fields(self):
         """Test tools work with empty optional fields using real API."""
         skip_if_no_custom_api()
@@ -312,7 +312,7 @@ class UserController:
         assert "content" in output
 
     @pytest.mark.integration
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_thinking_modes_work(self):
         """Test that thinking modes are properly passed through using real API."""
         skip_if_no_custom_api()
@@ -337,7 +337,7 @@ class UserController:
         assert "quantum" in output["content"].lower() or "computing" in output["content"].lower()
 
     @pytest.mark.integration
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_special_characters_in_prompts(self):
         """Test prompts with special characters work correctly using real API."""
         skip_if_no_custom_api()
@@ -363,7 +363,7 @@ class UserController:
         assert len(output["content"]) > 0
 
     @pytest.mark.integration
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_mixed_file_paths(self):
         """Test handling of various file path formats using real API."""
         skip_if_no_custom_api()
@@ -411,7 +411,7 @@ class UserController:
                     os.unlink(temp_file)
 
     @pytest.mark.integration
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_unicode_content(self):
         """Test handling of unicode content in prompts using real API."""
         skip_if_no_custom_api()

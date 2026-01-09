@@ -24,7 +24,7 @@ class TestListModelsTool:
         assert "model providers" in tool.description
         assert tool.get_request_model().__name__ == "ToolRequest"
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_execute_with_no_providers(self, tool):
         """Test listing models with no providers configured"""
         with patch.dict(os.environ, {}, clear=True):
@@ -52,7 +52,7 @@ class TestListModelsTool:
             # Check summary shows 0 configured
             assert "**Configured Providers**: 0" in content
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_execute_with_gemini_configured(self, tool):
         """Test listing models with Gemini configured"""
         env_vars = {"GEMINI_API_KEY": "test-key", "DEFAULT_MODEL": "auto"}
@@ -73,7 +73,7 @@ class TestListModelsTool:
             # Check summary
             assert "**Configured Providers**: 1" in content
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_execute_with_multiple_providers(self, tool):
         """Test listing models with multiple providers configured"""
         env_vars = {
@@ -101,7 +101,7 @@ class TestListModelsTool:
             # Check summary
             assert "**Configured Providers**: 3" in content
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_execute_with_openrouter(self, tool):
         """Test listing models with OpenRouter configured"""
         env_vars = {"OPENROUTER_API_KEY": "test-key", "DEFAULT_MODEL": "auto"}
@@ -119,7 +119,7 @@ class TestListModelsTool:
             # Should show some models (mocked registry will have some)
             assert "Available Models" in content
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_execute_with_custom_api(self, tool):
         """Test listing models with custom API configured"""
         env_vars = {"CUSTOM_API_URL": "http://localhost:11434", "DEFAULT_MODEL": "auto"}
@@ -135,7 +135,7 @@ class TestListModelsTool:
             assert "http://localhost:11434" in content
             assert "Local models via Ollama" in content
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_output_includes_usage_tips(self, tool):
         """Test that output includes helpful usage tips"""
         result = await tool.execute({})

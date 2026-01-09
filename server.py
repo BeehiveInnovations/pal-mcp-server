@@ -47,6 +47,18 @@ from config import (  # noqa: E402
     DEFAULT_MODEL,
     __version__,
 )
+from providers import (  # noqa: E402
+    AzureOpenAIProvider,
+    CustomProvider,
+    DIALModelProvider,
+    GeminiModelProvider,
+    ModelProviderRegistry,
+    OpenAIModelProvider,
+    OpenRouterProvider,
+    SAIAProvider,
+    XAIModelProvider,
+)
+from providers.base import ProviderType  # noqa: E402
 from tools import (  # noqa: E402
     AnalyzeTool,
     ChallengeTool,
@@ -70,6 +82,7 @@ from tools import (  # noqa: E402
 from tools.models import ToolOutput  # noqa: E402
 from tools.shared.exceptions import ToolExecutionError  # noqa: E402
 from utils.env import env_override_enabled, get_env  # noqa: E402
+from utils.model_restrictions import get_restriction_service  # noqa: E402
 
 # Configure logging for server operations
 # Can be controlled via LOG_LEVEL environment variable (DEBUG, INFO, WARNING, ERROR)
@@ -379,7 +392,7 @@ def configure_providers():
     """
     Configure and validate AI providers based on available API keys.
 
-    This function checks for API keys and registers the appropriate providers.
+    This function checks for API keys and registers appropriate providers.
     At least one valid API key (Gemini or OpenAI) is required.
 
     Raises:
@@ -391,21 +404,13 @@ def configure_providers():
     for key in api_keys_to_check:
         value = get_env(key)
         logger.debug(f"  {key}: {'[PRESENT]' if value else '[MISSING]'}")
-    from providers import ModelProviderRegistry
-    from providers.azure_openai import AzureOpenAIProvider
-    from providers.custom import CustomProvider
-    from providers.dial import DIALModelProvider
-    from providers.gemini import GeminiModelProvider
-    from providers.openai import OpenAIModelProvider
-    from providers.openrouter import OpenRouterProvider
-    from providers.shared import ProviderType
-    from providers.xai import XAIModelProvider
-    from utils.model_restrictions import get_restriction_service
 
     valid_providers = []
     has_native_apis = False
     has_openrouter = False
     has_custom = False
+    saia_keys = []  # Initialize before SAIA check to prevent UnboundLocalError
+    has_saia = False
 
     # Check for Gemini API key
     gemini_key = get_env("GEMINI_API_KEY")
@@ -461,6 +466,30 @@ def configure_providers():
         valid_providers.append("DIAL")
         has_native_apis = True
         logger.info("DIAL API key found - DIAL models available")
+
+    # Check for SAIA API key
+    saia_keys_raw = get_env("SAIA_API_KEY", "")
+    if saia_keys_raw:
+        # Support multiple SAIA API keys separated by comma
+        saia_keys = [key.strip() for key in saia_keys_raw.split(",") if key.strip()]
+
+    if saia_keys and any(saia_keys):
+        valid_providers.append("SAIA")
+        has_native_apis = True
+        logger.info(f"SAIA API keys found - {len(saia_keys)} key(s) available")
+    else:
+        if not saia_keys_raw:
+            logger.debug("SAIA API key not found in environment")
+        else:
+            logger.warning("SAIA_API_KEY is set but contains no valid keys")
+
+    # Register SAIA provider
+    from providers.saia import SAIAProvider
+
+    if saia_keys and any(saia_keys):
+        ModelProviderRegistry.register_provider(ProviderType.SAIA, SAIAProvider)
+        registered_providers.append(ProviderType.SAIA.value)
+        logger.debug(f"Registered provider: {ProviderType.SAIA.value}")
 
     # Check for OpenRouter API key
     openrouter_key = get_env("OPENROUTER_API_KEY")

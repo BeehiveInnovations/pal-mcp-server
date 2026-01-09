@@ -130,5 +130,27 @@
       "supports_temperature": true,
       "max_image_size_mb": 20.0
     }
+    ,
+    {
+      "model_name": "gemini-2.5-flash-lite",
+      "friendly_name": "Gemini (Flash 2.5 Lite)",
+      "aliases": [
+        "flash2.5-lite",
+        "gemini-flash-lite"
+      ],
+      "intelligence_score": 7,
+      "description": "Gemini Flash 2.5 Lite (1M context) - Lightweight, low-cost fast model (text-only)",
+      "context_window": 1048576,
+      "max_output_tokens": 65536,
+      "max_thinking_tokens": 12288,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true,
+      "max_image_size_mb": 0.0
+    }
   ]
 }

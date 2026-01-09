@@ -79,7 +79,7 @@ class TestPlannerTool:
         # Planning needs deep thinking
         assert category == ToolModelCategory.EXTENDED_REASONING
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_execute_first_step(self):
         """Test execute method for first planning step."""
         tool = PlannerTool()
@@ -116,7 +116,7 @@ class TestPlannerTool:
         assert "required_thinking" in parsed_response
         assert "MANDATORY: DO NOT call the planner tool again immediately" in parsed_response["next_steps"]
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_execute_subsequent_step(self):
         """Test execute method for subsequent planning step."""
         tool = PlannerTool()
@@ -151,7 +151,7 @@ class TestPlannerTool:
         assert "required_thinking" in parsed_response
         assert "STOP! Complex planning requires reflection between steps" in parsed_response["next_steps"]
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_execute_with_continuation_context(self):
         """Test execute method with continuation that loads previous context."""
         tool = PlannerTool()
@@ -200,7 +200,7 @@ class TestPlannerTool:
         assert parsed_response["continuation_id"] == "test-continuation-id"
         assert parsed_response["next_step_required"] is True
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_execute_final_step(self):
         """Test execute method for final planning step."""
         tool = PlannerTool()
@@ -232,7 +232,7 @@ class TestPlannerTool:
         assert "plan_summary" in parsed_response
         assert "COMPLETE PLAN:" in parsed_response["plan_summary"]
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_execute_with_branching(self):
         """Test execute method with branching."""
         tool = PlannerTool()
@@ -263,7 +263,7 @@ class TestPlannerTool:
         assert parsed_response["metadata"]["branches"] == ["cloud-native-path"]
         assert "cloud-native-path" in str(tool.branches)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_execute_with_revision(self):
         """Test execute method with step revision."""
         tool = PlannerTool()
@@ -301,7 +301,7 @@ class TestPlannerTool:
         assert latest_step["is_step_revision"] is True
         assert latest_step["revises_step_number"] == 2
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_execute_adjusts_total_steps(self):
         """Test execute method adjusts total steps when current step exceeds estimate."""
         tool = PlannerTool()
@@ -331,7 +331,7 @@ class TestPlannerTool:
         assert parsed_response["step_number"] == 8
         assert parsed_response["status"] == "pause_for_planning"
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_execute_error_handling(self):
         """Test execute method error handling."""
         tool = PlannerTool()
@@ -351,7 +351,7 @@ class TestPlannerTool:
         assert parsed_response["status"] == "planner_failed"
         assert "error" in parsed_response
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_execute_step_history_tracking(self):
         """Test that execute method properly tracks step history."""
         tool = PlannerTool()
@@ -390,7 +390,7 @@ class TestPlannerToolIntegration:
         self.tool = PlannerTool()
         self.tool._model_context = ModelContext("flash")  # Test model
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_interactive_planning_flow(self):
         """Test complete interactive planning flow."""
         arguments = {
@@ -423,7 +423,7 @@ class TestPlannerToolIntegration:
         assert parsed_response["status"] == "pause_for_deep_thinking"
         assert parsed_response["thinking_required"] is True
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_simple_planning_flow(self):
         """Test simple planning flow without deep thinking pauses."""
         arguments = {

@@ -37,7 +37,7 @@ class TestThinkingModes:
                 tool.get_default_thinking_mode() == expected_default
             ), f"{tool.__class__.__name__} should default to {expected_default}"
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_thinking_mode_minimal(self):
         """Test minimal thinking mode with real provider resolution"""
         import importlib
@@ -120,7 +120,7 @@ class TestThinkingModes:
             importlib.reload(config)
             ModelProviderRegistry._instance = None
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_thinking_mode_low(self):
         """Test low thinking mode with real provider resolution"""
         import importlib
@@ -199,7 +199,7 @@ class TestThinkingModes:
             importlib.reload(config)
             ModelProviderRegistry._instance = None
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_thinking_mode_medium(self):
         """Test medium thinking mode (default for most tools) using real integration testing"""
         import importlib
@@ -279,7 +279,7 @@ class TestThinkingModes:
             importlib.reload(config)
             ModelProviderRegistry._instance = None
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_thinking_mode_high(self):
         """Test high thinking mode with real provider resolution"""
         import importlib
@@ -358,7 +358,7 @@ class TestThinkingModes:
             importlib.reload(config)
             ModelProviderRegistry._instance = None
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_thinking_mode_max(self):
         """Test max thinking mode (default for thinkdeep) using real integration testing"""
         import importlib

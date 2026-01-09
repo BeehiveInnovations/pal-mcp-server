@@ -50,7 +50,7 @@ async def _run_agent_with_process(monkeypatch, agent, role, process):
     return await agent.run(role=role, prompt="do something", files=[], images=[])
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_gemini_agent_recovers_tool_error(monkeypatch, gemini_agent):
     agent, role = gemini_agent
     error_json = """{
@@ -71,7 +71,7 @@ async def test_gemini_agent_recovers_tool_error(monkeypatch, gemini_agent):
     assert "Gemini CLI reported a tool failure" in result.parsed.content
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_gemini_agent_propagates_unrecoverable_error(monkeypatch, gemini_agent):
     agent, role = gemini_agent
     stderr = b"Plain failure without structured payload"

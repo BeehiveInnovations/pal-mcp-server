@@ -330,7 +330,7 @@ class TestConsensusTool:
         result = tool.customize_workflow_response(response_data, request)
         assert result["consensus_workflow_status"] == "ready_for_synthesis"
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_consensus_with_relevant_files_model_context_fix(self):
         """Test that consensus tool properly handles relevant_files without RuntimeError.
 
