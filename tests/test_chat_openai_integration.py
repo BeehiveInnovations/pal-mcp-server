@@ -21,7 +21,7 @@ CASSETTE_PATH = CASSETTE_DIR / "chat_gpt5_moon_distance.json"
 CASSETTE_CONTINUATION_PATH = CASSETTE_DIR / "chat_gpt5_continuation.json"
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 @pytest.mark.no_mock_provider
 async def test_chat_auto_mode_with_openai(monkeypatch, tmp_path):
     """Ensure ChatTool in auto mode selects gpt-5 via OpenAI and returns a valid response."""
@@ -87,7 +87,7 @@ async def test_chat_auto_mode_with_openai(monkeypatch, tmp_path):
     assert CASSETTE_PATH.exists()
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 @pytest.mark.no_mock_provider
 async def test_chat_openai_continuation(monkeypatch, tmp_path):
     """Verify continuation_id workflow against gpt-5 using recorded OpenAI responses."""

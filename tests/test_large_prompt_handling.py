@@ -52,7 +52,7 @@ class TestLargePromptHandling:
             f.write(large_prompt)
         return file_path
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_chat_large_prompt_detection(self, large_prompt):
         """Test that chat tool detects large prompts."""
         tool = ChatTool()
@@ -71,7 +71,7 @@ class TestLargePromptHandling:
         assert output["metadata"]["prompt_size"] == len(large_prompt)
         assert output["metadata"]["limit"] == MCP_PROMPT_SIZE_LIMIT
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_chat_normal_prompt_works(self, normal_prompt):
         """Test that chat tool works normally with regular prompts."""
         tool = ChatTool()
@@ -96,7 +96,7 @@ class TestLargePromptHandling:
         # Whether provider succeeds or fails, we should not hit the resend_prompt branch
         assert output["status"] != "resend_prompt"
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_chat_prompt_file_handling(self):
         """Test that chat tool correctly handles prompt.txt files with reasonable size."""
         tool = ChatTool()
@@ -132,7 +132,7 @@ class TestLargePromptHandling:
             # Cleanup
             shutil.rmtree(temp_dir)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_codereview_large_focus(self, large_prompt):
         """Test that codereview tool detects large focus_on field using real integration testing."""
         import importlib
@@ -230,7 +230,7 @@ class TestLargePromptHandling:
     # The new debug tool requires fields like: step, step_number, total_steps, next_step_required, findings
     # and doesn't have the "resend_prompt" functionality for large prompts.
 
-    # @pytest.mark.asyncio
+    # @pytest.mark.anyio
     # async def test_debug_large_error_description(self, large_prompt):
     #     """Test that debug tool detects large error_description."""
     #     tool = DebugIssueTool()
@@ -240,7 +240,7 @@ class TestLargePromptHandling:
     #     output = json.loads(result[0].text)
     #     assert output["status"] == "resend_prompt"
 
-    # @pytest.mark.asyncio
+    # @pytest.mark.anyio
     # async def test_debug_large_error_context(self, large_prompt, normal_prompt):
     #     """Test that debug tool detects large error_context."""
     #     tool = DebugIssueTool()
@@ -252,7 +252,7 @@ class TestLargePromptHandling:
 
     # Removed: test_analyze_large_question - workflow tool handles large prompts differently
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_multiple_files_with_prompt_txt(self, temp_prompt_file):
         """Test handling of prompt.txt alongside other files."""
         tool = ChatTool()
@@ -314,7 +314,7 @@ class TestLargePromptHandling:
         temp_dir = os.path.dirname(temp_prompt_file)
         shutil.rmtree(temp_dir)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_boundary_case_exactly_at_limit(self):
         """Test prompt exactly at MCP_PROMPT_SIZE_LIMIT characters (should pass with the fix)."""
         tool = ChatTool()
@@ -346,7 +346,7 @@ class TestLargePromptHandling:
                 shutil.rmtree(temp_dir, ignore_errors=True)
             assert output["status"] != "resend_prompt"
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_boundary_case_just_over_limit(self):
         """Test prompt just over MCP_PROMPT_SIZE_LIMIT characters (should trigger file request)."""
         tool = ChatTool()
@@ -364,7 +364,7 @@ class TestLargePromptHandling:
             shutil.rmtree(temp_dir, ignore_errors=True)
         assert output["status"] == "resend_prompt"
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_empty_prompt_no_file(self):
         """Test empty prompt without prompt.txt file."""
         tool = ChatTool()
@@ -393,7 +393,7 @@ class TestLargePromptHandling:
                 shutil.rmtree(temp_dir, ignore_errors=True)
             assert output["status"] != "resend_prompt"
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_prompt_file_read_error(self):
         """Test handling when prompt.txt can't be read."""
         from tests.mock_helpers import create_mock_provider
@@ -439,7 +439,7 @@ class TestLargePromptHandling:
                 shutil.rmtree(temp_dir, ignore_errors=True)
             assert output["status"] != "resend_prompt"
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_large_file_context_does_not_trigger_mcp_prompt_limit(self, tmp_path):
         """Large context files should not be blocked by MCP prompt limit enforcement."""
         from tests.mock_helpers import create_mock_provider
@@ -489,7 +489,7 @@ class TestLargePromptHandling:
         output = json.loads(result[0].text)
         assert output["status"] != "resend_prompt"
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_mcp_boundary_with_large_internal_context(self):
         """
         Critical test: Ensure MCP_PROMPT_SIZE_LIMIT only applies to user input (MCP boundary),
@@ -559,7 +559,7 @@ class TestLargePromptHandling:
             tool.prepare_prompt = original_prepare_prompt
             shutil.rmtree(temp_dir, ignore_errors=True)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_mcp_boundary_vs_internal_processing_distinction(self):
         """
         Test that clearly demonstrates the distinction between:
@@ -606,7 +606,7 @@ class TestLargePromptHandling:
         finally:
             shutil.rmtree(temp_dir, ignore_errors=True)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_continuation_with_huge_conversation_history(self):
         """
         Test that continuation calls with huge conversation history work correctly.

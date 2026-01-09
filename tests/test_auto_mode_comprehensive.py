@@ -200,7 +200,7 @@ class TestAutoModeComprehensive:
         tool = tool_class()
         assert tool.get_model_category() == expected_category
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_auto_mode_with_gemini_only_uses_correct_models(self, tmp_path):
         """Test that auto mode with only Gemini uses flash for fast tools and pro for reasoning tools."""
 
@@ -344,7 +344,7 @@ class TestAutoModeComprehensive:
             # With multiple providers configured, the listmodels tool
             # would show models from all providers when called
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_auto_mode_model_parameter_required_error(self, tmp_path):
         """Test that auto mode properly requires model parameter and suggests correct model."""
 
@@ -495,7 +495,7 @@ class TestAutoModeComprehensive:
                 assert extended_reasoning is not None
                 assert fast_response is not None
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_actual_model_name_resolution_in_auto_mode(self, tmp_path):
         """Test that when a model is selected in auto mode, the tool executes successfully."""
 

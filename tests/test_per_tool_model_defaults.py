@@ -275,7 +275,7 @@ class TestAutoModeErrorMessages:
         # Clear provider registry singleton
         ModelProviderRegistry._instance = None
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_chat_auto_error_message(self):
         """Test Chat tool suggests appropriate model in auto mode."""
         with patch("config.IS_AUTO_MODE", True):
@@ -395,7 +395,7 @@ class TestRuntimeModelSelection:
         # Clear provider registry singleton
         ModelProviderRegistry._instance = None
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_explicit_auto_in_request(self):
         """Test when Claude explicitly passes model='auto'."""
         with patch("config.DEFAULT_MODEL", "pro"):  # DEFAULT_MODEL is a real model
@@ -415,7 +415,7 @@ class TestRuntimeModelSelection:
                 assert len(result) == 1
                 assert "Model 'auto' is not available" in result[0].text
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_unavailable_model_in_request(self):
         """Test when Claude passes an unavailable model."""
         with patch("config.DEFAULT_MODEL", "pro"):
@@ -484,7 +484,7 @@ class TestSchemaGeneration:
 class TestUnavailableModelFallback:
     """Test fallback behavior when DEFAULT_MODEL is not available."""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_unavailable_default_model_fallback(self):
         """Test that unavailable DEFAULT_MODEL triggers auto mode behavior."""
         with patch("config.DEFAULT_MODEL", "o3"):  # Set DEFAULT_MODEL to a specific model
@@ -511,7 +511,7 @@ class TestUnavailableModelFallback:
                     # Should list available models in the error
                     assert "Available models:" in result[0].text
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_available_default_model_no_fallback(self):
         """Test that available DEFAULT_MODEL works normally."""
         with patch("config.DEFAULT_MODEL", "pro"):

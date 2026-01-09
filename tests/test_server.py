@@ -10,14 +10,14 @@ from server import handle_call_tool
 class TestServerTools:
     """Test server tool handling"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_handle_call_tool_unknown(self):
         """Test calling an unknown tool"""
         result = await handle_call_tool("unknown_tool", {})
         assert len(result) == 1
         assert "Unknown tool: unknown_tool" in result[0].text
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_handle_chat(self):
         """Test chat functionality using real integration testing"""
         import importlib
@@ -86,7 +86,7 @@ class TestServerTools:
             importlib.reload(config)
             ModelProviderRegistry._instance = None
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_handle_version(self):
         """Test getting version info"""
         result = await handle_call_tool("version", {})

@@ -37,7 +37,7 @@ def build_debug_arguments(**overrides) -> dict[str, object]:
     return base_arguments
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_workflow_tool_accepts_normal_step_content() -> None:
     """Verify a typical step executes through the real workflow path."""
 
@@ -53,7 +53,7 @@ async def test_workflow_tool_accepts_normal_step_content() -> None:
     assert "error" not in payload
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_workflow_tool_rejects_oversized_step_with_guidance() -> None:
     """Large step content should trigger the size safeguard with helpful guidance."""
 

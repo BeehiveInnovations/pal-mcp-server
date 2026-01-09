@@ -53,7 +53,7 @@ def _extract_number(text: str) -> str:
     return ""
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 @pytest.mark.no_mock_provider
 async def test_chat_cross_model_continuation(monkeypatch, tmp_path):
     """Verify continuation across Gemini then OpenAI using recorded interactions."""

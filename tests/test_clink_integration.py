@@ -8,7 +8,7 @@ from tools.clink import CLinkTool
 
 
 @pytest.mark.integration
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_clink_gemini_single_digit_sum():
     if shutil.which("gemini") is None:
         pytest.skip("gemini CLI is not installed or on PATH")
@@ -45,7 +45,7 @@ async def test_clink_gemini_single_digit_sum():
 
 
 @pytest.mark.integration
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_clink_claude_single_digit_sum():
     if shutil.which("claude") is None:
         pytest.skip("claude CLI is not installed or on PATH")

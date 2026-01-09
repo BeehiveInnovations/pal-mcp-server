@@ -30,7 +30,7 @@ GEMINI_REPLAY_PATH = GEMINI_REPLAY_DIR / "consensus" / "step2_gemini25_flash_aga
 
 
 @pytest.mark.integration
-@pytest.mark.asyncio
+@pytest.mark.anyio
 @pytest.mark.no_mock_provider
 @pytest.mark.parametrize("openai_model", ["gpt-5", "gpt-5.2"])
 async def test_consensus_multi_model_consultations(monkeypatch, openai_model):
@@ -196,7 +196,7 @@ async def test_consensus_multi_model_consultations(monkeypatch, openai_model):
     ModelProviderRegistry.reset_for_testing()
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 @pytest.mark.no_mock_provider
 async def test_consensus_auto_mode_with_openrouter_and_gemini(monkeypatch):
     """Ensure continuation flow resolves to real models instead of leaking 'auto'."""

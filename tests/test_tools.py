@@ -37,7 +37,7 @@ class TestThinkDeepTool:
         expected_required = {"step", "step_number", "total_steps", "next_step_required", "findings"}
         assert expected_required.issubset(set(schema["required"]))
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_execute_success(self, tool):
         """Test successful execution using real integration testing"""
         import importlib
@@ -131,7 +131,7 @@ class TestCodeReviewTool:
         assert "step" in schema["properties"]
         assert "step_number" in schema["required"]
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_execute_with_review_type(self, tool, tmp_path):
         """Test execution with specific review type using real provider resolution"""
         import importlib
@@ -233,7 +233,7 @@ class TestAnalyzeTool:
         expected_required = {"step", "step_number", "total_steps", "next_step_required", "findings"}
         assert expected_required.issubset(set(schema["required"]))
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_execute_with_analysis_type(self, tool, tmp_path):
         """Test execution with specific analysis type using real provider resolution"""
         import importlib
@@ -321,7 +321,7 @@ class TestAbsolutePathValidation:
     # file reading stage. See simulator_tests/test_codereview_validation.py for comprehensive
     # workflow testing of the new codereview tool.
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_thinkdeep_tool_relative_path_rejected(self):
         """Test that thinkdeep tool rejects relative paths"""
         tool = ThinkDeepTool()
@@ -342,7 +342,7 @@ class TestAbsolutePathValidation:
         assert "must be FULL absolute paths" in response["content"]
         assert "./local/file.py" in response["content"]
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_chat_tool_relative_path_rejected(self):
         """Test that chat tool rejects relative paths"""
         tool = ChatTool()
@@ -364,7 +364,7 @@ class TestAbsolutePathValidation:
         assert "must be FULL absolute paths" in response["content"]
         assert "code.py" in response["content"]
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_analyze_tool_accepts_absolute_paths(self):
         """Test that analyze tool accepts absolute paths using real provider resolution"""
         import importlib

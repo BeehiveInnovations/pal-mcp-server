@@ -25,7 +25,7 @@ class TestDynamicContextRequests:
     def debug_tool(self):
         return DebugIssueTool()
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     @patch("tools.shared.base_tool.BaseTool.get_model_provider")
     async def test_clarification_request_parsing(self, mock_get_provider, analyze_tool):
         """Test that tools correctly parse clarification requests"""
@@ -79,7 +79,7 @@ class TestDynamicContextRequests:
         assert "step_number" in response_data
         assert response_data["step_number"] == 1
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     @patch("tools.shared.base_tool.BaseTool.get_model_provider")
     @patch("utils.conversation_memory.create_thread", return_value="debug-test-uuid")
     @patch("utils.conversation_memory.add_turn")
@@ -114,7 +114,7 @@ class TestDynamicContextRequests:
         assert response_data["investigation_required"] is True
         assert "required_actions" in response_data
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     @patch("tools.shared.base_tool.BaseTool.get_model_provider")
     async def test_malformed_clarification_request_treated_as_normal(self, mock_get_provider, analyze_tool):
         """Test that malformed JSON clarification requests are treated as normal responses"""
@@ -154,7 +154,7 @@ class TestDynamicContextRequests:
                 # The malformed JSON should be included in the analysis
                 assert "files_required_to_continue" in analysis_content or malformed_json in str(response_data)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     @patch("tools.shared.base_tool.BaseTool.get_model_provider")
     async def test_clarification_with_suggested_action(self, mock_get_provider, analyze_tool):
         """Test clarification request with suggested next action"""
@@ -302,7 +302,7 @@ class TestDynamicContextRequests:
         assert len(request.files_needed) == 2
         assert request.suggested_next_action["tool"] == "analyze"
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     @patch("tools.shared.base_tool.BaseTool.get_model_provider")
     async def test_error_response_format(self, mock_get_provider, analyze_tool):
         """Test error response format"""
@@ -351,7 +351,7 @@ class TestCollaborationWorkflow:
 
         ModelProviderRegistry._instance = None
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     @patch("tools.shared.base_tool.BaseTool.get_model_provider")
     @patch("tools.workflow.workflow_mixin.BaseWorkflowMixin._call_expert_analysis")
     async def test_dependency_analysis_triggers_clarification(self, mock_expert_analysis, mock_get_provider):
@@ -417,7 +417,7 @@ class TestCollaborationWorkflow:
             # Some other status - ensure it's a valid workflow response
             assert "step_number" in response
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     @patch("tools.shared.base_tool.BaseTool.get_model_provider")
     @patch("tools.workflow.workflow_mixin.BaseWorkflowMixin._call_expert_analysis")
     async def test_multi_step_collaboration(self, mock_expert_analysis, mock_get_provider):

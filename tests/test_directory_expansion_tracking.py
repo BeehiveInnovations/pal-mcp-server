@@ -73,7 +73,7 @@ def helper_function():
 
             shutil.rmtree(temp_dir, ignore_errors=True)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     @patch("providers.ModelProviderRegistry.get_provider_for_model")
     async def test_directory_expansion_tracked_in_conversation_memory(
         self, mock_get_provider, tool, temp_directory_with_files
@@ -121,7 +121,7 @@ def helper_function():
             expected_resolved = str(Path(expected_file).resolve())
             assert any(str(Path(f).resolve()) == expected_resolved for f in captured_files)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     @patch("utils.conversation_memory.get_storage")
     @patch("providers.ModelProviderRegistry.get_provider_for_model")
     async def test_conversation_continuation_with_directory_files(
@@ -285,7 +285,7 @@ def helper_function():
         # The directory itself might be in the filtered list if it expands to new files
         # In this case, since we only embedded Swift files, the directory might still be included
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     @patch("providers.ModelProviderRegistry.get_provider_for_model")
     async def test_actually_processed_files_stored_correctly(self, mock_get_provider, tool, temp_directory_with_files):
         """Test that _actually_processed_files is stored correctly after file processing"""

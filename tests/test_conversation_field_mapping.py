@@ -11,7 +11,7 @@ from server import reconstruct_thread_context
 from utils.conversation_memory import ConversationTurn, ThreadContext
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 @pytest.mark.no_mock_provider
 async def test_conversation_history_field_mapping():
     """Test that enhanced prompts are mapped to prompt field for all tools"""
@@ -95,7 +95,7 @@ async def test_conversation_history_field_mapping():
                 assert enhanced_args["_remaining_tokens"] > 0
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 @pytest.mark.no_mock_provider
 async def test_unknown_tool_defaults_to_prompt():
     """Test that unknown tools default to using 'prompt' field"""
@@ -138,7 +138,7 @@ async def test_unknown_tool_defaults_to_prompt():
             assert "User input" in enhanced_args["prompt"]
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_tool_parameter_standardization():
     """Test that workflow tools use standardized investigation pattern"""
     from tools.analyze import AnalyzeWorkflowRequest

@@ -8,7 +8,7 @@ from clink.parsers.base import ParsedCLIResponse
 from tools.clink import MAX_RESPONSE_CHARS, CLinkTool
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_clink_tool_execute(monkeypatch):
     tool = CLinkTool()
 
@@ -69,7 +69,7 @@ def test_registry_lists_roles():
     ]
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_clink_tool_defaults_to_first_cli(monkeypatch):
     tool = CLinkTool()
 
@@ -104,7 +104,7 @@ async def test_clink_tool_defaults_to_first_cli(monkeypatch):
     assert metadata.get("events_removed_for_normal") is True
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_clink_tool_truncates_large_output(monkeypatch):
     tool = CLinkTool()
 
@@ -146,7 +146,7 @@ async def test_clink_tool_truncates_large_output(monkeypatch):
     assert metadata.get("output_original_length") == len(long_text)
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_clink_tool_truncates_without_summary(monkeypatch):
     tool = CLinkTool()
 
