@@ -1,49 +1,63 @@
 <div align="center">
 
-#### Recommended AI Stack
+  [Zen in action](https://github.com/user-attachments/assets/0d26061e-5f21-4ab1-b7d0-f883ddc2c3da)
 
-<details>
-<summary>For Claude Code Users</summary>
+👉 **[Watch more examples](#-watch-tools-in-action)**
 
-For best results when using [Claude Code](https://claude.ai/code):  
+### Your CLI + Multiple Models = Your AI Dev Team
 
-- **Sonnet 4.5** – All agentic work and orchestration  
-- **Gemini 2.5 Pro** OR **GPT-5-Pro** – Deep thinking, code reviews, debugging, pre-commit analysis
-</details>
+**Use the 🤖 CLI you love:**  
+[Claude Code](https://www.anthropic.com/claude-code) · [Gemini CLI](https://github.com/google-gemini/gemini-cli) · [Codex CLI](https://github.com/openai/codex) · [Qwen Code CLI](https://qwenlm.github.io/qwen-code-docs/) · [Cursor](https://cursor.com) · _and more_
 
-<details>
-<summary>For Codex Users</summary>
+**With multiple models within a single prompt:**  
+Gemini · OpenAI · Anthropic · Grok · Azure · Ollama · OpenRouter · DIAL · On-Device Model
 
-For best results when using [Codex CLI](https://developers.openai.com/codex/cli):  
+</div>
 
-- **GPT-5 Codex Medium** – All agentic work and orchestration  
-- **Gemini 2.5 Pro** OR **GPT-5-Pro** – Deep thinking, code reviews, debugging, pre-commit analysis
-</details>
+---
 
-## Quick Start (5 minutes)
+## 🧘 Zen MCP: Many Workflows. One Context.
 
-**Prerequisites:**  
-- Python 3.10+  
-- Git  
-- [uv installed](https://docs.astral.sh/uv/getting-started/installation/)
+**Zen MCP** is a **Model Context Protocol server** that transforms your CLI or IDE into a multi-model AI workspace.  
+Instead of depending on one model, Zen lets your favorite tool — like Claude Code, Codex CLI, or Gemini CLI — **collaborate with multiple AI models** in a single session.
 
-### 1. Get API Keys (choose one or more)
-- **[OpenRouter](https://openrouter.ai/)** – Access multiple models with one API  
-- **[Gemini](https://makersuite.google.com/app/apikey)** – Google's latest models  
-- **[OpenAI](https://platform.openai.com/api-keys)** – O3, GPT-5 series  
-- **[Azure OpenAI](https://learn.microsoft.com/azure/ai-services/openai/)** – Enterprise deployments  
-- **[X.AI](https://console.x.ai/)** – Grok models  
-- **[DIAL](https://dialx.ai/)** – Vendor-agnostic model access  
-- **[Ollama](https://ollama.ai/)** – Local models (free)
+> Build, review, debug, and plan — with multiple AI models working together under your CLI’s control.
 
-### 2. Install (choose one)
+---
 
-**Option A: Clone and Automatic Setup (recommended)**
+## 🚀 Why Zen MCP?
+
+**Why rely on one AI model when you can orchestrate them all?**
+
+Zen MCP supercharges AI tools and IDEs by connecting them to **multiple models simultaneously**, enabling true multi-agent collaboration.
+
+### Highlights
+
+- 🧩 **Multi-Model Orchestration** – Combine Gemini, GPT-5, O3, Grok, Ollama, and more in one workflow  
+- 🔁 **Conversation Continuity** – Context flows seamlessly between tools and models  
+- 🧠 **Guided Workflows** – Code review, debugging, and planning with consistent reasoning  
+- 🪄 **Context Revival** – Recover discussions even after context resets  
+- 🔒 **Local & Private** – Run local Llama or Mistral via Ollama for privacy and zero API cost  
+- ⚙️ **Extensible** – Add or disable tools easily via `.env` or `mcp.json`
+
+> Think of it as **Claude Code _for_ Claude Code** — the super-glue between your favorite AI dev tools.
+
+---
+
+## 🆕 CLI-to-CLI Bridge (`clink`)
+
+The **[`clink`](docs/tools/clink.md)** (CLI + Link) tool connects external AI CLIs directly into your workflow:
+
+- Connect [Gemini CLI](https://github.com/google-gemini/gemini-cli), [Codex CLI](https://github.com/openai/codex), [Claude Code](https://www.anthropic.com/claude-code)
+- Launch isolated **sub-agents** inside your current CLI session
+- Run separate tasks with **context isolation**
+- Create **specialized roles** (planner, codereviewer, debugger)
+- Enjoy **seamless continuity** — sub-CLIs share context between tools
+
 ```bash
-git clone https://github.com/BeehiveInnovations/zen-mcp-server.git
-cd zen-mcp-server
+# Example: Spawn Codex subagent for code review
+clink with codex codereviewer to audit auth module for security issues
 
-# Handles everything: setup, config, API keys from system environment. 
-# Auto-configures Claude Desktop, Claude Code, Gemini CLI, Codex CLI, Qwen CLI
-# Enable / disable additional settings in .env
-./run-server.sh
+# Consensus across models → Implementation handoff
+Use consensus with gpt-5 and gemini-pro to decide: dark mode or offline support next
+Continue with clink gemini - implement the recommended feature
