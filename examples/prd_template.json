@@ -1,0 +1,40 @@
+{
+  "project_name": "Example Project",
+  "description": "This is an example PRD template for Ralph Loop. Replace with your actual project details.",
+  "tasks": [
+    {
+      "id": 1,
+      "description": "Create the initial project structure",
+      "success_criteria": "All required directories and files exist, code_quality_checks.sh passes",
+      "files_to_modify": ["src/main.py", "tests/test_main.py"],
+      "status": "pending"
+    },
+    {
+      "id": 2,
+      "description": "Implement the core feature X",
+      "success_criteria": "Feature works as specified, all tests pass",
+      "files_to_modify": ["src/feature_x.py", "tests/test_feature_x.py"],
+      "status": "pending"
+    },
+    {
+      "id": 3,
+      "description": "Add error handling and edge cases",
+      "success_criteria": "All edge cases handled, no uncaught exceptions",
+      "files_to_modify": ["src/feature_x.py"],
+      "status": "pending"
+    },
+    {
+      "id": 4,
+      "description": "Write documentation",
+      "success_criteria": "README updated with usage instructions",
+      "files_to_modify": ["README.md"],
+      "status": "pending"
+    }
+  ],
+  "passes": false,
+  "iteration": 0,
+  "max_iterations": 50,
+  "created_at": "",
+  "updated_at": "",
+  "learnings": []
+}
