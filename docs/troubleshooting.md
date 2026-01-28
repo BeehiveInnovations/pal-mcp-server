@@ -73,6 +73,56 @@ See [Logging Documentation](logging.md) for more details on accessing logs.
 - Add your API key to the `.env` file
 - Restart Claude Desktop after updating `.env`
 
+**Claude Code CLI: API keys not passed to MCP server** (Known Bug)
+
+When using Claude Code CLI with `env` blocks in MCP configuration, environment variables may not be passed correctly to the server. This is due to a [known issue](https://github.com/anthropics/claude-code/issues/1254) where Claude Code replaces `process.env` entirely instead of merging it.
+
+**Symptoms:**
+- Server logs show `OPENAI_API_KEY: [MISSING]` even though keys are defined in config
+- Server crashes with "At least one API configuration is required"
+
+**Workaround - Use a wrapper script:**
+
+1. Create `/usr/local/bin/pal-mcp-wrapper`:
+   ```bash
+   #!/bin/bash
+   # Source API keys from secure env file
+   if [ -f /etc/pal-mcp/env ]; then
+       source /etc/pal-mcp/env
+   fi
+   # Find uvx in common locations
+   for p in /usr/local/bin/uvx "$HOME/.local/bin/uvx" $(which uvx 2>/dev/null); do
+       if [ -x "$p" ]; then
+           exec "$p" --from git+https://github.com/BeehiveInnovations/pal-mcp-server.git pal-mcp-server "$@"
+       fi
+   done
+   echo "uvx not found" >&2
+   exit 1
+   ```
+
+2. Create `/etc/pal-mcp/env` with your API keys:
+   ```bash
+   export OPENAI_API_KEY="your-key-here"
+   export GEMINI_API_KEY="your-key-here"
+   ```
+
+3. Make executable and secure:
+   ```bash
+   sudo chmod +x /usr/local/bin/pal-mcp-wrapper
+   sudo chmod 600 /etc/pal-mcp/env
+   ```
+
+4. Configure Claude Code (removes broken env block):
+   ```bash
+   claude mcp remove pal -s local 2>/dev/null
+   claude mcp add pal /usr/local/bin/pal-mcp-wrapper -s user
+   ```
+
+5. If using `uvx`, ensure `uv` is in a system-wide path:
+   ```bash
+   sudo cp ~/.local/bin/uv /usr/local/bin/uv
+   ```
+
 **File path errors**
 - Always use absolute paths: `/Users/you/project/file.py`
 - Never use relative paths: `./file.py`
