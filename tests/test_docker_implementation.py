@@ -310,13 +310,11 @@ def temp_project_dir():
 
         # Create base files
         (temp_path / "server.py").write_text("# Mock server.py")
-        (temp_path / "Dockerfile").write_text(
-            """
+        (temp_path / "Dockerfile").write_text("""
 FROM python:3.11-slim
 COPY server.py /app/
 CMD ["python", "/app/server.py"]
-"""
-        )
+""")
 
         yield temp_path
 
