@@ -1,0 +1,386 @@
+{
+  "_README": {
+    "description": "Model metadata for Nebius Token Factory API access.",
+    "documentation": "https://docs.tokenfactory.nebius.com/",
+    "usage": "Models listed here are exposed directly through the Nebius provider. Aliases are case-insensitive and prefixed with 'nebius-' to disambiguate from other providers.",
+    "field_notes": "Matches providers/shared/model_capabilities.py.",
+    "field_descriptions": {
+      "model_name": "The full model identifier as used in Nebius API (e.g., 'Qwen/Qwen3-235B-A22B-Instruct-2507')",
+      "aliases": "Array of short names users can type instead of the full model name (prefixed with 'nebius-')",
+      "context_window": "Total number of tokens the model can process (input + output combined)",
+      "max_output_tokens": "Maximum number of tokens the model can generate in a single response",
+      "supports_extended_thinking": "Whether the model supports reasoning/thinking tokens (DeepSeek-R1, QwQ, etc.)",
+      "supports_json_mode": "Whether the model can guarantee valid JSON output",
+      "supports_function_calling": "Whether the model supports function/tool calling",
+      "supports_images": "Whether the model can process images/visual input",
+      "max_image_size_mb": "Maximum total size in MB for all images combined",
+      "description": "Human-readable description of the model",
+      "intelligence_score": "1-20 human rating used as the primary signal for auto-mode model ordering"
+    }
+  },
+  "models": [
+    {
+      "model_name": "Qwen/Qwen3-235B-A22B-Instruct-2507",
+      "friendly_name": "Nebius (Qwen3 235B)",
+      "aliases": [
+        "nebius-qwen3",
+        "nebius-qwen3-235b",
+        "nebius-qwen"
+      ],
+      "intelligence_score": 19,
+      "description": "Qwen3 235B (262K context) - State-of-the-art MoE reasoning model with advanced math and coding capabilities",
+      "context_window": 262000,
+      "max_output_tokens": 8000,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true
+    },
+    {
+      "model_name": "Qwen/Qwen3-235B-A22B-Thinking-2507",
+      "friendly_name": "Nebius (Qwen3 235B Thinking)",
+      "aliases": [
+        "nebius-qwen3-thinking",
+        "nebius-qwen-thinking"
+      ],
+      "intelligence_score": 19,
+      "description": "Qwen3 235B Thinking (262K context) - Reasoning variant with extended thinking capabilities",
+      "context_window": 262000,
+      "max_output_tokens": 8000,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true
+    },
+    {
+      "model_name": "Qwen/Qwen3-Coder-480B-A35B-Instruct",
+      "friendly_name": "Nebius (Qwen3 Coder 480B)",
+      "aliases": [
+        "nebius-qwen3-coder",
+        "nebius-coder"
+      ],
+      "intelligence_score": 19,
+      "description": "Qwen3 Coder 480B (262K context) - Largest coding-specialized MoE model with 35B active parameters",
+      "context_window": 262000,
+      "max_output_tokens": 16000,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true
+    },
+    {
+      "model_name": "Qwen/Qwen3-32B",
+      "friendly_name": "Nebius (Qwen3 32B)",
+      "aliases": [
+        "nebius-qwen3-32b"
+      ],
+      "intelligence_score": 14,
+      "description": "Qwen3 32B (128K context) - Efficient mid-size reasoning model",
+      "context_window": 128000,
+      "max_output_tokens": 8000,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true
+    },
+    {
+      "model_name": "Qwen/Qwen3-30B-A3B-Instruct-2507",
+      "friendly_name": "Nebius (Qwen3 30B)",
+      "aliases": [
+        "nebius-qwen3-30b"
+      ],
+      "intelligence_score": 13,
+      "description": "Qwen3 30B (128K context) - Efficient MoE model with 3B active parameters",
+      "context_window": 128000,
+      "max_output_tokens": 8000,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true
+    },
+    {
+      "model_name": "Qwen/Qwen2.5-VL-72B-Instruct",
+      "friendly_name": "Nebius (Qwen2.5 VL 72B)",
+      "aliases": [
+        "nebius-qwen-vl",
+        "nebius-qwen-vision"
+      ],
+      "intelligence_score": 16,
+      "description": "Qwen2.5 VL 72B (128K context) - Vision-language model for image understanding",
+      "context_window": 128000,
+      "max_output_tokens": 8000,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0
+    },
+    {
+      "model_name": "openai/gpt-oss-120b",
+      "friendly_name": "Nebius (GPT-OSS 120B)",
+      "aliases": [
+        "nebius-gpt-oss",
+        "nebius-gpt-oss-120b"
+      ],
+      "intelligence_score": 18,
+      "description": "GPT-OSS 120B (128K context) - OpenAI's first open-source model with exceptional reasoning",
+      "context_window": 128000,
+      "max_output_tokens": 16000,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true
+    },
+    {
+      "model_name": "openai/gpt-oss-20b",
+      "friendly_name": "Nebius (GPT-OSS 20B)",
+      "aliases": [
+        "nebius-gpt-oss-20b"
+      ],
+      "intelligence_score": 13,
+      "description": "GPT-OSS 20B (128K context) - Compact open-source model matching o3-mini performance",
+      "context_window": 128000,
+      "max_output_tokens": 16000,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true
+    },
+    {
+      "model_name": "deepseek-ai/DeepSeek-R1-0528",
+      "friendly_name": "Nebius (DeepSeek R1)",
+      "aliases": [
+        "nebius-deepseek-r1",
+        "nebius-r1"
+      ],
+      "intelligence_score": 18,
+      "description": "DeepSeek R1 (128K context) - Advanced reasoning model with visible chain-of-thought",
+      "context_window": 128000,
+      "max_output_tokens": 16000,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true
+    },
+    {
+      "model_name": "deepseek-ai/DeepSeek-V3-0324",
+      "friendly_name": "Nebius (DeepSeek V3)",
+      "aliases": [
+        "nebius-deepseek",
+        "nebius-deepseek-v3"
+      ],
+      "intelligence_score": 17,
+      "description": "DeepSeek V3 (128K context) - High-performance general-purpose model",
+      "context_window": 128000,
+      "max_output_tokens": 16000,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true
+    },
+    {
+      "model_name": "deepseek-ai/DeepSeek-V3.2",
+      "friendly_name": "Nebius (DeepSeek V3.2)",
+      "aliases": [
+        "nebius-deepseek-v3.2"
+      ],
+      "intelligence_score": 18,
+      "description": "DeepSeek V3.2 (128K context) - Latest DeepSeek general-purpose model",
+      "context_window": 128000,
+      "max_output_tokens": 16000,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true
+    },
+    {
+      "model_name": "meta-llama/Llama-3.3-70B-Instruct",
+      "friendly_name": "Nebius (Llama 3.3 70B)",
+      "aliases": [
+        "nebius-llama",
+        "nebius-llama-70b",
+        "nebius-llama3"
+      ],
+      "intelligence_score": 16,
+      "description": "Llama 3.3 70B (128K context) - Meta's flagship instruction-tuned model",
+      "context_window": 128000,
+      "max_output_tokens": 8000,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true
+    },
+    {
+      "model_name": "meta-llama/Meta-Llama-3.1-8B-Instruct",
+      "friendly_name": "Nebius (Llama 3.1 8B)",
+      "aliases": [
+        "nebius-llama-8b",
+        "nebius-llama-small"
+      ],
+      "intelligence_score": 10,
+      "description": "Llama 3.1 8B (128K context) - Fast, efficient model for simple tasks",
+      "context_window": 128000,
+      "max_output_tokens": 8000,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true
+    },
+    {
+      "model_name": "moonshotai/Kimi-K2-Instruct",
+      "friendly_name": "Nebius (Kimi K2)",
+      "aliases": [
+        "nebius-kimi",
+        "nebius-kimi-k2"
+      ],
+      "intelligence_score": 18,
+      "description": "Kimi K2 (128K context) - Moonshot AI's flagship model with strong reasoning",
+      "context_window": 128000,
+      "max_output_tokens": 16000,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true
+    },
+    {
+      "model_name": "zai-org/GLM-4.5",
+      "friendly_name": "Nebius (GLM 4.5)",
+      "aliases": [
+        "nebius-glm",
+        "nebius-glm4"
+      ],
+      "intelligence_score": 17,
+      "description": "GLM 4.5 (128K context) - Zhipu's hybrid reasoning system with native function calling",
+      "context_window": 128000,
+      "max_output_tokens": 8000,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0
+    },
+    {
+      "model_name": "zai-org/GLM-4.5-Air",
+      "friendly_name": "Nebius (GLM 4.5 Air)",
+      "aliases": [
+        "nebius-glm-air"
+      ],
+      "intelligence_score": 14,
+      "description": "GLM 4.5 Air (128K context) - Lightweight variant, MIT licensed",
+      "context_window": 128000,
+      "max_output_tokens": 8000,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0
+    },
+    {
+      "model_name": "zai-org/GLM-4.7-FP8",
+      "friendly_name": "Nebius (GLM 4.7)",
+      "aliases": [
+        "nebius-glm4.7",
+        "nebius-glm-latest"
+      ],
+      "intelligence_score": 17,
+      "description": "GLM 4.7 FP8 (128K context) - Latest GLM model with vision support",
+      "context_window": 128000,
+      "max_output_tokens": 8000,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0
+    },
+    {
+      "model_name": "google/gemma-3-27b-it",
+      "friendly_name": "Nebius (Gemma 3 27B)",
+      "aliases": [
+        "nebius-gemma",
+        "nebius-gemma-27b"
+      ],
+      "intelligence_score": 13,
+      "description": "Gemma 3 27B (128K context) - Google's efficient open model",
+      "context_window": 128000,
+      "max_output_tokens": 8000,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": false,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0
+    },
+    {
+      "model_name": "nvidia/Llama-3_1-Nemotron-Ultra-253B-v1",
+      "friendly_name": "Nebius (Nemotron Ultra 253B)",
+      "aliases": [
+        "nebius-nemotron",
+        "nebius-nemotron-ultra"
+      ],
+      "intelligence_score": 17,
+      "description": "Nemotron Ultra 253B (128K context) - NVIDIA's high-performance instruction model",
+      "context_window": 128000,
+      "max_output_tokens": 8000,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true
+    }
+  ]
+}
