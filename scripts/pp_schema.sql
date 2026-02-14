@@ -54,6 +54,8 @@ CREATE TABLE IF NOT EXISTS ledger (
   est_cost_cents INTEGER NOT NULL,
   est_input_bytes INTEGER NOT NULL,
   est_output_bytes_budget INTEGER NOT NULL,
+  request_ip TEXT,
+  user_agent TEXT,
   status TEXT NOT NULL,
   reason TEXT,
   UNIQUE(tenant_id, tool_name, request_id),

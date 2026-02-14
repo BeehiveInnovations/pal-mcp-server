@@ -820,8 +820,22 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[TextCon
         # Skip model resolution for tools that don't require models (e.g., planner)
         if not tool.requires_model():
             logger.debug(f"Tool {name} doesn't require model resolution - skipping model validation")
-            # Execute tool directly without model context
-            return await tool.execute(arguments)
+            # Execute tool directly without model context.
+            # Normalize failures to ToolOutput JSON payloads for consistent MCP responses.
+            try:
+                return await tool.execute(arguments)
+            except ToolExecutionError as exc:
+                logger.warning(f"Tool '{name}' returned ToolExecutionError during execution")
+                return [TextContent(type="text", text=exc.payload)]
+            except Exception as exc:
+                logger.exception(f"Unexpected error while executing tool '{name}'")
+                error_output = ToolOutput(
+                    status="error",
+                    content=str(exc),
+                    content_type="text",
+                    metadata={"tool_name": name, "code": "INTERNAL_ERROR", "http_status": 500},
+                )
+                return [TextContent(type="text", text=error_output.model_dump_json())]
 
         # Handle auto mode at MCP boundary - resolve to specific model
         if model_name.lower() == "auto":
@@ -876,7 +890,20 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[TextCon
                 raise ToolExecutionError(ToolOutput(**file_size_check).model_dump_json())
 
         # Execute tool with pre-resolved model context
-        result = await tool.execute(arguments)
+        try:
+            result = await tool.execute(arguments)
+        except ToolExecutionError as exc:
+            logger.warning(f"Tool '{name}' returned ToolExecutionError during execution")
+            return [TextContent(type="text", text=exc.payload)]
+        except Exception as exc:
+            logger.exception(f"Unexpected error while executing tool '{name}'")
+            error_output = ToolOutput(
+                status="error",
+                content=str(exc),
+                content_type="text",
+                metadata={"tool_name": name, "code": "INTERNAL_ERROR", "http_status": 500},
+            )
+            return [TextContent(type="text", text=error_output.model_dump_json())]
         logger.info(f"Tool '{name}' execution completed")
 
         # Log completion to activity file
@@ -889,7 +916,13 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[TextCon
 
     # Handle unknown tool requests gracefully
     else:
-        return [TextContent(type="text", text=f"Unknown tool: {name}")]
+        error_output = ToolOutput(
+            status="error",
+            content=f"Unknown tool: {name}",
+            content_type="text",
+            metadata={"tool_name": name, "code": "UNKNOWN_TOOL", "http_status": 404},
+        )
+        return [TextContent(type="text", text=error_output.model_dump_json())]
 
 
 def parse_model_option(model_string: str) -> tuple[str, Optional[str]]:

@@ -3,6 +3,7 @@
 import hashlib
 import json
 import sqlite3
+import uuid
 from pathlib import Path
 
 import pytest
@@ -47,8 +48,7 @@ def _create_legacy_db_with_old_ledger_unique(
     db_path.parent.mkdir(parents=True, exist_ok=True)
 
     conn = sqlite3.connect(str(db_path))
-    conn.executescript(
-        """
+    conn.executescript("""
         CREATE TABLE tenants (
           tenant_id TEXT PRIMARY KEY,
           name TEXT NOT NULL,
@@ -91,8 +91,7 @@ def _create_legacy_db_with_old_ledger_unique(
           reason TEXT,
           UNIQUE(tenant_id, request_id)
         );
-        """
-    )
+        """)
 
     api_key_sha = hashlib.sha256(api_key.encode("utf-8")).hexdigest()
     conn.execute(
@@ -132,6 +131,10 @@ def _create_job(db_path: Path, tenant_id: str, job_id: str, payload: str = "{}")
     conn.close()
 
 
+def _allowed_tmp_db_path(prefix: str) -> Path:
+    return Path("/tmp") / f"{prefix}_{uuid.uuid4().hex}.sqlite"
+
+
 def test_pp_schemas_allow_optional_db_path() -> None:
     tools = [
         PPTenantWhoamiTool(),
@@ -146,6 +149,87 @@ def test_pp_schemas_allow_optional_db_path() -> None:
         assert schema["properties"]["db_path"]["type"] == "string"
         assert "db_path" not in schema.get("required", [])
         assert schema["additionalProperties"] is False
+
+
+@pytest.mark.asyncio
+async def test_pp_rejects_db_path_outside_allowlist() -> None:
+    db_path = Path.cwd() / "forbidden_pp.sqlite"
+    tool = PPPrepareTool()
+
+    with pytest.raises(ToolExecutionError) as exc_info:
+        await tool.execute(
+            {
+                "db_path": str(db_path),
+                "api_key": "any",
+                "request_id": "req_prepare_bad_path",
+                "kind": "proof_pack",
+                "input": {"customer_text": "hello"},
+            }
+        )
+
+    payload = json.loads(exc_info.value.payload)
+    assert payload["metadata"]["code"] == "BAD_REQUEST"
+    assert payload["metadata"]["http_status"] == 400
+    assert "db_path must be under" in payload["content"]
+
+
+@pytest.mark.asyncio
+async def test_pp_whoami_updates_last_used_at() -> None:
+    db_path = _allowed_tmp_db_path("pp_last_used")
+    tenant_id = "tenant_last_used"
+    api_key = "pp_last_used_key"
+    _create_tenant(db_path, tenant_id, api_key, daily_limit_cents=100)
+
+    tool = PPTenantWhoamiTool()
+    await tool.execute(
+        {
+            "db_path": str(db_path),
+            "api_key": api_key,
+            "request_id": "req_last_used",
+        }
+    )
+
+    conn = sqlite3.connect(str(db_path))
+    row = conn.execute("SELECT last_used_at FROM api_keys").fetchone()
+    conn.close()
+    assert row is not None
+    assert row[0] is not None
+
+
+@pytest.mark.asyncio
+async def test_pp_quote_records_request_audit_fields() -> None:
+    db_path = _allowed_tmp_db_path("pp_audit")
+    tenant_id = "tenant_audit"
+    api_key = "pp_audit_key"
+    _create_tenant(db_path, tenant_id, api_key, daily_limit_cents=100)
+    _create_job(db_path, tenant_id, "job_audit")
+
+    tool = PPQuoteTool()
+    await tool.execute(
+        {
+            "db_path": str(db_path),
+            "api_key": api_key,
+            "request_id": "req_audit_1",
+            "job_id": "job_audit",
+            "request_ip": "203.0.113.77",
+            "user_agent": "pal-smoke-test/1.0",
+        }
+    )
+
+    conn = sqlite3.connect(str(db_path))
+    row = conn.execute(
+        """
+        SELECT request_ip, user_agent
+        FROM ledger
+        WHERE tenant_id=? AND tool_name='pp_quote' AND request_id='pp_quote:req_audit_1'
+        """,
+        (tenant_id,),
+    ).fetchone()
+    conn.close()
+
+    assert row is not None
+    assert row[0] == "203.0.113.77"
+    assert row[1] == "pal-smoke-test/1.0"
 
 
 @pytest.mark.asyncio

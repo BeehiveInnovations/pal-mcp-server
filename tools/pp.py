@@ -20,6 +20,9 @@ from tools.shared.exceptions import ToolExecutionError
 from utils.env import get_env
 
 logger = logging.getLogger(__name__)
+REPO_ROOT = Path(__file__).resolve().parents[1]
+ALLOWED_DB_DATA_ROOT = (REPO_ROOT / "data").resolve()
+ALLOWED_DB_TMP_ROOT = Path("/tmp").resolve()
 
 PP_TOOL_KEYS = {
     "pp_tenant_whoami",
@@ -86,6 +89,8 @@ CREATE TABLE IF NOT EXISTS ledger (
   est_cost_cents INTEGER NOT NULL,
   est_input_bytes INTEGER NOT NULL,
   est_output_bytes_budget INTEGER NOT NULL,
+  request_ip TEXT,
+  user_agent TEXT,
   status TEXT NOT NULL,
   reason TEXT,
   UNIQUE(tenant_id, tool_name, request_id),
@@ -109,6 +114,12 @@ class Budget:
     est_input_bytes: int
     est_output_bytes_budget: int
     est_cost_cents: int
+
+
+@dataclass(frozen=True)
+class RequestAudit:
+    request_ip: str | None = None
+    user_agent: str | None = None
 
 
 @dataclass(frozen=True)
@@ -177,8 +188,7 @@ def _migrate_legacy_ledger_if_needed(conn: sqlite3.Connection) -> None:
     conn.execute("BEGIN IMMEDIATE;")
     try:
         conn.execute("ALTER TABLE ledger RENAME TO ledger_old_pp_mig;")
-        conn.execute(
-            """
+        conn.execute("""
             CREATE TABLE ledger (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               ts TEXT NOT NULL DEFAULT (datetime('now')),
@@ -189,13 +199,14 @@ def _migrate_legacy_ledger_if_needed(conn: sqlite3.Connection) -> None:
               est_cost_cents INTEGER NOT NULL,
               est_input_bytes INTEGER NOT NULL,
               est_output_bytes_budget INTEGER NOT NULL,
+              request_ip TEXT,
+              user_agent TEXT,
               status TEXT NOT NULL,
               reason TEXT,
               UNIQUE(tenant_id, tool_name, request_id),
               FOREIGN KEY (tenant_id) REFERENCES tenants(tenant_id) ON DELETE CASCADE
             );
-            """
-        )
+            """)
         conn.execute("CREATE INDEX IF NOT EXISTS idx_ledger_tenant_ts ON ledger(tenant_id, ts);")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_ledger_tool_ts ON ledger(tool_name, ts);")
 
@@ -203,25 +214,21 @@ def _migrate_legacy_ledger_if_needed(conn: sqlite3.Connection) -> None:
         has_old_tool_name = "tool_name" in old_cols
 
         if has_old_tool_name:
-            old_rows = conn.execute(
-                """
+            old_rows = conn.execute("""
                 SELECT id, ts, tenant_id, tool_name, request_id, api_key_sha256,
                        est_cost_cents, est_input_bytes, est_output_bytes_budget,
                        status, reason
                 FROM ledger_old_pp_mig
                 ORDER BY id ASC
-                """
-            ).fetchall()
+                """).fetchall()
         else:
-            old_rows = conn.execute(
-                """
+            old_rows = conn.execute("""
                 SELECT id, ts, tenant_id, request_id, api_key_sha256,
                        est_cost_cents, est_input_bytes, est_output_bytes_budget,
                        status, reason
                 FROM ledger_old_pp_mig
                 ORDER BY id ASC
-                """
-            ).fetchall()
+                """).fetchall()
 
         for row in old_rows:
             if has_old_tool_name:
@@ -242,9 +249,9 @@ def _migrate_legacy_ledger_if_needed(conn: sqlite3.Connection) -> None:
                 """
                 INSERT OR IGNORE INTO ledger(
                   id, ts, tenant_id, tool_name, request_id, api_key_sha256,
-                  est_cost_cents, est_input_bytes, est_output_bytes_budget,
+                  est_cost_cents, est_input_bytes, est_output_bytes_budget, request_ip, user_agent,
                   status, reason
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     int(row["id"]),
@@ -256,6 +263,8 @@ def _migrate_legacy_ledger_if_needed(conn: sqlite3.Connection) -> None:
                     int(row["est_cost_cents"]),
                     int(row["est_input_bytes"]),
                     int(row["est_output_bytes_budget"]),
+                    None,
+                    None,
                     row["status"],
                     row["reason"],
                 ),
@@ -272,13 +281,46 @@ def _sha256_hex(value: str) -> str:
     return sha256(value.encode("utf-8")).hexdigest()
 
 
+def _is_relative_to(path: Path, root: Path) -> bool:
+    try:
+        path.relative_to(root)
+        return True
+    except ValueError:
+        return False
+
+
 def _resolve_db_path(arguments: dict[str, Any]) -> Path:
     arg_path = arguments.get("db_path")
     default_path = get_env("PP_DB_PATH", "data/pp.sqlite") or "data/pp.sqlite"
-    resolved = str(arg_path).strip() if isinstance(arg_path, str) and arg_path.strip() else default_path
-    path = Path(resolved).expanduser()
+    raw_path = str(arg_path).strip() if isinstance(arg_path, str) and arg_path.strip() else default_path
+    path = Path(raw_path).expanduser()
+    if not path.is_absolute():
+        path = (REPO_ROOT / path).resolve()
+    else:
+        path = path.resolve()
+
+    allowed = _is_relative_to(path, ALLOWED_DB_TMP_ROOT) or _is_relative_to(path, ALLOWED_DB_DATA_ROOT)
+    if not allowed:
+        raise PPDomainError(
+            "BAD_REQUEST",
+            f"db_path must be under '{ALLOWED_DB_TMP_ROOT}' or '{ALLOWED_DB_DATA_ROOT}'",
+            400,
+        )
+
     path.parent.mkdir(parents=True, exist_ok=True)
     return path
+
+
+def _ensure_ledger_audit_columns(conn: sqlite3.Connection) -> None:
+    table_info = conn.execute("PRAGMA table_info('ledger')").fetchall()
+    if not table_info:
+        return
+
+    existing_cols = {str(row[1]) for row in table_info}
+    if "request_ip" not in existing_cols:
+        conn.execute("ALTER TABLE ledger ADD COLUMN request_ip TEXT;")
+    if "user_agent" not in existing_cols:
+        conn.execute("ALTER TABLE ledger ADD COLUMN user_agent TEXT;")
 
 
 def _connect_db(arguments: dict[str, Any]) -> sqlite3.Connection:
@@ -291,6 +333,7 @@ def _connect_db(arguments: dict[str, Any]) -> sqlite3.Connection:
     conn.execute("PRAGMA synchronous=FULL;")
     conn.executescript(PP_SCHEMA_SQL)
     _migrate_legacy_ledger_if_needed(conn)
+    _ensure_ledger_audit_columns(conn)
     return conn
 
 
@@ -350,6 +393,22 @@ def _require_request_id(arguments: dict[str, Any]) -> str:
     return request_id.strip()
 
 
+def _optional_text(value: Any, *, max_len: int) -> str | None:
+    if not isinstance(value, str):
+        return None
+    normalized = value.strip()
+    if not normalized:
+        return None
+    return normalized[:max_len]
+
+
+def _extract_request_audit(arguments: dict[str, Any]) -> RequestAudit:
+    return RequestAudit(
+        request_ip=_optional_text(arguments.get("request_ip"), max_len=64),
+        user_agent=_optional_text(arguments.get("user_agent"), max_len=512),
+    )
+
+
 def _resolve_tenant(conn: sqlite3.Connection, arguments: dict[str, Any]) -> TenantCtx:
     api_key = _require_api_key(arguments)
     key_hash = _sha256_hex(api_key)
@@ -392,6 +451,8 @@ def _insert_ledger(
     est_cost_cents: int,
     est_input_bytes: int,
     est_output_bytes_budget: int,
+    request_ip: str | None,
+    user_agent: str | None,
     status: str,
     reason: str | None,
 ) -> None:
@@ -399,9 +460,9 @@ def _insert_ledger(
         """
         INSERT INTO ledger(
           tenant_id, tool_name, request_id, api_key_sha256,
-          est_cost_cents, est_input_bytes, est_output_bytes_budget,
+          est_cost_cents, est_input_bytes, est_output_bytes_budget, request_ip, user_agent,
           status, reason
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             tenant_id,
@@ -411,6 +472,8 @@ def _insert_ledger(
             int(est_cost_cents),
             int(est_input_bytes),
             int(est_output_bytes_budget),
+            request_ip,
+            user_agent,
             status,
             reason,
         ),
@@ -464,6 +527,7 @@ def _atomic_precharge_daily_only(
     tool_name: str,
     request_id: str,
     budget: Budget,
+    audit: RequestAudit,
 ) -> PrechargeResult:
     if not request_id:
         raise PPDomainError("REQUEST_ID_MISSING", "Missing request_id", 400)
@@ -500,6 +564,8 @@ def _atomic_precharge_daily_only(
                 est_cost_cents=budget.est_cost_cents,
                 est_input_bytes=budget.est_input_bytes,
                 est_output_bytes_budget=budget.est_output_bytes_budget,
+                request_ip=audit.request_ip,
+                user_agent=audit.user_agent,
                 status="rejected",
                 reason="NO_LIMITS_ROW",
             )
@@ -535,6 +601,8 @@ def _atomic_precharge_daily_only(
                 est_cost_cents=budget.est_cost_cents,
                 est_input_bytes=budget.est_input_bytes,
                 est_output_bytes_budget=budget.est_output_bytes_budget,
+                request_ip=audit.request_ip,
+                user_agent=audit.user_agent,
                 status="rejected",
                 reason="LIMIT_DISABLED",
             )
@@ -556,6 +624,8 @@ def _atomic_precharge_daily_only(
                 est_cost_cents=budget.est_cost_cents,
                 est_input_bytes=budget.est_input_bytes,
                 est_output_bytes_budget=budget.est_output_bytes_budget,
+                request_ip=audit.request_ip,
+                user_agent=audit.user_agent,
                 status="rejected",
                 reason="LIMIT_EXCEEDED",
             )
@@ -576,6 +646,8 @@ def _atomic_precharge_daily_only(
             est_cost_cents=budget.est_cost_cents,
             est_input_bytes=budget.est_input_bytes,
             est_output_bytes_budget=budget.est_output_bytes_budget,
+            request_ip=audit.request_ip,
+            user_agent=audit.user_agent,
             status="precharged",
             reason=None,
         )
@@ -744,6 +816,8 @@ class PPTenantWhoamiTool(PPBaseTool):
                 "api_key": {"type": "string", "description": "Tenant API key for PP tools."},
                 "request_id": {"type": "string", "description": "Optional idempotency key."},
                 "db_path": {"type": "string", "description": "Optional path to PP SQLite database file."},
+                "request_ip": {"type": "string", "description": "Optional caller IP for audit logging."},
+                "user_agent": {"type": "string", "description": "Optional caller user-agent for audit logging."},
             },
             "required": ["api_key"],
             "additionalProperties": False,
@@ -755,6 +829,7 @@ class PPTenantWhoamiTool(PPBaseTool):
         try:
             conn = _connect_db(arguments)
             tenant = _resolve_tenant(conn, arguments)
+            audit = _extract_request_audit(arguments)
 
             effective_request_id = request_id.strip() if request_id and request_id.strip() else f"whoami:{uuid.uuid4()}"
             result = _atomic_precharge_daily_only(
@@ -764,6 +839,7 @@ class PPTenantWhoamiTool(PPBaseTool):
                 tool_name=self.name,
                 request_id=effective_request_id,
                 budget=Budget(est_input_bytes=1024, est_output_bytes_budget=4096, est_cost_cents=1),
+                audit=audit,
             )
             _enforce_precharge(self.name, effective_request_id, result)
 
@@ -812,6 +888,8 @@ class PPPrepareTool(PPBaseTool):
                 "kind": {"type": "string", "description": "Work kind; expected value is proof_pack."},
                 "input": {"type": "object", "description": "Structured payload for preparation."},
                 "raw_body": {"type": "string", "description": "Optional raw payload string used for byte accounting."},
+                "request_ip": {"type": "string", "description": "Optional caller IP for audit logging."},
+                "user_agent": {"type": "string", "description": "Optional caller user-agent for audit logging."},
             },
             "required": ["api_key", "request_id"],
             "additionalProperties": False,
@@ -823,6 +901,7 @@ class PPPrepareTool(PPBaseTool):
             conn = _connect_db(arguments)
             tenant = _resolve_tenant(conn, arguments)
             request_id = _require_request_id(arguments)
+            audit = _extract_request_audit(arguments)
 
             payload_bytes = _prepare_payload_bytes(arguments)
             payload_size = len(payload_bytes)
@@ -833,6 +912,7 @@ class PPPrepareTool(PPBaseTool):
                 tool_name=self.name,
                 request_id=request_id,
                 budget=Budget(est_input_bytes=payload_size, est_output_bytes_budget=8192, est_cost_cents=5),
+                audit=audit,
             )
             _enforce_precharge(self.name, request_id, result)
 
@@ -891,6 +971,8 @@ class PPQuoteTool(PPBaseTool):
                 "request_id": {"type": "string", "description": "Idempotency key for quote."},
                 "db_path": {"type": "string", "description": "Optional path to PP SQLite database file."},
                 "job_id": {"type": "string", "description": "Prepared job identifier."},
+                "request_ip": {"type": "string", "description": "Optional caller IP for audit logging."},
+                "user_agent": {"type": "string", "description": "Optional caller user-agent for audit logging."},
             },
             "required": ["api_key", "request_id", "job_id"],
             "additionalProperties": False,
@@ -902,6 +984,7 @@ class PPQuoteTool(PPBaseTool):
             conn = _connect_db(arguments)
             tenant = _resolve_tenant(conn, arguments)
             request_id = _require_request_id(arguments)
+            audit = _extract_request_audit(arguments)
 
             job_id = arguments.get("job_id")
             if not isinstance(job_id, str) or not job_id.strip():
@@ -916,6 +999,7 @@ class PPQuoteTool(PPBaseTool):
                 tool_name=self.name,
                 request_id=request_id,
                 budget=Budget(est_input_bytes=2048, est_output_bytes_budget=4096, est_cost_cents=2),
+                audit=audit,
             )
             _enforce_precharge(self.name, request_id, result)
 
@@ -964,6 +1048,8 @@ class PPSubmitTool(PPBaseTool):
                 "request_id": {"type": "string", "description": "Idempotency key for submit."},
                 "db_path": {"type": "string", "description": "Optional path to PP SQLite database file."},
                 "job_id": {"type": "string", "description": "Prepared job identifier."},
+                "request_ip": {"type": "string", "description": "Optional caller IP for audit logging."},
+                "user_agent": {"type": "string", "description": "Optional caller user-agent for audit logging."},
             },
             "required": ["api_key", "request_id", "job_id"],
             "additionalProperties": False,
@@ -975,6 +1061,7 @@ class PPSubmitTool(PPBaseTool):
             conn = _connect_db(arguments)
             tenant = _resolve_tenant(conn, arguments)
             request_id = _require_request_id(arguments)
+            audit = _extract_request_audit(arguments)
 
             job_id = arguments.get("job_id")
             if not isinstance(job_id, str) or not job_id.strip():
@@ -989,6 +1076,7 @@ class PPSubmitTool(PPBaseTool):
                 tool_name=self.name,
                 request_id=request_id,
                 budget=Budget(est_input_bytes=2048, est_output_bytes_budget=16384, est_cost_cents=25),
+                audit=audit,
             )
             _enforce_precharge(self.name, request_id, result)
 
@@ -1040,6 +1128,8 @@ class PPAdminSetLimitTool(PPBaseTool):
                 "db_path": {"type": "string", "description": "Optional path to PP SQLite database file."},
                 "target_tenant_id": {"type": "string", "description": "Tenant whose daily limit will be set."},
                 "daily_limit_cents": {"type": "integer", "minimum": 0, "description": "New daily limit in cents."},
+                "request_ip": {"type": "string", "description": "Optional caller IP for audit logging."},
+                "user_agent": {"type": "string", "description": "Optional caller user-agent for audit logging."},
             },
             "required": ["api_key", "request_id", "target_tenant_id", "daily_limit_cents"],
             "additionalProperties": False,
@@ -1051,6 +1141,7 @@ class PPAdminSetLimitTool(PPBaseTool):
             conn = _connect_db(arguments)
             tenant = _resolve_tenant(conn, arguments)
             request_id = _require_request_id(arguments)
+            audit = _extract_request_audit(arguments)
             target_tenant_id = arguments.get("target_tenant_id")
             if not isinstance(target_tenant_id, str) or not target_tenant_id.strip():
                 raise PPDomainError("BAD_REQUEST", "target_tenant_id is required", 400)
@@ -1074,6 +1165,7 @@ class PPAdminSetLimitTool(PPBaseTool):
                 tool_name=self.name,
                 request_id=request_id,
                 budget=Budget(est_input_bytes=4096, est_output_bytes_budget=2048, est_cost_cents=1),
+                audit=audit,
             )
             _enforce_precharge(self.name, request_id, result)
 
