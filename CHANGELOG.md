@@ -2,6 +2,24 @@
 
 <!-- version list -->
 
+## v1.0.1 (2026-02-14)
+
+### Bug Fixes
+
+- **pp**: Allow db_path args and providerless utility startup
+  ([`ef4240f`](https://github.com/VaultSovereign/vaultmesh-pal-mcp-server/commit/ef4240f808ff5ba3394534b86729f1f505b28b18))
+
+### Chores
+
+- Sync version to config.py [skip ci]
+  ([`33c0a99`](https://github.com/VaultSovereign/vaultmesh-pal-mcp-server/commit/33c0a99e00a4e279b7a782d0505a89f2bb285321))
+
+### Code Style
+
+- **pp**: Satisfy ruff type-annotation rules
+  ([`c01ab7c`](https://github.com/VaultSovereign/vaultmesh-pal-mcp-server/commit/c01ab7c330be7516d2d6fa17a70d682219c25b3d))
+
+
 ## v1.0.0 (2026-02-14)
 
 - Initial Release
