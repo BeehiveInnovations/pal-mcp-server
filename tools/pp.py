@@ -62,6 +62,20 @@ CREATE TABLE IF NOT EXISTS usage_limits (
   FOREIGN KEY (tenant_id) REFERENCES tenants(tenant_id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS pp_jobs (
+  tenant_id TEXT NOT NULL,
+  job_id TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  payload_sha256 TEXT NOT NULL,
+  payload_bytes INTEGER NOT NULL,
+  status TEXT NOT NULL DEFAULT 'prepared',
+  PRIMARY KEY (tenant_id, job_id),
+  FOREIGN KEY (tenant_id) REFERENCES tenants(tenant_id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_pp_jobs_tenant_created
+ON pp_jobs(tenant_id, created_at);
+
 CREATE TABLE IF NOT EXISTS ledger (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   ts TEXT NOT NULL DEFAULT (datetime('now')),
@@ -410,6 +424,38 @@ def _load_usage_row(conn: sqlite3.Connection, tenant_id: str) -> Optional[sqlite
     ).fetchone()
 
 
+def _insert_prepared_job(
+    conn: sqlite3.Connection,
+    *,
+    tenant_id: str,
+    job_id: str,
+    payload_sha256: str,
+    payload_bytes: int,
+) -> None:
+    conn.execute(
+        """
+        INSERT INTO pp_jobs(
+          tenant_id, job_id, payload_sha256, payload_bytes, status
+        ) VALUES (?, ?, ?, ?, 'prepared')
+        """,
+        (tenant_id, job_id, payload_sha256, int(payload_bytes)),
+    )
+
+
+def _require_tenant_job(conn: sqlite3.Connection, *, tenant_id: str, job_id: str) -> sqlite3.Row:
+    row = conn.execute(
+        """
+        SELECT tenant_id, job_id, payload_sha256, payload_bytes, status
+        FROM pp_jobs
+        WHERE tenant_id=? AND job_id=?
+        """,
+        (tenant_id, job_id),
+    ).fetchone()
+    if not row:
+        raise PPDomainError("JOB_NOT_FOUND", "job_id not found for tenant", 404)
+    return row
+
+
 def _atomic_precharge_daily_only(
     conn: sqlite3.Connection,
     *,
@@ -603,6 +649,11 @@ def _to_non_negative_int(value: Any, field_name: str) -> int:
 
 
 def _prepare_input_bytes(arguments: dict[str, Any]) -> int:
+    payload_bytes = _prepare_payload_bytes(arguments)
+    return len(payload_bytes)
+
+
+def _prepare_payload_bytes(arguments: dict[str, Any]) -> bytes:
     if isinstance(arguments.get("raw_body"), str):
         payload_bytes = arguments["raw_body"].encode("utf-8")
     else:
@@ -618,7 +669,7 @@ def _prepare_input_bytes(arguments: dict[str, Any]) -> int:
     size = len(payload_bytes)
     if size > 5_000_000:
         raise PPDomainError("PAYLOAD_TOO_LARGE", "Payload exceeds 5_000_000 bytes", 413)
-    return size
+    return payload_bytes
 
 
 def _daily_usage_snapshot(conn: sqlite3.Connection, tenant_id: str) -> dict[str, Any]:
@@ -771,7 +822,8 @@ class PPPrepareTool(PPBaseTool):
             tenant = _resolve_tenant(conn, arguments)
             request_id = _require_request_id(arguments)
 
-            payload_size = _prepare_input_bytes(arguments)
+            payload_bytes = _prepare_payload_bytes(arguments)
+            payload_size = len(payload_bytes)
             result = _atomic_precharge_daily_only(
                 conn,
                 tenant_id=tenant.tenant_id,
@@ -782,13 +834,25 @@ class PPPrepareTool(PPBaseTool):
             )
             _enforce_precharge(self.name, request_id, result)
 
-            prepare_id = f"prep_{uuid.uuid4().hex}"
+            job_id = f"job_{uuid.uuid4().hex}"
+            payload_sha256 = sha256(payload_bytes).hexdigest()
+            _insert_prepared_job(
+                conn,
+                tenant_id=tenant.tenant_id,
+                job_id=job_id,
+                payload_sha256=payload_sha256,
+                payload_bytes=payload_size,
+            )
             return _ok_payload(
                 self.name,
                 {
-                    "prepare_id": prepare_id,
+                    "job_id": job_id,
+                    "prepare_id": job_id,
+                    "prepare_id_deprecated": True,
                     "status": "prepared",
                     "kind": arguments.get("kind", "proof_pack"),
+                    "payload_sha256": payload_sha256,
+                    "payload_bytes": payload_size,
                     "input_bytes": payload_size,
                 },
                 {
@@ -839,6 +903,8 @@ class PPQuoteTool(PPBaseTool):
             job_id = arguments.get("job_id")
             if not isinstance(job_id, str) or not job_id.strip():
                 raise PPDomainError("BAD_REQUEST", "job_id is required", 400)
+            normalized_job_id = job_id.strip()
+            _require_tenant_job(conn, tenant_id=tenant.tenant_id, job_id=normalized_job_id)
 
             result = _atomic_precharge_daily_only(
                 conn,
@@ -853,7 +919,7 @@ class PPQuoteTool(PPBaseTool):
             return _ok_payload(
                 self.name,
                 {
-                    "job_id": job_id.strip(),
+                    "job_id": normalized_job_id,
                     "quote": {
                         "currency": "USD",
                         "amount_cents": 750000,
@@ -909,6 +975,8 @@ class PPSubmitTool(PPBaseTool):
             job_id = arguments.get("job_id")
             if not isinstance(job_id, str) or not job_id.strip():
                 raise PPDomainError("BAD_REQUEST", "job_id is required", 400)
+            normalized_job_id = job_id.strip()
+            _require_tenant_job(conn, tenant_id=tenant.tenant_id, job_id=normalized_job_id)
 
             result = _atomic_precharge_daily_only(
                 conn,
@@ -921,10 +989,14 @@ class PPSubmitTool(PPBaseTool):
             _enforce_precharge(self.name, request_id, result)
 
             submit_id = f"sub_{uuid.uuid4().hex}"
+            conn.execute(
+                "UPDATE pp_jobs SET status='submitted' WHERE tenant_id=? AND job_id=?",
+                (tenant.tenant_id, normalized_job_id),
+            )
             return _ok_payload(
                 self.name,
                 {
-                    "job_id": job_id.strip(),
+                    "job_id": normalized_job_id,
                     "submit_id": submit_id,
                     "status": "submitted",
                     "tracking": {"state": "queued"},

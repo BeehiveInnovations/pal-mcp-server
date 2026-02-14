@@ -73,6 +73,7 @@ skip_glob = ["venv/*", ".venv/*", ".pal_venv/*"]
 [tool.ruff]
 target-version = "py39"
 line-length = 120
+extend-exclude = ["scripts/*.sql"]
 
 [tool.ruff.lint]
 select = [

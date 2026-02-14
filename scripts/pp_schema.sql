@@ -30,6 +30,20 @@ CREATE TABLE IF NOT EXISTS usage_limits (
   FOREIGN KEY (tenant_id) REFERENCES tenants(tenant_id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS pp_jobs (
+  tenant_id TEXT NOT NULL,
+  job_id TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  payload_sha256 TEXT NOT NULL,
+  payload_bytes INTEGER NOT NULL,
+  status TEXT NOT NULL DEFAULT 'prepared',
+  PRIMARY KEY (tenant_id, job_id),
+  FOREIGN KEY (tenant_id) REFERENCES tenants(tenant_id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_pp_jobs_tenant_created
+ON pp_jobs(tenant_id, created_at);
+
 CREATE TABLE IF NOT EXISTS ledger (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   ts TEXT NOT NULL DEFAULT (datetime('now')),
