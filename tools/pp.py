@@ -743,6 +743,7 @@ class PPTenantWhoamiTool(PPBaseTool):
             "properties": {
                 "api_key": {"type": "string", "description": "Tenant API key for PP tools."},
                 "request_id": {"type": "string", "description": "Optional idempotency key."},
+                "db_path": {"type": "string", "description": "Optional path to PP SQLite database file."},
             },
             "required": ["api_key"],
             "additionalProperties": False,
@@ -807,6 +808,7 @@ class PPPrepareTool(PPBaseTool):
             "properties": {
                 "api_key": {"type": "string", "description": "Tenant API key for PP tools."},
                 "request_id": {"type": "string", "description": "Idempotency key for prepare."},
+                "db_path": {"type": "string", "description": "Optional path to PP SQLite database file."},
                 "kind": {"type": "string", "description": "Work kind; expected value is proof_pack."},
                 "input": {"type": "object", "description": "Structured payload for preparation."},
                 "raw_body": {"type": "string", "description": "Optional raw payload string used for byte accounting."},
@@ -887,6 +889,7 @@ class PPQuoteTool(PPBaseTool):
             "properties": {
                 "api_key": {"type": "string", "description": "Tenant API key for PP tools."},
                 "request_id": {"type": "string", "description": "Idempotency key for quote."},
+                "db_path": {"type": "string", "description": "Optional path to PP SQLite database file."},
                 "job_id": {"type": "string", "description": "Prepared job identifier."},
             },
             "required": ["api_key", "request_id", "job_id"],
@@ -959,6 +962,7 @@ class PPSubmitTool(PPBaseTool):
             "properties": {
                 "api_key": {"type": "string", "description": "Tenant API key for PP tools."},
                 "request_id": {"type": "string", "description": "Idempotency key for submit."},
+                "db_path": {"type": "string", "description": "Optional path to PP SQLite database file."},
                 "job_id": {"type": "string", "description": "Prepared job identifier."},
             },
             "required": ["api_key", "request_id", "job_id"],
@@ -1033,6 +1037,7 @@ class PPAdminSetLimitTool(PPBaseTool):
             "properties": {
                 "api_key": {"type": "string", "description": "Admin tenant API key."},
                 "request_id": {"type": "string", "description": "Idempotency key for admin writes."},
+                "db_path": {"type": "string", "description": "Optional path to PP SQLite database file."},
                 "target_tenant_id": {"type": "string", "description": "Tenant whose daily limit will be set."},
                 "daily_limit_cents": {"type": "integer", "minimum": 0, "description": "New daily limit in cents."},
             },

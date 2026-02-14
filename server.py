@@ -390,10 +390,12 @@ def configure_providers():
     Configure and validate AI providers based on available API keys.
 
     This function checks for API keys and registers the appropriate providers.
-    At least one valid API key (Gemini or OpenAI) is required.
+    Provider configuration is optional at startup so utility-only tools can run.
+    Model-backed tools will return runtime errors until at least one provider is configured.
 
     Raises:
-        ValueError: If no valid API keys are found or conflicting configurations detected
+        ValueError: If providers are configured but auto mode has no available models
+                   after restrictions are applied.
     """
     # Log environment variable status for debugging
     logger.debug("Checking environment variables for API keys...")
@@ -550,19 +552,15 @@ def configure_providers():
     if registered_providers:
         logger.info(f"Registered providers: {', '.join(registered_providers)}")
 
-    # Require at least one valid provider
-    if not valid_providers:
-        raise ValueError(
-            "At least one API configuration is required. Please set either:\n"
-            "- GEMINI_API_KEY for Gemini models\n"
-            "- OPENAI_API_KEY for OpenAI models\n"
-            "- XAI_API_KEY for X.AI GROK models\n"
-            "- DIAL_API_KEY for DIAL models\n"
-            "- OPENROUTER_API_KEY for OpenRouter (multiple models)\n"
-            "- CUSTOM_API_URL for local models (Ollama, vLLM, etc.)"
+    has_configured_providers = bool(valid_providers)
+    if not has_configured_providers:
+        logger.warning(
+            "No AI providers configured. Utility tools remain available, "
+            "but model-backed tools will be unavailable until a provider is configured."
         )
 
-    logger.info(f"Available providers: {', '.join(valid_providers)}")
+    if has_configured_providers:
+        logger.info(f"Available providers: {', '.join(valid_providers)}")
 
     # Log provider priority
     priority_info = []
@@ -625,15 +623,21 @@ def configure_providers():
     from config import IS_AUTO_MODE
 
     if IS_AUTO_MODE:
-        available_models = ModelProviderRegistry.get_available_models(respect_restrictions=True)
-        if not available_models:
-            logger.error(
-                "Auto mode is enabled but no models are available after applying restrictions. "
-                "Please check your OPENAI_ALLOWED_MODELS and GOOGLE_ALLOWED_MODELS settings."
-            )
-            raise ValueError(
-                "No models available for auto mode due to restrictions. "
-                "Please adjust your allowed model settings or disable auto mode."
+        if has_configured_providers:
+            available_models = ModelProviderRegistry.get_available_models(respect_restrictions=True)
+            if not available_models:
+                logger.error(
+                    "Auto mode is enabled but no models are available after applying restrictions. "
+                    "Please check your OPENAI_ALLOWED_MODELS and GOOGLE_ALLOWED_MODELS settings."
+                )
+                raise ValueError(
+                    "No models available for auto mode due to restrictions. "
+                    "Please adjust your allowed model settings or disable auto mode."
+                )
+        else:
+            logger.warning(
+                "Auto mode is enabled but no providers are configured. "
+                "Model-backed tool calls will fail until provider configuration is added."
             )
 
 

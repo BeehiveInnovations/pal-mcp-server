@@ -309,7 +309,7 @@ class TestConfigureProvidersFunction:
             assert ProviderType.CUSTOM in available
 
     def test_configure_providers_no_valid_keys(self):
-        """Test configure_providers raises error when no valid API keys."""
+        """Test configure_providers allows utility-only startup when no providers are configured."""
         from server import configure_providers
 
         with patch.dict(
@@ -317,5 +317,8 @@ class TestConfigureProvidersFunction:
             {"GEMINI_API_KEY": "", "OPENAI_API_KEY": "", "OPENROUTER_API_KEY": "", "CUSTOM_API_URL": ""},
             clear=True,
         ):
-            with pytest.raises(ValueError, match="At least one API configuration is required"):
-                configure_providers()
+            configure_providers()
+
+            # No providers should be registered, but startup should still be allowed.
+            available = ModelProviderRegistry.get_available_providers()
+            assert available == []

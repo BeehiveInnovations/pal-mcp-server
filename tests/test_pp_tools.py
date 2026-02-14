@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from tools.pp import PP_SCHEMA_SQL, PPPrepareTool, PPQuoteTool, PPSubmitTool
+from tools.pp import PP_SCHEMA_SQL, PPAdminSetLimitTool, PPPrepareTool, PPQuoteTool, PPSubmitTool, PPTenantWhoamiTool
 from tools.shared.exceptions import ToolExecutionError
 
 
@@ -130,6 +130,22 @@ def _create_job(db_path: Path, tenant_id: str, job_id: str, payload: str = "{}")
     )
     conn.commit()
     conn.close()
+
+
+def test_pp_schemas_allow_optional_db_path() -> None:
+    tools = [
+        PPTenantWhoamiTool(),
+        PPPrepareTool(),
+        PPQuoteTool(),
+        PPSubmitTool(),
+        PPAdminSetLimitTool(),
+    ]
+    for tool in tools:
+        schema = tool.get_input_schema()
+        assert "db_path" in schema["properties"]
+        assert schema["properties"]["db_path"]["type"] == "string"
+        assert "db_path" not in schema.get("required", [])
+        assert schema["additionalProperties"] is False
 
 
 @pytest.mark.asyncio
