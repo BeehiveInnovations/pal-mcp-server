@@ -9,7 +9,7 @@ import uuid
 from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from mcp.types import TextContent
 
@@ -114,7 +114,7 @@ class Budget:
 @dataclass(frozen=True)
 class PrechargeResult:
     status: str
-    reason: Optional[str]
+    reason: str | None
     daily_limit_cents: int
     daily_spent_cents: int
     idempotent_replay: bool = False
@@ -299,7 +299,7 @@ def _error_payload(
     code: str,
     message: str,
     http_status: int,
-    meta: Optional[dict[str, Any]] = None,
+    meta: dict[str, Any] | None = None,
 ) -> str:
     metadata: dict[str, Any] = {"tool_name": tool_name, "code": code, "http_status": http_status}
     if meta:
@@ -313,7 +313,7 @@ def _raise_tool_error(
     code: str,
     message: str,
     http_status: int,
-    meta: Optional[dict[str, Any]] = None,
+    meta: dict[str, Any] | None = None,
 ) -> None:
     raise ToolExecutionError(_error_payload(tool_name, code, message, http_status, meta))
 
@@ -321,7 +321,7 @@ def _raise_tool_error(
 def _ok_payload(
     tool_name: str,
     content_obj: dict[str, Any],
-    meta: Optional[dict[str, Any]] = None,
+    meta: dict[str, Any] | None = None,
 ) -> list[TextContent]:
     metadata = {"tool_name": tool_name}
     if meta:
@@ -393,7 +393,7 @@ def _insert_ledger(
     est_input_bytes: int,
     est_output_bytes_budget: int,
     status: str,
-    reason: Optional[str],
+    reason: str | None,
 ) -> None:
     conn.execute(
         """
@@ -417,7 +417,7 @@ def _insert_ledger(
     )
 
 
-def _load_usage_row(conn: sqlite3.Connection, tenant_id: str) -> Optional[sqlite3.Row]:
+def _load_usage_row(conn: sqlite3.Connection, tenant_id: str) -> sqlite3.Row | None:
     return conn.execute(
         "SELECT daily_day, daily_limit_cents, daily_spent_cents FROM usage_limits WHERE tenant_id=?",
         (tenant_id,),
@@ -720,13 +720,13 @@ class PPBaseTool(BaseTool):
     async def prepare_prompt(self, request: ToolRequest) -> str:
         return ""
 
-    def format_response(self, response: str, request: ToolRequest, model_info: Optional[dict] = None) -> str:
+    def format_response(self, response: str, request: ToolRequest, model_info: dict | None = None) -> str:
         return response
 
     def get_model_category(self) -> ToolModelCategory:
         return ToolModelCategory.FAST_RESPONSE
 
-    def get_annotations(self) -> Optional[dict[str, Any]]:
+    def get_annotations(self) -> dict[str, Any] | None:
         return {"readOnlyHint": False}
 
 
@@ -749,7 +749,7 @@ class PPTenantWhoamiTool(PPBaseTool):
         }
 
     async def execute(self, arguments: dict[str, Any]) -> list[TextContent]:
-        conn: Optional[sqlite3.Connection] = None
+        conn: sqlite3.Connection | None = None
         request_id = arguments.get("request_id") if isinstance(arguments.get("request_id"), str) else None
         try:
             conn = _connect_db(arguments)
@@ -816,7 +816,7 @@ class PPPrepareTool(PPBaseTool):
         }
 
     async def execute(self, arguments: dict[str, Any]) -> list[TextContent]:
-        conn: Optional[sqlite3.Connection] = None
+        conn: sqlite3.Connection | None = None
         try:
             conn = _connect_db(arguments)
             tenant = _resolve_tenant(conn, arguments)
@@ -894,7 +894,7 @@ class PPQuoteTool(PPBaseTool):
         }
 
     async def execute(self, arguments: dict[str, Any]) -> list[TextContent]:
-        conn: Optional[sqlite3.Connection] = None
+        conn: sqlite3.Connection | None = None
         try:
             conn = _connect_db(arguments)
             tenant = _resolve_tenant(conn, arguments)
@@ -966,7 +966,7 @@ class PPSubmitTool(PPBaseTool):
         }
 
     async def execute(self, arguments: dict[str, Any]) -> list[TextContent]:
-        conn: Optional[sqlite3.Connection] = None
+        conn: sqlite3.Connection | None = None
         try:
             conn = _connect_db(arguments)
             tenant = _resolve_tenant(conn, arguments)
@@ -1041,7 +1041,7 @@ class PPAdminSetLimitTool(PPBaseTool):
         }
 
     async def execute(self, arguments: dict[str, Any]) -> list[TextContent]:
-        conn: Optional[sqlite3.Connection] = None
+        conn: sqlite3.Connection | None = None
         try:
             conn = _connect_db(arguments)
             tenant = _resolve_tenant(conn, arguments)
