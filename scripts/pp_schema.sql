@@ -44,6 +44,28 @@ CREATE TABLE IF NOT EXISTS pp_jobs (
 CREATE INDEX IF NOT EXISTS idx_pp_jobs_tenant_created
 ON pp_jobs(tenant_id, created_at);
 
+CREATE TABLE IF NOT EXISTS pp_quotes (
+  quote_id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL,
+  job_id TEXT NOT NULL,
+  request_id TEXT NOT NULL,
+  amount_cents INTEGER NOT NULL,
+  currency TEXT NOT NULL,
+  base_cents INTEGER NOT NULL,
+  processing_cents INTEGER NOT NULL,
+  quote_signature TEXT NOT NULL,
+  issued_at TEXT NOT NULL DEFAULT (datetime('now')),
+  expires_at TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active', 'consumed')),
+  consumed_request_id TEXT,
+  consumed_at TEXT,
+  UNIQUE(tenant_id, request_id),
+  FOREIGN KEY (tenant_id) REFERENCES tenants(tenant_id) ON DELETE CASCADE,
+  FOREIGN KEY (tenant_id, job_id) REFERENCES pp_jobs(tenant_id, job_id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_pp_quotes_tenant_job ON pp_quotes(tenant_id, job_id, status);
+
 CREATE TABLE IF NOT EXISTS ledger (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   ts TEXT NOT NULL DEFAULT (datetime('now')),

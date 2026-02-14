@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import hmac
 import json
 import logging
 import sqlite3
 import uuid
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 from hashlib import sha256
 from pathlib import Path
 from typing import Any
@@ -23,6 +25,10 @@ logger = logging.getLogger(__name__)
 REPO_ROOT = Path(__file__).resolve().parents[1]
 ALLOWED_DB_DATA_ROOT = (REPO_ROOT / "data").resolve()
 ALLOWED_DB_TMP_ROOT = Path("/tmp").resolve()
+QUOTE_CURRENCY = "USD"
+QUOTE_BASE_CENTS = 700_000
+QUOTE_PROCESSING_CENTS = 50_000
+QUOTE_TOTAL_CENTS = QUOTE_BASE_CENTS + QUOTE_PROCESSING_CENTS
 
 PP_TOOL_KEYS = {
     "pp_tenant_whoami",
@@ -78,6 +84,28 @@ CREATE TABLE IF NOT EXISTS pp_jobs (
 
 CREATE INDEX IF NOT EXISTS idx_pp_jobs_tenant_created
 ON pp_jobs(tenant_id, created_at);
+
+CREATE TABLE IF NOT EXISTS pp_quotes (
+  quote_id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL,
+  job_id TEXT NOT NULL,
+  request_id TEXT NOT NULL,
+  amount_cents INTEGER NOT NULL,
+  currency TEXT NOT NULL,
+  base_cents INTEGER NOT NULL,
+  processing_cents INTEGER NOT NULL,
+  quote_signature TEXT NOT NULL,
+  issued_at TEXT NOT NULL DEFAULT (datetime('now')),
+  expires_at TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active', 'consumed')),
+  consumed_request_id TEXT,
+  consumed_at TEXT,
+  UNIQUE(tenant_id, request_id),
+  FOREIGN KEY (tenant_id) REFERENCES tenants(tenant_id) ON DELETE CASCADE,
+  FOREIGN KEY (tenant_id, job_id) REFERENCES pp_jobs(tenant_id, job_id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_pp_quotes_tenant_job ON pp_quotes(tenant_id, job_id, status);
 
 CREATE TABLE IF NOT EXISTS ledger (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -407,6 +435,117 @@ def _extract_request_audit(arguments: dict[str, Any]) -> RequestAudit:
         request_ip=_optional_text(arguments.get("request_ip"), max_len=64),
         user_agent=_optional_text(arguments.get("user_agent"), max_len=512),
     )
+
+
+def _quote_ttl_seconds() -> int:
+    raw_ttl = get_env("PP_QUOTE_TTL_SECONDS", "900") or "900"
+    try:
+        ttl = int(raw_ttl)
+    except ValueError:
+        return 900
+    return ttl if ttl > 0 else 900
+
+
+def _quote_signing_key() -> str:
+    return (get_env("PP_QUOTE_SIGNING_KEY", "pp_quote_signing_key_v1") or "pp_quote_signing_key_v1").strip()
+
+
+def _utc_now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def _iso_utc(value: datetime) -> str:
+    return value.astimezone(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+
+def _parse_utc(value: str) -> datetime:
+    return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(timezone.utc)
+
+
+def _quote_cost_breakdown() -> dict[str, int]:
+    return {
+        "base_cents": QUOTE_BASE_CENTS,
+        "processing_cents": QUOTE_PROCESSING_CENTS,
+        "total_cents": QUOTE_TOTAL_CENTS,
+    }
+
+
+def _quote_signature_payload(
+    *,
+    quote_id: str,
+    tenant_id: str,
+    job_id: str,
+    amount_cents: int,
+    currency: str,
+    expires_at: str,
+) -> str:
+    return "|".join([quote_id, tenant_id, job_id, str(amount_cents), currency, expires_at])
+
+
+def _sign_quote_artifact(
+    *,
+    quote_id: str,
+    tenant_id: str,
+    job_id: str,
+    amount_cents: int,
+    currency: str,
+    expires_at: str,
+) -> str:
+    payload = _quote_signature_payload(
+        quote_id=quote_id,
+        tenant_id=tenant_id,
+        job_id=job_id,
+        amount_cents=amount_cents,
+        currency=currency,
+        expires_at=expires_at,
+    )
+    digest = hmac.new(_quote_signing_key().encode("utf-8"), payload.encode("utf-8"), "sha256").hexdigest()
+    return f"h1.{digest}"
+
+
+def _load_quote_by_request_id(conn: sqlite3.Connection, *, tenant_id: str, request_id: str) -> sqlite3.Row | None:
+    return conn.execute(
+        """
+        SELECT quote_id, tenant_id, job_id, request_id, amount_cents, currency, base_cents, processing_cents,
+               quote_signature, issued_at, expires_at, status, consumed_request_id
+        FROM pp_quotes
+        WHERE tenant_id=? AND request_id=?
+        """,
+        (tenant_id, request_id),
+    ).fetchone()
+
+
+def _load_quote_by_id(conn: sqlite3.Connection, *, tenant_id: str, job_id: str, quote_id: str) -> sqlite3.Row | None:
+    return conn.execute(
+        """
+        SELECT quote_id, tenant_id, job_id, request_id, amount_cents, currency, base_cents, processing_cents,
+               quote_signature, issued_at, expires_at, status, consumed_request_id
+        FROM pp_quotes
+        WHERE tenant_id=? AND job_id=? AND quote_id=?
+        """,
+        (tenant_id, job_id, quote_id),
+    ).fetchone()
+
+
+def _quote_response_content(quote_row: sqlite3.Row) -> dict[str, Any]:
+    amount_cents = int(quote_row["amount_cents"])
+    return {
+        "job_id": str(quote_row["job_id"]),
+        "quote": {
+            "quote_id": str(quote_row["quote_id"]),
+            "expires_at": str(quote_row["expires_at"]),
+            "currency": str(quote_row["currency"]),
+            "amount_cents": amount_cents,
+            "type": "fixed",
+            "cost_breakdown": {
+                "base_cents": int(quote_row["base_cents"]),
+                "processing_cents": int(quote_row["processing_cents"]),
+                "total_cents": amount_cents,
+            },
+            "signature": str(quote_row["quote_signature"]),
+        },
+        "can_submit": True,
+    }
 
 
 def _resolve_tenant(conn: sqlite3.Connection, arguments: dict[str, Any]) -> TenantCtx:
@@ -1003,17 +1142,52 @@ class PPQuoteTool(PPBaseTool):
             )
             _enforce_precharge(self.name, request_id, result)
 
+            quote_row = _load_quote_by_request_id(conn, tenant_id=tenant.tenant_id, request_id=request_id)
+            if quote_row and str(quote_row["job_id"]) != normalized_job_id:
+                raise PPDomainError(
+                    "REQUEST_ID_CONFLICT",
+                    "request_id is already bound to a different job_id for pp_quote",
+                    409,
+                )
+
+            if not quote_row:
+                quote_id = f"quote_{uuid.uuid4().hex}"
+                expires_at = _iso_utc(_utc_now() + timedelta(seconds=_quote_ttl_seconds()))
+                quote_signature = _sign_quote_artifact(
+                    quote_id=quote_id,
+                    tenant_id=tenant.tenant_id,
+                    job_id=normalized_job_id,
+                    amount_cents=QUOTE_TOTAL_CENTS,
+                    currency=QUOTE_CURRENCY,
+                    expires_at=expires_at,
+                )
+
+                conn.execute(
+                    """
+                    INSERT INTO pp_quotes(
+                      quote_id, tenant_id, job_id, request_id,
+                      amount_cents, currency, base_cents, processing_cents,
+                      quote_signature, expires_at, status
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')
+                    """,
+                    (
+                        quote_id,
+                        tenant.tenant_id,
+                        normalized_job_id,
+                        request_id,
+                        QUOTE_TOTAL_CENTS,
+                        QUOTE_CURRENCY,
+                        QUOTE_BASE_CENTS,
+                        QUOTE_PROCESSING_CENTS,
+                        quote_signature,
+                        expires_at,
+                    ),
+                )
+                quote_row = _load_quote_by_request_id(conn, tenant_id=tenant.tenant_id, request_id=request_id)
+
             return _ok_payload(
                 self.name,
-                {
-                    "job_id": normalized_job_id,
-                    "quote": {
-                        "currency": "USD",
-                        "amount_cents": 750000,
-                        "type": "fixed",
-                    },
-                    "can_submit": True,
-                },
+                _quote_response_content(quote_row),
                 {
                     "request_id": request_id,
                     "idempotent_replay": result.idempotent_replay,
@@ -1048,10 +1222,12 @@ class PPSubmitTool(PPBaseTool):
                 "request_id": {"type": "string", "description": "Idempotency key for submit."},
                 "db_path": {"type": "string", "description": "Optional path to PP SQLite database file."},
                 "job_id": {"type": "string", "description": "Prepared job identifier."},
+                "quote_id": {"type": "string", "description": "Quote identifier returned by pp_quote."},
+                "quote_signature": {"type": "string", "description": "Quote signature returned by pp_quote."},
                 "request_ip": {"type": "string", "description": "Optional caller IP for audit logging."},
                 "user_agent": {"type": "string", "description": "Optional caller user-agent for audit logging."},
             },
-            "required": ["api_key", "request_id", "job_id"],
+            "required": ["api_key", "request_id", "job_id", "quote_id", "quote_signature"],
             "additionalProperties": False,
         }
 
@@ -1069,6 +1245,50 @@ class PPSubmitTool(PPBaseTool):
             normalized_job_id = job_id.strip()
             _require_tenant_job(conn, tenant_id=tenant.tenant_id, job_id=normalized_job_id)
 
+            quote_id = arguments.get("quote_id")
+            if not isinstance(quote_id, str) or not quote_id.strip():
+                raise PPDomainError("BAD_REQUEST", "quote_id is required", 400)
+            normalized_quote_id = quote_id.strip()
+
+            provided_signature = arguments.get("quote_signature")
+            if not isinstance(provided_signature, str) or not provided_signature.strip():
+                raise PPDomainError("BAD_REQUEST", "quote_signature is required", 400)
+            normalized_signature = provided_signature.strip()
+
+            quote_row = _load_quote_by_id(
+                conn,
+                tenant_id=tenant.tenant_id,
+                job_id=normalized_job_id,
+                quote_id=normalized_quote_id,
+            )
+            if not quote_row:
+                raise PPDomainError("QUOTE_NOT_FOUND", "quote_id not found for tenant/job", 404)
+
+            expected_signature = _sign_quote_artifact(
+                quote_id=str(quote_row["quote_id"]),
+                tenant_id=str(quote_row["tenant_id"]),
+                job_id=str(quote_row["job_id"]),
+                amount_cents=int(quote_row["amount_cents"]),
+                currency=str(quote_row["currency"]),
+                expires_at=str(quote_row["expires_at"]),
+            )
+
+            if not hmac.compare_digest(str(quote_row["quote_signature"]), expected_signature):
+                raise PPDomainError("FORBIDDEN", "Stored quote signature integrity check failed", 403)
+            if not hmac.compare_digest(normalized_signature, expected_signature):
+                raise PPDomainError("FORBIDDEN", "Invalid quote signature", 403)
+
+            expires_at = _parse_utc(str(quote_row["expires_at"]))
+            if _utc_now() > expires_at:
+                raise PPDomainError("QUOTE_EXPIRED", "Quote expired", 410)
+
+            quote_status = str(quote_row["status"])
+            consumed_request_id = quote_row["consumed_request_id"]
+            if quote_status == "consumed" and consumed_request_id != request_id:
+                raise PPDomainError("QUOTE_ALREADY_USED", "Quote already consumed", 409)
+            if quote_status not in {"active", "consumed"}:
+                raise PPDomainError("BAD_REQUEST", f"Unsupported quote status: {quote_status}", 400)
+
             result = _atomic_precharge_daily_only(
                 conn,
                 tenant_id=tenant.tenant_id,
@@ -1080,17 +1300,27 @@ class PPSubmitTool(PPBaseTool):
             )
             _enforce_precharge(self.name, request_id, result)
 
-            submit_id = f"sub_{uuid.uuid4().hex}"
+            submit_id = f"sub_{_sha256_hex(f'{tenant.tenant_id}:{normalized_job_id}:{request_id}')[:24]}"
             conn.execute(
                 "UPDATE pp_jobs SET status='submitted' WHERE tenant_id=? AND job_id=?",
                 (tenant.tenant_id, normalized_job_id),
             )
+            if quote_status == "active":
+                conn.execute(
+                    """
+                    UPDATE pp_quotes
+                    SET status='consumed', consumed_request_id=?, consumed_at=datetime('now')
+                    WHERE quote_id=?
+                    """,
+                    (request_id, normalized_quote_id),
+                )
             return _ok_payload(
                 self.name,
                 {
                     "job_id": normalized_job_id,
                     "submit_id": submit_id,
                     "status": "submitted",
+                    "accepted_quote_id": normalized_quote_id,
                     "tracking": {"state": "queued"},
                 },
                 {

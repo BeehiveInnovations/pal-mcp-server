@@ -135,6 +135,12 @@ def _allowed_tmp_db_path(prefix: str) -> Path:
     return Path("/tmp") / f"{prefix}_{uuid.uuid4().hex}.sqlite"
 
 
+def _extract_quote_fields(result: list) -> tuple[str, str]:
+    payload = json.loads(result[0].text)
+    content = json.loads(payload["content"])
+    return content["quote"]["quote_id"], content["quote"]["signature"]
+
+
 def test_pp_schemas_allow_optional_db_path() -> None:
     tools = [
         PPTenantWhoamiTool(),
@@ -298,6 +304,10 @@ async def test_pp_quote_precharge_success(tmp_path: Path) -> None:
     content = json.loads(payload["content"])
     assert content["job_id"] == "job_123"
     assert content["quote"]["amount_cents"] == 750000
+    assert content["quote"]["quote_id"].startswith("quote_")
+    assert content["quote"]["signature"].startswith("h1.")
+    assert content["quote"]["cost_breakdown"]["total_cents"] == 750000
+    assert "expires_at" in content["quote"]
 
     conn = sqlite3.connect(str(db_path))
     spent = conn.execute(
@@ -316,6 +326,17 @@ async def test_pp_submit_precharge_limit_exceeded_returns_429(tmp_path: Path) ->
     _create_tenant(db_path, tenant_id, api_key, daily_limit_cents=10)
     _create_job(db_path, tenant_id, "job_abc")
 
+    quote_tool = PPQuoteTool()
+    quote_result = await quote_tool.execute(
+        {
+            "db_path": str(db_path),
+            "api_key": api_key,
+            "request_id": "req_quote_for_submit",
+            "job_id": "job_abc",
+        }
+    )
+    quote_id, quote_signature = _extract_quote_fields(quote_result)
+
     tool = PPSubmitTool()
     with pytest.raises(ToolExecutionError) as exc_info:
         await tool.execute(
@@ -324,6 +345,8 @@ async def test_pp_submit_precharge_limit_exceeded_returns_429(tmp_path: Path) ->
                 "api_key": api_key,
                 "request_id": "req_submit_1",
                 "job_id": "job_abc",
+                "quote_id": quote_id,
+                "quote_signature": quote_signature,
             }
         )
 
@@ -338,7 +361,8 @@ async def test_pp_submit_precharge_limit_exceeded_returns_429(tmp_path: Path) ->
         (tenant_id,),
     ).fetchone()[0]
     conn.close()
-    assert spent == 0
+    # quote precharge (2c) succeeded before submit was rejected at 25c.
+    assert spent == 2
 
 
 @pytest.mark.asyncio
@@ -374,6 +398,10 @@ async def test_pp_quote_idempotent_request_charges_once(tmp_path: Path) -> None:
     assert first_payload["status"] == "success"
     assert second_payload["status"] == "success"
     assert second_payload["metadata"]["idempotent_replay"] is True
+    first_content = json.loads(first_payload["content"])
+    second_content = json.loads(second_payload["content"])
+    assert second_content["quote"]["quote_id"] == first_content["quote"]["quote_id"]
+    assert second_content["quote"]["signature"] == first_content["quote"]["signature"]
 
     conn = sqlite3.connect(str(db_path))
     spent = conn.execute(
@@ -404,12 +432,23 @@ async def test_same_request_id_different_tools_do_not_collide(tmp_path: Path) ->
             "job_id": "job_q",
         }
     )
+    quote_for_submit = await quote_tool.execute(
+        {
+            "db_path": str(db_path),
+            "api_key": api_key,
+            "request_id": "req_submit_quote",
+            "job_id": "job_s",
+        }
+    )
+    quote_id, quote_signature = _extract_quote_fields(quote_for_submit)
     await submit_tool.execute(
         {
             "db_path": str(db_path),
             "api_key": api_key,
             "request_id": "req_shared",
             "job_id": "job_s",
+            "quote_id": quote_id,
+            "quote_signature": quote_signature,
         }
     )
 
@@ -420,8 +459,8 @@ async def test_same_request_id_different_tools_do_not_collide(tmp_path: Path) ->
     ).fetchone()[0]
     conn.close()
 
-    # quote=2 cents + submit=25 cents
-    assert spent == 27
+    # quote(job_q)=2 + quote(job_s)=2 + submit(job_s)=25
+    assert spent == 29
 
 
 @pytest.mark.asyncio
@@ -444,17 +483,28 @@ async def test_legacy_ledger_schema_is_migrated_before_precharge(tmp_path: Path)
             "job_id": "job_legacy_q",
         }
     )
+    quote_for_submit = await quote_tool.execute(
+        {
+            "db_path": str(db_path),
+            "api_key": api_key,
+            "request_id": "req_legacy_submit_quote",
+            "job_id": "job_legacy_s",
+        }
+    )
+    quote_id, quote_signature = _extract_quote_fields(quote_for_submit)
     await submit_tool.execute(
         {
             "db_path": str(db_path),
             "api_key": api_key,
             "request_id": "req_legacy",
             "job_id": "job_legacy_s",
+            "quote_id": quote_id,
+            "quote_signature": quote_signature,
         }
     )
 
     conn = sqlite3.connect(str(db_path))
-    # quote=2 cents + submit=25 cents
+    # quote(job_legacy_q)=2 + quote(job_legacy_s)=2 + submit(job_legacy_s)=25
     spent = conn.execute(
         "SELECT daily_spent_cents FROM usage_limits WHERE tenant_id=?",
         (tenant_id,),
@@ -472,8 +522,45 @@ async def test_legacy_ledger_schema_is_migrated_before_precharge(tmp_path: Path)
             break
     conn.close()
 
-    assert spent == 27
+    assert spent == 29
     assert found_target is True
+
+
+@pytest.mark.asyncio
+async def test_pp_submit_rejects_invalid_quote_signature(tmp_path: Path) -> None:
+    db_path = tmp_path / "pp.sqlite"
+    tenant_id = "tenant_bad_sig"
+    api_key = "pp_bad_sig_key"
+    _create_tenant(db_path, tenant_id, api_key, daily_limit_cents=100)
+    _create_job(db_path, tenant_id, "job_bad_sig")
+
+    quote_tool = PPQuoteTool()
+    quote_result = await quote_tool.execute(
+        {
+            "db_path": str(db_path),
+            "api_key": api_key,
+            "request_id": "req_quote_bad_sig",
+            "job_id": "job_bad_sig",
+        }
+    )
+    quote_id, quote_signature = _extract_quote_fields(quote_result)
+
+    submit_tool = PPSubmitTool()
+    with pytest.raises(ToolExecutionError) as exc_info:
+        await submit_tool.execute(
+            {
+                "db_path": str(db_path),
+                "api_key": api_key,
+                "request_id": "req_submit_bad_sig",
+                "job_id": "job_bad_sig",
+                "quote_id": quote_id,
+                "quote_signature": f"{quote_signature}tampered",
+            }
+        )
+
+    payload = json.loads(exc_info.value.payload)
+    assert payload["metadata"]["code"] == "FORBIDDEN"
+    assert payload["metadata"]["http_status"] == 403
 
 
 @pytest.mark.asyncio
