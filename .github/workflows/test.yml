@@ -1,10 +1,41 @@
-name: Tests
+name: tests
 
 on:
-  pull_request:
+  push:
     branches: [main]
+  pull_request:
 
 jobs:
+  transport-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          python -m venv .venv
+          .venv/bin/pip install --upgrade pip
+          if [ -f requirements.txt ]; then .venv/bin/pip install -r requirements.txt; fi
+          if [ -f requirements-dev.txt ]; then .venv/bin/pip install -r requirements-dev.txt; fi
+          .venv/bin/pip install -e .
+
+      - name: Run deterministic MCP transport smoke
+        env:
+          PP_SMOKE_TENANT: tenant_smoke
+          PP_SMOKE_API_KEY: pp_test_tenant_key_1
+        run: |
+          chmod +x scripts/pp_smoke.sh
+          ./scripts/pp_smoke.sh
+
   test:
     runs-on: ubuntu-latest
     strategy:

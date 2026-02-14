@@ -3,12 +3,14 @@
 
 from __future__ import annotations
 
+import argparse
 import asyncio
 import json
 import os
 import sqlite3
 import sys
 import uuid
+from hashlib import sha256
 from pathlib import Path
 from typing import Any
 
@@ -16,9 +18,85 @@ from mcp import ClientSession
 from mcp.client.stdio import StdioServerParameters, stdio_client
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+SCHEMA_PATH = REPO_ROOT / "scripts" / "pp_schema.sql"
 DEFAULT_DB_PATH = Path(os.environ.get("PP_SMOKE_DB", "/tmp/pp_smoke.sqlite"))
 DEFAULT_API_KEY = os.environ.get("PP_SMOKE_API_KEY", "pp_test_tenant_key_1")
 DEFAULT_TENANT_ID = os.environ.get("PP_SMOKE_TENANT", "tenant_smoke")
+
+
+def _default_daily_limit_cents() -> int:
+    raw_value = os.environ.get("PP_SMOKE_DAILY_LIMIT_CENTS", "8")
+    try:
+        return int(raw_value)
+    except ValueError:
+        return 8
+
+
+DEFAULT_DAILY_LIMIT_CENTS = _default_daily_limit_cents()
+
+
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Run PP MCP stdio transport smoke.")
+    parser.add_argument(
+        "--seed",
+        action="store_true",
+        help="Force-seed tenant/key/limits before running the smoke steps.",
+    )
+    parser.add_argument(
+        "--daily-limit-cents",
+        type=int,
+        default=DEFAULT_DAILY_LIMIT_CENTS,
+        help="Daily tenant budget used by seed logic (default: %(default)s).",
+    )
+    return parser.parse_args()
+
+
+def _seed_smoke_db(db_path: Path, tenant_id: str, api_key: str, daily_limit_cents: int) -> None:
+    if daily_limit_cents <= 0:
+        raise RuntimeError(f"--daily-limit-cents must be > 0, got {daily_limit_cents}")
+    if not SCHEMA_PATH.exists():
+        raise RuntimeError(f"schema not found: {SCHEMA_PATH}")
+
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+
+    conn = sqlite3.connect(str(db_path))
+    try:
+        conn.executescript(SCHEMA_PATH.read_text(encoding="utf-8"))
+        api_key_sha = sha256(api_key.encode("utf-8")).hexdigest()
+
+        conn.execute(
+            "INSERT INTO tenants(tenant_id, name, status) VALUES (?, ?, 'active') "
+            "ON CONFLICT(tenant_id) DO UPDATE SET name=excluded.name, status='active'",
+            (tenant_id, f"Tenant {tenant_id}"),
+        )
+        conn.execute(
+            "INSERT INTO api_keys(api_key_sha256, tenant_id, label, status) VALUES (?, ?, ?, 'active') "
+            "ON CONFLICT(api_key_sha256) DO UPDATE SET tenant_id=excluded.tenant_id, label=excluded.label, status='active'",
+            (api_key_sha, tenant_id, "smoke-key"),
+        )
+        conn.execute(
+            """
+            INSERT INTO usage_limits(
+              tenant_id, daily_limit_cents, monthly_limit_cents,
+              daily_spent_cents, monthly_spent_cents, daily_day, monthly_ym, updated_at
+            ) VALUES (?, ?, 0, 0, 0, date('now'), strftime('%Y-%m','now'), datetime('now'))
+            ON CONFLICT(tenant_id) DO UPDATE SET
+              daily_limit_cents=excluded.daily_limit_cents,
+              monthly_limit_cents=0,
+              daily_spent_cents=0,
+              monthly_spent_cents=0,
+              daily_day=date('now'),
+              monthly_ym=strftime('%Y-%m','now'),
+              updated_at=datetime('now')
+            """,
+            (tenant_id, daily_limit_cents),
+        )
+        # Keep seeded runs deterministic.
+        conn.execute("DELETE FROM ledger WHERE tenant_id=?", (tenant_id,))
+        conn.execute("DELETE FROM pp_jobs WHERE tenant_id=?", (tenant_id,))
+        conn.commit()
+    finally:
+        conn.close()
 
 
 def _content_to_text(result: Any) -> str:
@@ -103,9 +181,33 @@ def _print_usage(db_path: Path, tenant_id: str) -> None:
 
 
 async def main() -> None:
+    args = _parse_args()
     run_id = uuid.uuid4().hex[:8]
-    db_path = Path(os.environ.get("PP_SMOKE_DB", str(DEFAULT_DB_PATH)))
-    api_key = DEFAULT_API_KEY
+    db_path = Path(os.environ.get("PP_SMOKE_DB", str(DEFAULT_DB_PATH))).expanduser()
+    api_key = os.environ.get("PP_SMOKE_API_KEY", DEFAULT_API_KEY)
+    tenant_id = os.environ.get("PP_SMOKE_TENANT", DEFAULT_TENANT_ID)
+
+    auto_seed = not db_path.exists()
+    if args.seed or auto_seed:
+        _seed_smoke_db(db_path=db_path, tenant_id=tenant_id, api_key=api_key, daily_limit_cents=args.daily_limit_cents)
+        print(
+            "seed:",
+            {
+                "mode": "forced" if args.seed else "auto-missing-db",
+                "db_path": str(db_path),
+                "tenant_id": tenant_id,
+                "daily_limit_cents": args.daily_limit_cents,
+            },
+        )
+    print(
+        "env:",
+        {
+            "PP_SMOKE_DB": str(db_path),
+            "PP_SMOKE_API_KEY": api_key,
+            "PP_SMOKE_TENANT": tenant_id,
+            "PP_SMOKE_DAILY_LIMIT_CENTS": args.daily_limit_cents,
+        },
+    )
 
     params = StdioServerParameters(
         command=sys.executable,
@@ -176,7 +278,7 @@ async def main() -> None:
                 raise RuntimeError(f"quote-2 expected 429/LIMIT_EXCEEDED, got: {metadata}")
             print("quote-2 rejected:", metadata.get("code"), metadata.get("http_status"))
 
-    _print_usage(db_path, DEFAULT_TENANT_ID)
+    _print_usage(db_path, tenant_id)
     print("OK: transport smoke passed")
 
 
