@@ -189,3 +189,7 @@ logs/
 /worktrees/
 test_simulation_files/
 .mcp.json
+data/*.sqlite
+data/*.sqlite-journal
+data/*.sqlite-wal
+data/*.sqlite-shm

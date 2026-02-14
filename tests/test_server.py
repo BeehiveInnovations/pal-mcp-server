@@ -4,11 +4,23 @@ Tests for the main server functionality
 
 import pytest
 
-from server import handle_call_tool
+from server import handle_call_tool, handle_list_tools
 
 
 class TestServerTools:
     """Test server tool handling"""
+
+    @pytest.mark.asyncio
+    async def test_handle_list_tools_includes_pp_tools(self):
+        """Ensure PP tools are present in MCP tool discovery list."""
+        tools = await handle_list_tools()
+        names = {tool.name for tool in tools}
+
+        assert "pp_tenant_whoami" in names
+        assert "pp_prepare" in names
+        assert "pp_quote" in names
+        assert "pp_submit" in names
+        assert "pp_admin_setlimit" in names
 
     @pytest.mark.asyncio
     async def test_handle_call_tool_unknown(self):

@@ -59,6 +59,11 @@ from tools import (  # noqa: E402
     ListModelsTool,
     LookupTool,
     PlannerTool,
+    PPAdminSetLimitTool,
+    PPPrepareTool,
+    PPQuoteTool,
+    PPSubmitTool,
+    PPTenantWhoamiTool,
     PrecommitTool,
     RefactorTool,
     SecauditTool,
@@ -277,6 +282,11 @@ TOOLS = {
     "apilookup": LookupTool(),  # Quick web/API lookup instructions
     "listmodels": ListModelsTool(),  # List all available AI models by provider
     "version": VersionTool(),  # Display server version and system information
+    "pp_tenant_whoami": PPTenantWhoamiTool(),  # Resolve tenant identity and daily budget snapshot
+    "pp_prepare": PPPrepareTool(),  # Prepare ProofPack request envelope with hard precharge
+    "pp_quote": PPQuoteTool(),  # Return deterministic ProofPack quote with hard precharge
+    "pp_submit": PPSubmitTool(),  # Submit ProofPack job with hard precharge
+    "pp_admin_setlimit": PPAdminSetLimitTool(),  # Admin-only tenant daily limit management
 }
 TOOLS = filter_disabled_tools(TOOLS)
 

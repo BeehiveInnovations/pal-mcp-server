@@ -13,6 +13,13 @@ from .debug import DebugIssueTool
 from .docgen import DocgenTool
 from .listmodels import ListModelsTool
 from .planner import PlannerTool
+from .pp import (
+    PPAdminSetLimitTool,
+    PPPrepareTool,
+    PPQuoteTool,
+    PPSubmitTool,
+    PPTenantWhoamiTool,
+)
 from .precommit import PrecommitTool
 from .refactor import RefactorTool
 from .secaudit import SecauditTool
@@ -33,6 +40,11 @@ __all__ = [
     "ConsensusTool",
     "ListModelsTool",
     "PlannerTool",
+    "PPTenantWhoamiTool",
+    "PPPrepareTool",
+    "PPQuoteTool",
+    "PPSubmitTool",
+    "PPAdminSetLimitTool",
     "PrecommitTool",
     "ChallengeTool",
     "RefactorTool",
