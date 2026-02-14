@@ -824,9 +824,9 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[TextCon
             # Normalize failures to ToolOutput JSON payloads for consistent MCP responses.
             try:
                 return await tool.execute(arguments)
-            except ToolExecutionError as exc:
+            except ToolExecutionError:
                 logger.warning(f"Tool '{name}' returned ToolExecutionError during execution")
-                return [TextContent(type="text", text=exc.payload)]
+                raise
             except Exception as exc:
                 logger.exception(f"Unexpected error while executing tool '{name}'")
                 error_output = ToolOutput(
@@ -835,7 +835,7 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[TextCon
                     content_type="text",
                     metadata={"tool_name": name, "code": "INTERNAL_ERROR", "http_status": 500},
                 )
-                return [TextContent(type="text", text=error_output.model_dump_json())]
+                raise ToolExecutionError(error_output.model_dump_json()) from exc
 
         # Handle auto mode at MCP boundary - resolve to specific model
         if model_name.lower() == "auto":
@@ -892,9 +892,9 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[TextCon
         # Execute tool with pre-resolved model context
         try:
             result = await tool.execute(arguments)
-        except ToolExecutionError as exc:
+        except ToolExecutionError:
             logger.warning(f"Tool '{name}' returned ToolExecutionError during execution")
-            return [TextContent(type="text", text=exc.payload)]
+            raise
         except Exception as exc:
             logger.exception(f"Unexpected error while executing tool '{name}'")
             error_output = ToolOutput(
@@ -903,7 +903,7 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[TextCon
                 content_type="text",
                 metadata={"tool_name": name, "code": "INTERNAL_ERROR", "http_status": 500},
             )
-            return [TextContent(type="text", text=error_output.model_dump_json())]
+            raise ToolExecutionError(error_output.model_dump_json()) from exc
         logger.info(f"Tool '{name}' execution completed")
 
         # Log completion to activity file
