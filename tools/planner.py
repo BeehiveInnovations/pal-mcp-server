@@ -510,7 +510,7 @@ class PlannerTool(WorkflowTool):
         """Planner-specific expert analysis skip status."""
         return "skipped_by_tool_design"
 
-    def store_initial_issue(self, step_description: str):
+    def store_initial_issue(self, step_description: str, continuation_id: str | None = None):  # noqa: ARG002
         """Store initial planning description."""
         self.initial_planning_description = step_description
 

@@ -137,11 +137,52 @@ class ConsensusTool(WorkflowTool):
 
     def __init__(self):
         super().__init__()
+        # Legacy instance state kept for backward compat (single-caller / no continuation_id)
         self.initial_prompt: str | None = None
-        self.original_proposal: str | None = None  # Store the original proposal separately
+        self.original_proposal: str | None = None
         self.models_to_consult: list[dict] = []
         self.accumulated_responses: list[dict] = []
         self._current_arguments: dict[str, Any] = {}
+        # Per-session state for multi-agent concurrency safety.
+        # Multiple callers (e.g. Claude Code Agent Teams) each get their own isolated
+        # state dict keyed by continuation_id, so concurrent consensus workflows never
+        # overwrite each other's proposal / model list / accumulated responses.
+        self._sessions: dict[str, dict[str, Any]] = {}
+
+    # ------------------------------------------------------------------
+    # Session helpers
+    # ------------------------------------------------------------------
+
+    def _get_session(self, continuation_id: str | None) -> dict[str, Any]:
+        """Return the per-session state dict for *continuation_id*.
+
+        When no continuation_id is provided (legacy / single-caller path) a
+        snapshot dict of the current instance variables is returned so the
+        rest of the code works without special-casing.  Note: in-place
+        mutations on mutable values (lists) propagate to the instance, but
+        scalar key reassignments do *not* — callers must sync those manually
+        via the legacy instance attributes when not using a continuation_id.
+        """
+        if not continuation_id:
+            # Backward-compat: reflect instance vars in a plain dict so callers
+            # can read/write through the same interface.
+            return {
+                "original_proposal": self.original_proposal,
+                "models_to_consult": self.models_to_consult,
+                "accumulated_responses": self.accumulated_responses,
+            }
+        if continuation_id not in self._sessions:
+            self._sessions[continuation_id] = {
+                "original_proposal": None,
+                "models_to_consult": [],
+                "accumulated_responses": [],
+            }
+        return self._sessions[continuation_id]
+
+    def _cleanup_session(self, continuation_id: str | None) -> None:
+        """Remove session state after a workflow completes."""
+        if continuation_id:
+            self._sessions.pop(continuation_id, None)
 
     def get_name(self) -> str:
         return "consensus"
@@ -391,11 +432,14 @@ of the evidence, even when it strongly points in one direction.""",
         response_data["consensus_complete"] = True
         response_data["status"] = "consensus_workflow_complete"
 
+        session = self._get_session(getattr(request, "continuation_id", None))
+        accumulated_responses = session.get("accumulated_responses", self.accumulated_responses)
+
         # Prepare final synthesis data
         response_data["complete_consensus"] = {
-            "initial_prompt": self.original_proposal if self.original_proposal else self.initial_prompt,
-            "models_consulted": [m["model"] + ":" + m.get("stance", "neutral") for m in self.accumulated_responses],
-            "total_responses": len(self.accumulated_responses),
+            "initial_prompt": session.get("original_proposal") or self.initial_prompt,
+            "models_consulted": [m["model"] + ":" + m.get("stance", "neutral") for m in accumulated_responses],
+            "total_responses": len(accumulated_responses),
             "consensus_confidence": "high",  # Consensus complete
         }
 
@@ -414,18 +458,21 @@ of the evidence, even when it strongly points in one direction.""",
         """Handle continuation between consensus steps."""
         current_idx = request.current_model_index or 0
 
+        session = self._get_session(getattr(request, "continuation_id", None))
+        models_to_consult = session.get("models_to_consult", self.models_to_consult)
+
         if request.step_number == 1:
             # After CLI Agent's initial analysis, prepare to consult first model
             response_data["status"] = "consulting_models"
-            response_data["next_model"] = self.models_to_consult[0] if self.models_to_consult else None
+            response_data["next_model"] = models_to_consult[0] if models_to_consult else None
             response_data["next_steps"] = (
                 "Your initial analysis is complete. The tool will now consult the specified models."
             )
-        elif current_idx < len(self.models_to_consult):
-            next_model = self.models_to_consult[current_idx]
+        elif current_idx < len(models_to_consult):
+            next_model = models_to_consult[current_idx]
             response_data["status"] = "consulting_next_model"
             response_data["next_model"] = next_model
-            response_data["models_remaining"] = len(self.models_to_consult) - current_idx
+            response_data["models_remaining"] = len(models_to_consult) - current_idx
             response_data["next_steps"] = f"Model consultation in progress. Next: {next_model['model']}"
         else:
             response_data["status"] = "ready_for_synthesis"
@@ -435,6 +482,14 @@ of the evidence, even when it strongly points in one direction.""",
 
     async def execute_workflow(self, arguments: dict[str, Any]) -> list:
         """Override execute_workflow to handle model consultations between steps."""
+        # Acquire the per-instance concurrency lock (inherited from BaseWorkflowMixin)
+        # to protect shared state (work_history, consolidated_findings) while
+        # consensus-specific state is isolated per-session via self._sessions.
+        async with self._concurrency_lock:
+            return await self._execute_consensus_workflow_locked(arguments)
+
+    async def _execute_consensus_workflow_locked(self, arguments: dict[str, Any]) -> list:
+        """Inner implementation, called while holding _concurrency_lock."""
 
         # Store arguments
         self._current_arguments = arguments
@@ -445,6 +500,28 @@ of the evidence, even when it strongly points in one direction.""",
         # Resolve existing continuation_id or create a new one on first step
         continuation_id = request.continuation_id
 
+        # Restore base workflow state from conversation memory on continuation steps.
+        # ConsensusTool has its own execute_workflow loop (to handle per-model consultation)
+        # and does NOT call the base class's execute_workflow, so we must replicate the
+        # base-class state restore here (cf. BaseWorkflowMixin._execute_workflow_locked
+        # lines 692-709).  Without this, interleaved sessions corrupt each other:
+        #   Session A step 1 → sets work_history
+        #   Session B step 1 → resets work_history to []
+        #   Session A step 2 → sees B's empty work_history instead of its own
+        if continuation_id and request.step_number > 1:
+            from utils.conversation_memory import get_thread
+
+            thread = get_thread(continuation_id)
+            if thread and thread.turns:
+                for turn in reversed(thread.turns):
+                    if turn.role == "assistant" and turn.tool_name == self.get_name() and turn.model_metadata:
+                        state = turn.model_metadata
+                        if isinstance(state, dict) and "work_history" in state:
+                            self.work_history = state.get("work_history", [])
+                            self.initial_request = state.get("initial_request")
+                            self._reprocess_consolidated_findings()
+                            break
+
         if request.step_number == 1:
             if not continuation_id:
                 clean_args = {k: v for k, v in arguments.items() if k not in ["_model_context", "_resolved_model_name"]}
@@ -454,30 +531,47 @@ of the evidence, even when it strongly points in one direction.""",
                 self.work_history = []
                 self.consolidated_findings = ConsolidatedFindings()
 
-            # Store the original proposal from step 1 - this is what all models should see
-            self.store_initial_issue(request.step)
+            # Store the original proposal from step 1 - this is what all models should see.
+            # Use per-session storage so concurrent callers never overwrite each other.
+            self.store_initial_issue(request.step, continuation_id)
             self.initial_request = request.step
-            self.models_to_consult = request.models or []
-            self.accumulated_responses = []
+
+            # Initialise per-session state for this workflow.
+            session = self._get_session(continuation_id)
+            session["models_to_consult"] = request.models or []
+            session["accumulated_responses"] = []
+
+            # Keep legacy instance vars in sync only for the single-caller path.
+            # For multi-agent sessions (continuation_id present) we must NOT overwrite
+            # the shared instance vars with one caller's session-specific data.
+            if not continuation_id:
+                self.models_to_consult = session["models_to_consult"]
+                self.accumulated_responses = session["accumulated_responses"]
+
             # Set total steps: len(models) (each step includes consultation + response)
-            request.total_steps = len(self.models_to_consult)
+            request.total_steps = len(session["models_to_consult"])
 
         # For all steps (1 through total_steps), consult the corresponding model
         if request.step_number <= request.total_steps:
+            # Retrieve isolated per-session state for this caller.
+            session = self._get_session(continuation_id)
+            models_to_consult = session["models_to_consult"]
+            accumulated_responses = session["accumulated_responses"]
+
             # Calculate which model to consult for this step
             model_idx = request.step_number - 1  # 0-based index
 
-            if model_idx < len(self.models_to_consult):
+            if model_idx < len(models_to_consult):
                 # Track workflow state for conversation memory
                 step_data = self.prepare_step_data(request)
                 self.work_history.append(step_data)
                 self._update_consolidated_findings(step_data)
 
                 # Consult the model for this step
-                model_response = await self._consult_model(self.models_to_consult[model_idx], request)
+                model_response = await self._consult_model(models_to_consult[model_idx], request)
 
-                # Add to accumulated responses
-                self.accumulated_responses.append(model_response)
+                # Add to accumulated responses (session-isolated list)
+                accumulated_responses.append(model_response)
 
                 # Include the model response in the step data
                 response_data = {
@@ -504,11 +598,11 @@ of the evidence, even when it strongly points in one direction.""",
                     response_data["status"] = "consensus_workflow_complete"
                     response_data["consensus_complete"] = True
                     response_data["complete_consensus"] = {
-                        "initial_prompt": self.original_proposal if self.original_proposal else self.initial_prompt,
+                        "initial_prompt": session["original_proposal"] or self.initial_prompt,
                         "models_consulted": [
-                            f"{m['model']}:{m.get('stance', 'neutral')}" for m in self.accumulated_responses
+                            f"{m['model']}:{m.get('stance', 'neutral')}" for m in accumulated_responses
                         ],
-                        "total_responses": len(self.accumulated_responses),
+                        "total_responses": len(accumulated_responses),
                         "consensus_confidence": "high",
                     }
                     response_data["next_steps"] = (
@@ -539,10 +633,20 @@ of the evidence, even when it strongly points in one direction.""",
                     if continuation_offer:
                         response_data["continuation_offer"] = continuation_offer
 
+                # Release per-session state *after* all response customization is done.
+                # Must be last: customize_workflow_response and _customize_consensus_metadata
+                # both call _get_session(continuation_id) to build metadata; cleaning up
+                # before those calls would recreate a fresh empty session and lose the
+                # accumulated model list / responses (see PR review comment).
+                if request.step_number == request.total_steps:
+                    self._cleanup_session(continuation_id)
+
                 return [TextContent(type="text", text=json.dumps(response_data, indent=2, ensure_ascii=False))]
 
-        # Otherwise, use standard workflow execution
-        return await super().execute_workflow(arguments)
+        # Otherwise, use standard workflow execution.
+        # We already hold _concurrency_lock so call the inner method directly
+        # to avoid a deadlock from re-acquiring the same asyncio.Lock.
+        return await super()._execute_workflow_locked(arguments)
 
     def _build_continuation_offer(self, continuation_id: str) -> dict[str, Any] | None:
         """Create a continuation offer without exposing prior model responses."""
@@ -588,8 +692,10 @@ of the evidence, even when it strongly points in one direction.""",
             # Use continuation_id=None for blinded consensus - each model should only see
             # original prompt + files, not conversation history or other model responses
             # CRITICAL: Use the original proposal from step 1, NOT what's in request.step for steps 2+!
-            # Steps 2+ contain summaries/notes that must NEVER be sent to other models
-            prompt = self.original_proposal if self.original_proposal else self.initial_prompt
+            # Steps 2+ contain summaries/notes that must NEVER be sent to other models.
+            # Read from the per-session state so concurrent callers don't see each other's proposals.
+            session = self._get_session(request.continuation_id)
+            prompt = session.get("original_proposal") or self.initial_prompt
             if request.relevant_files:
                 file_content, _ = self._prepare_file_content_for_prompt(
                     request.relevant_files,
@@ -723,14 +829,16 @@ of the evidence, even when it strongly points in one direction.""",
 
     def customize_workflow_response(self, response_data: dict, request) -> dict:
         """Customize response for consensus workflow."""
+        session = self._get_session(getattr(request, "continuation_id", None))
+        accumulated_responses = session.get("accumulated_responses", self.accumulated_responses)
         # Store model responses in the response for tracking
-        if self.accumulated_responses:
-            response_data["accumulated_responses"] = self.accumulated_responses
+        if accumulated_responses:
+            response_data["accumulated_responses"] = accumulated_responses
 
         # Add consensus-specific fields
         if request.step_number == 1:
             response_data["consensus_workflow_status"] = "initial_analysis_complete"
-        elif request.step_number < request.total_steps - 1:
+        elif request.step_number < request.total_steps:
             response_data["consensus_workflow_status"] = "consulting_models"
         else:
             response_data["consensus_workflow_status"] = "ready_for_synthesis"
@@ -756,18 +864,19 @@ of the evidence, even when it strongly points in one direction.""",
         # Always preserve tool_name
         metadata["tool_name"] = self.get_name()
 
+        session = self._get_session(getattr(request, "continuation_id", None))
+        session_models = session.get("models_to_consult", self.models_to_consult)
+
         if request.step_number == request.total_steps:
             # Final step - show comprehensive consensus metadata
-            models_consulted = []
-            if self.models_to_consult:
-                models_consulted = [f"{m['model']}:{m.get('stance', 'neutral')}" for m in self.models_to_consult]
+            models_consulted = [f"{m['model']}:{m.get('stance', 'neutral')}" for m in session_models]
 
             metadata.update(
                 {
                     "workflow_type": "multi_model_consensus",
                     "models_consulted": models_consulted,
                     "consensus_complete": True,
-                    "total_models": len(self.models_to_consult) if self.models_to_consult else 0,
+                    "total_models": len(session_models),
                 }
             )
 
@@ -777,14 +886,12 @@ of the evidence, even when it strongly points in one direction.""",
 
         else:
             # Intermediate steps - show consensus workflow in progress
-            models_to_consult = []
-            if self.models_to_consult:
-                models_to_consult = [f"{m['model']}:{m.get('stance', 'neutral')}" for m in self.models_to_consult]
+            models_to_consult_labels = [f"{m['model']}:{m.get('stance', 'neutral')}" for m in session_models]
 
             metadata.update(
                 {
                     "workflow_type": "multi_model_consensus",
-                    "models_to_consult": models_to_consult,
+                    "models_to_consult": models_to_consult_labels,
                     "consultation_step": request.step_number,
                     "total_consultation_steps": request.total_steps,
                 }
@@ -819,10 +926,17 @@ of the evidence, even when it strongly points in one direction.""",
             f"[CONSENSUS_METADATA] {self.get_name()}: Using consensus-specific metadata instead of single-model metadata"
         )
 
-    def store_initial_issue(self, step_description: str):
+    def store_initial_issue(self, step_description: str, continuation_id: str | None = None):
         """Store initial prompt for model consultations."""
-        self.original_proposal = step_description
-        self.initial_prompt = step_description  # Keep for backward compatibility
+        # Write into the per-session dict so concurrent callers stay isolated.
+        session = self._get_session(continuation_id)
+        session["original_proposal"] = step_description
+        # Only sync to legacy instance vars on the single-caller (no continuation_id) path.
+        # For multi-agent sessions we must NOT overwrite the shared singleton state with
+        # one caller's proposal, as that would corrupt concurrent callers.
+        if not continuation_id:
+            self.original_proposal = step_description
+            self.initial_prompt = step_description  # Keep for backward compatibility
 
     # Required abstract methods from BaseTool
     def get_request_model(self):

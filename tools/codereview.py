@@ -448,7 +448,7 @@ class CodeReviewTool(WorkflowTool):
         # Only skip if explicitly set to internal AND review is complete
         return validation_type == "internal" and not request.next_step_required
 
-    def store_initial_issue(self, step_description: str):
+    def store_initial_issue(self, step_description: str, continuation_id: str | None = None):  # noqa: ARG002
         """Store initial request for expert analysis."""
         self.initial_request = step_description
 

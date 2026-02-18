@@ -21,7 +21,6 @@ This validates the conversation threading system's ability to:
 - Properly traverse parent relationships for history reconstruction
 """
 
-
 from .conversation_base_test import ConversationBaseTest
 
 

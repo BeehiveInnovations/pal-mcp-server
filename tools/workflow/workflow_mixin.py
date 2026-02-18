@@ -20,6 +20,7 @@ Features:
 - Comprehensive type annotations for IDE support
 """
 
+import asyncio
 import json
 import logging
 import os
@@ -71,6 +72,14 @@ class BaseWorkflowMixin(ABC):
         self.work_history: list[dict[str, Any]] = []
         self.consolidated_findings: ConsolidatedFindings = ConsolidatedFindings()
         self.initial_request: Optional[str] = None
+        # Per-instance lock: serialises concurrent callers on the same tool singleton so
+        # that shared mutable state (work_history, consolidated_findings, etc.) is never
+        # corrupted by interleaved async execution.  Different tool instances (e.g. debug
+        # vs codereview) have independent locks so they run fully in parallel.
+        # NOTE: with truly async (non-blocking) AI providers this lock prevents races
+        # at the cost of serialising calls of the *same* tool type.  If that becomes a
+        # bottleneck, migrate to per-session state keyed by continuation_id.
+        self._concurrency_lock: asyncio.Lock = asyncio.Lock()
 
     # ================================================================================
     # Abstract Methods - Required Implementation by BaseTool or Subclasses
@@ -611,6 +620,16 @@ class BaseWorkflowMixin(ABC):
         7. Step guidance and required actions
         8. Conversation memory integration
         """
+
+        # Serialise concurrent calls on this tool instance.  The tool singleton holds
+        # mutable state (work_history, consolidated_findings, …) that must not be
+        # corrupted by interleaved async execution from multiple callers (e.g. Claude
+        # Code Agent Teams running parallel sub-agents that all hit the same MCP server).
+        async with self._concurrency_lock:
+            return await self._execute_workflow_locked(arguments)
+
+    async def _execute_workflow_locked(self, arguments: dict[str, Any]) -> list[TextContent]:
+        """Inner implementation of execute_workflow, called while holding _concurrency_lock."""
         from mcp.types import TextContent
 
         try:
@@ -698,8 +717,9 @@ class BaseWorkflowMixin(ABC):
                 clean_args = {k: v for k, v in arguments.items() if k not in ["_model_context", "_resolved_model_name"]}
                 continuation_id = create_thread(self.get_name(), clean_args)
                 self.initial_request = request.step
-                # Allow tools to store initial description for expert analysis
-                self.store_initial_issue(request.step)
+                # Allow tools to store initial description for expert analysis.
+                # Pass continuation_id so subclasses can use per-session storage.
+                self.store_initial_issue(request.step, continuation_id)
 
             # Process work step - allow tools to customize field mapping
             step_data = self.prepare_step_data(request)
@@ -987,9 +1007,11 @@ class BaseWorkflowMixin(ABC):
         except AttributeError:
             return {}
 
-    def store_initial_issue(self, step_description: str):
+    def store_initial_issue(self, step_description: str, continuation_id: Optional[str] = None):  # noqa: ARG002
         """Store initial issue description. Override for custom storage."""
-        # Default implementation - tools can override to store differently
+        # Default implementation - tools can override to store differently.
+        # continuation_id is accepted but ignored here; subclasses (e.g. ConsensusTool)
+        # use it for per-session state isolation.
         self.initial_issue = step_description
 
     def get_initial_request(self, fallback_step: str) -> str:
