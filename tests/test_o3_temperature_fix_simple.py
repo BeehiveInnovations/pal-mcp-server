@@ -173,6 +173,53 @@ class TestO3TemperatureParameterFixSimple:
         assert call_kwargs["stop"] == ["END"], "O3 should include stop parameter"
 
     @patch("utils.model_restrictions.get_restriction_service")
+    @patch("providers.openai_compatible.logging")
+    @patch("providers.openai_compatible.OpenAI")
+    def test_logs_ignored_thinking_mode_parameter(
+        self, mock_openai_class, mock_logging, mock_restriction_service
+    ):
+        """Test that unsupported thinking_mode kwargs are logged instead of being silently dropped."""
+        # Mock restriction service to allow all models
+        mock_service = Mock()
+        mock_service.is_allowed.return_value = True
+        mock_restriction_service.return_value = mock_service
+
+        # Setup mock client
+        mock_client = Mock()
+        mock_openai_class.return_value = mock_client
+
+        # Setup mock response
+        mock_response = Mock()
+        mock_response.choices = [Mock()]
+        mock_response.choices[0].message.content = "Test response"
+        mock_response.choices[0].finish_reason = "stop"
+        mock_response.model = "gpt-4.1-2025-04-14"
+        mock_response.id = "test-id"
+        mock_response.created = 1234567890
+        mock_response.usage = Mock()
+        mock_response.usage.prompt_tokens = 10
+        mock_response.usage.completion_tokens = 5
+        mock_response.usage.total_tokens = 15
+        mock_client.chat.completions.create.return_value = mock_response
+
+        provider = OpenAIModelProvider(api_key="test-key")
+        provider._resolve_model_name = lambda name: name
+        provider.validate_model_name = lambda name: True
+
+        provider.generate_content(
+            prompt="Test prompt",
+            model_name="gpt-4.1-2025-04-14",
+            temperature=0.5,
+            thinking_mode="high",
+        )
+
+        ignored_warning_calls = [
+            call for call in mock_logging.warning.call_args_list if "ignored unsupported generate_content kwargs" in call[0][0]
+        ]
+        assert ignored_warning_calls, "Expected warning when thinking_mode is ignored by OpenAI-compatible providers"
+        assert "thinking_mode" in ignored_warning_calls[0][0][3]
+
+    @patch("utils.model_restrictions.get_restriction_service")
     def test_all_o3_models_have_correct_temperature_capability(self, mock_restriction_service):
         """Test that all O3/O4 models have supports_temperature=False in their capabilities."""
         from providers.openai import OpenAIModelProvider

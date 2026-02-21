@@ -47,6 +47,9 @@ class TestThinkingModes:
         original_env = {
             "OPENAI_API_KEY": os.environ.get("OPENAI_API_KEY"),
             "DEFAULT_MODEL": os.environ.get("DEFAULT_MODEL"),
+            "GEMINI_API_KEY": os.environ.get("GEMINI_API_KEY"),
+            "XAI_API_KEY": os.environ.get("XAI_API_KEY"),
+            "OPENROUTER_API_KEY": os.environ.get("OPENROUTER_API_KEY"),
         }
 
         try:
@@ -130,6 +133,9 @@ class TestThinkingModes:
         original_env = {
             "OPENAI_API_KEY": os.environ.get("OPENAI_API_KEY"),
             "DEFAULT_MODEL": os.environ.get("DEFAULT_MODEL"),
+            "GEMINI_API_KEY": os.environ.get("GEMINI_API_KEY"),
+            "XAI_API_KEY": os.environ.get("XAI_API_KEY"),
+            "OPENROUTER_API_KEY": os.environ.get("OPENROUTER_API_KEY"),
         }
 
         try:
@@ -209,6 +215,9 @@ class TestThinkingModes:
         original_env = {
             "OPENAI_API_KEY": os.environ.get("OPENAI_API_KEY"),
             "DEFAULT_MODEL": os.environ.get("DEFAULT_MODEL"),
+            "GEMINI_API_KEY": os.environ.get("GEMINI_API_KEY"),
+            "XAI_API_KEY": os.environ.get("XAI_API_KEY"),
+            "OPENROUTER_API_KEY": os.environ.get("OPENROUTER_API_KEY"),
         }
 
         try:
@@ -289,6 +298,9 @@ class TestThinkingModes:
         original_env = {
             "OPENAI_API_KEY": os.environ.get("OPENAI_API_KEY"),
             "DEFAULT_MODEL": os.environ.get("DEFAULT_MODEL"),
+            "GEMINI_API_KEY": os.environ.get("GEMINI_API_KEY"),
+            "XAI_API_KEY": os.environ.get("XAI_API_KEY"),
+            "OPENROUTER_API_KEY": os.environ.get("OPENROUTER_API_KEY"),
         }
 
         try:
@@ -369,6 +381,9 @@ class TestThinkingModes:
             "OPENAI_API_KEY": os.environ.get("OPENAI_API_KEY"),
             "DEFAULT_MODEL": os.environ.get("DEFAULT_MODEL"),
             "DEFAULT_THINKING_MODE_THINKDEEP": os.environ.get("DEFAULT_THINKING_MODE_THINKDEEP"),
+            "GEMINI_API_KEY": os.environ.get("GEMINI_API_KEY"),
+            "XAI_API_KEY": os.environ.get("XAI_API_KEY"),
+            "OPENROUTER_API_KEY": os.environ.get("OPENROUTER_API_KEY"),
         }
 
         try:
@@ -439,3 +454,119 @@ class TestThinkingModes:
             # Reload config and clear registry
             importlib.reload(config)
             ModelProviderRegistry._instance = None
+
+
+class TestGeminiThinkingConfiguration:
+    """Test Gemini-specific thinking configuration.
+
+    Note: Gemini API docs describe thinkingLevel for Gemini 3 and thinkingBudget
+    for Gemini 2.5. The current provider implementation maps PAL thinking modes
+    to thinking_budget for both model families.
+    """
+
+    def test_gemini_3_uses_thinking_budget(self):
+        """Verify provider currently uses thinkingBudget for Gemini 3 models."""
+        from unittest.mock import MagicMock, patch
+
+        from providers.gemini import GeminiModelProvider
+
+        # Mock the client and response
+        mock_response = MagicMock()
+        mock_response.text = "Test response"
+        mock_response.candidates = [MagicMock(finish_reason="STOP")]
+        mock_response.usage_metadata = MagicMock(prompt_token_count=10, candidates_token_count=20)
+
+        mock_client = MagicMock()
+        mock_client.models.generate_content.return_value = mock_response
+
+        with patch("google.genai.Client", return_value=mock_client):
+            provider = GeminiModelProvider(api_key="test-key")
+
+            # Call generate_content with Gemini 3 Flash model
+            provider.generate_content(
+                prompt="Test",
+                model_name="gemini-3-flash-preview",
+                thinking_mode="high",
+            )
+
+            # Verify the call was made
+            mock_client.models.generate_content.assert_called_once()
+            call_kwargs = mock_client.models.generate_content.call_args
+            config = call_kwargs.kwargs.get("config") or call_kwargs[1].get("config")
+
+            # Verify provider writes an integer thinking_budget.
+            assert config.thinking_config is not None
+            capability_map = provider.get_all_model_capabilities()
+            max_thinking_tokens = capability_map["gemini-3-flash-preview"].max_thinking_tokens
+            expected_budget = int(max_thinking_tokens * GeminiModelProvider.THINKING_BUDGETS["high"])
+            assert config.thinking_config.thinking_budget == expected_budget
+
+    def test_gemini_25_uses_thinking_budget(self):
+        """Verify Gemini 2.5 models use thinkingBudget parameter (integer)"""
+        from unittest.mock import MagicMock, patch
+
+        from providers.gemini import GeminiModelProvider
+
+        # Mock the client and response
+        mock_response = MagicMock()
+        mock_response.text = "Test response"
+        mock_response.candidates = [MagicMock(finish_reason="STOP")]
+        mock_response.usage_metadata = MagicMock(prompt_token_count=10, candidates_token_count=20)
+
+        mock_client = MagicMock()
+        mock_client.models.generate_content.return_value = mock_response
+
+        with patch("google.genai.Client", return_value=mock_client):
+            provider = GeminiModelProvider(api_key="test-key")
+
+            # Call generate_content with Gemini 2.5 Flash model
+            provider.generate_content(
+                prompt="Test",
+                model_name="gemini-2.5-flash",
+                thinking_mode="high",
+            )
+
+            # Verify the call was made
+            mock_client.models.generate_content.assert_called_once()
+            call_kwargs = mock_client.models.generate_content.call_args
+            config = call_kwargs.kwargs.get("config") or call_kwargs[1].get("config")
+
+            # Verify thinking_config uses thinking_budget (integer), not thinking_level
+            assert config.thinking_config is not None
+            capability_map = provider.get_all_model_capabilities()
+            max_thinking_tokens = capability_map["gemini-2.5-flash"].max_thinking_tokens
+            expected_budget = int(max_thinking_tokens * GeminiModelProvider.THINKING_BUDGETS["high"])
+            assert config.thinking_config.thinking_budget == expected_budget
+
+    def test_gemini_3_flash_max_thinking_budget(self):
+        """Verify Gemini 3 Flash 'max' thinking mode uses full thinking budget"""
+        from unittest.mock import MagicMock, patch
+
+        from providers.gemini import GeminiModelProvider
+
+        mock_response = MagicMock()
+        mock_response.text = "Test response"
+        mock_response.candidates = [MagicMock(finish_reason="STOP")]
+        mock_response.usage_metadata = MagicMock(prompt_token_count=10, candidates_token_count=20)
+
+        mock_client = MagicMock()
+        mock_client.models.generate_content.return_value = mock_response
+
+        with patch("google.genai.Client", return_value=mock_client):
+            provider = GeminiModelProvider(api_key="test-key")
+
+            provider.generate_content(
+                prompt="Test",
+                model_name="gemini-3-flash-preview",
+                thinking_mode="max",
+            )
+
+            call_kwargs = mock_client.models.generate_content.call_args
+            config = call_kwargs.kwargs.get("config") or call_kwargs[1].get("config")
+
+            # 'max' = 100% of model max_thinking_tokens.
+            assert config.thinking_config is not None
+            capability_map = provider.get_all_model_capabilities()
+            max_thinking_tokens = capability_map["gemini-3-flash-preview"].max_thinking_tokens
+            expected_budget = int(max_thinking_tokens * GeminiModelProvider.THINKING_BUDGETS["max"])
+            assert config.thinking_config.thinking_budget == expected_budget

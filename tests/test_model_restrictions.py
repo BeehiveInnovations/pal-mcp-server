@@ -63,7 +63,6 @@ class TestModelRestrictionService:
                 return mapping.get(provider_type)
 
             with patch.object(ModelProviderRegistry, "get_provider", side_effect=fake_get_provider):
-
                 service = ModelRestrictionService()
 
                 # Check OpenAI models
@@ -257,7 +256,7 @@ class TestProviderIntegration:
             provider.get_capabilities("o3")
         assert "not allowed by restriction policy" in str(exc_info.value)
 
-    @patch.dict(os.environ, {"GOOGLE_ALLOWED_MODELS": "gemini-2.5-flash,flash"})
+    @patch.dict(os.environ, {"GOOGLE_ALLOWED_MODELS": "gemini-2.5-flash,flash2.5,flash"})
     def test_gemini_provider_respects_restrictions(self):
         """Test that Gemini provider respects restrictions."""
         # Clear any cached restriction service
@@ -267,8 +266,10 @@ class TestProviderIntegration:
 
         provider = GeminiModelProvider(api_key="test-key")
 
-        # Should validate allowed models (both shorthand and full name allowed)
-        assert provider.validate_model_name("flash")
+        # Should validate allowed models
+        # Note: "flash" now points to gemini-3-flash-preview, "flash2.5" points to gemini-2.5-flash
+        assert provider.validate_model_name("flash")  # flash -> gemini-3-flash-preview
+        assert provider.validate_model_name("flash2.5")  # flash2.5 -> gemini-2.5-flash
         assert provider.validate_model_name("gemini-2.5-flash")
 
         # Should not validate disallowed model
@@ -302,19 +303,19 @@ class TestProviderIntegration:
         from providers.registry import ModelProviderRegistry
 
         with patch.object(ModelProviderRegistry, "get_provider", return_value=provider):
-
             # Test case: Only alias "flash" is allowed, not the full name
             # If parameters are in wrong order, this test will catch it
+            # Note: "flash" now points to gemini-3-flash-preview
 
             # Should allow "flash" alias
             assert provider.validate_model_name("flash")
 
             # Should allow getting capabilities for "flash"
             capabilities = provider.get_capabilities("flash")
-            assert capabilities.model_name == "gemini-2.5-flash"
+            assert capabilities.model_name == "gemini-3-flash-preview"  # flash now points to Gemini 3 Flash
 
             # Canonical form should also be allowed now that alias is on the allowlist
-            assert provider.validate_model_name("gemini-2.5-flash")
+            assert provider.validate_model_name("gemini-3-flash-preview")
             # Unrelated models remain blocked
             assert not provider.validate_model_name("pro")
             assert not provider.validate_model_name("gemini-2.5-pro")
@@ -326,6 +327,10 @@ class TestProviderIntegration:
         This is the reverse scenario - only the full canonical name is allowed,
         not the shorthand alias. This tests that the parameter order is correct
         when resolving aliases.
+
+        Note: With the Gemini 3 Flash change, "flash" now resolves to gemini-3-flash-preview,
+        NOT gemini-2.5-flash. So when only "gemini-2.5-flash" is allowed, "flash" is NOT valid.
+        Use "flash2.5" alias to access gemini-2.5-flash.
         """
         # Clear any cached restriction service
         import utils.model_restrictions
@@ -337,9 +342,12 @@ class TestProviderIntegration:
         # Should allow full name
         assert provider.validate_model_name("gemini-2.5-flash")
 
-        # Should also allow alias that resolves to allowed full name
-        # This works because is_allowed checks both resolved_name and original_name
-        assert provider.validate_model_name("flash")
+        # "flash" now resolves to gemini-3-flash-preview, which is NOT allowed
+        # So "flash" should NOT be valid when only gemini-2.5-flash is allowed
+        assert not provider.validate_model_name("flash")
+
+        # "flash2.5" resolves to gemini-2.5-flash, which IS allowed
+        assert provider.validate_model_name("flash2.5")
 
         # Should not allow "pro" alias
         assert not provider.validate_model_name("pro")
@@ -612,10 +620,13 @@ class TestShorthandRestrictions:
             assert not openai_provider.validate_model_name("o4-mini")  # Unrelated model still blocked
             assert not openai_provider.validate_model_name("o3-mini")
 
-            # Test Gemini provider
+            # Test Gemini provider (flash now points to gemini-3-flash-preview)
             assert gemini_provider.validate_model_name("flash")  # Should work with shorthand
-            assert gemini_provider.validate_model_name("gemini-2.5-flash")  # Canonical allowed
+            assert gemini_provider.validate_model_name("gemini-3-flash-preview")  # Canonical allowed
             assert not gemini_provider.validate_model_name("pro")  # Not allowed
+            assert not gemini_provider.validate_model_name(
+                "gemini-2.5-flash"
+            )  # Not allowed (flash != gemini-2.5-flash now)
 
     @patch.dict(os.environ, {"OPENAI_ALLOWED_MODELS": "o3mini,mini,o4-mini"})
     def test_multiple_shorthands_for_same_model(self):
@@ -641,7 +652,10 @@ class TestShorthandRestrictions:
 
     @patch.dict(
         os.environ,
-        {"OPENAI_ALLOWED_MODELS": "mini,o4-mini", "GOOGLE_ALLOWED_MODELS": "flash,gemini-2.5-flash"},
+        {
+            "OPENAI_ALLOWED_MODELS": "mini,o4-mini",
+            "GOOGLE_ALLOWED_MODELS": "flash,flash2.5,gemini-2.5-flash,gemini-3-flash-preview",
+        },
     )
     def test_both_shorthand_and_full_name_allowed(self):
         """Test that we can allow both shorthand and full names."""
@@ -655,10 +669,13 @@ class TestShorthandRestrictions:
         assert openai_provider.validate_model_name("mini")
         assert openai_provider.validate_model_name("o4-mini")
 
-        # Gemini - both flash and full name are allowed
+        # Gemini - both flash aliases and full names are allowed
+        # Note: "flash" now points to gemini-3-flash-preview, "flash2.5" points to gemini-2.5-flash
         gemini_provider = GeminiModelProvider(api_key="test-key")
-        assert gemini_provider.validate_model_name("flash")
+        assert gemini_provider.validate_model_name("flash")  # -> gemini-3-flash-preview
+        assert gemini_provider.validate_model_name("flash2.5")  # -> gemini-2.5-flash
         assert gemini_provider.validate_model_name("gemini-2.5-flash")
+        assert gemini_provider.validate_model_name("gemini-3-flash-preview")
 
 
 class TestAutoModeWithRestrictions:

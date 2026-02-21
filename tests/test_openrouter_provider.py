@@ -387,3 +387,40 @@ class TestOpenRouterFunctionality:
         # Registry should be initialized
         assert hasattr(provider, "_registry")
         assert provider._registry is not None
+
+    @patch("utils.model_restrictions.get_restriction_service")
+    @patch("providers.openai_compatible.OpenAI")
+    def test_thinking_mode_maps_to_reasoning_effort(self, mock_openai_class, mock_restriction_service):
+        """OpenRouter should translate thinking_mode into reasoning.effort for chat completions."""
+        mock_service = Mock()
+        mock_service.is_allowed.return_value = True
+        mock_restriction_service.return_value = mock_service
+
+        mock_client = Mock()
+        mock_openai_class.return_value = mock_client
+
+        mock_response = Mock()
+        mock_response.choices = [Mock()]
+        mock_response.choices[0].message.content = "Test response"
+        mock_response.choices[0].finish_reason = "stop"
+        mock_response.model = "google/gemini-3-flash-preview"
+        mock_response.id = "test-id"
+        mock_response.created = 1234567890
+        mock_response.usage = Mock()
+        mock_response.usage.prompt_tokens = 10
+        mock_response.usage.completion_tokens = 5
+        mock_response.usage.total_tokens = 15
+        mock_client.chat.completions.create.return_value = mock_response
+
+        provider = OpenRouterProvider(api_key="test-key")
+        provider.validate_model_name = lambda name: True
+
+        provider.generate_content(
+            prompt="Test prompt",
+            model_name="google/gemini-3-flash-preview",
+            thinking_mode="max",
+        )
+
+        call_kwargs = mock_client.chat.completions.create.call_args[1]
+        assert "reasoning" not in call_kwargs
+        assert call_kwargs["extra_body"]["reasoning"] == {"effort": "xhigh"}

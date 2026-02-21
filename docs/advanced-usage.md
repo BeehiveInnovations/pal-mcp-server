@@ -33,8 +33,9 @@ Regardless of your default configuration, you can specify models per request:
 
 | Model | Provider | Context | Strengths | Auto Mode Usage |
 |-------|----------|---------|-----------|------------------|
-| **`pro`** (Gemini 3.0 Pro) | Google | 1M tokens | Extended thinking (up to 32K tokens), deep analysis | Complex architecture, security reviews, deep debugging |
-| **`flash`** (Gemini 2.5 Flash) | Google | 1M tokens | Ultra-fast responses with thinking | Quick checks, formatting, simple analysis |
+| **`pro`** (Gemini 3.0 Pro) | Google | 1M tokens | Extended thinking via `generationConfig.thinkingConfig.thinkingLevel` (`minimal`/`low`/`medium`/`high`), deep analysis | Complex architecture, security reviews, deep debugging |
+| **`flash`** (Gemini 3 Flash) | Google | 1M tokens | Pro-level reasoning with Flash latency using `generationConfig.thinkingConfig.thinkingLevel` (`minimal`/`low`/`medium`/`high`) | Everyday tasks, agentic coding, complex analysis at high speed |
+| **`flash2.5`** (Gemini 2.5 Flash) | Google | 1M tokens | Ultra-fast responses with thinking | Quick checks, formatting, simple analysis |
 | **`flash-2.0`** (Gemini 2.0 Flash) | Google | 1M tokens | Latest fast model with audio/video support | Quick analysis with multimodal input |
 | **`flashlite`** (Gemini 2.0 Flash Lite) | Google | 1M tokens | Lightweight text-only model | Fast text processing without vision |
 | **`o3`** | OpenAI | 200K tokens | Strong logical reasoning | Debugging logic errors, systematic analysis |
@@ -57,7 +58,8 @@ cloud models (expensive/powerful) AND local models (free/private) in the same co
 
 **Model Capabilities:**
 - **Gemini Models**: Support thinking modes (minimal to max), web search, 1M context
-  - **Pro 3.0**: Deep analysis with max 32K thinking tokens
+  - **Pro 3.0**: Deep analysis with discrete `generationConfig.thinkingConfig.thinkingLevel` values: `minimal`, `low`, `medium`, `high`
+  - **Flash 3.0**: Pro-level reasoning at Flash latency using `generationConfig.thinkingConfig.thinkingLevel` (`minimal`, `low`, `medium`, `high`) (intelligence_score: 17)
   - **Flash 2.5**: Ultra-fast with thinking support (24K thinking tokens)
   - **Flash 2.0**: Latest fast model with audio/video input (24K thinking tokens)
   - **Flash Lite 2.0**: Text-only lightweight model (no thinking support)
@@ -105,7 +107,7 @@ OPENAI_ALLOWED_MODELS=o3,o4-mini
 
 ### Thinking Modes & Token Budgets
 
-These only apply to models that support customizing token usage for extended thinking, such as Gemini 3.0 Pro.
+These token budgets apply to models that support customizing token usage for extended thinking, such as Gemini 2.5 Flash.
 
 | Mode | Token Budget | Use Case | Cost Impact |
 |------|-------------|----------|-------------|

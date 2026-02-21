@@ -195,6 +195,8 @@ def clear_model_restriction_env(monkeypatch):
 def disable_force_env_override(monkeypatch):
     """Default tests to runtime environment visibility unless they explicitly opt in."""
 
+    # Prevent .env-loaded DISABLED_TOOLS from disabling tools in test runs.
+    monkeypatch.setenv("DISABLED_TOOLS", "")
     monkeypatch.setenv("PAL_MCP_FORCE_ENV_OVERRIDE", "false")
     env_config.reload_env({"PAL_MCP_FORCE_ENV_OVERRIDE": "false"})
     monkeypatch.setenv("DEFAULT_MODEL", "gemini-2.5-flash")

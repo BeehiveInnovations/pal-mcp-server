@@ -229,6 +229,24 @@ class SimpleTool(BaseTool):
         except AttributeError:
             return None
 
+    def get_provider_thinking_mode(self, provider: Any, capabilities: Any, thinking_mode: Optional[str], logger) -> Optional[str]:
+        """Return thinking_mode only when both model metadata and provider implementation support it."""
+        if thinking_mode is None or not capabilities.supports_extended_thinking:
+            return None
+
+        # Gemini and OpenRouter currently consume `thinking_mode` directly.
+        provider_type = provider.get_provider_type()
+        if provider_type.value in {"google", "openrouter"}:
+            return thinking_mode
+
+        logger.warning(
+            "Ignoring thinking_mode='%s' for model '%s': provider '%s' does not accept thinking_mode kwargs",
+            thinking_mode,
+            self._current_model_name,
+            provider_type.value,
+        )
+        return None
+
     def get_request_files(self, request) -> list:
         """Get absolute file paths from request. Override for custom file handling."""
         try:
@@ -437,18 +455,20 @@ class SimpleTool(BaseTool):
             estimated_tokens = estimate_tokens(prompt)
             logger.debug(f"Prompt length: {len(prompt)} characters (~{estimated_tokens:,} tokens)")
 
-            # Resolve model capabilities for feature gating
-            supports_thinking = capabilities.supports_extended_thinking
+            provider_thinking_mode = self.get_provider_thinking_mode(provider, capabilities, thinking_mode, logger)
+
+            generation_kwargs = {
+                "prompt": prompt,
+                "model_name": self._current_model_name,
+                "system_prompt": system_prompt,
+                "temperature": temperature,
+                "images": images if images else None,
+            }
+            if provider_thinking_mode is not None:
+                generation_kwargs["thinking_mode"] = provider_thinking_mode
 
             # Generate content with provider abstraction
-            model_response = provider.generate_content(
-                prompt=prompt,
-                model_name=self._current_model_name,
-                system_prompt=system_prompt,
-                temperature=temperature,
-                thinking_mode=thinking_mode if supports_thinking else None,
-                images=images if images else None,
-            )
+            model_response = provider.generate_content(**generation_kwargs)
 
             logger.info(f"Received response from {provider.get_provider_type().value} API for {self.get_name()}")
 
@@ -498,14 +518,16 @@ class SimpleTool(BaseTool):
                         retry_prompt = f"{original_prompt}\n\nIMPORTANT: Please provide a substantive response. If you cannot respond to the above request, please explain why and suggest alternatives."
 
                         try:
-                            retry_response = provider.generate_content(
-                                prompt=retry_prompt,
-                                model_name=self._current_model_name,
-                                system_prompt=system_prompt,
-                                temperature=temperature,
-                                thinking_mode=thinking_mode if supports_thinking else None,
-                                images=images if images else None,
-                            )
+                            retry_kwargs = {
+                                "prompt": retry_prompt,
+                                "model_name": self._current_model_name,
+                                "system_prompt": system_prompt,
+                                "temperature": temperature,
+                                "images": images if images else None,
+                            }
+                            if provider_thinking_mode is not None:
+                                retry_kwargs["thinking_mode"] = provider_thinking_mode
+                            retry_response = provider.generate_content(**retry_kwargs)
 
                             if retry_response.content:
                                 # Successful retry - use the retry response

@@ -48,14 +48,14 @@ class TestIntelligentFallback:
 
     @patch.dict(os.environ, {"OPENAI_API_KEY": "", "GEMINI_API_KEY": "test-gemini-key"}, clear=False)
     def test_prefers_gemini_flash_when_openai_unavailable(self):
-        """Test that gemini-2.5-flash is used when only Gemini API key is available"""
+        """Test that gemini-3-flash-preview is used when only Gemini API key is available"""
         # Register only Gemini provider for this test
         from providers.gemini import GeminiModelProvider
 
         ModelProviderRegistry.register_provider(ProviderType.GOOGLE, GeminiModelProvider)
 
         fallback_model = ModelProviderRegistry.get_preferred_fallback_model()
-        assert fallback_model == "gemini-2.5-flash"
+        assert fallback_model == "gemini-3-flash-preview"  # Gemini 3 Flash has higher intelligence score (17)
 
     @patch.dict(os.environ, {"OPENAI_API_KEY": "sk-test-key", "GEMINI_API_KEY": "test-gemini-key"}, clear=False)
     def test_prefers_openai_when_both_available(self):
@@ -68,7 +68,9 @@ class TestIntelligentFallback:
         ModelProviderRegistry.register_provider(ProviderType.GOOGLE, GeminiModelProvider)
 
         fallback_model = ModelProviderRegistry.get_preferred_fallback_model()
-        assert fallback_model == "gemini-2.5-flash"  # Gemini has priority now (based on new PROVIDER_PRIORITY_ORDER)
+        assert (
+            fallback_model == "gemini-3-flash-preview"
+        )  # Gemini 3 Flash has priority now (based on new PROVIDER_PRIORITY_ORDER)
 
     @patch.dict(os.environ, {"OPENAI_API_KEY": "", "GEMINI_API_KEY": ""}, clear=False)
     def test_fallback_when_no_keys_available(self):
@@ -81,7 +83,9 @@ class TestIntelligentFallback:
         ModelProviderRegistry.register_provider(ProviderType.GOOGLE, GeminiModelProvider)
 
         fallback_model = ModelProviderRegistry.get_preferred_fallback_model()
-        assert fallback_model == "gemini-2.5-flash"  # Default fallback
+        assert (
+            fallback_model == "gemini-3-flash-preview"
+        )  # Gemini 3 Flash is default fallback (higher intelligence score)
 
     def test_available_providers_with_keys(self):
         """Test the get_available_providers_with_keys method"""
@@ -186,8 +190,8 @@ class TestIntelligentFallback:
 
                 history, tokens = build_conversation_history(context, model_context=None)
 
-                # Should use gemini-2.5-flash when only Gemini is available
-                mock_context_class.assert_called_once_with("gemini-2.5-flash")
+                # Should use gemini-3-flash-preview when only Gemini is available (Gemini 3 Flash has higher intelligence)
+                mock_context_class.assert_called_once_with("gemini-3-flash-preview")
 
     def test_non_auto_mode_unchanged(self):
         """Test that non-auto mode behavior is unchanged"""

@@ -30,6 +30,13 @@ class OpenAICompatibleProvider(ModelProvider):
 
     DEFAULT_HEADERS = {}
     FRIENDLY_NAME = "OpenAI Compatible"
+    _THINKING_MODE_TO_REASONING_EFFORT = {
+        "minimal": "minimal",
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "max": "xhigh",
+    }
 
     def __init__(self, api_key: str, base_url: str = None, **kwargs):
         """Initialize the provider with API key and optional base URL.
@@ -385,6 +392,48 @@ class OpenAICompatibleProvider(ModelProvider):
 
         return content
 
+    def _map_thinking_mode_to_reasoning_effort(self, thinking_mode: str, model_name: str) -> Optional[str]:
+        """Translate tool-level thinking_mode values into OpenRouter reasoning effort values."""
+        normalized = thinking_mode.strip().lower()
+        effort = self._THINKING_MODE_TO_REASONING_EFFORT.get(normalized)
+        if effort is None:
+            logging.warning(
+                "Ignoring unsupported thinking_mode '%s' for model %s (expected one of: %s)",
+                thinking_mode,
+                model_name,
+                ", ".join(sorted(self._THINKING_MODE_TO_REASONING_EFFORT.keys())),
+            )
+        return effort
+
+    def _resolve_openrouter_reasoning(self, model_name: str, **kwargs) -> Optional[dict]:
+        """Build OpenRouter reasoning configuration from explicit reasoning or thinking_mode."""
+        reasoning = kwargs.get("reasoning")
+        if reasoning is not None:
+            if isinstance(reasoning, dict):
+                return reasoning
+            logging.warning(
+                "Ignoring invalid reasoning payload for model %s: expected dict, got %s",
+                model_name,
+                type(reasoning).__name__,
+            )
+
+        thinking_mode = kwargs.get("thinking_mode")
+        if thinking_mode is None:
+            return None
+
+        if not isinstance(thinking_mode, str):
+            logging.warning(
+                "Ignoring non-string thinking_mode for model %s: got %s",
+                model_name,
+                type(thinking_mode).__name__,
+            )
+            return None
+
+        effort = self._map_thinking_mode_to_reasoning_effort(thinking_mode, model_name)
+        if effort is None:
+            return None
+        return {"effort": effort}
+
     def _generate_with_responses_endpoint(
         self,
         model_name: str,
@@ -417,10 +466,24 @@ class OpenAICompatibleProvider(ModelProvider):
         if capabilities and capabilities.default_reasoning_effort:
             effort = capabilities.default_reasoning_effort
 
+        reasoning_payload: dict[str, object] = {"effort": effort}
+
+        # OpenRouter supports request-scoped reasoning controls. Prefer explicit
+        # reasoning payload, then thinking_mode override.
+        if self.get_provider_type() == ProviderType.OPENROUTER:
+            request_reasoning = self._resolve_openrouter_reasoning(model_name, **kwargs)
+            if isinstance(request_reasoning, dict):
+                reasoning_payload = request_reasoning.copy()
+                override_effort = reasoning_payload.get("effort")
+                if isinstance(override_effort, str) and override_effort.strip():
+                    reasoning_payload["effort"] = override_effort.strip()
+                else:
+                    reasoning_payload["effort"] = effort
+
         completion_params = {
             "model": model_name,
             "input": input_messages,
-            "reasoning": {"effort": effort},
+            "reasoning": reasoning_payload,
         }
 
         # Only include store parameter for providers that support it.
@@ -432,9 +495,9 @@ class OpenAICompatibleProvider(ModelProvider):
         else:
             logging.debug(f"Omitting 'store' parameter for OpenRouter provider (model: {model_name})")
 
-        # Add max tokens if specified (using max_completion_tokens for responses endpoint)
+        # Add max tokens if specified
         if max_output_tokens:
-            completion_params["max_completion_tokens"] = max_output_tokens
+            completion_params["max_output_tokens"] = max_output_tokens
 
         # For responses endpoint, we only add parameters that are explicitly supported
         # Remove unsupported chat completion parameters that may cause API errors
@@ -602,10 +665,32 @@ class OpenAICompatibleProvider(ModelProvider):
 
         # Add any additional OpenAI-specific parameters
         # Use capabilities to filter parameters for reasoning models
+        allowed_chat_kwargs = {"top_p", "frequency_penalty", "presence_penalty", "seed", "stop", "stream"}
+        if self.get_provider_type() == ProviderType.OPENROUTER:
+            allowed_chat_kwargs |= {"reasoning", "thinking_mode"}
+
+            openrouter_reasoning = self._resolve_openrouter_reasoning(resolved_model, **kwargs)
+            if openrouter_reasoning is not None:
+                completion_params.setdefault("extra_body", {})
+                completion_params["extra_body"]["reasoning"] = openrouter_reasoning
+
+        ignored_kwargs = sorted(
+            key for key, value in kwargs.items() if value is not None and key not in allowed_chat_kwargs
+        )
+        if ignored_kwargs:
+            logging.warning(
+                "%s provider ignored unsupported generate_content kwargs for model %s: %s",
+                self.FRIENDLY_NAME,
+                resolved_model,
+                ", ".join(ignored_kwargs),
+            )
+
         for key, value in kwargs.items():
-            if key in ["top_p", "frequency_penalty", "presence_penalty", "seed", "stop", "stream"]:
+            if key in allowed_chat_kwargs:
+                if key in {"reasoning", "thinking_mode"}:
+                    continue
                 # Reasoning models (those that don't support temperature) also don't support these parameters
-                if not supports_sampling and key in ["top_p", "frequency_penalty", "presence_penalty", "stream"]:
+                if not supports_sampling and key in {"top_p", "frequency_penalty", "presence_penalty", "stream"}:
                     continue  # Skip unsupported parameters for reasoning models
                 completion_params[key] = value
 

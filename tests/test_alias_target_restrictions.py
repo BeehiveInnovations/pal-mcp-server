@@ -87,9 +87,13 @@ class TestAliasTargetRestrictions:
         assert provider.validate_model_name("gpt5")
         assert provider.validate_model_name("gpt-5")
 
-    @patch.dict(os.environ, {"GOOGLE_ALLOWED_MODELS": "gemini-2.5-flash"})  # Allow target
+    @patch.dict(os.environ, {"GOOGLE_ALLOWED_MODELS": "gemini-3-flash-preview"})  # Allow target
     def test_gemini_restriction_policy_allows_alias_when_target_allowed(self):
-        """Test Gemini restriction policy allows alias when target is allowed."""
+        """Test Gemini restriction policy allows alias when target is allowed.
+
+        Note: 'flash' now points to gemini-3-flash-preview, not gemini-2.5-flash.
+        Use 'flash2.5' to access gemini-2.5-flash.
+        """
         # Clear cached restriction service
         import utils.model_restrictions
 
@@ -98,12 +102,15 @@ class TestAliasTargetRestrictions:
         provider = GeminiModelProvider(api_key="test-key")
 
         # Both target and alias should be allowed
-        assert provider.validate_model_name("gemini-2.5-flash")
-        assert provider.validate_model_name("flash")
+        assert provider.validate_model_name("gemini-3-flash-preview")
+        assert provider.validate_model_name("flash")  # flash -> gemini-3-flash-preview
 
     @patch.dict(os.environ, {"GOOGLE_ALLOWED_MODELS": "flash"})  # Allow alias only
     def test_gemini_restriction_policy_alias_allows_canonical(self):
-        """Gemini alias allowlists should permit canonical forms."""
+        """Gemini alias allowlists should permit canonical forms.
+
+        Note: 'flash' now resolves to gemini-3-flash-preview, not gemini-2.5-flash.
+        """
         import utils.model_restrictions
 
         utils.model_restrictions._restriction_service = None
@@ -111,7 +118,9 @@ class TestAliasTargetRestrictions:
         provider = GeminiModelProvider(api_key="test-key")
 
         assert provider.validate_model_name("flash")
-        assert provider.validate_model_name("gemini-2.5-flash")
+        assert provider.validate_model_name("gemini-3-flash-preview")  # flash -> gemini-3-flash-preview
+        # gemini-2.5-flash should NOT be allowed when only 'flash' is allowed
+        assert not provider.validate_model_name("gemini-2.5-flash")
 
     def test_restriction_service_validation_includes_all_targets(self):
         """Test that restriction service validation knows about all aliases and targets."""
@@ -167,15 +176,18 @@ class TestAliasTargetRestrictions:
 
     @patch.dict(os.environ, {"GOOGLE_ALLOWED_MODELS": "flash"}, clear=True)
     def test_service_alias_allows_canonical_gemini(self):
-        """Gemini alias allowlists should permit canonical forms."""
+        """Gemini alias allowlists should permit canonical forms.
+
+        Note: 'flash' now resolves to gemini-3-flash-preview, not gemini-2.5-flash.
+        """
         import utils.model_restrictions
 
         utils.model_restrictions._restriction_service = None
         provider = GeminiModelProvider(api_key="test-key")
         service = ModelRestrictionService()
 
-        assert service.is_allowed(ProviderType.GOOGLE, "gemini-2.5-flash")
-        assert provider.validate_model_name("gemini-2.5-flash")
+        assert service.is_allowed(ProviderType.GOOGLE, "gemini-3-flash-preview")  # flash -> gemini-3-flash-preview
+        assert provider.validate_model_name("gemini-3-flash-preview")
 
     def test_alias_target_policy_regression_prevention(self):
         """Regression test to ensure aliases and targets are both validated properly.

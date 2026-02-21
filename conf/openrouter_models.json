@@ -9,7 +9,7 @@
       "aliases": "Array of short names users can type instead of the full model name",
       "context_window": "Total number of tokens the model can process (input + output combined)",
       "max_output_tokens": "Maximum number of tokens the model can generate in a single response",
-      "supports_extended_thinking": "Whether the model supports extended reasoning tokens (currently none do via OpenRouter or custom APIs)",
+      "supports_extended_thinking": "Whether the model supports extended reasoning controls via this provider (for example thinking/reasoning parameters)",
       "supports_json_mode": "Whether the model can guarantee valid JSON output",
       "supports_function_calling": "Whether the model supports function/tool calling",
       "supports_images": "Whether the model can process images/visual input",
@@ -123,6 +123,25 @@
       "intelligence_score": 18
     },
     {
+      "model_name": "google/gemini-3-flash-preview",
+      "aliases": [
+        "flash",
+        "flash3",
+        "gemini3-flash",
+        "gemini-flash",
+        "flash-openrouter"
+      ],
+      "context_window": 1048576,
+      "max_output_tokens": 65536,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 20.0,
+      "description": "Google's Gemini 3 Flash via OpenRouter - Pro-level reasoning with Flash latency",
+      "intelligence_score": 17
+    },
+    {
       "model_name": "google/gemini-2.5-pro",
       "aliases": [
         "gemini-2.5",
@@ -142,8 +161,9 @@
     {
       "model_name": "google/gemini-2.5-flash",
       "aliases": [
-        "flash",
-        "gemini-flash"
+        "flash2.5",
+        "flash-2.5",
+        "flash2.5-openrouter"
       ],
       "context_window": 1048576,
       "max_output_tokens": 65536,

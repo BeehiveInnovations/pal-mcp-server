@@ -140,6 +140,89 @@ class TestStoreParameterHandling(unittest.TestCase):
         self.assertIn("store", captured_params, "OpenAI requests should include 'store' parameter")
         self.assertTrue(captured_params["store"], "OpenAI requests should have store=True")
 
+    def test_openrouter_responses_thinking_mode_overrides_reasoning_effort(self):
+        """OpenRouter responses endpoint should map thinking_mode to reasoning.effort."""
+        captured_params = {}
+
+        def capture_create(**kwargs):
+            captured_params.update(kwargs)
+            mock_response = Mock()
+            mock_response.output_text = "Test response"
+            mock_response.usage = None
+            return mock_response
+
+        mock_client_instance = Mock()
+        mock_client_instance.responses.create = capture_create
+
+        with patch.object(
+            MockOpenRouterProvider, "client", new_callable=lambda: property(lambda self: mock_client_instance)
+        ):
+            provider = MockOpenRouterProvider("test-key")
+            provider._generate_with_responses_endpoint(
+                model_name="openai/gpt-5-pro",
+                messages=[{"role": "user", "content": "test"}],
+                temperature=0.7,
+                thinking_mode="minimal",
+            )
+
+        # minimal should remain distinct and override default_reasoning_effort=high
+        self.assertEqual(captured_params.get("reasoning"), {"effort": "minimal"})
+
+    def test_openrouter_responses_preserves_explicit_reasoning_fields(self):
+        """OpenRouter responses endpoint should forward explicit reasoning payloads without truncating fields."""
+        captured_params = {}
+
+        def capture_create(**kwargs):
+            captured_params.update(kwargs)
+            mock_response = Mock()
+            mock_response.output_text = "Test response"
+            mock_response.usage = None
+            return mock_response
+
+        mock_client_instance = Mock()
+        mock_client_instance.responses.create = capture_create
+
+        with patch.object(
+            MockOpenRouterProvider, "client", new_callable=lambda: property(lambda self: mock_client_instance)
+        ):
+            provider = MockOpenRouterProvider("test-key")
+            provider._generate_with_responses_endpoint(
+                model_name="openai/gpt-5.1-codex",
+                messages=[{"role": "user", "content": "test"}],
+                temperature=0.7,
+                reasoning={"effort": "high", "exclude": True},
+            )
+
+        self.assertEqual(captured_params.get("reasoning"), {"effort": "high", "exclude": True})
+
+    def test_openrouter_responses_uses_max_output_tokens_parameter(self):
+        """Responses endpoint should use max_output_tokens key for SDK compatibility."""
+        captured_params = {}
+
+        def capture_create(**kwargs):
+            captured_params.update(kwargs)
+            mock_response = Mock()
+            mock_response.output_text = "Test response"
+            mock_response.usage = None
+            return mock_response
+
+        mock_client_instance = Mock()
+        mock_client_instance.responses.create = capture_create
+
+        with patch.object(
+            MockOpenRouterProvider, "client", new_callable=lambda: property(lambda self: mock_client_instance)
+        ):
+            provider = MockOpenRouterProvider("test-key")
+            provider._generate_with_responses_endpoint(
+                model_name="openai/gpt-5.1-codex",
+                messages=[{"role": "user", "content": "test"}],
+                temperature=0.7,
+                max_output_tokens=321,
+            )
+
+        self.assertEqual(captured_params.get("max_output_tokens"), 321)
+        self.assertNotIn("max_completion_tokens", captured_params)
+
 
 if __name__ == "__main__":
     unittest.main()
