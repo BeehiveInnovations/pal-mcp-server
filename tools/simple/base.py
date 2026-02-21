@@ -599,6 +599,13 @@ class SimpleTool(BaseTool):
         # Format the response using the hook method
         formatted_response = self.format_response(raw_text, request, model_info)
 
+        # Fenced code block extraction (applies to all tools with a working directory)
+        working_dir = getattr(request, "working_directory_absolute_path", None)
+        if working_dir:
+            from tools.shared.code_extraction import apply_fenced_code_extraction
+
+            formatted_response = apply_fenced_code_extraction(formatted_response, working_dir)
+
         # Handle conversation continuation like old base.py
         continuation_id = self.get_request_continuation_id(request)
         if continuation_id:
