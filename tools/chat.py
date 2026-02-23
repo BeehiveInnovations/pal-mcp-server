@@ -153,7 +153,7 @@ class ChatTool(SimpleTool):
                 },
             },
             "required": required_fields,
-            "additionalProperties": False,
+            "additionalProperties": True,
         }
 
         return schema

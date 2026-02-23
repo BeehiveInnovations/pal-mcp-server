@@ -98,7 +98,7 @@ class SchemaBuilder:
             "$schema": "http://json-schema.org/draft-07/schema#",
             "type": "object",
             "properties": properties,
-            "additionalProperties": False,
+            "additionalProperties": True,
         }
 
         if required:

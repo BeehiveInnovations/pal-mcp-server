@@ -148,7 +148,7 @@ class VersionTool(BaseTool):
             "type": "object",
             "properties": {},
             "required": [],
-            "additionalProperties": False,
+            "additionalProperties": True,
         }
 
     def get_annotations(self) -> Optional[dict[str, Any]]:

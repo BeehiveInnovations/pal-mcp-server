@@ -147,7 +147,7 @@ class WorkflowSchemaBuilder:
             "type": "object",
             "properties": properties,
             "required": required,
-            "additionalProperties": False,
+            "additionalProperties": True,
         }
 
         if tool_name:

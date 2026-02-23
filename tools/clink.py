@@ -149,7 +149,7 @@ class CLinkTool(SimpleTool):
             "type": "object",
             "properties": properties,
             "required": ["prompt"],
-            "additionalProperties": False,
+            "additionalProperties": True,
         }
 
         if len(self._cli_names) > 1:
