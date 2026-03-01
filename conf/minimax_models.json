@@ -1,0 +1,121 @@
+{
+  "_README": {
+    "description": "Model metadata for MiniMax API access.",
+    "documentation": "https://github.com/BeehiveInnovations/pal-mcp-server/blob/main/docs/custom_models.md",
+    "usage": "Models listed here are exposed directly through the MiniMax provider. Aliases are case-insensitive.",
+    "field_notes": "Matches providers/shared/model_capabilities.py.",
+    "field_descriptions": {
+      "model_name": "The model identifier (e.g., 'MiniMax-M2.5', 'MiniMax-M2')",
+      "aliases": "Array of short names users can type instead of the full model name",
+      "context_window": "Total number of tokens the model can process (input + output combined)",
+      "max_output_tokens": "Maximum number of tokens the model can generate in a single response",
+      "supports_extended_thinking": "Whether the model supports extended reasoning tokens (MiniMax uses reasoning_split instead)",
+      "supports_json_mode": "Whether the model can guarantee valid JSON output",
+      "supports_function_calling": "Whether the model supports function/tool calling",
+      "supports_images": "Whether the model can process images/visual input",
+      "supports_temperature": "Whether the model accepts temperature parameter in API calls",
+      "description": "Human-readable description of the model",
+      "intelligence_score": "1-20 human rating used as the primary signal for auto-mode model ordering"
+    }
+  },
+  "models": [
+    {
+      "model_name": "MiniMax-M2.5",
+      "friendly_name": "MiniMax (M2.5)",
+      "aliases": [
+        "m2.5",
+        "minimax",
+        "minimax-m2.5"
+      ],
+      "intelligence_score": 16,
+      "description": "MiniMax M2.5 (196K context) - Frontier reasoning model with tool calling",
+      "context_window": 196608,
+      "max_output_tokens": 196608,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true
+    },
+    {
+      "model_name": "MiniMax-M2.5-highspeed",
+      "friendly_name": "MiniMax (M2.5 Highspeed)",
+      "aliases": [
+        "m2.5-fast",
+        "m2.5-highspeed",
+        "minimax-m2.5-fast"
+      ],
+      "intelligence_score": 15,
+      "description": "MiniMax M2.5 Highspeed (204K context) - Fast reasoning model",
+      "context_window": 204800,
+      "max_output_tokens": 100000,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true
+    },
+    {
+      "model_name": "MiniMax-M2.1",
+      "friendly_name": "MiniMax (M2.1)",
+      "aliases": [
+        "m2.1",
+        "minimax-m2.1"
+      ],
+      "intelligence_score": 15,
+      "description": "MiniMax M2.1 (204K context) - Advanced reasoning model with tool calling",
+      "context_window": 204800,
+      "max_output_tokens": 100000,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true
+    },
+    {
+      "model_name": "MiniMax-M2.1-highspeed",
+      "friendly_name": "MiniMax (M2.1 Highspeed)",
+      "aliases": [
+        "m2.1-fast",
+        "m2.1-highspeed",
+        "minimax-m2.1-fast"
+      ],
+      "intelligence_score": 14,
+      "description": "MiniMax M2.1 Highspeed (204K context) - Fast reasoning model",
+      "context_window": 204800,
+      "max_output_tokens": 100000,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true
+    },
+    {
+      "model_name": "MiniMax-M2",
+      "friendly_name": "MiniMax (M2)",
+      "aliases": [
+        "m2",
+        "minimax-m2"
+      ],
+      "intelligence_score": 13,
+      "description": "MiniMax M2 (204K context) - Capable reasoning model with tool calling",
+      "context_window": 204800,
+      "max_output_tokens": 100000,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true
+    }
+  ]
+}

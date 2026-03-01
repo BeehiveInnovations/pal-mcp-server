@@ -3,6 +3,7 @@
 from .azure_openai import AzureOpenAIProvider
 from .base import ModelProvider
 from .gemini import GeminiModelProvider
+from .minimax import MiniMaxModelProvider
 from .openai import OpenAIModelProvider
 from .openai_compatible import OpenAICompatibleProvider
 from .openrouter import OpenRouterProvider
@@ -16,6 +17,7 @@ __all__ = [
     "ModelProviderRegistry",
     "AzureOpenAIProvider",
     "GeminiModelProvider",
+    "MiniMaxModelProvider",
     "OpenAIModelProvider",
     "OpenAICompatibleProvider",
     "OpenRouterProvider",
