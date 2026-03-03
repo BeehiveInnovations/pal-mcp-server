@@ -1,0 +1,102 @@
+{
+  "_README": {
+    "description": "Model metadata for Moonshot (Kimi) API access.",
+    "documentation": "https://github.com/BeehiveInnovations/pal-mcp-server/blob/main/docs/custom_models.md",
+    "usage": "Models listed here are exposed directly through the Moonshot provider. Aliases are case-insensitive.",
+    "field_notes": "Matches providers/shared/model_capabilities.py.",
+    "field_descriptions": {
+      "model_name": "The model identifier (e.g., 'kimi-k2.5', 'moonshot-v1-128k')",
+      "aliases": "Array of short names users can type instead of the full model name",
+      "context_window": "Total number of tokens the model can process (input + output combined)",
+      "max_output_tokens": "Maximum number of tokens the model can generate in a single response",
+      "supports_extended_thinking": "Whether the model supports extended reasoning tokens",
+      "supports_json_mode": "Whether the model can guarantee valid JSON output",
+      "supports_function_calling": "Whether the model supports function/tool calling",
+      "supports_images": "Whether the model can process images/visual input",
+      "max_image_size_mb": "Maximum total size in MB for all images combined",
+      "supports_temperature": "Whether the model accepts temperature parameter in API calls",
+      "description": "Human-readable description of the model",
+      "intelligence_score": "1-20 human rating used as the primary signal for auto-mode model ordering"
+    }
+  },
+  "models": [
+    {
+      "model_name": "kimi-k2.5",
+      "friendly_name": "Moonshot (Kimi K2.5)",
+      "aliases": [
+        "kimi",
+        "kimi-k2.5",
+        "kimi-k2",
+        "moonshot"
+      ],
+      "intelligence_score": 16,
+      "description": "Kimi K2.5 (256K context) - Frontier MoE model (1T params, 32B active) with multimodal reasoning, function calling, and extended thinking",
+      "context_window": 262144,
+      "max_output_tokens": 65535,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0
+    },
+    {
+      "model_name": "kimi-k2-0905-preview",
+      "friendly_name": "Moonshot (Kimi K2 0905)",
+      "aliases": [
+        "kimi-k2-0905",
+        "kimi-k2-preview"
+      ],
+      "intelligence_score": 15,
+      "description": "Kimi K2 0905 Preview (256K context) - Improved grounding and instruction following for coding and agentic tasks",
+      "context_window": 262144,
+      "max_output_tokens": 65535,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true
+    },
+    {
+      "model_name": "moonshot-v1-128k",
+      "friendly_name": "Moonshot (V1 128K)",
+      "aliases": [
+        "moonshot-128k",
+        "moonshot-v1"
+      ],
+      "intelligence_score": 12,
+      "description": "Moonshot V1 128K - Legacy model with 128K context window",
+      "context_window": 131072,
+      "max_output_tokens": 8192,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true
+    },
+    {
+      "model_name": "moonshot-v1-32k",
+      "friendly_name": "Moonshot (V1 32K)",
+      "aliases": [
+        "moonshot-32k"
+      ],
+      "intelligence_score": 11,
+      "description": "Moonshot V1 32K - Legacy model with 32K context window, fast and cost-efficient",
+      "context_window": 32768,
+      "max_output_tokens": 8192,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true
+    }
+  ]
+}
