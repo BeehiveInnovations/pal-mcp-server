@@ -63,6 +63,10 @@ async def test_copilot_agent_success(monkeypatch, copilot_agent):
     assert result.returncode == 0
     assert "Hello from Copilot" in result.parsed.content
     assert result.parsed.metadata["usage"]["output_tokens"] == 5
+    # Prompt must be redacted in sanitized_command (metadata/logs)
+    assert "do something" not in result.sanitized_command
+    p_idx = result.sanitized_command.index("-p")
+    assert result.sanitized_command[p_idx + 1] == "[REDACTED]"
 
 
 @pytest.mark.asyncio

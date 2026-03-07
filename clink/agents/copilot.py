@@ -44,16 +44,12 @@ class CopilotAgent(BaseCLIAgent):
             )
         command[0] = resolved_executable
 
-        sanitized_command = list(command)
+        sanitized_command = ["[REDACTED]" if i > 0 and command[i - 1] == "-p" else arg for i, arg in enumerate(command)]
         cwd = str(self.client.working_dir) if self.client.working_dir else None
         limit = DEFAULT_STREAM_LIMIT
         start_time = time.monotonic()
 
-        log_command = [
-            "[REDACTED]" if i > 0 and sanitized_command[i - 1] == "-p" else arg
-            for i, arg in enumerate(sanitized_command)
-        ]
-        self._logger.debug("Executing CLI command: %s", " ".join(log_command))
+        self._logger.debug("Executing CLI command: %s", " ".join(sanitized_command))
 
         try:
             process = await asyncio.create_subprocess_exec(
