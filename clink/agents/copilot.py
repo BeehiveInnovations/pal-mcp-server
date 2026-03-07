@@ -49,7 +49,11 @@ class CopilotAgent(BaseCLIAgent):
         limit = DEFAULT_STREAM_LIMIT
         start_time = time.monotonic()
 
-        self._logger.debug("Executing CLI command: %s", " ".join(sanitized_command))
+        log_command = [
+            "[REDACTED]" if i > 0 and sanitized_command[i - 1] == "-p" else arg
+            for i, arg in enumerate(sanitized_command)
+        ]
+        self._logger.debug("Executing CLI command: %s", " ".join(log_command))
 
         try:
             process = await asyncio.create_subprocess_exec(

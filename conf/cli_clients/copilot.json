@@ -1,9 +1,7 @@
 {
   "name": "copilot",
   "command": "copilot",
-  "additional_args": [
-    "--allow-all-tools"
-  ],
+  "additional_args": [],
   "env": {},
   "roles": {
     "default": {
