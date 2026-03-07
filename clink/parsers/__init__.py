@@ -5,12 +5,14 @@ from __future__ import annotations
 from .base import BaseParser, ParsedCLIResponse, ParserError
 from .claude import ClaudeJSONParser
 from .codex import CodexJSONLParser
+from .copilot import CopilotJSONLParser
 from .gemini import GeminiJSONParser
 
 _PARSER_CLASSES: dict[str, type[BaseParser]] = {
     CodexJSONLParser.name: CodexJSONLParser,
     GeminiJSONParser.name: GeminiJSONParser,
     ClaudeJSONParser.name: ClaudeJSONParser,
+    CopilotJSONLParser.name: CopilotJSONLParser,
 }
 
 
