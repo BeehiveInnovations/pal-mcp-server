@@ -2,7 +2,7 @@
 List Models Tool - Display all available models organized by provider
 
 This tool provides a comprehensive view of all AI models available in the system,
-organized by their provider (Gemini, OpenAI, X.AI, OpenRouter, Custom).
+organized by their provider (Gemini, OpenAI, X.AI, MiniMax, OpenRouter, Custom).
 It shows which providers are configured and what models can be used.
 """
 
@@ -102,6 +102,7 @@ class ListModelsTool(BaseTool):
             ProviderType.OPENAI: {"name": "OpenAI", "env_key": "OPENAI_API_KEY"},
             ProviderType.AZURE: {"name": "Azure OpenAI", "env_key": "AZURE_OPENAI_API_KEY"},
             ProviderType.XAI: {"name": "X.AI (Grok)", "env_key": "XAI_API_KEY"},
+            ProviderType.MINIMAX: {"name": "MiniMax", "env_key": "MINIMAX_API_KEY"},
             ProviderType.DIAL: {"name": "AI DIAL", "env_key": "DIAL_API_KEY"},
         }
 
