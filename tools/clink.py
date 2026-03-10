@@ -22,7 +22,7 @@ from tools.simple.base import SchemaBuilder, SimpleTool
 
 logger = logging.getLogger(__name__)
 
-MAX_RESPONSE_CHARS = 20_000
+MAX_RESPONSE_CHARS = 100_000
 SUMMARY_PATTERN = re.compile(r"<SUMMARY>(.*?)</SUMMARY>", re.IGNORECASE | re.DOTALL)
 
 
@@ -375,7 +375,7 @@ class CLinkTool(SimpleTool):
             }
         )
 
-        excerpt_limit = min(4000, MAX_RESPONSE_CHARS // 2)
+        excerpt_limit = MAX_RESPONSE_CHARS // 2
         excerpt = content[:excerpt_limit]
         truncated_metadata["output_excerpt_length"] = len(excerpt)
 
