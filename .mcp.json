@@ -4,7 +4,7 @@
       "command": "uvx",
       "args": [
         "--from",
-        "git+https://github.com/BeehiveInnovations/pal-mcp-server.git",
+        "git+https://github.com/BeehiveInnovations/pal-mcp-server.git@v9.8.2",
         "pal-mcp-server"
       ]
     }
