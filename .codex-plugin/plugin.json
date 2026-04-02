@@ -1,0 +1,23 @@
+{
+  "name": "pal-mcp-server",
+  "version": "0.1.0",
+  "description": "Multi-model LLM routing for Codex via MCP",
+  "author": {
+    "name": "BeehiveInnovations",
+    "url": "https://github.com/BeehiveInnovations/pal-mcp-server"
+  },
+  "homepage": "https://github.com/BeehiveInnovations/pal-mcp-server",
+  "repository": "https://github.com/BeehiveInnovations/pal-mcp-server",
+  "keywords": [
+    "mcp",
+    "codex"
+  ],
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "PAL MCP Server",
+    "shortDescription": "Multi-model LLM routing for Codex via MCP",
+    "longDescription": "Use Claude Code / CodexCLI + Gemini / OpenAI / OpenRouter / Azure / Grok / Ollama / Custom Model working as one.",
+    "category": "Development",
+    "websiteURL": "https://github.com/BeehiveInnovations/pal-mcp-server"
+  }
+}
