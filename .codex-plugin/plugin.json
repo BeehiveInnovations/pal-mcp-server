@@ -19,5 +19,6 @@
     "longDescription": "Use Claude Code / CodexCLI + Gemini / OpenAI / OpenRouter / Azure / Grok / Ollama / Custom Model working as one.",
     "category": "Development",
     "websiteURL": "https://github.com/BeehiveInnovations/pal-mcp-server"
-  }
+  },
+  "skills": "./skills/"
 }
