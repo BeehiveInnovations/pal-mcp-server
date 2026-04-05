@@ -37,6 +37,19 @@ class TestSupportedModelsAliases:
         assert provider._resolve_model_name("Flash") == "gemini-2.5-flash"
         assert provider._resolve_model_name("PRO") == "gemini-3-pro-preview"
 
+    def test_gemini_latest_preview_models_are_available(self):
+        """Test latest Gemini preview model IDs are recognized."""
+        provider = GeminiModelProvider("test-key")
+
+        assert "gemini-3.1-pro-preview" in provider.MODEL_CAPABILITIES
+        assert "gemini-3-flash-preview" in provider.MODEL_CAPABILITIES
+        assert "gemini-3.1-flash-lite-preview" in provider.MODEL_CAPABILITIES
+
+        assert provider._resolve_model_name("gemini-3.1-pro-preview") == "gemini-3.1-pro-preview"
+        assert provider._resolve_model_name("gemini-3-flash-preview") == "gemini-3-flash-preview"
+        assert provider._resolve_model_name("gemini31pro") == "gemini-3.1-pro-preview"
+        assert provider._resolve_model_name("flash3") == "gemini-3-flash-preview"
+
     def test_openai_provider_aliases(self):
         """Test OpenAI provider's alias structure."""
         provider = OpenAIModelProvider("test-key")

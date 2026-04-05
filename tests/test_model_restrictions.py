@@ -63,7 +63,6 @@ class TestModelRestrictionService:
                 return mapping.get(provider_type)
 
             with patch.object(ModelProviderRegistry, "get_provider", side_effect=fake_get_provider):
-
                 service = ModelRestrictionService()
 
                 # Check OpenAI models
@@ -169,6 +168,25 @@ class TestModelRestrictionService:
             # Should have logged a warning about the typo
             assert "o4-mimi" in caplog.text
             assert "not a recognized" in caplog.text
+
+    def test_latest_gemini_preview_model_names_work_in_restrictions(self):
+        """Test exact latest Gemini preview model IDs are accepted in restrictions."""
+        with patch.dict(os.environ, {"GOOGLE_ALLOWED_MODELS": "gemini-3.1-pro-preview,gemini-3-flash-preview"}):
+            gemini_provider = GeminiModelProvider(api_key="test-key")
+
+            from providers.registry import ModelProviderRegistry
+
+            def fake_get_provider(provider_type, force_new=False):
+                if provider_type is ProviderType.GOOGLE:
+                    return gemini_provider
+                return None
+
+            with patch.object(ModelProviderRegistry, "get_provider", side_effect=fake_get_provider):
+                service = ModelRestrictionService()
+
+                assert service.is_allowed(ProviderType.GOOGLE, "gemini-3.1-pro-preview")
+                assert service.is_allowed(ProviderType.GOOGLE, "gemini-3-flash-preview")
+                assert not service.is_allowed(ProviderType.GOOGLE, "gemini-2.5-flash")
 
     def test_openrouter_model_restrictions(self):
         """Test OpenRouter model restrictions functionality."""
@@ -302,7 +320,6 @@ class TestProviderIntegration:
         from providers.registry import ModelProviderRegistry
 
         with patch.object(ModelProviderRegistry, "get_provider", return_value=provider):
-
             # Test case: Only alias "flash" is allowed, not the full name
             # If parameters are in wrong order, this test will catch it
 

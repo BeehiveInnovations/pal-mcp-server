@@ -26,6 +26,72 @@
   },
   "models": [
     {
+      "model_name": "gemini-3.1-pro-preview",
+      "friendly_name": "Gemini 3.1 Pro Preview",
+      "aliases": [
+        "gemini-3.1-pro",
+        "gemini31pro",
+        "pro-3.1"
+      ],
+      "intelligence_score": 19,
+      "description": "Latest Gemini 3.1 preview with advanced reasoning, coding, and multimodal capabilities",
+      "context_window": 1048576,
+      "max_output_tokens": 65536,
+      "max_thinking_tokens": 32768,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "allow_code_generation": true,
+      "max_image_size_mb": 32.0
+    },
+    {
+      "model_name": "gemini-3-flash-preview",
+      "friendly_name": "Gemini 3 Flash Preview",
+      "aliases": [
+        "gemini-3-flash",
+        "flash-3",
+        "flash3"
+      ],
+      "intelligence_score": 11,
+      "description": "Latest Gemini 3 Flash preview with frontier-class performance at Flash latency and pricing",
+      "context_window": 1048576,
+      "max_output_tokens": 65536,
+      "max_thinking_tokens": 24576,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0
+    },
+    {
+      "model_name": "gemini-3.1-flash-lite-preview",
+      "friendly_name": "Gemini 3.1 Flash-Lite Preview",
+      "aliases": [
+        "gemini-3.1-flash-lite",
+        "flash-lite-3.1",
+        "flashlite3.1"
+      ],
+      "intelligence_score": 8,
+      "description": "Latest Gemini 3.1 Flash-Lite preview for low-cost, high-volume multimodal workloads",
+      "context_window": 1048576,
+      "max_output_tokens": 65536,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0
+    },
+    {
       "model_name": "gemini-3-pro-preview",
       "friendly_name": "Gemini Pro 3.0 Preview",
       "aliases": [

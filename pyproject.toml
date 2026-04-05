@@ -2,7 +2,7 @@
 name = "pal-mcp-server"
 version = "9.8.2"
 description = "AI-powered MCP server with multiple model providers"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "mcp>=1.0.0",
     "google-genai>=1.19.0",
