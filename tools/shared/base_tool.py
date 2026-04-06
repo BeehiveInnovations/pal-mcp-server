@@ -372,6 +372,7 @@ class BaseTool(ABC):
 
         from providers.registry import ModelProviderRegistry
 
+        tool_name = self.name
         ranked: list[tuple[int, str, Any]] = []
         available = ModelProviderRegistry.get_available_models(respect_restrictions=True)
 
@@ -383,6 +384,9 @@ class BaseTool(ABC):
             try:
                 capabilities = provider.get_capabilities(model_name)
             except ValueError:
+                continue
+
+            if tool_name and capabilities.excluded_tools and tool_name in capabilities.excluded_tools:
                 continue
 
             rank = capabilities.get_effective_capability_rank()

@@ -387,7 +387,14 @@ def configure_providers():
     """
     # Log environment variable status for debugging
     logger.debug("Checking environment variables for API keys...")
-    api_keys_to_check = ["OPENAI_API_KEY", "OPENROUTER_API_KEY", "GEMINI_API_KEY", "XAI_API_KEY", "CUSTOM_API_URL"]
+    api_keys_to_check = [
+        "OPENAI_API_KEY",
+        "OPENROUTER_API_KEY",
+        "GEMINI_API_KEY",
+        "XAI_API_KEY",
+        "NEBIUS_API_KEY",
+        "CUSTOM_API_URL",
+    ]
     for key in api_keys_to_check:
         value = get_env(key)
         logger.debug(f"  {key}: {'[PRESENT]' if value else '[MISSING]'}")
@@ -396,6 +403,7 @@ def configure_providers():
     from providers.custom import CustomProvider
     from providers.dial import DIALModelProvider
     from providers.gemini import GeminiModelProvider
+    from providers.nebius import NebiusModelProvider
     from providers.openai import OpenAIModelProvider
     from providers.openrouter import OpenRouterProvider
     from providers.shared import ProviderType
@@ -426,6 +434,13 @@ def configure_providers():
             logger.debug("OpenAI API key not found in environment")
         else:
             logger.debug("OpenAI API key is placeholder value")
+
+    # Check for Nebius Token Factory API key
+    nebius_key = get_env("NEBIUS_API_KEY")
+    if nebius_key and nebius_key != "your_nebius_api_key_here":
+        valid_providers.append("Nebius")
+        has_native_apis = True
+        logger.info("Nebius API key found - Nebius Token Factory models available")
 
     # Check for Azure OpenAI configuration
     azure_key = get_env("AZURE_OPENAI_API_KEY")
@@ -505,6 +520,10 @@ def configure_providers():
             ModelProviderRegistry.register_provider(ProviderType.OPENAI, OpenAIModelProvider)
             registered_providers.append(ProviderType.OPENAI.value)
             logger.debug(f"Registered provider: {ProviderType.OPENAI.value}")
+        if nebius_key and nebius_key != "your_nebius_api_key_here":
+            ModelProviderRegistry.register_provider(ProviderType.NEBIUS, NebiusModelProvider)
+            registered_providers.append(ProviderType.NEBIUS.value)
+            logger.debug(f"Registered provider: {ProviderType.NEBIUS.value}")
         if azure_models_available:
             ModelProviderRegistry.register_provider(ProviderType.AZURE, AzureOpenAIProvider)
             registered_providers.append(ProviderType.AZURE.value)
@@ -546,6 +565,7 @@ def configure_providers():
             "At least one API configuration is required. Please set either:\n"
             "- GEMINI_API_KEY for Gemini models\n"
             "- OPENAI_API_KEY for OpenAI models\n"
+            "- NEBIUS_API_KEY for Nebius Token Factory models (Qwen3, DeepSeek, Llama, etc.)\n"
             "- XAI_API_KEY for X.AI GROK models\n"
             "- DIAL_API_KEY for DIAL models\n"
             "- OPENROUTER_API_KEY for OpenRouter (multiple models)\n"

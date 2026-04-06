@@ -27,9 +27,7 @@
     {
       "model_name": "anthropic/claude-opus-4.5",
       "aliases": [
-        "opus",
-        "opus4.5",
-        "claude-opus"
+        "opus4.5"
       ],
       "context_window": 200000,
       "max_output_tokens": 64000,
@@ -39,12 +37,11 @@
       "supports_images": true,
       "max_image_size_mb": 5.0,
       "description": "Claude Opus 4.5 - Anthropic's frontier reasoning model for complex software engineering and agentic workflows",
-      "intelligence_score": 18
+      "intelligence_score": 16
     },
     {
       "model_name": "anthropic/claude-sonnet-4.5",
       "aliases": [
-        "sonnet",
         "sonnet4.5"
       ],
       "context_window": 200000,
@@ -70,7 +67,7 @@
       "supports_images": true,
       "max_image_size_mb": 5.0,
       "description": "Claude Opus 4.1 - Last generation flagship model with strong coding and reasoning",
-      "intelligence_score": 14
+      "intelligence_score": 13
     },
     {
       "model_name": "anthropic/claude-sonnet-4.1",
@@ -120,7 +117,7 @@
       "max_image_size_mb": 20.0,
       "allow_code_generation": true,
       "description": "Google's Gemini 3.0 Pro via OpenRouter with vision",
-      "intelligence_score": 18
+      "intelligence_score": 17
     },
     {
       "model_name": "google/gemini-2.5-pro",
@@ -128,6 +125,7 @@
         "gemini-2.5",
         "pro-2.5-openrouter"
       ],
+      "excluded_tools": ["consensus"],
       "context_window": 1048576,
       "max_output_tokens": 65536,
       "supports_extended_thinking": true,
@@ -137,7 +135,7 @@
       "max_image_size_mb": 20.0,
       "allow_code_generation": true,
       "description": "Google's Gemini 2.5 Pro via OpenRouter with vision",
-      "intelligence_score": 18
+      "intelligence_score": 17
     },
     {
       "model_name": "google/gemini-2.5-flash",
@@ -145,6 +143,7 @@
         "flash",
         "gemini-flash"
       ],
+      "excluded_tools": ["consensus"],
       "context_window": 1048576,
       "max_output_tokens": 65536,
       "supports_extended_thinking": true,
@@ -158,8 +157,7 @@
     {
       "model_name": "mistralai/mistral-large-2411",
       "aliases": [
-        "mistral-large",
-        "mistral"
+        "mistral-large-2411"
       ],
       "context_window": 128000,
       "max_output_tokens": 32000,
@@ -174,7 +172,6 @@
     {
       "model_name": "meta-llama/llama-3-70b",
       "aliases": [
-        "llama",
         "llama3",
         "llama3-70b",
         "llama-70b",
@@ -328,7 +325,7 @@
       "supports_temperature": true,
       "temperature_constraint": "range",
       "description": "GPT-5 (400K context, 128K output) - Advanced model with reasoning support",
-      "intelligence_score": 16
+      "intelligence_score": 15
     },
     {
       "model_name": "openai/gpt-5.2-pro",
@@ -350,7 +347,7 @@
       "default_reasoning_effort": "high",
       "allow_code_generation": true,
       "description": "GPT-5.2 Pro - Advanced reasoning model with highest quality responses (text+image input, text output only)",
-      "intelligence_score": 18
+      "intelligence_score": 17
     },
     {
       "model_name": "openai/gpt-5-codex",
@@ -366,7 +363,7 @@
       "supports_images": false,
       "max_image_size_mb": 0.0,
       "description": "GPT-5-Codex is a specialized version of GPT-5 optimized for software engineering and coding workflows",
-      "intelligence_score": 17
+      "intelligence_score": 16
     },
     {
       "model_name": "openai/gpt-5-mini",
@@ -424,7 +421,7 @@
       "default_reasoning_effort": "medium",
       "allow_code_generation": true,
       "description": "GPT-5.2 (400K context, 128K output) - Flagship reasoning model with configurable thinking effort and vision support",
-      "intelligence_score": 18
+      "intelligence_score": 17
     },
     {
       "model_name": "openai/gpt-5.1-codex",
@@ -507,6 +504,194 @@
       "temperature_constraint": "range",
       "description": "xAI's Grok 4.1 Fast Reasoning via OpenRouter (2M context) with vision and advanced reasoning",
       "intelligence_score": 15
+    },
+    {
+      "model_name": "anthropic/claude-opus-4.6",
+      "aliases": [
+        "opus",
+        "opus4.6",
+        "claude-opus"
+      ],
+      "context_window": 1000000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": false,
+      "supports_images": true,
+      "max_image_size_mb": 5.0,
+      "allow_code_generation": true,
+      "description": "Claude Opus 4.6 - Anthropic's frontier reasoning model with 1M context, adaptive thinking, and 128K output",
+      "intelligence_score": 20
+    },
+    {
+      "model_name": "anthropic/claude-sonnet-4.6",
+      "aliases": [
+        "sonnet",
+        "sonnet4.6"
+      ],
+      "context_window": 1000000,
+      "max_output_tokens": 64000,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": false,
+      "supports_images": true,
+      "max_image_size_mb": 5.0,
+      "description": "Claude Sonnet 4.6 - High-performance model with adaptive thinking and 1M context",
+      "intelligence_score": 16
+    },
+    {
+      "model_name": "meta-llama/llama-4-maverick",
+      "aliases": [
+        "llama",
+        "llama4",
+        "llama4-maverick",
+        "maverick"
+      ],
+      "context_window": 1000000,
+      "max_output_tokens": 65536,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 20.0,
+      "description": "Meta Llama 4 Maverick - 128-expert MoE with 17B active params, strong coding and reasoning (1M context)",
+      "intelligence_score": 16
+    },
+    {
+      "model_name": "meta-llama/llama-4-scout",
+      "aliases": [
+        "llama4-scout",
+        "scout"
+      ],
+      "context_window": 10000000,
+      "max_output_tokens": 65536,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 20.0,
+      "description": "Meta Llama 4 Scout - Massive 10M context for long document analysis with multimodal support",
+      "intelligence_score": 13
+    },
+    {
+      "model_name": "mistralai/mistral-large-3",
+      "aliases": [
+        "mistral",
+        "mistral-large",
+        "mistral3",
+        "mistral-large-3"
+      ],
+      "context_window": 256000,
+      "max_output_tokens": 65536,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 20.0,
+      "description": "Mistral Large 3 - 41B active/675B total MoE with multimodal, OCR, and function calling (256K context)",
+      "intelligence_score": 15
+    },
+    {
+      "model_name": "google/gemma-4-31b-it",
+      "aliases": [
+        "gemma4",
+        "gemma-4",
+        "gemma4-31b"
+      ],
+      "context_window": 256000,
+      "max_output_tokens": 32768,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 20.0,
+      "description": "Google Gemma 4 31B - Dense multimodal model with strong coding and reasoning (256K context)",
+      "intelligence_score": 14
+    },
+    {
+      "model_name": "google/gemma-4-26b-a4b-it",
+      "aliases": [
+        "gemma4-small",
+        "gemma4-26b"
+      ],
+      "context_window": 256000,
+      "max_output_tokens": 32768,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 15.0,
+      "description": "Google Gemma 4 26B A4B - Efficient MoE with 4B active params, multimodal (256K context)",
+      "intelligence_score": 10
+    },
+    {
+      "model_name": "openai/gpt-5.4",
+      "aliases": [
+        "gpt5.4-openrouter"
+      ],
+      "context_window": 1050000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 20.0,
+      "supports_temperature": true,
+      "temperature_constraint": "fixed",
+      "default_reasoning_effort": "high",
+      "allow_code_generation": true,
+      "description": "GPT-5.4 via OpenRouter (1.05M context, 128K output) - Flagship reasoning model with vision",
+      "intelligence_score": 20
+    },
+    {
+      "model_name": "openai/gpt-5.4-mini",
+      "aliases": [
+        "gpt5.4-mini-openrouter"
+      ],
+      "context_window": 400000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 20.0,
+      "supports_temperature": true,
+      "temperature_constraint": "fixed",
+      "description": "GPT-5.4 mini via OpenRouter (400K context, 128K output) - Fast, efficient variant",
+      "intelligence_score": 16
+    },
+    {
+      "model_name": "openai/gpt-5.4-nano",
+      "aliases": [
+        "gpt5.4-nano-openrouter"
+      ],
+      "context_window": 400000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 20.0,
+      "supports_temperature": true,
+      "temperature_constraint": "fixed",
+      "description": "GPT-5.4 nano via OpenRouter (400K context, 128K output) - Budget variant with MCP support",
+      "intelligence_score": 14
+    },
+    {
+      "model_name": "google/gemini-3.1-pro",
+      "aliases": [
+        "gemini-3.1-openrouter"
+      ],
+      "context_window": 1048576,
+      "max_output_tokens": 65536,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 20.0,
+      "allow_code_generation": true,
+      "description": "Google Gemini 3.1 Pro via OpenRouter (1M context) - Latest flagship with deep reasoning",
+      "intelligence_score": 20
     }
   ]
 }

@@ -32,7 +32,7 @@
         "grok4",
         "grok-4"
       ],
-      "intelligence_score": 16,
+      "intelligence_score": 17,
       "description": "GROK-4 (256K context) - Frontier multimodal reasoning model with advanced capabilities",
       "context_window": 256000,
       "max_output_tokens": 256000,

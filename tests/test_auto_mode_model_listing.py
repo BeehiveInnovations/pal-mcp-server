@@ -86,6 +86,7 @@ def test_error_listing_respects_env_restrictions(monkeypatch, reset_registry):
     monkeypatch.setenv("OPENAI_ALLOWED_MODELS", "gpt-5.2")
     monkeypatch.setenv("OPENROUTER_ALLOWED_MODELS", "gpt5nano")
     monkeypatch.setenv("XAI_ALLOWED_MODELS", "")
+    monkeypatch.setenv("NEBIUS_ALLOWED_MODELS", "")
 
     import config
 
@@ -107,10 +108,11 @@ def test_error_listing_respects_env_restrictions(monkeypatch, reset_registry):
         ("OPENAI_ALLOWED_MODELS", "gpt-5.2"),
         ("OPENROUTER_ALLOWED_MODELS", "gpt5nano"),
         ("XAI_ALLOWED_MODELS", ""),
+        ("NEBIUS_ALLOWED_MODELS", ""),
     ):
         monkeypatch.setenv(key, value)
 
-    for var in ("XAI_API_KEY", "CUSTOM_API_URL", "CUSTOM_API_KEY", "DIAL_API_KEY"):
+    for var in ("XAI_API_KEY", "CUSTOM_API_URL", "CUSTOM_API_KEY", "DIAL_API_KEY", "NEBIUS_API_KEY"):
         monkeypatch.delenv(var, raising=False)
     for azure_var in (
         "AZURE_OPENAI_API_KEY",

@@ -80,7 +80,7 @@ class TestAutoModeComprehensive:
                     "OPENROUTER_API_KEY": None,
                 },
                 {
-                    "EXTENDED_REASONING": "gemini-3-pro-preview",  # Gemini 3 Pro Preview for deep thinking
+                    "EXTENDED_REASONING": "gemini-3.1-pro",  # Gemini 3.1 Pro for deep thinking
                     "FAST_RESPONSE": "gemini-2.5-flash",  # Flash for speed
                     "BALANCED": "gemini-2.5-flash",  # Flash as balanced
                 },
@@ -94,9 +94,9 @@ class TestAutoModeComprehensive:
                     "OPENROUTER_API_KEY": None,
                 },
                 {
-                    "EXTENDED_REASONING": "gpt-5.1-codex",  # GPT-5.1 Codex prioritized for coding tasks
-                    "FAST_RESPONSE": "gpt-5.2",  # Prefer gpt-5.2 for speed
-                    "BALANCED": "gpt-5.2",  # Prefer gpt-5.2 for balanced
+                    "EXTENDED_REASONING": "gpt-5.4",  # GPT-5.4 prioritized for extended reasoning
+                    "FAST_RESPONSE": "gpt-5.4-mini",  # Prefer gpt-5.4-mini for speed
+                    "BALANCED": "gpt-5.4",  # Prefer gpt-5.4 for balanced
                 },
             ),
             # Only X.AI API available
@@ -122,7 +122,7 @@ class TestAutoModeComprehensive:
                     "OPENROUTER_API_KEY": None,
                 },
                 {
-                    "EXTENDED_REASONING": "gemini-3-pro-preview",  # Gemini 3 Pro Preview comes first in priority
+                    "EXTENDED_REASONING": "gemini-3.1-pro",  # Gemini 3.1 Pro comes first in priority
                     "FAST_RESPONSE": "gemini-2.5-flash",  # Prefer flash for speed
                     "BALANCED": "gemini-2.5-flash",  # Prefer flash for balanced
                 },
@@ -136,7 +136,7 @@ class TestAutoModeComprehensive:
                     "OPENROUTER_API_KEY": None,
                 },
                 {
-                    "EXTENDED_REASONING": "gemini-3-pro-preview",  # Gemini 3 Pro Preview comes first in priority
+                    "EXTENDED_REASONING": "gemini-3.1-pro",  # Gemini 3.1 Pro comes first in priority
                     "FAST_RESPONSE": "gemini-2.5-flash",  # Prefer flash for speed
                     "BALANCED": "gemini-2.5-flash",  # Prefer flash for balanced
                 },

@@ -26,6 +26,28 @@
   },
   "models": [
     {
+      "model_name": "gemini-3.1-pro",
+      "friendly_name": "Gemini Pro 3.1",
+      "aliases": [
+        "gemini3.1",
+        "gemini-3.1"
+      ],
+      "intelligence_score": 20,
+      "description": "Gemini 3.1 Pro (1M context) - Google's latest flagship with deep reasoning and multimodal support",
+      "context_window": 1048576,
+      "max_output_tokens": 65536,
+      "max_thinking_tokens": 32768,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "allow_code_generation": true,
+      "max_image_size_mb": 32.0
+    },
+    {
       "model_name": "gemini-3-pro-preview",
       "friendly_name": "Gemini Pro 3.0 Preview",
       "aliases": [
@@ -33,7 +55,7 @@
         "gemini3",
         "gemini-pro"
       ],
-      "intelligence_score": 18,
+      "intelligence_score": 17,
       "description": "Deep reasoning + thinking mode (1M context) - Complex problems, architecture, deep analysis",
       "context_window": 1048576,
       "max_output_tokens": 65536,
@@ -54,7 +76,8 @@
       "aliases": [
         "gemini-pro-2.5"
       ],
-      "intelligence_score": 18,
+      "excluded_tools": ["consensus"],
+      "intelligence_score": 17,
       "description": "Older Model. 1M context - Complex problems, architecture, deep analysis",
       "context_window": 1048576,
       "max_output_tokens": 65536,
@@ -116,6 +139,7 @@
         "flash",
         "flash2.5"
       ],
+      "excluded_tools": ["consensus"],
       "intelligence_score": 10,
       "description": "Ultra-fast (1M context) - Quick analysis, simple queries, rapid iterations",
       "context_window": 1048576,

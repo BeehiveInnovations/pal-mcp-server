@@ -58,6 +58,9 @@ class ModelCapabilities:
         False  # Enables structured code generation in chat tool for substantial implementations
     )
 
+    # Tool restrictions
+    excluded_tools: list[str] = field(default_factory=list)
+
     # Additional attributes
     max_image_size_mb: float = 0.0
     temperature_constraint: TemperatureConstraint = field(
