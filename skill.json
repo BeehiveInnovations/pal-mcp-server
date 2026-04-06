@@ -1,0 +1,13 @@
+{
+  "name": "pal-mcp-server",
+  "version": "0.1.0",
+  "description": "The power of Claude Code / GeminiCLI / CodexCLI + various AI models working as one.",
+  "author": {
+    "name": "BeehiveInnovations",
+    "url": "https://github.com/BeehiveInnovations"
+  },
+  "homepage": "https://github.com/BeehiveInnovations/pal-mcp-server",
+  "repository": "https://github.com/BeehiveInnovations/pal-mcp-server",
+  "keywords": ["mcp", "codex"],
+  "license": "MIT"
+}
