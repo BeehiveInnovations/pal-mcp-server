@@ -200,8 +200,20 @@ cd pal-mcp-server
 
 ## Provider Configuration
 
-PAL activates any provider that has credentials in your `.env`. See `.env.example` for deeper customization.
+## Using Gemini 3.1 Pro Preview
 
+PAL MCP supports Gemini models through Google's Generative AI API. You can use newer models such as **Gemini 3.1 Pro Preview** if they are available in your API access.
+
+### Steps to Use Gemini 3.1 Pro Preview
+
+1. **Get a Gemini API Key**
+   - Visit: https://makersuite.google.com/app/apikey
+   - Generate your API key
+
+2. **Set your API Key**
+   Add it to your environment variables or `.env` file:
+   ```bash
+   GEMINI_API_KEY=your_api_key_here
 ## Core Tools
 
 > **Note:** Each tool comes with its own multi-step workflow, parameters, and descriptions that consume valuable context window space even when not in use. To optimize performance, some tools are disabled by default. See [Tool Configuration](#tool-configuration) below to enable them.
