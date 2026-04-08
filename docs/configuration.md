@@ -71,6 +71,7 @@ DEFAULT_MODEL=auto  # Claude picks best model for each task (recommended)
   - `conf/openai_models.json` – OpenAI catalogue (can be overridden with `OPENAI_MODELS_CONFIG_PATH`)
   - `conf/gemini_models.json` – Gemini catalogue (`GEMINI_MODELS_CONFIG_PATH`)
   - `conf/xai_models.json` – X.AI / GROK catalogue (`XAI_MODELS_CONFIG_PATH`)
+  - `conf/cerebras_models.json` – Cerebras Inference catalogue (`CEREBRAS_MODELS_CONFIG_PATH`)
   - `conf/openrouter_models.json` – OpenRouter catalogue (`OPENROUTER_MODELS_CONFIG_PATH`)
   - `conf/dial_models.json` – DIAL aggregation catalogue (`DIAL_MODELS_CONFIG_PATH`)
   - `conf/custom_models.json` – Custom/OpenAI-compatible endpoints (`CUSTOM_MODELS_CONFIG_PATH`)
@@ -84,6 +85,7 @@ DEFAULT_MODEL=auto  # Claude picks best model for each task (recommended)
   | OpenAI | `gpt-5.2`, `gpt-5.1-codex`, `gpt-5.1-codex-mini`, `gpt-5`, `gpt-5.2-pro`, `gpt-5-mini`, `gpt-5-nano`, `gpt-5-codex`, `gpt-4.1`, `o3`, `o3-mini`, `o3-pro`, `o4-mini` | `gpt5.2`, `gpt-5.2`, `5.2`, `gpt5.1-codex`, `codex-5.1`, `codex-mini`, `gpt5`, `gpt5pro`, `mini`, `nano`, `codex`, `o3mini`, `o3pro`, `o4mini` |
   | Gemini | `gemini-2.5-pro`, `gemini-2.5-flash`, `gemini-2.0-flash`, `gemini-2.0-flash-lite` | `pro`, `gemini-pro`, `flash`, `flash-2.0`, `flashlite` |
   | X.AI | `grok-4`, `grok-4.1-fast` | `grok`, `grok4`, `grok-4.1-fast-reasoning` |
+  | Cerebras | `zai-glm-4.7`, `gpt-oss-120b`, `qwen-3-235b-a22b-instruct-2507`, `llama3.1-8b` | `cerebras`, `glm`, `zai`, `gpt-oss`, `oss-120b`, `qwen3`, `qwen235b`, `llama8b`, `llama3.1` |
   | OpenRouter | See `conf/openrouter_models.json` for the continually evolving catalogue | e.g., `opus`, `sonnet`, `flash`, `pro`, `mistral` |
   | Custom | User-managed entries such as `llama3.2` | Define your own aliases per entry |
 

@@ -1,0 +1,111 @@
+{
+  "_README": {
+    "description": "Model metadata for Cerebras Inference API.",
+    "documentation": "https://inference-docs.cerebras.ai/models",
+    "usage": "Models listed here are exposed directly through the Cerebras provider. Aliases are case-insensitive.",
+    "field_notes": "Matches providers/shared/model_capabilities.py.",
+    "field_descriptions": {
+      "model_name": "The model identifier (e.g., 'zai-glm-4.7')",
+      "aliases": "Array of short names users can type instead of the full model name",
+      "context_window": "Total number of tokens the model can process (input + output combined)",
+      "max_output_tokens": "Maximum number of tokens the model can generate in a single response",
+      "supports_extended_thinking": "Whether the model supports extended reasoning tokens",
+      "supports_json_mode": "Whether the model can guarantee valid JSON output",
+      "supports_function_calling": "Whether the model supports function/tool calling",
+      "supports_images": "Whether the model can process images/visual input",
+      "supports_temperature": "Whether the model accepts temperature parameter in API calls",
+      "description": "Human-readable description of the model",
+      "intelligence_score": "1-20 human rating used as the primary signal for auto-mode model ordering"
+    }
+  },
+  "models": [
+    {
+      "model_name": "gpt-oss-120b",
+      "friendly_name": "Cerebras (gpt-oss-120b)",
+      "aliases": [
+        "gpt-oss",
+        "oss-120b",
+        "openai-oss"
+      ],
+      "intelligence_score": 17,
+      "description": "OpenAI GPT-OSS 120B — ultra-fast inference (~3000 tok/s), 128K context, internal chain-of-thought reasoning, strong agentic/tool-use",
+      "context_window": 131072,
+      "max_output_tokens": 40000,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true,
+      "temperature_constraint": "range"
+    },
+    {
+      "model_name": "qwen-3-235b-a22b-instruct-2507",
+      "friendly_name": "Cerebras (qwen-3-235b-a22b-instruct-2507)",
+      "aliases": [
+        "qwen3",
+        "qwen-3",
+        "qwen235b",
+        "qwen3-235b"
+      ],
+      "intelligence_score": 16,
+      "description": "Qwen3-235B-A22B Instruct 2507 — fast inference (~1400 tok/s), 128K context, strong coding/reasoning/tool use",
+      "context_window": 131072,
+      "max_output_tokens": 40000,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true,
+      "temperature_constraint": "range"
+    },
+    {
+      "model_name": "zai-glm-4.7",
+      "friendly_name": "Cerebras (zai-glm-4.7)",
+      "aliases": [
+        "cerebras",
+        "glm",
+        "glm-4.7",
+        "zai",
+        "zai-glm"
+      ],
+      "intelligence_score": 14,
+      "description": "Cerebras ZAI-GLM 4.7 — fast inference (~1000 tok/s), 128K context, reasoning model with tool calling",
+      "context_window": 131072,
+      "max_output_tokens": 40000,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true,
+      "temperature_constraint": "range"
+    },
+    {
+      "model_name": "llama3.1-8b",
+      "friendly_name": "Cerebras (llama3.1-8b)",
+      "aliases": [
+        "llama8b",
+        "llama-8b",
+        "llama3.1",
+        "llama3-8b"
+      ],
+      "intelligence_score": 9,
+      "description": "Meta Llama 3.1 8B — fastest small model on Cerebras (~2200 tok/s), 32K context, ideal for real-time and high-throughput tasks",
+      "context_window": 32768,
+      "max_output_tokens": 8192,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true,
+      "temperature_constraint": "range"
+    }
+  ]
+}

@@ -387,12 +387,20 @@ def configure_providers():
     """
     # Log environment variable status for debugging
     logger.debug("Checking environment variables for API keys...")
-    api_keys_to_check = ["OPENAI_API_KEY", "OPENROUTER_API_KEY", "GEMINI_API_KEY", "XAI_API_KEY", "CUSTOM_API_URL"]
+    api_keys_to_check = [
+        "OPENAI_API_KEY",
+        "OPENROUTER_API_KEY",
+        "GEMINI_API_KEY",
+        "XAI_API_KEY",
+        "CEREBRAS_API_KEY",
+        "CUSTOM_API_URL",
+    ]
     for key in api_keys_to_check:
         value = get_env(key)
         logger.debug(f"  {key}: {'[PRESENT]' if value else '[MISSING]'}")
     from providers import ModelProviderRegistry
     from providers.azure_openai import AzureOpenAIProvider
+    from providers.cerebras import CerebrasModelProvider
     from providers.custom import CustomProvider
     from providers.dial import DIALModelProvider
     from providers.gemini import GeminiModelProvider
@@ -455,6 +463,13 @@ def configure_providers():
         has_native_apis = True
         logger.info("X.AI API key found - GROK models available")
 
+    # Check for Cerebras API key
+    cerebras_key = get_env("CEREBRAS_API_KEY")
+    if cerebras_key and cerebras_key != "your_cerebras_api_key_here":
+        valid_providers.append("Cerebras")
+        has_native_apis = True
+        logger.info("Cerebras API key found - Cerebras Inference models available")
+
     # Check for DIAL API key
     dial_key = get_env("DIAL_API_KEY")
     if dial_key and dial_key != "your_dial_api_key_here":
@@ -513,6 +528,10 @@ def configure_providers():
             ModelProviderRegistry.register_provider(ProviderType.XAI, XAIModelProvider)
             registered_providers.append(ProviderType.XAI.value)
             logger.debug(f"Registered provider: {ProviderType.XAI.value}")
+        if cerebras_key and cerebras_key != "your_cerebras_api_key_here":
+            ModelProviderRegistry.register_provider(ProviderType.CEREBRAS, CerebrasModelProvider)
+            registered_providers.append(ProviderType.CEREBRAS.value)
+            logger.debug(f"Registered provider: {ProviderType.CEREBRAS.value}")
         if dial_key and dial_key != "your_dial_api_key_here":
             ModelProviderRegistry.register_provider(ProviderType.DIAL, DIALModelProvider)
             registered_providers.append(ProviderType.DIAL.value)
@@ -600,7 +619,13 @@ def configure_providers():
 
         # Validate restrictions against known models
         provider_instances = {}
-        provider_types_to_validate = [ProviderType.GOOGLE, ProviderType.OPENAI, ProviderType.XAI, ProviderType.DIAL]
+        provider_types_to_validate = [
+            ProviderType.GOOGLE,
+            ProviderType.OPENAI,
+            ProviderType.XAI,
+            ProviderType.CEREBRAS,
+            ProviderType.DIAL,
+        ]
         for provider_type in provider_types_to_validate:
             provider = ModelProviderRegistry.get_provider(provider_type)
             if provider:
