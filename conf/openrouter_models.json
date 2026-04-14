@@ -27,9 +27,7 @@
     {
       "model_name": "anthropic/claude-opus-4.5",
       "aliases": [
-        "opus",
-        "opus4.5",
-        "claude-opus"
+        "opus4.5"
       ],
       "context_window": 200000,
       "max_output_tokens": 64000,
@@ -42,9 +40,25 @@
       "intelligence_score": 18
     },
     {
+      "model_name": "anthropic/claude-opus-4.6",
+      "aliases": [
+        "opus",
+        "opus4.6",
+        "claude-opus"
+      ],
+      "context_window": 1000000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": false,
+      "supports_json_mode": false,
+      "supports_function_calling": false,
+      "supports_images": true,
+      "max_image_size_mb": 5.0,
+      "description": "Claude Opus 4.6 - Anthropic's strongest model for coding, long-running professional tasks, and agentic workflows",
+      "intelligence_score": 18
+    },
+    {
       "model_name": "anthropic/claude-sonnet-4.5",
       "aliases": [
-        "sonnet",
         "sonnet4.5"
       ],
       "context_window": 200000,
@@ -56,6 +70,22 @@
       "max_image_size_mb": 5.0,
       "description": "Claude Sonnet 4.5 - High-performance model with exceptional reasoning and efficiency",
       "intelligence_score": 12
+    },
+    {
+      "model_name": "anthropic/claude-sonnet-4.6",
+      "aliases": [
+        "sonnet",
+        "sonnet4.6"
+      ],
+      "context_window": 1000000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": false,
+      "supports_json_mode": false,
+      "supports_function_calling": false,
+      "supports_images": true,
+      "max_image_size_mb": 5.0,
+      "description": "Claude Sonnet 4.6 - Frontier Sonnet with coding, agents, and professional task performance",
+      "intelligence_score": 13
     },
     {
       "model_name": "anthropic/claude-opus-4.1",
@@ -105,10 +135,8 @@
     {
       "model_name": "google/gemini-3-pro-preview",
       "aliases": [
-        "pro",
-        "gemini-pro",
-        "gemini",
-        "gemini3",
+        "gemini3.0",
+        "gemini-3.0",
         "pro-openrouter"
       ],
       "context_window": 1048576,
@@ -120,7 +148,27 @@
       "max_image_size_mb": 20.0,
       "allow_code_generation": true,
       "description": "Google's Gemini 3.0 Pro via OpenRouter with vision",
-      "intelligence_score": 18
+      "intelligence_score": 17
+    },
+    {
+      "model_name": "google/gemini-3.1-pro-preview",
+      "aliases": [
+        "pro",
+        "gemini-pro",
+        "gemini",
+        "gemini3",
+        "gemini3.1"
+      ],
+      "context_window": 1048576,
+      "max_output_tokens": 65536,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 20.0,
+      "allow_code_generation": true,
+      "description": "Google's Gemini 3.1 Pro - Frontier reasoning with enhanced software engineering and agentic capabilities",
+      "intelligence_score": 19
     },
     {
       "model_name": "google/gemini-2.5-pro",
@@ -172,25 +220,6 @@
       "intelligence_score": 11
     },
     {
-      "model_name": "meta-llama/llama-3-70b",
-      "aliases": [
-        "llama",
-        "llama3",
-        "llama3-70b",
-        "llama-70b",
-        "llama3-openrouter"
-      ],
-      "context_window": 8192,
-      "max_output_tokens": 8192,
-      "supports_extended_thinking": false,
-      "supports_json_mode": false,
-      "supports_function_calling": false,
-      "supports_images": false,
-      "max_image_size_mb": 0.0,
-      "description": "Meta's Llama 3 70B model (text-only)",
-      "intelligence_score": 9
-    },
-    {
       "model_name": "deepseek/deepseek-r1-0528",
       "aliases": [
         "deepseek-r1",
@@ -207,23 +236,6 @@
       "max_image_size_mb": 0.0,
       "description": "DeepSeek R1 with thinking mode - advanced reasoning capabilities (text-only)",
       "intelligence_score": 15
-    },
-    {
-      "model_name": "perplexity/llama-3-sonar-large-32k-online",
-      "aliases": [
-        "perplexity",
-        "sonar",
-        "perplexity-online"
-      ],
-      "context_window": 32768,
-      "max_output_tokens": 32768,
-      "supports_extended_thinking": false,
-      "supports_json_mode": false,
-      "supports_function_calling": false,
-      "supports_images": false,
-      "max_image_size_mb": 0.0,
-      "description": "Perplexity's online model with web search (text-only)",
-      "intelligence_score": 9
     },
     {
       "model_name": "openai/o3",
@@ -316,7 +328,8 @@
     {
       "model_name": "openai/gpt-5",
       "aliases": [
-        "gpt5"
+        "gpt-5.0",
+        "gpt5.0"
       ],
       "context_window": 400000,
       "max_output_tokens": 128000,
@@ -327,15 +340,14 @@
       "max_image_size_mb": 20.0,
       "supports_temperature": true,
       "temperature_constraint": "range",
-      "description": "GPT-5 (400K context, 128K output) - Advanced model with reasoning support",
+      "description": "GPT-5.0 (400K context, 128K output) - Advanced model with reasoning support",
       "intelligence_score": 16
     },
     {
       "model_name": "openai/gpt-5.2-pro",
       "aliases": [
         "gpt5.2-pro",
-        "gpt5.2pro",
-        "gpt5pro"
+        "gpt5.2pro"
       ],
       "context_window": 400000,
       "max_output_tokens": 272000,
@@ -353,9 +365,52 @@
       "intelligence_score": 18
     },
     {
+      "model_name": "openai/gpt-5.4-pro",
+      "aliases": [
+        "gpt5.4-pro",
+        "gpt5.4pro",
+        "gpt5pro"
+      ],
+      "context_window": 1050000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 20.0,
+      "supports_temperature": false,
+      "temperature_constraint": "fixed",
+      "use_openai_response_api": true,
+      "default_reasoning_effort": "high",
+      "allow_code_generation": true,
+      "description": "GPT-5.4 Pro - OpenAI's most advanced model with enhanced reasoning and 1M context window",
+      "intelligence_score": 19
+    },
+    {
+      "model_name": "openai/gpt-5.4",
+      "aliases": [
+        "gpt5",
+        "gpt5.4",
+        "gpt-5.4"
+      ],
+      "context_window": 1050000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 20.0,
+      "supports_temperature": false,
+      "temperature_constraint": "fixed",
+      "default_reasoning_effort": "medium",
+      "allow_code_generation": true,
+      "description": "GPT-5.4 - OpenAI's unified frontier model (1M context, 128K output) combining Codex and GPT capabilities",
+      "intelligence_score": 19
+    },
+    {
       "model_name": "openai/gpt-5-codex",
       "aliases": [
-        "codex",
+        "codex-5.0",
         "gpt5codex"
       ],
       "context_window": 400000,
@@ -451,6 +506,28 @@
       "intelligence_score": 19
     },
     {
+      "model_name": "openai/gpt-5.3-codex",
+      "aliases": [
+        "codex",
+        "codex-5.3",
+        "gpt5.3-codex"
+      ],
+      "context_window": 400000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 20.0,
+      "supports_temperature": false,
+      "temperature_constraint": "fixed",
+      "use_openai_response_api": true,
+      "default_reasoning_effort": "high",
+      "allow_code_generation": true,
+      "description": "GPT-5.3 Codex - OpenAI's most advanced agentic coding model with frontier software engineering performance",
+      "intelligence_score": 19
+    },
+    {
       "model_name": "openai/gpt-5.1-codex-mini",
       "aliases": [
         "gpt5.1-codex-mini",
@@ -507,6 +584,167 @@
       "temperature_constraint": "range",
       "description": "xAI's Grok 4.1 Fast Reasoning via OpenRouter (2M context) with vision and advanced reasoning",
       "intelligence_score": 15
+    },
+    {
+      "model_name": "deepseek/deepseek-v3.2-exp",
+      "aliases": [
+        "deepseek-v3",
+        "deepseek-v3.2",
+        "dsv3"
+      ],
+      "context_window": 163840,
+      "max_output_tokens": 65536,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": false,
+      "supports_images": false,
+      "max_image_size_mb": 0.0,
+      "description": "DeepSeek V3.2 Experimental - Strong reasoning capabilities (text-only)",
+      "intelligence_score": 16
+    },
+    {
+      "model_name": "mistralai/devstral-2512",
+      "aliases": [
+        "devstral"
+      ],
+      "context_window": 262144,
+      "max_output_tokens": 32768,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": false,
+      "max_image_size_mb": 0.0,
+      "description": "Devstral 2 - Mistral's 123B parameter model specialized for agentic coding and codebase exploration",
+      "intelligence_score": 15
+    },
+    {
+      "model_name": "qwen/qwen3.5-397b-a17b",
+      "aliases": [
+        "qwen3.5"
+      ],
+      "context_window": 262144,
+      "max_output_tokens": 65536,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 20.0,
+      "description": "Qwen 3.5 397B - Frontier reasoning model with vision, hybrid architecture (text+image+video input)",
+      "intelligence_score": 16
+    },
+    {
+      "model_name": "minimax/minimax-m2.5",
+      "aliases": [
+        "m2.5"
+      ],
+      "context_window": 196608,
+      "max_output_tokens": 32768,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": false,
+      "max_image_size_mb": 0.0,
+      "description": "MiniMax M2.5 - SWE-Bench 80.2%, optimized for agent workflows and real-world productivity (API allows up to 196K output)",
+      "intelligence_score": 16
+    },
+    {
+      "model_name": "nousresearch/hermes-4-405b",
+      "aliases": [
+        "hermes",
+        "hermes-4",
+        "hermes-405b"
+      ],
+      "context_window": 131072,
+      "max_output_tokens": 32000,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": false,
+      "max_image_size_mb": 0.0,
+      "description": "Nous Research Hermes 4 405B - Hybrid reasoning model with deliberative alignment and structured output",
+      "intelligence_score": 15
+    },
+    {
+      "model_name": "nousresearch/hermes-4-70b",
+      "aliases": [
+        "hermes-70b",
+        "hermes-4-70b"
+      ],
+      "context_window": 131072,
+      "max_output_tokens": 32000,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": false,
+      "max_image_size_mb": 0.0,
+      "description": "Nous Research Hermes 4 70B - Cost-efficient hybrid reasoning with function calling and structured output",
+      "intelligence_score": 12
+    },
+    {
+      "model_name": "qwen/qwen3.6-plus",
+      "aliases": [
+        "qwen",
+        "qwen3.6",
+        "qwen3.6-plus"
+      ],
+      "context_window": 1000000,
+      "max_output_tokens": 65536,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 20.0,
+      "description": "Qwen 3.6 Plus - Alibaba's latest frontier model with 1M context and agentic coding capabilities",
+      "intelligence_score": 17
+    },
+    {
+      "model_name": "minimax/minimax-m2.7",
+      "aliases": [
+        "minimax",
+        "minimax-m2.7",
+        "m2.7"
+      ],
+      "context_window": 196608,
+      "max_output_tokens": 32768,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": false,
+      "max_image_size_mb": 0.0,
+      "description": "MiniMax M2.7 - 1T parameter model with SWE-Pro performance matching GPT-5.3-Codex",
+      "intelligence_score": 17
+    },
+    {
+      "model_name": "qwen/qwen3-coder",
+      "aliases": [
+        "qwen-coder",
+        "qwen3-coder"
+      ],
+      "context_window": 262144,
+      "max_output_tokens": 65536,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": false,
+      "max_image_size_mb": 0.0,
+      "description": "Qwen3 Coder 480B - Frontier open-weight coding model (35B active MoE) with strong SWE performance",
+      "intelligence_score": 16
+    },
+    {
+      "model_name": "google/gemini-3.1-flash-lite-preview",
+      "aliases": [
+        "flash-lite",
+        "gemini-flash-lite"
+      ],
+      "context_window": 1048576,
+      "max_output_tokens": 65536,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 15.0,
+      "description": "Google Gemini 3.1 Flash Lite - Cost-efficient flash variant with full thinking support",
+      "intelligence_score": 9
     }
   ]
 }

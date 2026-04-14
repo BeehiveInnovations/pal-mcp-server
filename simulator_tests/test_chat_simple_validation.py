@@ -13,7 +13,6 @@ Comprehensive test for the new ChatSimple tool implementation that validates:
 - Conversation context preservation across turns
 """
 
-
 from .conversation_base_test import ConversationBaseTest
 
 

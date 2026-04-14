@@ -22,21 +22,27 @@ class TestModelResolutionBug:
         self.consensus_tool = ConsensusTool()
 
     def test_openrouter_registry_resolves_gemini_alias(self):
-        """Test that OpenRouter registry properly resolves 'gemini' to 'google/gemini-3-pro-preview'."""
+        """Test that OpenRouter registry properly resolves 'gemini' to the latest Gemini Pro."""
         # Test the registry directly
         provider = OpenRouterProvider("test_key")
 
-        # Test alias resolution
+        # Test alias resolution - 'gemini' and 'pro' now point to 3.1
         resolved_model_name = provider._resolve_model_name("gemini")
         assert (
-            resolved_model_name == "google/gemini-3-pro-preview"
-        ), f"Expected 'google/gemini-3-pro-preview', got '{resolved_model_name}'"
+            resolved_model_name == "google/gemini-3.1-pro-preview"
+        ), f"Expected 'google/gemini-3.1-pro-preview', got '{resolved_model_name}'"
 
         # Test that it also works with 'pro' alias
         resolved_pro = provider._resolve_model_name("pro")
         assert (
-            resolved_pro == "google/gemini-3-pro-preview"
-        ), f"Expected 'google/gemini-3-pro-preview', got '{resolved_pro}'"
+            resolved_pro == "google/gemini-3.1-pro-preview"
+        ), f"Expected 'google/gemini-3.1-pro-preview', got '{resolved_pro}'"
+
+        # Test version-specific alias still works for backward compat
+        resolved_3_0 = provider._resolve_model_name("gemini3.0")
+        assert (
+            resolved_3_0 == "google/gemini-3-pro-preview"
+        ), f"Expected 'google/gemini-3-pro-preview', got '{resolved_3_0}'"
 
     # DELETED: test_provider_registry_returns_openrouter_for_gemini
     # This test had a flawed mock setup - it mocked get_provider() but called get_provider_for_model().

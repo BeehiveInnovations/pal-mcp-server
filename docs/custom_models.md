@@ -52,18 +52,26 @@ The curated defaults in `conf/openrouter_models.json` include popular entries su
 
 | Alias | Canonical Model | Highlights |
 |-------|-----------------|------------|
-| `opus`, `claude-opus` | `anthropic/claude-opus-4.1` | Flagship Claude reasoning model with vision |
-| `sonnet`, `sonnet4.5` | `anthropic/claude-sonnet-4.5` | Balanced Claude with high context window |
+| `opus`, `claude-opus` | `anthropic/claude-opus-4.6` | Latest Anthropic flagship (1M context, vision). `opus4.5` → 4.5, `opus4.1` → 4.1 |
+| `sonnet` | `anthropic/claude-sonnet-4.6` | Frontier Sonnet (1M context, vision). `sonnet4.5` → 4.5 |
 | `haiku` | `anthropic/claude-3.5-haiku` | Fast Claude option with vision |
-| `pro`, `gemini` | `google/gemini-2.5-pro` | Frontier Gemini with extended thinking |
+| `pro`, `gemini` | `google/gemini-3.1-pro-preview` | Latest Gemini Pro with 1M context, thinking. `gemini3.0` → 3.0 |
 | `flash` | `google/gemini-2.5-flash` | Ultra-fast Gemini with vision |
-| `mistral` | `mistralai/mistral-large-2411` | Frontier Mistral (text only) |
-| `llama3` | `meta-llama/llama-3-70b` | Large open-weight text model |
-| `deepseek-r1` | `deepseek/deepseek-r1-0528` | DeepSeek reasoning model |
-| `perplexity` | `perplexity/llama-3-sonar-large-32k-online` | Search-augmented model |
+| `gpt5`, `gpt5.4` | `openai/gpt-5.4` | Unified frontier model (1M context, 128K output). `gpt5.0` → 5.0 |
+| `gpt5pro` | `openai/gpt-5.4-pro` | Enhanced reasoning variant (1M context). `gpt5.2-pro` → 5.2 Pro |
+| `codex`, `codex-5.3` | `openai/gpt-5.3-codex` | Latest agentic coding model (Responses API). `codex-5.0` → 5.0 |
 | `gpt5.2`, `gpt-5.2`, `5.2` | `openai/gpt-5.2` | Flagship GPT-5.2 with reasoning and vision |
 | `gpt5.1-codex`, `codex-5.1` | `openai/gpt-5.1-codex` | Agentic coding specialization (Responses API) |
-| `codex-mini`, `gpt5.1-codex-mini` | `openai/gpt-5.1-codex-mini` | Cost-efficient Codex variant with streaming |
+| `codex-mini` | `openai/gpt-5.1-codex-mini` | Cost-efficient Codex variant with streaming |
+| `mistral` | `mistralai/mistral-large-2411` | Frontier Mistral (text only) |
+| `devstral` | `mistralai/devstral-2512` | 123B agentic coding model (262K context) |
+| `deepseek-r1` | `deepseek/deepseek-r1-0528` | DeepSeek reasoning model |
+| `deepseek-v3`, `dsv3` | `deepseek/deepseek-v3.2-exp` | DeepSeek V3.2 with strong reasoning (164K context) |
+| `qwen` | `qwen/qwen3.6-plus` | Alibaba's latest frontier model (1M context). `qwen3.5` → 3.5 |
+| `minimax` | `minimax/minimax-m2.7` | 1T param model matching GPT-5.3-Codex. `m2.5` → 2.5 |
+| `hermes` | `nousresearch/hermes-4-405b` | Hybrid reasoning with deliberative alignment (131K context) |
+| `qwen-coder` | `qwen/qwen3-coder` | Frontier open-weight coding model, 480B MoE (262K context) |
+| `flash-lite` | `google/gemini-3.1-flash-lite-preview` | Cost-efficient Gemini flash variant (1M context) |
 
 Consult the JSON file for the full list, aliases, and capability flags. Add new entries as OpenRouter releases additional models.
 
