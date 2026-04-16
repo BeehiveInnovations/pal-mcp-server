@@ -263,6 +263,56 @@
       "temperature_constraint": "fixed"
     },
     {
+      "model_name": "gpt-5.4",
+      "friendly_name": "OpenAI (GPT-5.4)",
+      "aliases": [
+        "gpt5.4",
+        "gpt-5.4",
+        "5.4"
+      ],
+      "intelligence_score": 19,
+      "description": "GPT-5.4 (400K context, 128K output) - Newest flagship reasoning model with configurable thinking effort and vision support.",
+      "context_window": 400000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0,
+      "use_openai_response_api": true,
+      "default_reasoning_effort": "high",
+      "allow_code_generation": true,
+      "temperature_constraint": "fixed"
+    },
+    {
+      "model_name": "gpt-5.4-pro",
+      "friendly_name": "OpenAI (GPT-5.4 Pro)",
+      "aliases": [
+        "gpt5.4-pro",
+        "gpt5.4pro",
+        "gpt-5.4-pro"
+      ],
+      "intelligence_score": 20,
+      "description": "GPT-5.4 Pro (400K context, 272K output) - Most advanced reasoning model.",
+      "context_window": 400000,
+      "max_output_tokens": 272000,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": false,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0,
+      "use_openai_response_api": true,
+      "default_reasoning_effort": "high",
+      "allow_code_generation": true,
+      "temperature_constraint": "fixed"
+    },
+    {
       "model_name": "gpt-5.1-codex",
       "friendly_name": "OpenAI (GPT-5.1 Codex)",
       "aliases": [
