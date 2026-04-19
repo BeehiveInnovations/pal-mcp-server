@@ -585,6 +585,31 @@ setup_environment() {
             rm -rf "$VENV_PATH"
         fi
 
+        # Reuse an existing uv-created venv if its Python is still valid.
+        # `uv venv` refuses to write into an existing directory without --clear,
+        # so without this branch every run after the first one fails with
+        # "A virtual environment already exists" and falls back to system
+        # Python detection — defeating the uv-first design.
+        if [[ -d "$VENV_PATH" ]] && [[ -f "$VENV_PATH/uv_created" ]]; then
+            local existing_python
+            if existing_python=$(get_venv_python_path "$VENV_PATH") && [[ -x "$existing_python" ]]; then
+                print_success "Reusing existing uv environment ($($existing_python --version 2>&1))"
+                if ! $existing_python -m pip --version &>/dev/null 2>&1; then
+                    print_info "Installing pip in uv environment..."
+                    if bootstrap_pip "$existing_python" "python3"; then
+                        print_success "pip installed in uv environment"
+                    else
+                        print_warning "Failed to install pip in uv environment"
+                    fi
+                fi
+                echo "$existing_python"
+                return 0
+            fi
+            # Marker present but Python is missing/broken — start clean.
+            print_warning "uv-created venv looks broken, recreating"
+            rm -rf "$VENV_PATH"
+        fi
+
         # Try Python 3.12 first (preferred)
         local uv_output
         if uv_output=$(uv venv --python 3.12 "$VENV_PATH" 2>&1); then
