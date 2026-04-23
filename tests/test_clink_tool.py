@@ -60,12 +60,12 @@ def test_registry_lists_roles():
     assert "default" in roles
     assert "default" in registry.list_roles("codex")
     codex_client = registry.get_client("codex")
-    # Verify codex uses --enable web_search_request (not --search which is unsupported by exec)
+    # Verify codex uses --enable web_search_request in executable (before exec)
+    # while additional_args only contains flags that go after exec
+    assert codex_client.executable == ["codex", "--enable", "web_search_request"]
     assert codex_client.config_args == [
         "--json",
         "--dangerously-bypass-approvals-and-sandbox",
-        "--enable",
-        "web_search_request",
     ]
 
 

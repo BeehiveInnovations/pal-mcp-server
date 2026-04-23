@@ -1,11 +1,9 @@
 {
   "name": "codex",
-  "command": "codex",
+  "command": "codex --enable web_search_request",
   "additional_args": [
     "--json",
-    "--dangerously-bypass-approvals-and-sandbox",
-    "--enable",
-    "web_search_request"
+    "--dangerously-bypass-approvals-and-sandbox"
   ],
   "env": {},
   "roles": {
