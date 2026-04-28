@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/beehiveinnovations-pal-mcp-server-badge.png)](https://mseep.ai/app/beehiveinnovations-pal-mcp-server)
+
 # PAL MCP: Many Workflows. One Context.
 
 <div align="center">
