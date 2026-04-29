@@ -309,13 +309,28 @@ class TestConfigureProvidersFunction:
             assert ProviderType.CUSTOM in available
 
     def test_configure_providers_no_valid_keys(self):
-        """Test configure_providers raises error when no valid API keys."""
+        """Test configure_providers logs a warning when no valid API keys."""
         from server import configure_providers
 
-        with patch.dict(
-            os.environ,
-            {"GEMINI_API_KEY": "", "OPENAI_API_KEY": "", "OPENROUTER_API_KEY": "", "CUSTOM_API_URL": ""},
-            clear=True,
+        with (
+            patch.dict(
+                os.environ,
+                {"GEMINI_API_KEY": "", "OPENAI_API_KEY": "", "OPENROUTER_API_KEY": "", "CUSTOM_API_URL": ""},
+                clear=True,
+            ),
+            patch("server.logger") as mock_logger,
         ):
-            with pytest.raises(ValueError, match="At least one API configuration is required"):
-                configure_providers()
+
+            valid_providers = configure_providers()
+
+            # Verify no providers are returned or list is empty (function doesn't return anything natively in python but just in case)
+            if valid_providers is not None:
+                assert len(valid_providers) == 0
+
+            # Verify it logged a warning instead of raising ValueError
+            mock_logger.warning.assert_called_once()
+            warning_msg = mock_logger.warning.call_args[0][0]
+            assert (
+                "No API configurations found" in warning_msg
+                or "At least one API configuration is required" in warning_msg
+            )

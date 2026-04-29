@@ -540,16 +540,11 @@ def configure_providers():
     if registered_providers:
         logger.info(f"Registered providers: {', '.join(registered_providers)}")
 
-    # Require at least one valid provider
+    # Check if OAuth-native mode is enabled or warn instead of blocking
     if not valid_providers:
-        raise ValueError(
-            "At least one API configuration is required. Please set either:\n"
-            "- GEMINI_API_KEY for Gemini models\n"
-            "- OPENAI_API_KEY for OpenAI models\n"
-            "- XAI_API_KEY for X.AI GROK models\n"
-            "- DIAL_API_KEY for DIAL models\n"
-            "- OPENROUTER_API_KEY for OpenRouter (multiple models)\n"
-            "- CUSTOM_API_URL for local models (Ollama, vLLM, etc.)"
+        logger.warning(
+            "No API configurations found. Tools requiring an API model will fail. "
+            "However, OAuth-native local tools (like clink) will still function."
         )
 
     logger.info(f"Available providers: {', '.join(valid_providers)}")
