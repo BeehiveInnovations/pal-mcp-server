@@ -112,6 +112,82 @@ class TestXAIProvider:
         assert capabilities.supports_json_mode is True
         assert capabilities.supports_images is True
 
+    def test_get_capabilities_grok_4_20_reasoning(self):
+        """Test capabilities for GROK-4.20 Reasoning."""
+        provider = XAIModelProvider("test-key")
+
+        capabilities = provider.get_capabilities("grok-4.20-reasoning")
+        assert capabilities.model_name == "grok-4.20-reasoning"
+        assert capabilities.friendly_name == "X.AI (Grok 4.20 Reasoning)"
+        assert capabilities.context_window == 2_000_000
+        assert capabilities.supports_extended_thinking is True
+        assert capabilities.supports_function_calling is True
+        assert capabilities.supports_json_mode is True
+        assert capabilities.supports_images is True
+
+    def test_get_capabilities_grok_4_20_non_reasoning(self):
+        """Test capabilities for GROK-4.20 Non-Reasoning."""
+        provider = XAIModelProvider("test-key")
+
+        capabilities = provider.get_capabilities("grok-4.20-non-reasoning")
+        assert capabilities.model_name == "grok-4.20-non-reasoning"
+        assert capabilities.context_window == 2_000_000
+        assert capabilities.supports_extended_thinking is False
+        assert capabilities.supports_function_calling is True
+        assert capabilities.supports_images is True
+
+    def test_get_capabilities_grok_4_20_multi_agent(self):
+        """Test capabilities for GROK-4.20 Multi-Agent."""
+        provider = XAIModelProvider("test-key")
+
+        capabilities = provider.get_capabilities("grok-4.20-multi-agent")
+        assert capabilities.model_name == "grok-4.20-multi-agent"
+        assert capabilities.context_window == 2_000_000
+        assert capabilities.supports_extended_thinking is True
+        assert capabilities.supports_function_calling is True
+        assert capabilities.supports_images is True
+
+    def test_grok_4_20_alias_resolution(self):
+        """Aliases for the Grok 4.20 variants resolve to canonical model_names."""
+        provider = XAIModelProvider("test-key")
+
+        assert provider._resolve_model_name("grok-4-20-reasoning") == "grok-4.20-reasoning"
+        assert provider._resolve_model_name("grok-4.20") == "grok-4.20-reasoning"
+        assert provider._resolve_model_name("grok-4.20-non-reasoning") == "grok-4.20-non-reasoning"
+        assert provider._resolve_model_name("grok-4.20-multi-agent") == "grok-4.20-multi-agent"
+
+    def test_get_capabilities_grok_4_3(self):
+        """Test capabilities for GROK-4.3 (current default flagship)."""
+        provider = XAIModelProvider("test-key")
+
+        capabilities = provider.get_capabilities("grok-4.3")
+        assert capabilities.model_name == "grok-4.3"
+        assert capabilities.friendly_name == "X.AI (Grok 4.3)"
+        assert capabilities.context_window == 2_000_000
+        assert capabilities.supports_extended_thinking is True
+        assert capabilities.supports_function_calling is True
+        assert capabilities.supports_json_mode is True
+        assert capabilities.supports_images is True
+
+        # Aliases resolve to canonical model name
+        assert provider._resolve_model_name("grok-4-3") == "grok-4.3"
+        assert provider._resolve_model_name("grok-4.3-latest") == "grok-4.3"
+
+    def test_get_capabilities_grok_420_multi_agent_beta(self):
+        """Grok 420 (no dot) Multi-Agent early-access variant is distinct from Grok 4.20 Multi-Agent."""
+        provider = XAIModelProvider("test-key")
+
+        capabilities = provider.get_capabilities("grok-420-multi-agent")
+        assert capabilities.model_name == "grok-420-multi-agent"
+        assert capabilities.context_window == 2_000_000
+        assert capabilities.supports_extended_thinking is True
+        assert capabilities.supports_function_calling is True
+        assert capabilities.supports_images is True
+
+        # Distinct from grok-4.20-multi-agent
+        assert provider._resolve_model_name("grok-420-ma") == "grok-420-multi-agent"
+        assert provider._resolve_model_name("grok-4.20-multi-agent") == "grok-4.20-multi-agent"
+
     def test_get_capabilities_with_shorthand(self):
         """Test getting model capabilities with shorthand."""
         provider = XAIModelProvider("test-key")
@@ -352,3 +428,83 @@ class TestXAIProvider:
         provider.generate_content(prompt="Test", model_name="grok-4.1-fast", temperature=0.7)
         call_kwargs = mock_client.chat.completions.create.call_args[1]
         assert call_kwargs["model"] == "grok-4-1-fast-reasoning"
+
+    def test_get_preferred_model_empty_list(self):
+        """Test get_preferred_model returns None for empty allowed_models."""
+        from tools.models import ToolModelCategory
+
+        provider = XAIModelProvider("test-key")
+        assert provider.get_preferred_model(ToolModelCategory.BALANCED, []) is None
+        assert provider.get_preferred_model(ToolModelCategory.EXTENDED_REASONING, []) is None
+        assert provider.get_preferred_model(ToolModelCategory.FAST_RESPONSE, []) is None
+
+    def test_get_preferred_model_extended_reasoning(self):
+        """Test get_preferred_model for EXTENDED_REASONING category."""
+        from tools.models import ToolModelCategory
+
+        provider = XAIModelProvider("test-key")
+
+        # Prefers PRIMARY_MODEL first
+        allowed = ["grok-4.3", "grok-4-1-fast-reasoning", "grok-4", "grok-code-fast-1"]
+        assert provider.get_preferred_model(ToolModelCategory.EXTENDED_REASONING, allowed) == "grok-4.3"
+
+        # Falls back to SECONDARY_MODEL when PRIMARY is unavailable
+        allowed = ["grok-4-1-fast-reasoning", "grok-4", "grok-code-fast-1"]
+        assert provider.get_preferred_model(ToolModelCategory.EXTENDED_REASONING, allowed) == "grok-4-1-fast-reasoning"
+
+        # Falls back to FALLBACK_MODEL when PRIMARY and SECONDARY are unavailable
+        allowed = ["grok-4", "grok-code-fast-1"]
+        assert provider.get_preferred_model(ToolModelCategory.EXTENDED_REASONING, allowed) == "grok-4"
+
+        # Falls back to first available if no preferred model is available
+        allowed = ["grok-code-fast-1", "some-other-model"]
+        assert provider.get_preferred_model(ToolModelCategory.EXTENDED_REASONING, allowed) == "grok-code-fast-1"
+
+    def test_get_preferred_model_fast_response(self):
+        """Test get_preferred_model for FAST_RESPONSE category."""
+        from tools.models import ToolModelCategory
+
+        provider = XAIModelProvider("test-key")
+
+        # Prefers PRIMARY_MODEL first
+        allowed = ["grok-4.3", "grok-4-1-fast-reasoning", "grok-4"]
+        assert provider.get_preferred_model(ToolModelCategory.FAST_RESPONSE, allowed) == "grok-4.3"
+
+        # Falls back to SECONDARY_MODEL
+        allowed = ["grok-4-1-fast-reasoning", "grok-4"]
+        assert provider.get_preferred_model(ToolModelCategory.FAST_RESPONSE, allowed) == "grok-4-1-fast-reasoning"
+
+        # Falls back to FALLBACK_MODEL
+        allowed = ["grok-4", "grok-code-fast-1"]
+        assert provider.get_preferred_model(ToolModelCategory.FAST_RESPONSE, allowed) == "grok-4"
+
+    def test_get_preferred_model_balanced(self):
+        """Test get_preferred_model for BALANCED category includes CODE_MODEL."""
+        from tools.models import ToolModelCategory
+
+        provider = XAIModelProvider("test-key")
+
+        # Prefers PRIMARY_MODEL first
+        allowed = ["grok-4.3", "grok-4-1-fast-reasoning", "grok-4", "grok-code-fast-1"]
+        assert provider.get_preferred_model(ToolModelCategory.BALANCED, allowed) == "grok-4.3"
+
+        # Falls back to SECONDARY_MODEL
+        allowed = ["grok-4-1-fast-reasoning", "grok-4", "grok-code-fast-1"]
+        assert provider.get_preferred_model(ToolModelCategory.BALANCED, allowed) == "grok-4-1-fast-reasoning"
+
+        # Falls back to FALLBACK_MODEL
+        allowed = ["grok-4", "grok-code-fast-1"]
+        assert provider.get_preferred_model(ToolModelCategory.BALANCED, allowed) == "grok-4"
+
+        # Falls back to CODE_MODEL for BALANCED category
+        allowed = ["grok-code-fast-1", "some-other-model"]
+        assert provider.get_preferred_model(ToolModelCategory.BALANCED, allowed) == "grok-code-fast-1"
+
+        # CODE_MODEL is NOT a fallback for other categories
+        allowed = ["grok-code-fast-1", "some-other-model"]
+        assert (
+            provider.get_preferred_model(ToolModelCategory.EXTENDED_REASONING, allowed) == "grok-code-fast-1"
+        )  # first in list
+        assert (
+            provider.get_preferred_model(ToolModelCategory.FAST_RESPONSE, allowed) == "grok-code-fast-1"
+        )  # first in list

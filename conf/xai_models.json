@@ -67,6 +67,129 @@
       "supports_images": true,
       "supports_temperature": true,
       "max_image_size_mb": 20.0
+    },
+    {
+      "model_name": "grok-code-fast-1",
+      "friendly_name": "X.AI (Grok Code Fast)",
+      "aliases": [
+        "grok-code",
+        "grok-code-fast"
+      ],
+      "intelligence_score": 14,
+      "description": "Grok Code Fast (256K context) - Specialized coding model",
+      "context_window": 256000,
+      "max_output_tokens": 256000,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true
+    },
+    {
+      "model_name": "grok-4.20-reasoning",
+      "friendly_name": "X.AI (Grok 4.20 Reasoning)",
+      "aliases": [
+        "grok-4.20",
+        "grok-4-20",
+        "grok-4-20-reasoning",
+        "grok-4.20-reasoning-latest"
+      ],
+      "intelligence_score": 17,
+      "description": "GROK-4.20 Reasoning (2M context) - Flagship multimodal reasoning model with chain-of-thought deliberation",
+      "context_window": 2000000,
+      "max_output_tokens": 2000000,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0
+    },
+    {
+      "model_name": "grok-4.20-non-reasoning",
+      "friendly_name": "X.AI (Grok 4.20 Non-Reasoning)",
+      "aliases": [
+        "grok-4-20-non-reasoning",
+        "grok-4.20-fast",
+        "grok-4.20-non-reasoning-latest"
+      ],
+      "intelligence_score": 16,
+      "description": "GROK-4.20 Non-Reasoning (2M context) - Lower-latency variant that skips chain-of-thought deliberation",
+      "context_window": 2000000,
+      "max_output_tokens": 2000000,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0
+    },
+    {
+      "model_name": "grok-4.20-multi-agent",
+      "friendly_name": "X.AI (Grok 4.20 Multi-Agent)",
+      "aliases": [
+        "grok-4-20-multi-agent",
+        "grok-4.20-ma",
+        "grok-4.20-multi-agent-latest"
+      ],
+      "intelligence_score": 18,
+      "description": "GROK-4.20 Multi-Agent (2M context) - 4-agent collaborative system (Grok/Harper/Benjamin/Lucas) with cross-agent verification",
+      "context_window": 2000000,
+      "max_output_tokens": 2000000,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0
+    },
+    {
+      "model_name": "grok-4.3",
+      "friendly_name": "X.AI (Grok 4.3)",
+      "aliases": [
+        "grok-4-3",
+        "grok-4.3-latest"
+      ],
+      "intelligence_score": 20,
+      "description": "GROK-4.3 (2M context) - Flagship multimodal reasoning model and current X.AI default",
+      "context_window": 2000000,
+      "max_output_tokens": 2000000,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0
+    },
+    {
+      "model_name": "grok-420-multi-agent",
+      "friendly_name": "X.AI (Grok 420 Multi-Agent, Early Access)",
+      "aliases": [
+        "grok-420-ma",
+        "grok-420-multi-agent-beta"
+      ],
+      "intelligence_score": 19,
+      "description": "GROK-420 Multi-Agent (2M context, early access) - Beta variant of the multi-agent system, available to xAI accounts with early-access entitlement",
+      "context_window": 2000000,
+      "max_output_tokens": 2000000,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0
     }
   ]
 }
