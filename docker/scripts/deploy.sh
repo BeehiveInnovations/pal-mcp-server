@@ -12,7 +12,7 @@ echo -e "${GREEN}=== Deploying PAL MCP Server ===${NC}"
 # Function to check if required environment variables are set
 check_env_vars() {
     # At least one of these API keys must be set
-    local required_vars=("GEMINI_API_KEY" "GOOGLE_API_KEY" "OPENAI_API_KEY" "XAI_API_KEY" "DIAL_API_KEY" "OPENROUTER_API_KEY")
+    local required_vars=("GEMINI_API_KEY" "GOOGLE_API_KEY" "OPENAI_API_KEY" "XAI_API_KEY" "ZAI_API_KEY" "DIAL_API_KEY" "OPENROUTER_API_KEY")
     
     local has_api_key=false
     for var in "${required_vars[@]}"; do

@@ -308,6 +308,30 @@ class TestConfigureProvidersFunction:
             assert ProviderType.OPENROUTER in available
             assert ProviderType.CUSTOM in available
 
+    def test_configure_providers_zai_only(self):
+        """Test configure_providers with only Z.AI key set."""
+        from server import configure_providers
+
+        with patch.dict(
+            os.environ,
+            {
+                "ZAI_API_KEY": "test-zai-key",
+                "GEMINI_API_KEY": "",
+                "OPENAI_API_KEY": "",
+                "XAI_API_KEY": "",
+                "DIAL_API_KEY": "",
+                "OPENROUTER_API_KEY": "",
+                "CUSTOM_API_URL": "",
+            },
+            clear=True,
+        ):
+            configure_providers()
+
+            available = ModelProviderRegistry.get_available_providers()
+            assert ProviderType.ZAI in available
+            assert ProviderType.OPENROUTER not in available
+            assert ProviderType.CUSTOM not in available
+
     def test_configure_providers_no_valid_keys(self):
         """Test configure_providers raises error when no valid API keys."""
         from server import configure_providers

@@ -46,7 +46,7 @@ class TestDockerMCPValidation:
 
     def test_environment_variables_validation(self):
         """Test environment variables validation"""
-        required_vars = ["GEMINI_API_KEY", "OPENAI_API_KEY", "XAI_API_KEY"]
+        required_vars = ["GEMINI_API_KEY", "OPENAI_API_KEY", "XAI_API_KEY", "ZAI_API_KEY"]
 
         # Test with variable present
         with patch.dict(os.environ, {"GEMINI_API_KEY": "test"}):

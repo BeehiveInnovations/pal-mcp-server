@@ -53,6 +53,8 @@ class TestDockerConfiguration:
         assert "services:" in content, "docker-compose.yml must have services"
         assert "pal-mcp" in content, "Service pal-mcp must be defined"
         assert "build:" in content, "Build configuration must be present"
+        assert "XAI_API_KEY=${XAI_API_KEY}" in content, "X.AI API key must be wired through compose"
+        assert "ZAI_API_KEY=${ZAI_API_KEY}" in content, "Z.AI API key must be wired through compose"
 
     def test_environment_file_template(self):
         """Test that an .env file template exists"""
@@ -138,12 +140,22 @@ class TestEnvironmentValidation:
         with patch.dict(os.environ, {"GEMINI_API_KEY": "test_key"}):
             # Here we should have a function that validates the keys
             # Let's simulate the validation logic
-            has_api_key = bool(os.getenv("GEMINI_API_KEY") or os.getenv("OPENAI_API_KEY") or os.getenv("XAI_API_KEY"))
+            has_api_key = bool(
+                os.getenv("GEMINI_API_KEY")
+                or os.getenv("OPENAI_API_KEY")
+                or os.getenv("XAI_API_KEY")
+                or os.getenv("ZAI_API_KEY")
+            )
             assert has_api_key, "At least one API key must be present"
 
         # Test without API key
         with patch.dict(os.environ, {}, clear=True):
-            has_api_key = bool(os.getenv("GEMINI_API_KEY") or os.getenv("OPENAI_API_KEY") or os.getenv("XAI_API_KEY"))
+            has_api_key = bool(
+                os.getenv("GEMINI_API_KEY")
+                or os.getenv("OPENAI_API_KEY")
+                or os.getenv("XAI_API_KEY")
+                or os.getenv("ZAI_API_KEY")
+            )
             assert not has_api_key, "No API key should be present"
 
     def test_environment_file_parsing(self):

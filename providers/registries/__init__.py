@@ -7,6 +7,7 @@ from .gemini import GeminiModelRegistry
 from .openai import OpenAIModelRegistry
 from .openrouter import OpenRouterModelRegistry
 from .xai import XAIModelRegistry
+from .zai import ZAIModelRegistry
 
 __all__ = [
     "AzureModelRegistry",
@@ -16,4 +17,5 @@ __all__ = [
     "OpenAIModelRegistry",
     "OpenRouterModelRegistry",
     "XAIModelRegistry",
+    "ZAIModelRegistry",
 ]

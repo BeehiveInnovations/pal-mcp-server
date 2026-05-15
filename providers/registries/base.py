@@ -12,7 +12,7 @@ from pathlib import Path
 from utils.env import get_env
 from utils.file_utils import read_json_file
 
-from ..shared import ModelCapabilities, ProviderType, TemperatureConstraint
+from ..shared import ModelCapabilities, ProviderType, RangeTemperatureConstraint, TemperatureConstraint
 
 logger = logging.getLogger(__name__)
 
@@ -158,6 +158,8 @@ class CustomModelRegistryBase:
         temperature_hint = entry.get("temperature_constraint")
         if isinstance(temperature_hint, str):
             entry["temperature_constraint"] = TemperatureConstraint.create(temperature_hint)
+        elif isinstance(temperature_hint, dict):
+            entry["temperature_constraint"] = self._convert_temperature_constraint(temperature_hint)
         elif temperature_hint is None:
             entry["temperature_constraint"] = TemperatureConstraint.create("range")
 
@@ -177,6 +179,17 @@ class CustomModelRegistryBase:
 
     def _default_friendly_name(self, model_name: str) -> str:
         return model_name
+
+    def _convert_temperature_constraint(self, raw: dict) -> TemperatureConstraint:
+        constraint_type = raw.get("type", "range")
+        if constraint_type == "range":
+            return RangeTemperatureConstraint(
+                float(raw.get("min", 0.0)),
+                float(raw.get("max", 2.0)),
+                float(raw.get("default", 0.3)),
+            )
+
+        return TemperatureConstraint.create(constraint_type)
 
     def _extra_keys(self) -> set[str]:
         return set()

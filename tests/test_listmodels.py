@@ -46,6 +46,7 @@ class TestListModelsTool:
             assert "Google Gemini ❌" in content
             assert "OpenAI ❌" in content
             assert "X.AI (Grok) ❌" in content
+            assert "Z.AI (GLM) ❌" in content
             assert "OpenRouter ❌" in content
             assert "Custom/Local API ❌" in content
 
@@ -100,6 +101,20 @@ class TestListModelsTool:
 
             # Check summary
             assert "**Configured Providers**: 3" in content
+
+    @pytest.mark.asyncio
+    async def test_execute_with_zai_configured(self, tool):
+        """Test listing models with Z.AI configured."""
+        env_vars = {"ZAI_API_KEY": "test-key", "DEFAULT_MODEL": "auto"}
+
+        with patch.dict(os.environ, env_vars, clear=True):
+            result = await tool.execute({})
+
+            response = json.loads(result[0].text)
+            content = response["content"]
+
+            assert "Z.AI (GLM) ✅" in content
+            assert "`glm`" in content
 
     @pytest.mark.asyncio
     async def test_execute_with_openrouter(self, tool):

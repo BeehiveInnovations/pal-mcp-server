@@ -123,6 +123,40 @@ class TestPipDetectionFix:
         assert ".env''" not in artifacts, "setup_env_file should not create BSD sed backup artifacts"
         assert ".env" in artifacts, ".env should be created from .env.example"
 
+    def test_setup_env_file_populates_exported_zai_key(self, tmp_path):
+        """Ensure first-run setup preserves exported Z.AI credentials."""
+        script_path = Path("./run-server.sh").resolve()
+
+        env_example = Path(".env.example").read_text()
+        target_example = tmp_path / ".env.example"
+        target_example.write_text(env_example)
+
+        command = f"""
+        set -e
+        cd "{tmp_path}"
+        source "{script_path}"
+        setup_env_file
+        """
+        env = os.environ.copy()
+        env["ZAI_API_KEY"] = "zai-real-test-key"
+        subprocess.run(["bash", "-lc", command], check=True, env=env, text=True)
+
+        env_content = (tmp_path / ".env").read_text()
+        assert "ZAI_API_KEY=zai-real-test-key" in env_content
+        assert "ZAI_API_KEY=your_zai_api_key_here" not in env_content
+
+    def test_powershell_setup_wires_zai_key(self):
+        """Ensure Windows setup paths include Z.AI credentials."""
+        content = Path("./run-server.ps1").read_text()
+
+        assert '"ZAI_API_KEY"        = ".+"' in content
+        assert "ZAI_API_KEY=your_zai_api_key_here" in content
+        assert '"GEMINI_API_KEY", "OPENAI_API_KEY", "XAI_API_KEY", "ZAI_API_KEY"' in content
+        assert (
+            '"OPENAI_ALLOWED_MODELS", "OPENROUTER_ALLOWED_MODELS", "XAI_ALLOWED_MODELS", "ZAI_ALLOWED_MODELS"'
+            in content
+        )
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

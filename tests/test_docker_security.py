@@ -167,7 +167,7 @@ class TestDockerSecretsHandling:
     def test_no_default_api_keys(self):
         """Test that no default API keys are present"""
         # Ensure no API keys are set by default
-        api_key_vars = ["GEMINI_API_KEY", "OPENAI_API_KEY", "XAI_API_KEY", "ANTHROPIC_API_KEY"]
+        api_key_vars = ["GEMINI_API_KEY", "OPENAI_API_KEY", "XAI_API_KEY", "ZAI_API_KEY", "ANTHROPIC_API_KEY"]
 
         for var in api_key_vars:
             assert os.getenv(var) is None, f"{var} should not have a default value"

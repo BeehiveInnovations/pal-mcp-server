@@ -1,0 +1,56 @@
+{
+  "_README": {
+    "description": "Model metadata for Z.AI GLM API access.",
+    "documentation": "https://github.com/BeehiveInnovations/pal-mcp-server/blob/main/docs/custom_models.md",
+    "usage": "Models listed here are exposed directly through the Z.AI provider. Aliases are case-insensitive.",
+    "field_notes": "Matches providers/shared/model_capabilities.py.",
+    "field_descriptions": {
+      "model_name": "The model identifier (e.g., 'glm-4.6')",
+      "aliases": "Array of short names users can type instead of the full model name",
+      "context_window": "Total number of tokens the model can process (input + output combined)",
+      "max_output_tokens": "Maximum number of tokens the model can generate in a single response",
+      "supports_extended_thinking": "Whether the model supports extended reasoning tokens",
+      "supports_json_mode": "Whether the model can guarantee valid JSON output",
+      "supports_function_calling": "Whether the model supports function/tool calling",
+      "supports_images": "Whether the model can process images/visual input",
+      "supports_temperature": "Whether the model accepts temperature parameter in API calls",
+      "temperature_constraint": "Temperature constraint object. Z.AI chat completions require temperature in [0.0, 1.0].",
+      "description": "Human-readable description of the model",
+      "intelligence_score": "1-20 human rating used as the primary signal for auto-mode model ordering"
+    },
+    "verification_sources": {
+      "model_overview": "https://docs.z.ai/guides/llm/glm-4.6",
+      "api_reference": "https://docs.z.ai/api-reference/llm/chat-completion",
+      "announcement": "https://z.ai/blog/glm-4.6"
+    }
+  },
+  "models": [
+    {
+      "model_name": "glm-4.6",
+      "friendly_name": "Z.AI (GLM-4.6)",
+      "aliases": [
+        "glm",
+        "glm-4",
+        "glm4.6",
+        "glm-4.6"
+      ],
+      "intelligence_score": 12,
+      "description": "GLM-4.6 (200K context) - Z.AI reasoning and coding model",
+      "context_window": 200000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true,
+      "temperature_constraint": {
+        "type": "range",
+        "min": 0.0,
+        "max": 1.0,
+        "default": 1.0
+      }
+    }
+  ]
+}

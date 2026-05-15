@@ -35,6 +35,10 @@ You need at least one API key. Choose based on your needs:
 - Visit [X.AI Console](https://console.x.ai/)
 - Generate an API key for Grok models
 
+**Z.AI (GLM):**
+- Visit [Z.AI API Keys](https://z.ai/manage-apikey/apikey-list)
+- Generate an API key for GLM-4.6 models
+
 **DIAL Platform:**
 - Visit [DIAL Platform](https://dialx.ai/)
 - Generate API key for vendor-agnostic model access
@@ -289,6 +293,7 @@ Add your API keys (at least one required):
 GEMINI_API_KEY=your-gemini-api-key-here      # For Gemini models  
 OPENAI_API_KEY=your-openai-api-key-here      # For GPT-5.2, GPT-5.1-Codex, O3
 XAI_API_KEY=your-xai-api-key-here            # For Grok models
+ZAI_API_KEY=your-zai-api-key-here            # For GLM models
 OPENROUTER_API_KEY=your-openrouter-key       # For multiple models
 
 # DIAL Platform (optional)

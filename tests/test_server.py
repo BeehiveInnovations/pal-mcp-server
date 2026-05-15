@@ -4,11 +4,23 @@ Tests for the main server functionality
 
 import pytest
 
-from server import handle_call_tool
+from server import _is_real_zai_api_key, handle_call_tool
 
 
 class TestServerTools:
     """Test server tool handling"""
+
+    @pytest.mark.parametrize(
+        "api_key",
+        [None, "", "your_zai_api_key_here", "your-zai-api-key-here", " YOUR-ZAI-API-KEY-HERE "],
+    )
+    def test_zai_placeholder_keys_are_not_real_provider_credentials(self, api_key):
+        """Documented Z.AI placeholders should not register the provider."""
+        assert _is_real_zai_api_key(api_key) is False
+
+    def test_zai_non_placeholder_key_is_real_provider_credential(self):
+        """A non-placeholder Z.AI key should register the provider."""
+        assert _is_real_zai_api_key("zai-real-looking-key") is True
 
     @pytest.mark.asyncio
     async def test_handle_call_tool_unknown(self):
@@ -105,3 +117,4 @@ class TestServerTools:
         assert "## Server Information" in content
         assert "## Configuration" in content
         assert "Current Version" in content
+        assert "Z.AI" in content

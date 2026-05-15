@@ -156,7 +156,7 @@ class TestDockerHealthCheckIntegration:
         # Health check should still work even without API keys
         # (it tests system health, not API connectivity)
 
-        required_vars = ["GEMINI_API_KEY", "OPENAI_API_KEY", "XAI_API_KEY"]
+        required_vars = ["GEMINI_API_KEY", "OPENAI_API_KEY", "XAI_API_KEY", "ZAI_API_KEY"]
 
         # Verify no API keys are set
         for var in required_vars:

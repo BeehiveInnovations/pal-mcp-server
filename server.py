@@ -375,19 +375,42 @@ PROMPT_TEMPLATES = {
 }
 
 
+ZAI_API_KEY_PLACEHOLDERS = {
+    "your_zai_api_key_here",
+    "your-zai-api-key-here",
+}
+
+
+def _is_real_zai_api_key(api_key: str | None) -> bool:
+    """Return True when the configured Z.AI key is not a documented placeholder."""
+
+    if not api_key:
+        return False
+
+    return api_key.strip().lower() not in ZAI_API_KEY_PLACEHOLDERS
+
+
 def configure_providers():
     """
     Configure and validate AI providers based on available API keys.
 
     This function checks for API keys and registers the appropriate providers.
-    At least one valid API key (Gemini or OpenAI) is required.
+    At least one valid provider configuration is required.
 
     Raises:
         ValueError: If no valid API keys are found or conflicting configurations detected
     """
     # Log environment variable status for debugging
     logger.debug("Checking environment variables for API keys...")
-    api_keys_to_check = ["OPENAI_API_KEY", "OPENROUTER_API_KEY", "GEMINI_API_KEY", "XAI_API_KEY", "CUSTOM_API_URL"]
+    api_keys_to_check = [
+        "OPENAI_API_KEY",
+        "OPENROUTER_API_KEY",
+        "GEMINI_API_KEY",
+        "XAI_API_KEY",
+        "ZAI_API_KEY",
+        "DIAL_API_KEY",
+        "CUSTOM_API_URL",
+    ]
     for key in api_keys_to_check:
         value = get_env(key)
         logger.debug(f"  {key}: {'[PRESENT]' if value else '[MISSING]'}")
@@ -400,6 +423,7 @@ def configure_providers():
     from providers.openrouter import OpenRouterProvider
     from providers.shared import ProviderType
     from providers.xai import XAIModelProvider
+    from providers.zai import ZAIModelProvider
     from utils.model_restrictions import get_restriction_service
 
     valid_providers = []
@@ -454,6 +478,13 @@ def configure_providers():
         valid_providers.append("X.AI (GROK)")
         has_native_apis = True
         logger.info("X.AI API key found - GROK models available")
+
+    # Check for Z.AI API key
+    zai_key = get_env("ZAI_API_KEY")
+    if _is_real_zai_api_key(zai_key):
+        valid_providers.append("Z.AI (GLM)")
+        has_native_apis = True
+        logger.info("Z.AI API key found - GLM models available")
 
     # Check for DIAL API key
     dial_key = get_env("DIAL_API_KEY")
@@ -513,6 +544,10 @@ def configure_providers():
             ModelProviderRegistry.register_provider(ProviderType.XAI, XAIModelProvider)
             registered_providers.append(ProviderType.XAI.value)
             logger.debug(f"Registered provider: {ProviderType.XAI.value}")
+        if _is_real_zai_api_key(zai_key):
+            ModelProviderRegistry.register_provider(ProviderType.ZAI, ZAIModelProvider)
+            registered_providers.append(ProviderType.ZAI.value)
+            logger.debug(f"Registered provider: {ProviderType.ZAI.value}")
         if dial_key and dial_key != "your_dial_api_key_here":
             ModelProviderRegistry.register_provider(ProviderType.DIAL, DIALModelProvider)
             registered_providers.append(ProviderType.DIAL.value)
@@ -547,6 +582,7 @@ def configure_providers():
             "- GEMINI_API_KEY for Gemini models\n"
             "- OPENAI_API_KEY for OpenAI models\n"
             "- XAI_API_KEY for X.AI GROK models\n"
+            "- ZAI_API_KEY for Z.AI GLM models\n"
             "- DIAL_API_KEY for DIAL models\n"
             "- OPENROUTER_API_KEY for OpenRouter (multiple models)\n"
             "- CUSTOM_API_URL for local models (Ollama, vLLM, etc.)"
@@ -600,7 +636,13 @@ def configure_providers():
 
         # Validate restrictions against known models
         provider_instances = {}
-        provider_types_to_validate = [ProviderType.GOOGLE, ProviderType.OPENAI, ProviderType.XAI, ProviderType.DIAL]
+        provider_types_to_validate = [
+            ProviderType.GOOGLE,
+            ProviderType.OPENAI,
+            ProviderType.XAI,
+            ProviderType.ZAI,
+            ProviderType.DIAL,
+        ]
         for provider_type in provider_types_to_validate:
             provider = ModelProviderRegistry.get_provider(provider_type)
             if provider:

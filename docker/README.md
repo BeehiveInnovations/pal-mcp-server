@@ -5,7 +5,7 @@
 ### 1. Prerequisites
 
 - Docker installed (Docker Compose optional)
-- At least one API key (Gemini, OpenAI, xAI, etc.)
+- At least one API key (Gemini, OpenAI, X.AI, Z.AI, etc.)
 
 ### 2. Configuration
 
@@ -14,7 +14,7 @@
 cp .env.example .env
 
 # Edit with your API keys (at least one required)
-# Required: GEMINI_API_KEY or OPENAI_API_KEY or XAI_API_KEY
+# Required: GEMINI_API_KEY or OPENAI_API_KEY or XAI_API_KEY or ZAI_API_KEY
 nano .env
 ```
 
@@ -293,6 +293,7 @@ DEFAULT_THINKING_MODE_THINKDEEP=high
 # Optional API keys (leave empty if not used)
 ANTHROPIC_API_KEY=
 XAI_API_KEY=
+ZAI_API_KEY=
 DIAL_API_KEY=
 OPENROUTER_API_KEY=
 CUSTOM_API_URL=
