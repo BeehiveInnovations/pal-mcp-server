@@ -579,6 +579,34 @@ class SimpleTool(BaseTool):
                 json_content = str(e)[len("MCP_SIZE_CHECK:") :]
                 raise ToolExecutionError(json_content)
 
+            # Handle Gemini account exhaustion — trigger rotate-on-demand.js + retry once
+            try:
+                from providers import GeminiAccountExhausted
+                if isinstance(e, GeminiAccountExhausted):
+                    import subprocess as _subprocess
+                    import time as _time
+                    from pathlib import Path as _Path
+                    from providers.gemini_switcher_client import GeminiSwitcherClient as _GSC
+                    node_bin = _GSC.get_node_binary()
+                    rotate_script = _Path.home() / ".claude" / "hooks" / "rotate-on-demand.js"
+                    logger.warning(
+                        "GeminiAccountExhausted for %s — running rotate-on-demand.js then sleeping 5s",
+                        e.account_email,
+                    )
+                    _subprocess.run(
+                        [node_bin, str(rotate_script), "pal-mcp"],
+                        timeout=10,
+                        check=False,
+                    )
+                    _time.sleep(5)
+                    # Re-raise as RuntimeError with clear message — outer retry logic can handle
+                    raise RuntimeError(
+                        f"Gemini account exhausted ({e.account_email}). "
+                        "Rotation triggered — please retry the request."
+                    ) from e
+            except ImportError:
+                pass
+
             logger.error(f"Error in {self.get_name()}: {str(e)}")
             error_output = ToolOutput(
                 status="error",
