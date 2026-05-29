@@ -407,12 +407,24 @@ def configure_providers():
     has_openrouter = False
     has_custom = False
 
+    def _has_gemini_oauth():
+        """Return True when Gemini CLI OAuth credentials are present on disk."""
+        return os.path.exists(os.path.expanduser("~/.gemini/oauth_creds.json"))
+
     # Check for Gemini API key
     gemini_key = get_env("GEMINI_API_KEY")
     if gemini_key and gemini_key != "your_gemini_api_key_here":
         valid_providers.append("Gemini")
         has_native_apis = True
         logger.info("Gemini API key found - Gemini models available")
+    elif _has_gemini_oauth():
+        # GEMINI-OAUTH-ONLY (Hamad msg-14953/14956): GEMINI_API_KEY is intentionally
+        # unset; Gemini auth runs via ~/.gemini/oauth_creds.json (Code Assist OAuth).
+        # Register the Gemini provider on OAuth-cred presence so configure_providers()
+        # does not raise "At least one API configuration is required".
+        valid_providers.append("Gemini")
+        has_native_apis = True
+        logger.info("Gemini OAuth credentials found (~/.gemini/oauth_creds.json) - Gemini models available")
 
     # Check for OpenAI API key
     openai_key = get_env("OPENAI_API_KEY")
@@ -497,10 +509,10 @@ def configure_providers():
     registered_providers = []
 
     if has_native_apis:
-        if gemini_key and gemini_key != "your_gemini_api_key_here":
+        if (gemini_key and gemini_key != "your_gemini_api_key_here") or _has_gemini_oauth():
             ModelProviderRegistry.register_provider(ProviderType.GOOGLE, GeminiModelProvider)
             registered_providers.append(ProviderType.GOOGLE.value)
-            logger.debug(f"Registered provider: {ProviderType.GOOGLE.value}")
+            logger.debug(f"Registered provider: {ProviderType.GOOGLE.value} (OAuth)" if not gemini_key else f"Registered provider: {ProviderType.GOOGLE.value}")
         if openai_key and openai_key != "your_openai_api_key_here":
             ModelProviderRegistry.register_provider(ProviderType.OPENAI, OpenAIModelProvider)
             registered_providers.append(ProviderType.OPENAI.value)
@@ -860,6 +872,10 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[TextCon
             if file_size_check:
                 logger.warning(f"File size check failed for {name} with model {model_name}")
                 raise ToolExecutionError(ToolOutput(**file_size_check).model_dump_json())
+
+        # Set PAL_TOOL_CONTEXT so _GemmaApiKeyAdapter routes to the per-tool dedicated key.
+        # (TASK-20260529-298: Gemma API key path reads this at generate_content call time.)
+        os.environ["PAL_TOOL_CONTEXT"] = name
 
         # Execute tool with pre-resolved model context
         result = await tool.execute(arguments)

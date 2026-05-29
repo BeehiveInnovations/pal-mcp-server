@@ -769,19 +769,174 @@ class _OAuthCodeAssistAdapterShared:
             raise RuntimeError(f"Code Assist generateContent network error: {exc}") from exc
 
 
+# ---------------------------------------------------------------------------
+# TASK-20260529-298 — Gemma 4-26B API key adapter
+#
+# Replaces OAuth/Code Assist before June 18 2026 deadline.
+# Endpoint: generativelanguage.googleapis.com/v1beta/models/gemma-4-26b-a4b-it:generateContent
+# Auth: x-goog-api-key header (NOT Bearer).
+# Activation: PAL_USE_API_KEYS=1 in PAL MCP env.
+# Per-tool key routing: reads PAL_TOOL_CONTEXT env var set by server.py at dispatch time.
+# Thought-part handling: Gemma returns reasoning in parts with thought:true; strip for clean
+#   verdicts EXCEPT for tools that benefit from full reasoning (challenge, debug, codereview).
+# ---------------------------------------------------------------------------
+
+_GEMMA_MODEL = "gemma-4-26b-a4b-it"
+_GEMMA_ENDPOINT_TMPL = (
+    "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+)
+
+# Tools where full reasoning (thought parts) is KEPT in the response text.
+# For all other tools, thought parts are stripped so only the answer remains.
+_GEMMA_KEEP_THOUGHTS_TOOLS = frozenset({"challenge", "debug", "codereview", "secaudit", "thinkdeep"})
+
+# Mapping from PAL_TOOL_CONTEXT → env var name holding the dedicated API key.
+# Falls back to GEMINI_API_KEY_GENERAL when tool is not in the map.
+_GEMMA_TOOL_KEY_MAP = {
+    "challenge": "GEMINI_API_KEY_CHALLENGE",
+    "precommit": "GEMINI_API_KEY_PRECOMMIT",
+    "codereview": "GEMINI_API_KEY_CODEREVIEW",
+    "secaudit": "GEMINI_API_KEY_SECAUDIT",
+    "debug": "GEMINI_API_KEY_DEBUG",
+    "analyze": "GEMINI_API_KEY_ANALYZE",
+    "thinkdeep": "GEMINI_API_KEY_THINKDEEP",
+}
+
+
+class _GemmaApiKeyAdapter:
+    """Calls generativelanguage.googleapis.com with x-goog-api-key + gemma-4-26b-a4b-it.
+
+    STRICTLY DEDICATED per-tool key routing (Hamad msg-34515): each PAL endpoint is
+    HARD-BOUND to exactly its own key — NO cross-key fallback between PAL endpoints.
+    1,500 req/day per key is ample; cross-endpoint rotation is BANNED.
+    Only permitted fallback: OAuth (when PAL_USE_API_KEYS=0) until June 18 2026.
+    Thought-part handling: strips thought:true parts EXCEPT for reasoning-heavy tools.
+    """
+
+    def _get_api_key(self) -> str:
+        """Return the DEDICATED API key for the current PAL_TOOL_CONTEXT.
+
+        Strictly bound: each tool reads ONLY its own dedicated key env var.
+        No cross-key fallback between PAL endpoints (Hamad msg-34515).
+        Raises RuntimeError if the dedicated key is missing — this is intentional
+        (misconfiguration should be loud, not silently routed to another key).
+        """
+        tool_ctx = os.environ.get("PAL_TOOL_CONTEXT", "").lower().strip()
+        env_var = _GEMMA_TOOL_KEY_MAP.get(tool_ctx, "GEMINI_API_KEY_GENERAL")
+        key = os.environ.get(env_var, "")
+        if not key:
+            raise RuntimeError(
+                f"_GemmaApiKeyAdapter: dedicated key {env_var} is missing for "
+                f"tool context '{tool_ctx}'. Set {env_var} in PAL MCP env. "
+                f"Cross-endpoint key fallback is BANNED (Hamad msg-34515)."
+            )
+        return key
+
+    def generate_content(
+        self,
+        model_name: str,
+        contents: list,
+        generation_config,
+    ) -> dict:
+        """POST to Gemma endpoint with x-goog-api-key; return inner response dict."""
+        import urllib.request as _url_req
+        import urllib.error as _url_err
+
+        api_key = self._get_api_key()
+        tool_ctx = os.environ.get("PAL_TOOL_CONTEXT", "").lower().strip()
+        keep_thoughts = tool_ctx in _GEMMA_KEEP_THOUGHTS_TOOLS
+
+        # Build request body (generativelanguage.googleapis.com schema — no "request" wrapper).
+        gen_cfg: dict = {}
+        if generation_config:
+            try:
+                gen_cfg["temperature"] = generation_config.temperature
+            except AttributeError:
+                pass
+            try:
+                if generation_config.max_output_tokens:
+                    gen_cfg["maxOutputTokens"] = generation_config.max_output_tokens
+            except AttributeError:
+                pass
+
+        body_dict: dict = {"contents": contents}
+        if gen_cfg:
+            body_dict["generationConfig"] = gen_cfg
+
+        body = json.dumps(body_dict).encode()
+        url = _GEMMA_ENDPOINT_TMPL.format(model=_GEMMA_MODEL)
+
+        req = _url_req.Request(
+            url,
+            data=body,
+            headers={
+                "x-goog-api-key": api_key,
+                "Content-Type": "application/json",
+            },
+            method="POST",
+        )
+
+        try:
+            timeout_s = float(os.environ.get("PAL_HTTP_ATTEMPT_TIMEOUT_S", "120"))
+            with _url_req.urlopen(req, timeout=timeout_s) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+        except _url_err.HTTPError as exc:
+            if exc.code == 429:
+                try:
+                    error_body = json.loads(exc.read().decode("utf-8"))
+                except Exception:
+                    error_body = {}
+                reason, reset_ms = _parse_429_reason(error_body)
+                raise _RateLimit429(reason, reset_ms, str(error_body)) from exc
+            raise RuntimeError(
+                f"Gemma API key generateContent HTTP {exc.code} for tool={tool_ctx}. "
+                "Check key validity or quota."
+            ) from exc
+        except _url_err.URLError as exc:
+            raise RuntimeError(f"Gemma API key generateContent network error: {exc}") from exc
+
+        # generativelanguage.googleapis.com returns the response directly (no "response" wrapper).
+        candidates = data.get("candidates", [])
+        if not candidates:
+            logger.warning("_GemmaApiKeyAdapter: empty candidates in response for tool=%s", tool_ctx)
+
+        # Handle thought-part filtering (Gemma returns reasoning in parts with thought:true).
+        # For most tools: keep only non-thought parts (clean answer).
+        # For reasoning-heavy tools (challenge, debug, codereview, etc.): keep all parts.
+        if not keep_thoughts and candidates:
+            for cand in candidates:
+                parts_list = cand.get("content", {}).get("parts", [])
+                non_thought = [p for p in parts_list if not p.get("thought")]
+                if non_thought:
+                    cand["content"]["parts"] = non_thought
+                # If ALL parts are thought parts (shouldn't happen), keep them all
+                # to avoid returning empty content.
+
+        logger.debug(
+            "_GemmaApiKeyAdapter: tool=%s keep_thoughts=%s candidates=%d",
+            tool_ctx, keep_thoughts, len(candidates),
+        )
+        return data
+
+
 def _OAuthCodeAssistAdapter(creds_path: str = _OAUTH_CREDS_PATH):  # noqa: N802
-    """Factory function: returns legacy or shared-switcher adapter per PAL_USE_SHARED_SWITCHER.
+    """Factory function: returns API-key, shared-switcher, or legacy adapter.
 
-    Feature flag:
-      PAL_USE_SHARED_SWITCHER=0 (default) → _OAuthCodeAssistAdapterLegacy (existing behavior)
-      PAL_USE_SHARED_SWITCHER=1           → _OAuthCodeAssistAdapterShared (new shared-state path)
+    Feature flags (checked in priority order):
+      PAL_USE_API_KEYS=1                  → _GemmaApiKeyAdapter (Gemma 4-26B, no OAuth)
+      PAL_USE_SHARED_SWITCHER=1           → _OAuthCodeAssistAdapterShared (OAuth shared-state)
+      (default)                           → _OAuthCodeAssistAdapterLegacy (OAuth legacy)
 
-    Phase 3 soak: flip env var to '1' to enable. Rollback: set back to '0'.
-    No restart required (flag read at instantiation time).
+    TASK-20260529-298: PAL_USE_API_KEYS=1 replaces OAuth before June 18 2026.
+    OAuth paths kept intact as fallback — set PAL_USE_API_KEYS=0 to revert.
 
     NOTE: This is a factory function, not a class. Callers that do isinstance() checks
-    will see the concrete type (_OAuthCodeAssistAdapterLegacy or _OAuthCodeAssistAdapterShared).
+    will see the concrete type.
     """
+    use_api_keys = os.environ.get("PAL_USE_API_KEYS", "0").strip() == "1"
+    if use_api_keys:
+        logger.info("PAL_USE_API_KEYS=1 — using Gemma API key adapter (generativelanguage.googleapis.com)")
+        return _GemmaApiKeyAdapter()
     use_shared = os.environ.get("PAL_USE_SHARED_SWITCHER", "0").strip() == "1"
     if use_shared:
         logger.info(

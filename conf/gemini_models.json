@@ -129,6 +129,28 @@
       "supports_images": true,
       "supports_temperature": true,
       "max_image_size_mb": 20.0
+    },
+    {
+      "model_name": "gemma-4-26b-a4b-it",
+      "friendly_name": "Gemma 4 26B (API key)",
+      "aliases": [
+        "gemma",
+        "gemma4",
+        "gemma-4-26b"
+      ],
+      "intelligence_score": 14,
+      "description": "Gemma 4 26B via generativelanguage.googleapis.com API key (TASK-20260529-298, replaces OAuth June 18 2026)",
+      "context_window": 131072,
+      "max_output_tokens": 8192,
+      "max_thinking_tokens": 0,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": false,
+      "supports_function_calling": false,
+      "supports_json_mode": false,
+      "supports_images": false,
+      "supports_temperature": true,
+      "max_image_size_mb": 0.0
     }
   ]
 }
