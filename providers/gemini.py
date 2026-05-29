@@ -76,6 +76,43 @@ _MAX_AUTH_FAILURES = int(os.environ.get("GEMINI_MAX_AUTH_FAILURES", "12"))
 # Daily-quota reason allow-list (mirror gemini-chain.js DAILY_REASONS — TASK-20260525-031).
 _DAILY_REASONS = ("QUOTA_EXHAUSTED", "RESOURCE_EXHAUSTED")
 
+# ---------------------------------------------------------------------------
+# TASK-20260529-280 — PAL combo rotation audit log (append-only JSONL).
+# Mirrors QC-side ~/.claude/logs/gemini-429-forensics.jsonl pattern.
+# ---------------------------------------------------------------------------
+_PAL_COMBO_AUDIT_LOG = os.path.expanduser("~/.claude/logs/pal-combo-rotation-audit.jsonl")
+
+
+def _write_combo_audit(
+    combo_index: int,
+    account_email: str,
+    model: str,
+    http_status: int,
+    reason: str,
+    reset_after_ms,
+) -> None:
+    """Append one combo-attempt entry to the PAL rotation audit log.
+
+    Never raises — write errors are silently swallowed so they never block rotation.
+    """
+    try:
+        log_dir = os.path.dirname(_PAL_COMBO_AUDIT_LOG)
+        os.makedirs(log_dir, exist_ok=True)
+        entry = {
+            "ts": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.") +
+                  f"{datetime.datetime.now(datetime.timezone.utc).microsecond // 1000:03d}Z",
+            "comboIndex": combo_index,
+            "accountEmail": account_email,
+            "model": model,
+            "httpStatus": http_status,
+            "reason": reason,
+            "resetAfterMs": reset_after_ms,
+        }
+        with open(_PAL_COMBO_AUDIT_LOG, "a", encoding="utf-8") as fh:
+            fh.write(json.dumps(entry) + "\n")
+    except Exception:  # noqa: BLE001 — never block rotation on log write failure
+        pass
+
 
 def _ms_until_next_utc_midnight() -> int:
     """Milliseconds from now until the next UTC midnight (daily-quota reset)."""
@@ -303,13 +340,6 @@ class _OAuthCodeAssistAdapterLegacy:
                     gen_cfg["maxOutputTokens"] = generation_config.max_output_tokens
             except AttributeError:
                 pass
-            try:
-                if generation_config.thinking_config:
-                    gen_cfg["thinkingConfig"] = {
-                        "thinkingBudget": generation_config.thinking_config.thinking_budget
-                    }
-            except AttributeError:
-                pass
 
         body = {
             "model": model_name,
@@ -348,8 +378,11 @@ class _OAuthCodeAssistAdapterLegacy:
             )
 
         data = resp.json()
-        # Unwrap: Code Assist wraps the actual response under "response" key
-        inner = data.get("response", data)
+        # Unwrap: Code Assist wraps the actual response under "response" key.
+        # Guard: if "response" exists but is not a dict (e.g. error string),
+        # fall back to the outer data dict so callers always receive a dict.
+        raw_inner = data.get("response", data)
+        inner = raw_inner if isinstance(raw_inner, dict) else data
         return inner
 
 
@@ -448,6 +481,10 @@ class _OAuthCodeAssistAdapterShared:
         auth_dead: dict = {0: False, 1: False}
         auth_failures = 0
         permanent: dict = {}                 # combo_idx -> True when permanently dead
+        iam_denied: dict = {}                # combo_idx -> 403 IAM-denied (FATAL, distinct from rate-limit)
+
+        _deadline_s = float(os.environ.get("PAL_EXPERT_DEADLINE_S", "25"))
+        _cycle_start = time.monotonic()
 
         full_cycles = 0
         while full_cycles < _MAX_FULL_CYCLES:
@@ -479,10 +516,12 @@ class _OAuthCodeAssistAdapterShared:
                     )
                     self._switcher.record_success(creds["fingerprint"])
                     self._mark_combo(combo_state, ci, status="active", cooldown_until=None)
+                    _write_combo_audit(ci, creds.get("account_email", "unknown"), model, 200, "success", None)
                     return result
 
                 except _RateLimit429 as exc:
                     self._switcher.record_429(creds["fingerprint"], exc.reason, exc.reset_after_ms, model)
+                    _write_combo_audit(ci, creds.get("account_email", "unknown"), model, 429, exc.reason or "", exc.reset_after_ms if exc.reset_after_ms > 0 else None)
                     cls = _classify_429(exc.reason, exc.reset_after_ms)
                     if cls == "rpm":
                         wait_ms = exc.reset_after_ms if exc.reset_after_ms > 0 else _RPM_WAIT_DEFAULT_MS
@@ -503,6 +542,7 @@ class _OAuthCodeAssistAdapterShared:
                     if status_code and 500 <= status_code < 600:
                         server_streak[acct_idx] += 1
                         last_error = f"combo {ci} {status_code}"
+                        _write_combo_audit(ci, creds.get("account_email", "unknown"), model, status_code, f"server_error_{status_code}", None)
                         if server_streak[acct_idx] >= _SERVER_BLOCKED_STREAK_N:
                             # 2-strike: bench BOTH combos of this account; jump to next account.
                             auth_dead[acct_idx] = True  # reuse account-skip gate
@@ -511,11 +551,35 @@ class _OAuthCodeAssistAdapterShared:
                         continue
                     if status_code == 401:
                         auth_failures += 1
+                        _write_combo_audit(ci, creds.get("account_email", "unknown"), model, 401, "UNAUTHENTICATED", None)
                         if not self._refresh_account_once(acct_idx):
                             auth_dead[acct_idx] = True
                             last_error = f"combo {ci} 401-authDead"
                         continue
-                    # 403 / 400 / IAM / PERMISSION_DENIED -> permanent for this combo.
+                    # 403 = IAM permission denied (FATAL auth error) — distinct from
+                    # rate-limit/throttle. Mark this combo permanently dead so the cycle
+                    # ADVANCES to other combos (different account stays tried), but track
+                    # it separately so the final surfaced error is a clear FATAL auth
+                    # message, never relabeled as rate-limiting. (TASK-20260529-263)
+                    if status_code == 403:
+                        permanent[ci] = True
+                        iam_denied[ci] = True
+                        auth_failures += 1
+                        _write_combo_audit(ci, creds.get("account_email", "unknown"), model, 403, "PERMISSION_DENIED", None)
+                        last_error = (
+                            f"combo {ci} (acct {acct_idx}) HTTP 403 IAM permission denied "
+                            f"for project — account needs re-onboarding or correct project"
+                        )
+                        logger.error(
+                            "Combo %d (acct %d): HTTP 403 IAM permission denied — FATAL auth "
+                            "error, NOT rate-limit. Account needs re-onboarding. Advancing to "
+                            "other combos.", ci, acct_idx,
+                        )
+                        if auth_failures >= _MAX_AUTH_FAILURES:
+                            break
+                        continue
+                    # 400 / other IAM / PERMISSION_DENIED -> permanent for this combo.
+                    _write_combo_audit(ci, creds.get("account_email", "unknown"), model, status_code or 0, f"permanent_{status_code or 'unknown'}", None)
                     permanent[ci] = True
                     auth_failures += 1
                     last_error = f"combo {ci} permanent: {exc}"
@@ -534,6 +598,17 @@ class _OAuthCodeAssistAdapterShared:
 
             # All 4 permanently dead / auth-cycling failed -> hard bail.
             if len(permanent) >= 4 or all(auth_dead.values()) or auth_failures >= _MAX_AUTH_FAILURES:
+                # If the exhaustion was driven by 403 IAM denial, surface a DISTINCT
+                # FATAL auth error (never relabeled as rate-limit/throttle downstream).
+                # (TASK-20260529-263)
+                if iam_denied:
+                    denied_combos = ", ".join(str(c) for c in sorted(iam_denied))
+                    raise RuntimeError(
+                        f"PAL combo cycle: HTTP 403 IAM permission denied (FATAL auth, "
+                        f"NOT rate-limit). Combo(s) {denied_combos} lack IAM permission on "
+                        f"their project — account(s) need re-onboarding or correct project. "
+                        f"last={last_error}"
+                    )
                 raise RuntimeError(f"PAL combo cycle: all combos dead (auth-cycling-failed). last={last_error}")
 
             # Otherwise sleep the SHORTEST remaining cooldown (bounded) then restart.
@@ -541,8 +616,23 @@ class _OAuthCodeAssistAdapterShared:
             if wait_ms <= 0:
                 continue
             wait_s = min(wait_ms, _FULL_CYCLE_WAIT_CAP_MS) / 1000
+            _elapsed = time.monotonic() - _cycle_start
+            if _elapsed + wait_s >= _deadline_s:
+                logger.warning(
+                    "PAL combo cycle %d: deadline %.0fs would be exceeded by sleep %.1fs (elapsed %.1fs) — aborting.",
+                    full_cycles, _deadline_s, wait_s, _elapsed,
+                )
+                # Only call it "rate-limited" when no combo hit a FATAL 403 IAM denial;
+                # otherwise be explicit so it isn't misread as throttling. (TASK-20260529-263)
+                if iam_denied:
+                    return (
+                        f"analysis unavailable — HTTP 403 IAM permission denied on one or more "
+                        f"accounts (re-onboarding needed); remaining combos still cooling after "
+                        f"{_elapsed:.0f}s; PAL staying alive"
+                    )
+                return f"analysis unavailable — Gemini rate-limited after {_elapsed:.0f}s; PAL staying alive"
             logger.warning("PAL combo cycle %d exhausted — bounded wait %.1fs before restart.", full_cycles, wait_s)
-            time.sleep(wait_s)
+            time.sleep(min(wait_s, 5))
 
         raise RuntimeError(f"PAL combo cycle: GEMINI_MAX_FULL_CYCLES ({_MAX_FULL_CYCLES}) reached. last={last_error}")
 
@@ -631,13 +721,6 @@ class _OAuthCodeAssistAdapterShared:
                     gen_cfg["maxOutputTokens"] = generation_config.max_output_tokens
             except AttributeError:
                 pass
-            try:
-                if generation_config.thinking_config:
-                    gen_cfg["thinkingConfig"] = {
-                        "thinkingBudget": generation_config.thinking_config.thinking_budget
-                    }
-            except AttributeError:
-                pass
 
         body = json.dumps({
             "model": model_name,
@@ -661,9 +744,14 @@ class _OAuthCodeAssistAdapterShared:
         )
 
         try:
-            with _url_req.urlopen(req, timeout=120) as resp:
+            _http_attempt_timeout = float(os.environ.get("PAL_HTTP_ATTEMPT_TIMEOUT_S", "120"))
+            with _url_req.urlopen(req, timeout=_http_attempt_timeout) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
-            inner = data.get("response", data)
+            # Unwrap: Code Assist wraps the actual response under "response" key.
+            # Guard: if "response" exists but is not a dict (e.g. error string),
+            # fall back to the outer data dict so callers always receive a dict.
+            raw_inner = data.get("response", data)
+            inner = raw_inner if isinstance(raw_inner, dict) else data
             return inner
         except _url_err.HTTPError as exc:
             if exc.code == 429:
@@ -959,6 +1047,17 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
                 inner = self._oauth_adapter.generate_content(
                     resolved_model_name, contents, generation_config
                 )
+                # Guard: deadline/degraded path returns a graceful string; wrap it.
+                if isinstance(inner, str):
+                    return ModelResponse(
+                        content=inner,
+                        usage={},
+                        model_name=resolved_model_name,
+                        friendly_name="Gemini",
+                        provider=ProviderType.GOOGLE,
+                        metadata={"finish_reason": "STOP", "is_blocked_by_safety": False},
+    
+                    )
                 candidates = inner.get("candidates", [])
                 usage_meta = inner.get("usageMetadata", {})
                 usage: dict[str, int] = {}
@@ -1076,12 +1175,24 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
             )
 
         try:
-            return self._run_with_retries(
+            _retries_result = self._run_with_retries(
                 operation=_attempt,
                 max_attempts=max_retries,
                 delays=retry_delays,
                 log_prefix=f"Gemini API ({resolved_model_name})",
             )
+            # Guard: base.py deadline also returns a graceful string; wrap it.
+            if isinstance(_retries_result, str):
+                return ModelResponse(
+                    content=_retries_result,
+                    usage={},
+                    model_name=resolved_model_name,
+                    friendly_name="Gemini",
+                    provider=ProviderType.GOOGLE,
+                    metadata={"finish_reason": "STOP", "is_blocked_by_safety": False},
+
+                )
+            return _retries_result
         except Exception as exc:
             exc_str = str(exc).lower()
             # 429 / quota-exhausted fallback: if API key is set but quota is
@@ -1106,12 +1217,23 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
                     "Attempting one-time fallback via OAuth/Code Assist adapter."
                 )
                 try:
-                    return self._run_with_retries(
+                    _fallback_result = self._run_with_retries(
                         operation=_attempt,
                         max_attempts=2,
                         delays=[1, 3],
                         log_prefix=f"Gemini OAuth/Code-Assist fallback ({resolved_model_name})",
                     )
+                    if isinstance(_fallback_result, str):
+                        return ModelResponse(
+                            content=_fallback_result,
+                            usage={},
+                            model_name=resolved_model_name,
+                            friendly_name="Gemini",
+                            provider=ProviderType.GOOGLE,
+                            metadata={"finish_reason": "STOP", "is_blocked_by_safety": False},
+        
+                        )
+                    return _fallback_result
                 except Exception as oauth_exc:
                     raise RuntimeError(
                         f"Gemini API quota exhausted and OAuth/Code Assist fallback also failed "
