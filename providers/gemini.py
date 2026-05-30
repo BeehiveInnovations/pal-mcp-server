@@ -18,372 +18,11 @@ from utils.env import get_env
 from utils.image_utils import validate_image
 
 from .base import ModelProvider
-from .gemini_switcher_client import GeminiSwitcherClient, _atomic_write_json
 from .registries.gemini import GeminiModelRegistry
 from .registry_provider_mixin import RegistryBackedProviderMixin
 from .shared import ModelCapabilities, ModelResponse, ProviderType
 
 logger = logging.getLogger(__name__)
-
-# Lazy import to avoid circular; GeminiAccountExhausted lives in providers/__init__.py
-# We import it inside the method to keep the module importable before __init__ resolves.
-def _get_gemini_account_exhausted():
-    from providers import GeminiAccountExhausted  # noqa: PLC0415
-    return GeminiAccountExhausted
-
-# ---------------------------------------------------------------------------
-# OAuth / Code Assist constants (Gemini CLI installed-app credentials)
-#
-# Background (discovered during implementation — spec §Root cause):
-#   The Gemini Developer API (generativelanguage.googleapis.com) only accepts
-#   x-goog-api-key auth.  User OAuth tokens work ONLY with the Gemini Code
-#   Assist API (cloudcode-pa.googleapis.com/v1internal), which is the actual
-#   backend used by the Gemini CLI for its "oauth-personal" auth type.
-#
-#   The OAuth client credentials below are the PUBLIC installed-app credentials
-#   embedded verbatim in the open-source Gemini CLI npm package.  They identify
-#   the application (not the user) — analogous to a client_id in any OAuth
-#   installed-app flow.  The user's actual credentials are the refresh_token
-#   stored in ~/.gemini/oauth_creds.json by `gemini auth login`.
-# ---------------------------------------------------------------------------
-_GEMINI_CLI_CLIENT_ID = "681255809395-oo8ft2oprdrnp9e3aqf6av3hmdib135j.apps.googleusercontent.com"
-# Public Gemini CLI OAuth client — see https://github.com/google-gemini/gemini-cli
-_GEMINI_CLI_CLIENT_SECRET = os.environ.get("GEMINI_CLI_CLIENT_SECRET", "<REDACTED_PUBLIC_CLI_SECRET>")  # noqa: S105 — public installed-app secret
-_OAUTH_TOKEN_URI = "https://oauth2.googleapis.com/token"
-_CODE_ASSIST_ENDPOINT = "https://cloudcode-pa.googleapis.com"
-_CODE_ASSIST_VERSION = "v1internal"
-_OAUTH_CREDS_PATH = os.path.join(os.path.expanduser("~"), ".gemini", "oauth_creds.json")
-# Refresh when < 5 minutes remain (expiry_date is epoch milliseconds in JSON)
-_EXPIRY_BUFFER_MS = 5 * 60 * 1000
-
-# ---------------------------------------------------------------------------
-# TASK-20260528-218 — 4-combo rotation constants (mirror gemini-chain.js).
-#   Cycle order: Flash-A -> Lite-A -> Flash-B -> Lite-B (combo state index 0..3).
-#   Every non-200 advances to the next combo immediately (wait=0); per-combo
-#   cooldownUntil prevents re-hitting a throttled combo within a cycle. Only a
-#   fully-exhausted cycle triggers a single bounded wait, capped at MAX_FULL_CYCLES.
-# ---------------------------------------------------------------------------
-_FLASH = "gemini-2.5-flash"
-_LITE = "gemini-2.5-flash-lite"
-# (account_index, model) in the canonical order — matches gemini-combo-state.json combos[].
-_COMBO_ORDER = [(0, _FLASH), (0, _LITE), (1, _FLASH), (1, _LITE)]
-_CAPACITY_COOLDOWN_MS = int(os.environ.get("GEMINI_CAPACITY_COOLDOWN_MS", "90000"))
-_SERVER_BLOCKED_STREAK_N = int(os.environ.get("GEMINI_SERVER_BLOCKED_STREAK_N", "2"))
-_MAX_FULL_CYCLES = int(os.environ.get("GEMINI_MAX_FULL_CYCLES", "2"))
-_RPM_WAIT_DEFAULT_MS = int(os.environ.get("GEMINI_RPM_WAIT_DEFAULT_MS", "13000"))
-_FULL_CYCLE_WAIT_CAP_MS = int(os.environ.get("GEMINI_FULL_CYCLE_WAIT_CAP_MS", "20000"))
-_MAX_AUTH_FAILURES = int(os.environ.get("GEMINI_MAX_AUTH_FAILURES", "12"))
-# Daily-quota reason allow-list (mirror gemini-chain.js DAILY_REASONS — TASK-20260525-031).
-_DAILY_REASONS = ("QUOTA_EXHAUSTED", "RESOURCE_EXHAUSTED")
-
-# ---------------------------------------------------------------------------
-# TASK-20260529-280 — PAL combo rotation audit log (append-only JSONL).
-# Mirrors QC-side ~/.claude/logs/gemini-429-forensics.jsonl pattern.
-# ---------------------------------------------------------------------------
-_PAL_COMBO_AUDIT_LOG = os.path.expanduser("~/.claude/logs/pal-combo-rotation-audit.jsonl")
-
-
-def _write_combo_audit(
-    combo_index: int,
-    account_email: str,
-    model: str,
-    http_status: int,
-    reason: str,
-    reset_after_ms,
-) -> None:
-    """Append one combo-attempt entry to the PAL rotation audit log.
-
-    Never raises — write errors are silently swallowed so they never block rotation.
-    """
-    try:
-        log_dir = os.path.dirname(_PAL_COMBO_AUDIT_LOG)
-        os.makedirs(log_dir, exist_ok=True)
-        entry = {
-            "ts": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.") +
-                  f"{datetime.datetime.now(datetime.timezone.utc).microsecond // 1000:03d}Z",
-            "comboIndex": combo_index,
-            "accountEmail": account_email,
-            "model": model,
-            "httpStatus": http_status,
-            "reason": reason,
-            "resetAfterMs": reset_after_ms,
-        }
-        with open(_PAL_COMBO_AUDIT_LOG, "a", encoding="utf-8") as fh:
-            fh.write(json.dumps(entry) + "\n")
-    except Exception:  # noqa: BLE001 — never block rotation on log write failure
-        pass
-
-
-def _ms_until_next_utc_midnight() -> int:
-    """Milliseconds from now until the next UTC midnight (daily-quota reset)."""
-    now = datetime.datetime.now(datetime.timezone.utc)
-    nxt = (now + datetime.timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
-    return int((nxt - now).total_seconds() * 1000)
-
-
-def _classify_429(reason: str, reset_after_ms: int) -> str:
-    """Classify a 429 into 'rpm' | 'capacity' | 'daily' (mirror gemini-chain.js
-    classifyThrottle L693-708). rpm = RATE_LIMIT_EXCEEDED or unknown-with-hint;
-    daily = allow-listed quota reasons; everything else = transient capacity."""
-    if reason == "RATE_LIMIT_EXCEEDED" or (not reason and reset_after_ms > 0):
-        return "rpm"
-    if reason in _DAILY_REASONS:
-        return "daily"
-    return "capacity"
-
-
-class _OAuthCodeAssistAdapterLegacy:
-    """Thin adapter that calls the Gemini Code Assist API using user OAuth credentials.
-
-    LEGACY path — used when PAL_USE_SHARED_SWITCHER != '1'.
-    Per-instance credential caches (access_token, expiry_ms, project_id, refresh_token).
-    This class is kept intact for rollback safety during the Phase 3 soak period.
-
-    This replicates the auth path the Gemini CLI uses for "oauth-personal" auth:
-      1. Read refresh_token from ~/.gemini/oauth_creds.json
-      2. Exchange for a fresh access_token via oauth2.googleapis.com/token
-      3. POST to cloudcode-pa.googleapis.com/v1internal:generateContent with Bearer auth
-
-    The Code Assist API request/response schema differs from the Developer API —
-    contents are wrapped under a "request" field and the project ID is required.
-    Responses unwrap from response.candidates[*] (same shape as Developer API).
-
-    SECURITY: access_token and refresh_token values are NEVER logged.
-    """
-
-    def __init__(self, creds_path: str = _OAUTH_CREDS_PATH) -> None:
-        self._creds_path = creds_path
-        self._access_token: Optional[str] = None
-        self._expiry_ms: int = 0  # epoch-ms; 0 means already expired
-        self._project_id: Optional[str] = None
-        self._refresh_token: Optional[str] = None
-        self._load_creds_file()
-
-    def _load_creds_file(self) -> None:
-        """Read refresh_token (and cached access_token if still fresh) from disk."""
-        if not os.path.exists(self._creds_path):
-            raise FileNotFoundError(
-                f"OAuth credentials not found at {self._creds_path}. "
-                "Run: gemini auth login"
-            )
-        try:
-            with open(self._creds_path, encoding="utf-8") as fh:
-                raw = json.load(fh)
-        except Exception as exc:
-            raise RuntimeError(
-                f"Failed to parse OAuth credentials at {self._creds_path}: {exc}"
-            ) from exc
-
-        self._refresh_token = raw.get("refresh_token")
-        if not self._refresh_token:
-            raise ValueError(
-                "OAuth refresh_token missing from credentials. "
-                "Re-authenticate with: gemini auth login"
-            )
-        # Use cached access_token only when still fresh (> 5-min buffer remaining)
-        cached_token = raw.get("access_token")
-        cached_expiry = int(raw.get("expiry_date", 0))
-        now_ms = int(datetime.datetime.utcnow().timestamp() * 1000)
-        if cached_token and (cached_expiry - now_ms) > _EXPIRY_BUFFER_MS:
-            self._access_token = cached_token
-            self._expiry_ms = cached_expiry
-
-    def _get_access_token(self) -> str:
-        """Return a valid access_token, refreshing if expired or near expiry.
-
-        Raises:
-            RuntimeError: If the token refresh request fails.
-            ValueError: If refresh_token has expired (re-auth required).
-        """
-        import requests as _requests
-
-        now_ms = int(datetime.datetime.utcnow().timestamp() * 1000)
-        if self._access_token and (self._expiry_ms - now_ms) > _EXPIRY_BUFFER_MS:
-            return self._access_token  # still fresh
-
-        logger.debug("OAuth access_token expired or near expiry — refreshing")
-        try:
-            resp = _requests.post(
-                _OAUTH_TOKEN_URI,
-                data={
-                    "client_id": _GEMINI_CLI_CLIENT_ID,
-                    "client_secret": _GEMINI_CLI_CLIENT_SECRET,
-                    "refresh_token": self._refresh_token,
-                    "grant_type": "refresh_token",
-                },
-                timeout=15,
-            )
-        except Exception as exc:
-            raise RuntimeError(f"OAuth token refresh network error: {exc}") from exc
-
-        if resp.status_code == 401:
-            raise ValueError(
-                "OAuth refresh_token has expired or been revoked. "
-                "Re-authenticate with: gemini auth login"
-            )
-        if resp.status_code != 200:
-            # Do NOT include response body — may contain partial token values
-            raise RuntimeError(
-                f"OAuth token refresh failed with HTTP {resp.status_code}. "
-                "Run: gemini auth login"
-            )
-
-        token_data = resp.json()
-        new_token = token_data.get("access_token")
-        if not new_token:
-            raise RuntimeError(
-                "OAuth token refresh returned no access_token. "
-                "Run: gemini auth login"
-            )
-        # SECURITY: new_token value is NOT logged
-        expires_in = int(token_data.get("expires_in", 3600))
-        self._access_token = new_token
-        self._expiry_ms = now_ms + expires_in * 1000
-
-        # Persist refreshed token to disk so next process start uses it
-        try:
-            with open(self._creds_path, encoding="utf-8") as fh:
-                raw = json.load(fh)
-            raw["access_token"] = new_token
-            raw["expiry_date"] = self._expiry_ms
-            with open(self._creds_path, "w", encoding="utf-8") as fh:
-                json.dump(raw, fh, indent=2)
-        except Exception as exc:
-            logger.warning("Could not persist refreshed OAuth token to disk: %s", exc)
-
-        return self._access_token
-
-    def _get_project_id(self) -> str:
-        """Return the Code Assist project ID for this account (cached after first call)."""
-        import requests as _requests
-
-        if self._project_id:
-            return self._project_id
-
-        token = self._get_access_token()
-        url = f"{_CODE_ASSIST_ENDPOINT}/{_CODE_ASSIST_VERSION}:loadCodeAssist"
-        try:
-            resp = _requests.post(
-                url,
-                headers={
-                    "Authorization": f"Bearer {token}",
-                    "Content-Type": "application/json",
-                },
-                json={
-                    "metadata": {
-                        "ideType": "IDE_UNSPECIFIED",
-                        "platform": "PLATFORM_UNSPECIFIED",
-                        "pluginType": "GEMINI",
-                    }
-                },
-                timeout=20,
-            )
-        except Exception as exc:
-            raise RuntimeError(f"Code Assist loadCodeAssist network error: {exc}") from exc
-
-        if resp.status_code != 200:
-            raise RuntimeError(
-                f"Code Assist loadCodeAssist failed with HTTP {resp.status_code}. "
-                "Ensure the account has Gemini Code Assist enabled."
-            )
-
-        data = resp.json()
-        project = data.get("cloudaicompanionProject")
-        if not project:
-            raise RuntimeError(
-                "Code Assist loadCodeAssist did not return a project ID. "
-                "Run: gemini auth login and ensure Gemini Code Assist is enabled."
-            )
-        self._project_id = project
-        logger.info("Code Assist project ID resolved: %s", project)
-        return self._project_id
-
-    def generate_content(
-        self,
-        model_name: str,
-        contents: list,
-        generation_config,
-    ) -> dict:
-        """POST to Code Assist generateContent and return the inner response dict.
-
-        Args:
-            model_name: Resolved Gemini model name (e.g. "gemini-2.5-flash").
-            contents: List of content dicts in Vertex AI format.
-            generation_config: GenerateContentConfig object (temperature, tokens, etc.)
-
-        Returns:
-            The inner response dict (same shape as Developer API response).
-
-        Raises:
-            RuntimeError: On HTTP errors or malformed responses.
-        """
-        import uuid
-
-        import requests as _requests
-
-        token = self._get_access_token()
-        project = self._get_project_id()
-
-        # Build generationConfig dict from the SDK object
-        gen_cfg: dict = {}
-        if generation_config:
-            try:
-                gen_cfg["temperature"] = generation_config.temperature
-            except AttributeError:
-                pass
-            try:
-                gen_cfg["candidateCount"] = generation_config.candidate_count
-            except AttributeError:
-                pass
-            try:
-                if generation_config.max_output_tokens:
-                    gen_cfg["maxOutputTokens"] = generation_config.max_output_tokens
-            except AttributeError:
-                pass
-
-        body = {
-            "model": model_name,
-            "project": project,
-            "user_prompt_id": str(uuid.uuid4()),
-            "request": {
-                "contents": contents,
-                "generationConfig": gen_cfg,
-            },
-        }
-
-        url = f"{_CODE_ASSIST_ENDPOINT}/{_CODE_ASSIST_VERSION}:generateContent"
-        try:
-            resp = _requests.post(
-                url,
-                headers={
-                    "Authorization": f"Bearer {token}",
-                    "Content-Type": "application/json",
-                },
-                json=body,
-                timeout=120,
-            )
-        except Exception as exc:
-            raise RuntimeError(
-                f"Code Assist generateContent network error: {exc}"
-            ) from exc
-
-        if resp.status_code == 429:
-            error_msg = resp.json().get("error", {}).get("message", "quota exhausted")
-            raise RuntimeError(f"429 {error_msg}")
-
-        if resp.status_code != 200:
-            raise RuntimeError(
-                f"Code Assist generateContent HTTP {resp.status_code}. "
-                "Check quota or re-authenticate with: gemini auth login"
-            )
-
-        data = resp.json()
-        # Unwrap: Code Assist wraps the actual response under "response" key.
-        # Guard: if "response" exists but is not a dict (e.g. error string),
-        # fall back to the outer data dict so callers always receive a dict.
-        raw_inner = data.get("response", data)
-        inner = raw_inner if isinstance(raw_inner, dict) else data
-        return inner
 
 
 class _RateLimit429(Exception):
@@ -421,352 +60,6 @@ def _parse_429_reason(error_body: dict) -> tuple[str, int]:
     if "rate_limit_exceeded" in msg or (reset_ms > 0 and reset_ms < 300_000):
         return "RATE_LIMIT_EXCEEDED", reset_ms
     return "daily", reset_ms
-
-
-class _OAuthCodeAssistAdapterShared:
-    """Shared-switcher Code Assist adapter.
-
-    Used when PAL_USE_SHARED_SWITCHER='1'.
-    Drops all per-instance credential caches.
-    Routes every call through GeminiSwitcherClient (state consumer, never rotator).
-
-    TASK-20260528-218 — 4-COMBO ROTATION (replaces same-account wait+retry):
-      Cycles Flash-A -> Lite-A -> Flash-B -> Lite-B; first 200 wins. Every non-200
-      ADVANCES to the next combo immediately (wait=0). Per-combo cooldownUntil
-      timestamps (shared gemini-combo-state.json) prevent re-hitting a throttled
-      combo. Error -> action matrix (Hamad msg-33261):
-        200       -> use it; record_success(fp)
-        429 rpm   -> combo cooldown = now + resetAfterMs; ADVANCE
-        429 cap   -> combo cooldown = now + CAPACITY_COOLDOWN_MS; ADVANCE
-        429 daily -> mark daily-exhausted till UTC midnight; ADVANCE (all 4 -> exhausted)
-        5xx       -> ADVANCE; 2 consecutive same-account 5xx -> skip that account's OTHER combo
-        401       -> one-shot token refresh for that account; still 401 -> skip account's combos
-        403/400/IAM -> ADVANCE (permanent); hard-bail only when all 4 permanently dead
-      Only a fully-cooling cycle triggers ONE bounded wait (shortest cooldown,
-      capped); capped at GEMINI_MAX_FULL_CYCLES.
-
-    SECURITY: access_token values are NEVER logged.
-    """
-
-    _FLASH_PRIMARY = "gemini-2.5-flash"
-    _FLASH_LITE = "gemini-2.5-flash-lite"
-
-    def __init__(self, model_name: str) -> None:
-        self._model = model_name
-        self._switcher = GeminiSwitcherClient()
-
-    def generate_content(
-        self,
-        model_name: str,
-        contents: list,
-        generation_config,
-    ) -> dict:
-        """POST to Code Assist via the 4-combo rotation cycle; return the inner dict.
-
-        Cycles Flash-A -> Lite-A -> Flash-B -> Lite-B (first 200 wins). The
-        `model_name` arg is honored for the FIRST attempt's model only when it
-        differs from Flash (callers requesting Lite enter at the matching combo);
-        otherwise the canonical order is used. See class docstring for the matrix.
-
-        Raises:
-            GeminiAccountExhausted: When all 4 combos are daily-exhausted.
-            RuntimeError: When all 4 combos are permanently dead (auth/IAM/cycle-cap).
-        """
-        return self._run_combo_cycle(model_name, contents, generation_config)
-
-    def _run_combo_cycle(self, requested_model: str, contents: list, generation_config) -> dict:
-        """Execute the bounded 4-combo rotation. Single site covering all endpoints."""
-        last_error: Optional[str] = None
-        server_streak: dict = {0: 0, 1: 0}   # per-account consecutive 5xx
-        auth_dead: dict = {0: False, 1: False}
-        auth_failures = 0
-        permanent: dict = {}                 # combo_idx -> True when permanently dead
-        iam_denied: dict = {}                # combo_idx -> 403 IAM-denied (FATAL, distinct from rate-limit)
-
-        _deadline_s = float(os.environ.get("PAL_EXPERT_DEADLINE_S", "25"))
-        _cycle_start = time.monotonic()
-
-        full_cycles = 0
-        while full_cycles < _MAX_FULL_CYCLES:
-            full_cycles += 1
-            combo_state = self._switcher.read_combo_state()
-            combos = combo_state.get("combos", [])
-            now_ms = int(time.time() * 1000)
-
-            for ci, (acct_idx, model) in enumerate(_COMBO_ORDER):
-                # Skip permanently-dead combos and dead-account combos.
-                if permanent.get(ci) or auth_dead.get(acct_idx):
-                    continue
-                # Skip combos still cooling (per-combo cooldownUntil in shared state).
-                cd = combos[ci].get("cooldownUntil") if ci < len(combos) else None
-                if cd and self._iso_to_ms(cd) > now_ms:
-                    continue
-
-                try:
-                    creds = self._switcher.get_credentials_for_account_index(acct_idx)
-                except Exception as exc:
-                    last_error = f"combo {ci} creds error: {exc}"
-                    logger.warning("Combo %d (acct %d): credential read failed — advancing: %s", ci, acct_idx, exc)
-                    continue
-
-                try:
-                    project = self._switcher.get_project_id(creds["fingerprint"])
-                    result = self._post_code_assist(
-                        creds["access_token"], project, model, contents, generation_config
-                    )
-                    self._switcher.record_success(creds["fingerprint"])
-                    self._mark_combo(combo_state, ci, status="active", cooldown_until=None)
-                    _write_combo_audit(ci, creds.get("account_email", "unknown"), model, 200, "success", None)
-                    return result
-
-                except _RateLimit429 as exc:
-                    self._switcher.record_429(creds["fingerprint"], exc.reason, exc.reset_after_ms, model)
-                    _write_combo_audit(ci, creds.get("account_email", "unknown"), model, 429, exc.reason or "", exc.reset_after_ms if exc.reset_after_ms > 0 else None)
-                    cls = _classify_429(exc.reason, exc.reset_after_ms)
-                    if cls == "rpm":
-                        wait_ms = exc.reset_after_ms if exc.reset_after_ms > 0 else _RPM_WAIT_DEFAULT_MS
-                        self._mark_combo(combo_state, ci, status="cooldown",
-                                         cooldown_until=self._ms_to_iso(now_ms + wait_ms))
-                    elif cls == "daily":
-                        self._mark_combo(combo_state, ci, status="daily",
-                                         cooldown_until=self._ms_to_iso(now_ms + _ms_until_next_utc_midnight()))
-                    else:  # capacity
-                        self._mark_combo(combo_state, ci, status="cooldown",
-                                         cooldown_until=self._ms_to_iso(now_ms + _CAPACITY_COOLDOWN_MS))
-                    last_error = f"combo {ci} 429-{cls}"
-                    # ADVANCE immediately (wait=0) — Hamad msg-33261.
-                    continue
-
-                except RuntimeError as exc:
-                    status_code = self._status_from_runtime(exc)
-                    if status_code and 500 <= status_code < 600:
-                        server_streak[acct_idx] += 1
-                        last_error = f"combo {ci} {status_code}"
-                        _write_combo_audit(ci, creds.get("account_email", "unknown"), model, status_code, f"server_error_{status_code}", None)
-                        if server_streak[acct_idx] >= _SERVER_BLOCKED_STREAK_N:
-                            # 2-strike: bench BOTH combos of this account; jump to next account.
-                            auth_dead[acct_idx] = True  # reuse account-skip gate
-                            logger.warning("Account %d: %d consecutive 5xx — skipping its combos.",
-                                           acct_idx, server_streak[acct_idx])
-                        continue
-                    if status_code == 401:
-                        auth_failures += 1
-                        _write_combo_audit(ci, creds.get("account_email", "unknown"), model, 401, "UNAUTHENTICATED", None)
-                        if not self._refresh_account_once(acct_idx):
-                            auth_dead[acct_idx] = True
-                            last_error = f"combo {ci} 401-authDead"
-                        continue
-                    # 403 = IAM permission denied (FATAL auth error) — distinct from
-                    # rate-limit/throttle. Mark this combo permanently dead so the cycle
-                    # ADVANCES to other combos (different account stays tried), but track
-                    # it separately so the final surfaced error is a clear FATAL auth
-                    # message, never relabeled as rate-limiting. (TASK-20260529-263)
-                    if status_code == 403:
-                        permanent[ci] = True
-                        iam_denied[ci] = True
-                        auth_failures += 1
-                        _write_combo_audit(ci, creds.get("account_email", "unknown"), model, 403, "PERMISSION_DENIED", None)
-                        last_error = (
-                            f"combo {ci} (acct {acct_idx}) HTTP 403 IAM permission denied "
-                            f"for project — account needs re-onboarding or correct project"
-                        )
-                        logger.error(
-                            "Combo %d (acct %d): HTTP 403 IAM permission denied — FATAL auth "
-                            "error, NOT rate-limit. Account needs re-onboarding. Advancing to "
-                            "other combos.", ci, acct_idx,
-                        )
-                        if auth_failures >= _MAX_AUTH_FAILURES:
-                            break
-                        continue
-                    # 400 / other IAM / PERMISSION_DENIED -> permanent for this combo.
-                    _write_combo_audit(ci, creds.get("account_email", "unknown"), model, status_code or 0, f"permanent_{status_code or 'unknown'}", None)
-                    permanent[ci] = True
-                    auth_failures += 1
-                    last_error = f"combo {ci} permanent: {exc}"
-                    if auth_failures >= _MAX_AUTH_FAILURES:
-                        break
-                    continue
-
-            # ── End of one full cycle ────────────────────────────────────────
-            self._switcher.write_combo_state(combo_state)
-
-            # All 4 daily-exhausted -> queue (no FRICTION-ALERT per matrix).
-            if all(c.get("status") == "daily" for c in combos[:4]):
-                self._switcher.request_rotation("all-accounts-daily")
-                GeminiAccountExhausted = _get_gemini_account_exhausted()
-                raise GeminiAccountExhausted("all-accounts-daily")
-
-            # All 4 permanently dead / auth-cycling failed -> hard bail.
-            if len(permanent) >= 4 or all(auth_dead.values()) or auth_failures >= _MAX_AUTH_FAILURES:
-                # If the exhaustion was driven by 403 IAM denial, surface a DISTINCT
-                # FATAL auth error (never relabeled as rate-limit/throttle downstream).
-                # (TASK-20260529-263)
-                if iam_denied:
-                    denied_combos = ", ".join(str(c) for c in sorted(iam_denied))
-                    raise RuntimeError(
-                        f"PAL combo cycle: HTTP 403 IAM permission denied (FATAL auth, "
-                        f"NOT rate-limit). Combo(s) {denied_combos} lack IAM permission on "
-                        f"their project — account(s) need re-onboarding or correct project. "
-                        f"last={last_error}"
-                    )
-                raise RuntimeError(f"PAL combo cycle: all combos dead (auth-cycling-failed). last={last_error}")
-
-            # Otherwise sleep the SHORTEST remaining cooldown (bounded) then restart.
-            wait_ms = self._shortest_cooldown_ms(combos)
-            if wait_ms <= 0:
-                continue
-            wait_s = min(wait_ms, _FULL_CYCLE_WAIT_CAP_MS) / 1000
-            _elapsed = time.monotonic() - _cycle_start
-            if _elapsed + wait_s >= _deadline_s:
-                logger.warning(
-                    "PAL combo cycle %d: deadline %.0fs would be exceeded by sleep %.1fs (elapsed %.1fs) — aborting.",
-                    full_cycles, _deadline_s, wait_s, _elapsed,
-                )
-                # Only call it "rate-limited" when no combo hit a FATAL 403 IAM denial;
-                # otherwise be explicit so it isn't misread as throttling. (TASK-20260529-263)
-                if iam_denied:
-                    return (
-                        f"analysis unavailable — HTTP 403 IAM permission denied on one or more "
-                        f"accounts (re-onboarding needed); remaining combos still cooling after "
-                        f"{_elapsed:.0f}s; PAL staying alive"
-                    )
-                return f"analysis unavailable — Gemini rate-limited after {_elapsed:.0f}s; PAL staying alive"
-            logger.warning("PAL combo cycle %d exhausted — bounded wait %.1fs before restart.", full_cycles, wait_s)
-            time.sleep(min(wait_s, 5))
-
-        raise RuntimeError(f"PAL combo cycle: GEMINI_MAX_FULL_CYCLES ({_MAX_FULL_CYCLES}) reached. last={last_error}")
-
-    # ── combo-cycle helpers ──────────────────────────────────────────────────
-
-    def _refresh_account_once(self, acct_idx: int) -> bool:
-        """One-shot forced token refresh for account `acct_idx`. Returns True if a
-        fresh token was obtained (caller retries on next pass), False if still dead."""
-        try:
-            creds = self._switcher.get_credentials_for_account_index(acct_idx)
-            return bool(creds.get("access_token"))
-        except Exception as exc:
-            logger.warning("Account %d one-shot refresh failed: %s", acct_idx, exc)
-            return False
-
-    @staticmethod
-    def _mark_combo(state: dict, idx: int, status: str, cooldown_until) -> None:
-        combos = state.setdefault("combos", [])
-        while len(combos) <= idx:
-            combos.append({"status": "active", "cooldownUntil": None, "note": ""})
-        combos[idx]["status"] = status
-        combos[idx]["cooldownUntil"] = cooldown_until
-
-    @staticmethod
-    def _shortest_cooldown_ms(combos: list) -> int:
-        now_ms = int(time.time() * 1000)
-        remaining = []
-        for c in combos[:4]:
-            cd = c.get("cooldownUntil")
-            if cd:
-                ms = _OAuthCodeAssistAdapterShared._iso_to_ms(cd) - now_ms
-                if ms > 0:
-                    remaining.append(ms)
-        return min(remaining) if remaining else 0
-
-    @staticmethod
-    def _iso_to_ms(iso: str) -> int:
-        try:
-            s = iso.replace("Z", "+00:00")
-            return int(datetime.datetime.fromisoformat(s).timestamp() * 1000)
-        except Exception:
-            return 0
-
-    @staticmethod
-    def _ms_to_iso(ms: int) -> str:
-        return datetime.datetime.fromtimestamp(ms / 1000, datetime.timezone.utc).isoformat().replace("+00:00", "Z")
-
-    @staticmethod
-    def _status_from_runtime(exc: RuntimeError) -> Optional[int]:
-        """Extract the HTTP status code embedded in a RuntimeError message
-        ('... HTTP 503 ...'). Returns None if no code is present (e.g. network error)."""
-        import re
-        m = re.search(r"HTTP\s+(\d{3})", str(exc))
-        return int(m.group(1)) if m else None
-
-    @staticmethod
-    def _post_code_assist(
-        access_token: str,
-        project: str,
-        model_name: str,
-        contents: list,
-        generation_config,
-    ) -> dict:
-        """Execute HTTP POST to Code Assist generateContent.
-
-        Raises:
-            _RateLimit429: On HTTP 429 (classified).
-            RuntimeError: On other HTTP errors.
-        """
-        import uuid
-        import urllib.request as _url_req
-        import urllib.error as _url_err
-
-        gen_cfg: dict = {}
-        if generation_config:
-            try:
-                gen_cfg["temperature"] = generation_config.temperature
-            except AttributeError:
-                pass
-            try:
-                gen_cfg["candidateCount"] = generation_config.candidate_count
-            except AttributeError:
-                pass
-            try:
-                if generation_config.max_output_tokens:
-                    gen_cfg["maxOutputTokens"] = generation_config.max_output_tokens
-            except AttributeError:
-                pass
-
-        body = json.dumps({
-            "model": model_name,
-            "project": project,
-            "user_prompt_id": str(uuid.uuid4()),
-            "request": {
-                "contents": contents,
-                "generationConfig": gen_cfg,
-            },
-        }).encode()
-
-        url = f"{_CODE_ASSIST_ENDPOINT}/{_CODE_ASSIST_VERSION}:generateContent"
-        req = _url_req.Request(
-            url,
-            data=body,
-            headers={
-                "Authorization": f"Bearer {access_token}",
-                "Content-Type": "application/json",
-            },
-            method="POST",
-        )
-
-        try:
-            _http_attempt_timeout = float(os.environ.get("PAL_HTTP_ATTEMPT_TIMEOUT_S", "120"))
-            with _url_req.urlopen(req, timeout=_http_attempt_timeout) as resp:
-                data = json.loads(resp.read().decode("utf-8"))
-            # Unwrap: Code Assist wraps the actual response under "response" key.
-            # Guard: if "response" exists but is not a dict (e.g. error string),
-            # fall back to the outer data dict so callers always receive a dict.
-            raw_inner = data.get("response", data)
-            inner = raw_inner if isinstance(raw_inner, dict) else data
-            return inner
-        except _url_err.HTTPError as exc:
-            if exc.code == 429:
-                try:
-                    error_body = json.loads(exc.read().decode("utf-8"))
-                except Exception:
-                    error_body = {}
-                reason, reset_ms = _parse_429_reason(error_body)
-                raise _RateLimit429(reason, reset_ms, str(error_body)) from exc
-            raise RuntimeError(
-                f"Code Assist generateContent HTTP {exc.code}. "
-                "Check quota or re-authenticate with: gemini auth login"
-            ) from exc
-        except _url_err.URLError as exc:
-            raise RuntimeError(f"Code Assist generateContent network error: {exc}") from exc
 
 
 # ---------------------------------------------------------------------------
@@ -919,31 +212,16 @@ class _GemmaApiKeyAdapter:
         return data
 
 
-def _OAuthCodeAssistAdapter(creds_path: str = _OAUTH_CREDS_PATH):  # noqa: N802
-    """Factory function: returns API-key, shared-switcher, or legacy adapter.
+def _build_model_adapter():
+    """Factory: return the Gemma 4-26B API-key adapter.
 
-    Feature flags (checked in priority order):
-      PAL_USE_API_KEYS=1                  → _GemmaApiKeyAdapter (Gemma 4-26B, no OAuth)
-      PAL_USE_SHARED_SWITCHER=1           → _OAuthCodeAssistAdapterShared (OAuth shared-state)
-      (default)                           → _OAuthCodeAssistAdapterLegacy (OAuth legacy)
-
-    TASK-20260529-298: PAL_USE_API_KEYS=1 replaces OAuth before June 18 2026.
-    OAuth paths kept intact as fallback — set PAL_USE_API_KEYS=0 to revert.
-
-    NOTE: This is a factory function, not a class. Callers that do isinstance() checks
-    will see the concrete type.
+    TASK-20260530-006 — OAuth/Code-Assist (cloudcode-pa.googleapis.com) purge.
+    The legacy OAuth adapters (_OAuthCodeAssistAdapterLegacy / ...Shared) and the
+    PAL_USE_SHARED_SWITCHER / PAL_USE_API_KEYS=0 / GEMINI_OAUTH_PREFER branches were
+    removed; Gemma is now the SOLE auth path (x-goog-api-key, per-tool dedicated keys).
     """
-    use_api_keys = os.environ.get("PAL_USE_API_KEYS", "0").strip() == "1"
-    if use_api_keys:
-        logger.info("PAL_USE_API_KEYS=1 — using Gemma API key adapter (generativelanguage.googleapis.com)")
-        return _GemmaApiKeyAdapter()
-    use_shared = os.environ.get("PAL_USE_SHARED_SWITCHER", "0").strip() == "1"
-    if use_shared:
-        logger.info(
-            "PAL_USE_SHARED_SWITCHER=1 — using shared GeminiSwitcherClient adapter"
-        )
-        return _OAuthCodeAssistAdapterShared(model_name=_OAuthCodeAssistAdapterShared._FLASH_PRIMARY)
-    return _OAuthCodeAssistAdapterLegacy(creds_path=creds_path)
+    logger.info("PAL: using Gemma API key adapter (generativelanguage.googleapis.com)")
+    return _GemmaApiKeyAdapter()
 
 
 class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
@@ -968,10 +246,12 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
     }
 
     def __init__(self, api_key: str, **kwargs):
-        """Initialize Gemini provider with API key and optional base URL.
+        """Initialize Gemini provider.
 
-        When api_key is empty or None, the provider falls back to OAuth
-        credentials loaded from ~/.gemini/oauth_creds.json (Gemini CLI flow).
+        TASK-20260530-006: OAuth/Code-Assist purged. The model adapter is always
+        the Gemma 4-26B API-key adapter (x-goog-api-key, per-tool dedicated keys).
+        The dedicated key is read at request time, so a missing key surfaces loudly
+        on the first call rather than silently at startup.
         """
         self._ensure_registry()
         super().__init__(api_key, **kwargs)
@@ -980,35 +260,13 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
         self._base_url = kwargs.get("base_url", None)  # Optional custom endpoint
         self._timeout_override = self._resolve_http_timeout()
         self._invalidate_capability_cache()
-        # OAuth path: build Code Assist adapter when no API key is present.
-        # Errors surface at startup rather than at first request.
-        self._oauth_adapter = None  # _OAuthCodeAssistAdapterLegacy | _OAuthCodeAssistAdapterShared
-        self._oauth_credentials = None  # legacy sentinel — keeps client property coherent
-        # OAuth precedence flag: when GEMINI_OAUTH_PREFER=true, OAuth becomes the
-        # primary auth path even if GEMINI_API_KEY is present. This allows free-tier
-        # OAuth quota to be used preferentially over paid API key usage.
-        _oauth_prefer = (get_env("GEMINI_OAUTH_PREFER", "false") or "false").strip().lower() in ("1", "true", "yes", "on")
-        if not self.api_key or _oauth_prefer:
-            try:
-                self._oauth_adapter = _OAuthCodeAssistAdapter()
-                if _oauth_prefer and self.api_key:
-                    # Suppress the API key so downstream client init uses OAuth path.
-                    logger.info(
-                        "Gemini provider: GEMINI_OAUTH_PREFER=true — OAuth/Code Assist "
-                        "adapter takes precedence over GEMINI_API_KEY"
-                    )
-                    self.api_key = ""
-                else:
-                    logger.info(
-                        "Gemini provider initialized with OAuth/Code Assist adapter "
-                        "(GEMINI_API_KEY not set — using ~/.gemini/oauth_creds.json)"
-                    )
-            except (FileNotFoundError, ValueError, RuntimeError) as exc:
-                logger.warning(
-                    "Gemini OAuth credentials unavailable: %s. "
-                    "Set GEMINI_API_KEY or run: gemini auth login",
-                    exc,
-                )
+        # Gemma API-key adapter is the sole auth path. Errors that can be detected
+        # at construction surface here; per-tool key lookup happens at call time.
+        self._model_adapter = None
+        try:
+            self._model_adapter = _build_model_adapter()
+        except (RuntimeError, ValueError) as exc:
+            logger.warning("Gemini Gemma adapter unavailable: %s", exc)
 
     # ------------------------------------------------------------------
     # Capability surface
@@ -1020,15 +278,11 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
 
     @property
     def client(self):
-        """Lazy initialization of Gemini client.
+        """Lazy initialization of the official Gemini SDK client (API-key path).
 
-        Auth priority:
-          1. GEMINI_API_KEY (env var, existing path — unchanged)
-          2. OAuth credentials from ~/.gemini/oauth_creds.json (Gemini CLI flow)
-
-        On 429 quota exhaustion with API key, callers should clear self._client
-        (set to None) and re-enter this property; _oauth_credentials will be
-        used on the next call if available.
+        Only used when a GEMINI_API_KEY is configured. The active PAL path is the
+        Gemma API-key adapter (self._model_adapter); the SDK client is the legacy
+        Developer-API path and is unused when no API key is set.
         """
         if self._client is None:
             http_options_kwargs: dict[str, object] = {}
@@ -1040,7 +294,6 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
             http_options = types.HttpOptions(**http_options_kwargs) if http_options_kwargs else None
 
             if self.api_key:
-                # --- Path 1: API key (existing behaviour, unchanged) ---
                 if http_options:
                     logger.debug(
                         "Initializing Gemini client with API key + options: base_url=%s timeout=%s",
@@ -1050,23 +303,10 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
                     self._client = genai.Client(api_key=self.api_key, http_options=http_options)
                 else:
                     self._client = genai.Client(api_key=self.api_key)
-            elif self._oauth_credentials is not None:
-                # --- Path 2: OAuth credentials (Gemini CLI user account) ---
-                # google-auth auto-refreshes when the token is < 5 min from expiry.
-                # SECURITY: access_token value is never logged.
-                logger.debug("Initializing Gemini client with OAuth credentials")
-                if http_options:
-                    self._client = genai.Client(
-                        credentials=self._oauth_credentials,
-                        http_options=http_options,
-                    )
-                else:
-                    self._client = genai.Client(credentials=self._oauth_credentials)
             else:
-                # Neither API key nor OAuth — attempt to surface a clear error
                 raise RuntimeError(
-                    "Gemini provider has no authentication. "
-                    "Set GEMINI_API_KEY or run: gemini auth login"
+                    "Gemini SDK client requires GEMINI_API_KEY. The active PAL path "
+                    "is the Gemma API-key adapter (per-tool dedicated keys)."
                 )
 
         return self._client
@@ -1197,9 +437,9 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
 
         def _attempt() -> ModelResponse:
             attempt_counter["value"] += 1
-            if self._oauth_adapter is not None:
-                # --- Code Assist adapter path (OAuth, no SDK client) ---
-                inner = self._oauth_adapter.generate_content(
+            if self._model_adapter is not None:
+                # --- Gemma API-key adapter path (no SDK client) ---
+                inner = self._model_adapter.generate_content(
                     resolved_model_name, contents, generation_config
                 )
                 # Guard: deadline/degraded path returns a graceful string; wrap it.
@@ -1349,52 +589,8 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
                 )
             return _retries_result
         except Exception as exc:
-            exc_str = str(exc).lower()
-            # 429 / quota-exhausted fallback: if API key is set but quota is
-            # exhausted AND OAuth credentials are available, retry once via OAuth.
-            # SECURITY: exc_str never contains access_token values (quota errors
-            # reference quota metrics, not auth tokens).
-            if (
-                self.api_key
-                and ("429" in exc_str or "quota" in exc_str or "resource_exhausted" in exc_str)
-            ):
-                # Lazily build Code Assist adapter for 429 fallback if not already available
-                if self._oauth_adapter is None:
-                    try:
-                        self._oauth_adapter = _OAuthCodeAssistAdapter()
-                    except (FileNotFoundError, ValueError, RuntimeError) as adapter_exc:
-                        raise RuntimeError(
-                            f"Gemini API quota exhausted (429) and OAuth/Code Assist adapter "
-                            f"unavailable: {adapter_exc}. Run: gemini auth login"
-                        ) from exc
-                logger.warning(
-                    "Gemini API key quota exhausted (429). "
-                    "Attempting one-time fallback via OAuth/Code Assist adapter."
-                )
-                try:
-                    _fallback_result = self._run_with_retries(
-                        operation=_attempt,
-                        max_attempts=2,
-                        delays=[1, 3],
-                        log_prefix=f"Gemini OAuth/Code-Assist fallback ({resolved_model_name})",
-                    )
-                    if isinstance(_fallback_result, str):
-                        return ModelResponse(
-                            content=_fallback_result,
-                            usage={},
-                            model_name=resolved_model_name,
-                            friendly_name="Gemini",
-                            provider=ProviderType.GOOGLE,
-                            metadata={"finish_reason": "STOP", "is_blocked_by_safety": False},
-        
-                        )
-                    return _fallback_result
-                except Exception as oauth_exc:
-                    raise RuntimeError(
-                        f"Gemini API quota exhausted and OAuth/Code Assist fallback also failed "
-                        f"for model {resolved_model_name}: {oauth_exc}"
-                    ) from oauth_exc
-
+            # TASK-20260530-006: OAuth/Code-Assist 429 fallback removed. Gemma is the
+            # sole path; on exhaustion we surface the error (no OAuth re-route).
             attempts = max(attempt_counter["value"], 1)
             error_msg = (
                 f"Gemini API error for model {resolved_model_name} after {attempts} attempt"

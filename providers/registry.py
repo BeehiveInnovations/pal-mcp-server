@@ -115,9 +115,11 @@ class ModelProviderRegistry:
                 # Initialize custom provider with both API key and base URL
                 provider = provider_class(api_key=api_key, base_url=custom_url)
         elif provider_type == ProviderType.GOOGLE:
-            # For Gemini, check if custom base URL is configured
+            # TASK-20260530-006: OAuth/Code-Assist purged. An empty top-level api_key
+            # is valid — the Gemma API-key adapter reads per-tool dedicated keys
+            # (GEMINI_API_KEY_*) at call time, so the provider must still register.
             if not api_key:
-                return None
+                api_key = ""  # Gemma adapter resolves the dedicated key at request time
             gemini_base_url = get_env("GEMINI_BASE_URL")
             provider_kwargs = {"api_key": api_key}
             if gemini_base_url:

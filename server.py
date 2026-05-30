@@ -407,9 +407,28 @@ def configure_providers():
     has_openrouter = False
     has_custom = False
 
-    def _has_gemini_oauth():
-        """Return True when Gemini CLI OAuth credentials are present on disk."""
-        return os.path.exists(os.path.expanduser("~/.gemini/oauth_creds.json"))
+    def _has_gemma_api_keys():
+        """Return True when the Gemma API-key path is active (TASK-20260530-006).
+
+        OAuth/Code-Assist was purged; PAL authenticates via per-tool dedicated keys
+        (GEMINI_API_KEY_*). Provider registration must succeed whenever PAL_USE_API_KEYS=1
+        and at least the general/fallback key is present.
+        """
+        if os.environ.get("PAL_USE_API_KEYS", "0").strip() != "1":
+            return False
+        return any(
+            os.environ.get(name)
+            for name in (
+                "GEMINI_API_KEY_GENERAL",
+                "GEMINI_API_KEY_CHALLENGE",
+                "GEMINI_API_KEY_PRECOMMIT",
+                "GEMINI_API_KEY_CODEREVIEW",
+                "GEMINI_API_KEY_SECAUDIT",
+                "GEMINI_API_KEY_DEBUG",
+                "GEMINI_API_KEY_ANALYZE",
+                "GEMINI_API_KEY_THINKDEEP",
+            )
+        )
 
     # Check for Gemini API key
     gemini_key = get_env("GEMINI_API_KEY")
@@ -417,14 +436,14 @@ def configure_providers():
         valid_providers.append("Gemini")
         has_native_apis = True
         logger.info("Gemini API key found - Gemini models available")
-    elif _has_gemini_oauth():
-        # GEMINI-OAUTH-ONLY (Hamad msg-14953/14956): GEMINI_API_KEY is intentionally
-        # unset; Gemini auth runs via ~/.gemini/oauth_creds.json (Code Assist OAuth).
-        # Register the Gemini provider on OAuth-cred presence so configure_providers()
-        # does not raise "At least one API configuration is required".
+    elif _has_gemma_api_keys():
+        # TASK-20260530-006: Gemma 4-26B API-key path. GEMINI_API_KEY is intentionally
+        # unset; PAL uses per-tool dedicated keys (GEMINI_API_KEY_*). Register the
+        # provider so configure_providers() does not raise "At least one API
+        # configuration is required".
         valid_providers.append("Gemini")
         has_native_apis = True
-        logger.info("Gemini OAuth credentials found (~/.gemini/oauth_creds.json) - Gemini models available")
+        logger.info("Gemma API keys found (GEMINI_API_KEY_*) - Gemini/Gemma models available")
 
     # Check for OpenAI API key
     openai_key = get_env("OPENAI_API_KEY")
