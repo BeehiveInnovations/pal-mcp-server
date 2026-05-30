@@ -528,10 +528,10 @@ def configure_providers():
     registered_providers = []
 
     if has_native_apis:
-        if (gemini_key and gemini_key != "your_gemini_api_key_here") or _has_gemini_oauth():
+        if (gemini_key and gemini_key != "your_gemini_api_key_here") or _has_gemma_api_keys():
             ModelProviderRegistry.register_provider(ProviderType.GOOGLE, GeminiModelProvider)
             registered_providers.append(ProviderType.GOOGLE.value)
-            logger.debug(f"Registered provider: {ProviderType.GOOGLE.value} (OAuth)" if not gemini_key else f"Registered provider: {ProviderType.GOOGLE.value}")
+            logger.debug(f"Registered provider: {ProviderType.GOOGLE.value} (Gemma API keys)" if not gemini_key else f"Registered provider: {ProviderType.GOOGLE.value}")
         if openai_key and openai_key != "your_openai_api_key_here":
             ModelProviderRegistry.register_provider(ProviderType.OPENAI, OpenAIModelProvider)
             registered_providers.append(ProviderType.OPENAI.value)
