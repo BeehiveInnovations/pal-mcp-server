@@ -15,8 +15,10 @@ Key features:
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
+import os
 from typing import TYPE_CHECKING, Any
 
 from pydantic import Field, model_validator
@@ -34,6 +36,18 @@ from utils.conversation_memory import MAX_CONVERSATION_TURNS, create_thread, get
 from .workflow.base import WorkflowTool
 
 logger = logging.getLogger(__name__)
+
+# TASK-20260530-026: Bound concurrent outbound model consults.
+# Consensus itself walks models sequentially per invocation, but offloading the
+# blocking provider HTTP call to a worker thread (asyncio.to_thread, see below)
+# means concurrent CLIENT calls could otherwise spawn unbounded worker threads and
+# overwhelm the upstream / thread pool. This semaphore caps concurrent model HTTP
+# consults server-wide (env-tunable, default 2).
+try:
+    _CONSENSUS_MAX_CONCURRENCY = max(1, int(os.environ.get("PAL_CONSENSUS_MAX_CONCURRENCY", "2")))
+except (TypeError, ValueError):
+    _CONSENSUS_MAX_CONCURRENCY = 2
+_CONSENSUS_SEMAPHORE = asyncio.Semaphore(_CONSENSUS_MAX_CONCURRENCY)
 
 # Tool-specific field descriptions for consensus workflow
 CONSENSUS_WORKFLOW_FIELD_DESCRIPTIONS = {
@@ -614,15 +628,23 @@ of the evidence, even when it strongly points in one direction.""",
             for warning in temp_warnings:
                 logger.warning(warning)
 
-            # Call the model with validated temperature
-            response = provider.generate_content(
-                prompt=prompt,
-                model_name=model_name,
-                system_prompt=system_prompt,
-                temperature=validated_temperature,
-                thinking_mode="medium",
-                images=request.images if request.images else None,
-            )
+            # Call the model with validated temperature.
+            # TASK-20260530-026 (RC1 fix): provider.generate_content performs a
+            # BLOCKING synchronous urlopen. Running it inline on the asyncio event
+            # loop starved the MCP stdio heartbeat under load and contributed to the
+            # 2026-05-30 hard crashes. Offload to a worker thread via asyncio.to_thread
+            # so a slow/timing-out upstream never blocks the event loop, and bound
+            # concurrent consults with the module-level semaphore.
+            async with _CONSENSUS_SEMAPHORE:
+                response = await asyncio.to_thread(
+                    provider.generate_content,
+                    prompt=prompt,
+                    model_name=model_name,
+                    system_prompt=system_prompt,
+                    temperature=validated_temperature,
+                    thinking_mode="medium",
+                    images=request.images if request.images else None,
+                )
 
             return {
                 "model": model_name,

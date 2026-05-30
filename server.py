@@ -723,6 +723,46 @@ async def handle_list_tools() -> list[Tool]:
 @server.call_tool()
 async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
     """
+    Top-level crash guard for the per-request tool dispatcher (TASK-20260530-026).
+
+    RC2 fix: any unexpected exception escaping the request handler previously
+    propagated out of the MCP SDK's anyio TaskGroup, unwound ``server.run``, and
+    KILLED the process (PAL hard-crashed twice on 2026-05-30 under a consensus
+    read-timeout). This wrapper contains ANY such exception: ToolExecutionError is
+    re-raised so the SDK can emit its normal MCP protocol error, while every other
+    exception is logged WITH traceback (never silently swallowed) and returned as a
+    proper MCP TextContent error response. No handler exception can kill the server.
+    """
+    try:
+        return await _dispatch_tool_call(name, arguments)
+    except ToolExecutionError:
+        # Intentional, SDK-recognised tool error — let the MCP SDK render it.
+        raise
+    except BaseException as exc:  # noqa: BLE001 — deliberate catch-all crash guard
+        # Re-raise control-flow exceptions that must NOT be turned into responses.
+        if isinstance(exc, (KeyboardInterrupt, SystemExit, asyncio.CancelledError)):
+            raise
+        # Log full traceback (logger.exception captures it) — NEVER swallow silently.
+        logger.exception("CRASH-GUARD: unhandled exception in tool '%s' contained", name)
+        try:
+            mcp_activity_logger = logging.getLogger("mcp_activity")
+            mcp_activity_logger.error(f"TOOL_CRASH_CONTAINED: {name} -> {type(exc).__name__}: {exc}")
+        except Exception:
+            pass
+        error_output = ToolOutput(
+            status="error",
+            content=(
+                f"PAL internal error while executing '{name}': "
+                f"{type(exc).__name__}: {exc}"
+            ),
+            content_type="text",
+            metadata={"tool_name": name, "crash_guard": True},
+        )
+        return [TextContent(type="text", text=error_output.model_dump_json())]
+
+
+async def _dispatch_tool_call(name: str, arguments: dict[str, Any]) -> list[TextContent]:
+    """
     Handle incoming tool execution requests from MCP clients.
 
     This is the main request dispatcher that routes tool calls to their appropriate handlers.
