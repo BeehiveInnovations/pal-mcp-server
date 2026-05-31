@@ -170,7 +170,7 @@ class _GemmaApiKeyAdapter:
         )
 
         try:
-            timeout_s = float(os.environ.get("PAL_HTTP_ATTEMPT_TIMEOUT_S", "120"))
+            timeout_s = float(os.environ.get("PAL_HTTP_ATTEMPT_TIMEOUT_S", "240"))
             with _url_req.urlopen(req, timeout=timeout_s) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
         except _url_err.HTTPError as exc:

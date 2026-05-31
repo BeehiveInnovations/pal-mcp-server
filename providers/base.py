@@ -270,7 +270,7 @@ class ModelProvider(ABC):
         delays = delays or []
         last_exc: Optional[Exception] = None
 
-        _deadline_s = float(os.environ.get("PAL_EXPERT_DEADLINE_S", "120"))
+        _deadline_s = float(os.environ.get("PAL_EXPERT_DEADLINE_S", "300"))
         _start_time = time.monotonic()
 
         for attempt_index in range(attempts):

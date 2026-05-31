@@ -932,37 +932,6 @@ async def _dispatch_tool_call(name: str, arguments: dict[str, Any]) -> list[Text
                 logger.warning(f"File size check failed for {name} with model {model_name}")
                 raise ToolExecutionError(ToolOutput(**file_size_check).model_dump_json())
 
-        # PROMPT TEXT SIZE GUARD — TASK-20260531-176
-        # Gemma 4-26B context window = 131,072 tokens. Large prompt text (e.g., full
-        # git diffs or pasted code) can exceed this without triggering the file-path
-        # check above. Estimate token count via chars/4 heuristic and reject early
-        # with an actionable message rather than burning an API call that returns 400.
-        _prompt_text = arguments.get("prompt", "") or ""
-        _prompt_estimated_tokens = len(_prompt_text) // 4
-        _GEMMA_PROMPT_TOKEN_LIMIT = 90_000  # 69% of 131k — reserves room for system prompt + tool overhead
-        if _prompt_estimated_tokens > _GEMMA_PROMPT_TOKEN_LIMIT:
-            logger.warning(
-                "Prompt size guard triggered for tool '%s': estimated %d tokens > limit %d",
-                name, _prompt_estimated_tokens, _GEMMA_PROMPT_TOKEN_LIMIT,
-            )
-            _pt_error = ToolOutput(
-                status="error",
-                content=(
-                    f"Prompt is too large for Gemma 4-26B (estimated {_prompt_estimated_tokens:,} tokens, "
-                    f"limit {_GEMMA_PROMPT_TOKEN_LIMIT:,}). "
-                    "Split the input: pass only the relevant diff sections, not the full file. "
-                    "For scalping_system.py analysis, use absolute_file_paths with targeted sections instead of pasting code."
-                ),
-                content_type="text",
-                metadata={
-                    "tool_name": name,
-                    "estimated_tokens": _prompt_estimated_tokens,
-                    "limit": _GEMMA_PROMPT_TOKEN_LIMIT,
-                    "gemma_context_window": 131_072,
-                },
-            )
-            raise ToolExecutionError(_pt_error.model_dump_json())
-
         # Set PAL_TOOL_CONTEXT so _GemmaApiKeyAdapter routes to the per-tool dedicated key.
         # (TASK-20260529-298: Gemma API key path reads this at generate_content call time.)
         os.environ["PAL_TOOL_CONTEXT"] = name
