@@ -441,14 +441,33 @@ class SimpleTool(BaseTool):
             supports_thinking = capabilities.supports_extended_thinking
 
             # Generate content with provider abstraction
-            model_response = provider.generate_content(
-                prompt=prompt,
-                model_name=self._current_model_name,
-                system_prompt=system_prompt,
-                temperature=temperature,
-                thinking_mode=thinking_mode if supports_thinking else None,
-                images=images if images else None,
-            )
+            import concurrent.futures as _cf
+            import os as _os
+            _deadline = float(_os.environ.get("PAL_EXPERT_DEADLINE_S", "120"))
+            with _cf.ThreadPoolExecutor(max_workers=1) as _pool:
+                try:
+                    _fut = _pool.submit(
+                        provider.generate_content,
+                        prompt=prompt,
+                        model_name=self._current_model_name,
+                        system_prompt=system_prompt,
+                        temperature=temperature,
+                        thinking_mode=thinking_mode if supports_thinking else None,
+                        images=images if images else None,
+                    )
+                    model_response = _fut.result(timeout=_deadline)
+                except _cf.TimeoutError:
+                    # Degraded path: return via the SAME serialization contract as the
+                    # success path below (model_dump_json() wrapped in TextContent).
+                    # Returning a bare ToolOutput here produced a Pydantic
+                    # CallToolResult validation error (tuple-vs-TextContent) because
+                    # execute() must yield list[TextContent], not a ToolOutput object.
+                    degraded_output = ToolOutput(
+                        status="success",
+                        content="analysis unavailable — Gemini slow/rate-limited; PAL staying alive",
+                        content_type="text",
+                    )
+                    return [TextContent(type="text", text=degraded_output.model_dump_json())]
 
             logger.info(f"Received response from {provider.get_provider_type().value} API for {self.get_name()}")
 

@@ -1,6 +1,7 @@
 """Base interfaces and common behaviour for model providers."""
 
 import logging
+import os
 import time
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, Callable, Optional
@@ -269,7 +270,19 @@ class ModelProvider(ABC):
         delays = delays or []
         last_exc: Optional[Exception] = None
 
+        _deadline_s = float(os.environ.get("PAL_EXPERT_DEADLINE_S", "120"))
+        _start_time = time.monotonic()
+
         for attempt_index in range(attempts):
+            _elapsed = time.monotonic() - _start_time
+            if _elapsed >= _deadline_s:
+                logger.warning(
+                    "%s deadline exceeded after %.1fs (PAL_EXPERT_DEADLINE_S=%.0f) — returning degraded result.",
+                    log_prefix or self.__class__.__name__,
+                    _elapsed,
+                    _deadline_s,
+                )
+                return f"analysis unavailable — Gemini rate-limited after {_elapsed:.0f}s; PAL staying alive"
             try:
                 return operation()
             except Exception as exc:  # noqa: BLE001 - bubble exact provider errors
