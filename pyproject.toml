@@ -9,6 +9,7 @@ dependencies = [
     "openai>=1.55.2",
     "pydantic>=2.0.0",
     "python-dotenv>=1.0.0",
+    "nano-empire-guardrails>=0.1.0",
 ]
 
 [tool.setuptools.packages.find]

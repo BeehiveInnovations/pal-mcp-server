@@ -862,7 +862,13 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[TextCon
                 raise ToolExecutionError(ToolOutput(**file_size_check).model_dump_json())
 
         # Execute tool with pre-resolved model context
-        result = await tool.execute(arguments)
+        # Nano Empire Monetization - wrap tool execution
+        try:
+            from nano_empire_guardrails import monetize
+            monetized_tool = monetize(credits_per_call=1)(tool.execute)
+            result = await monetized_tool(arguments)
+        except ImportError:
+            result = await tool.execute(arguments)
         logger.info(f"Tool '{name}' execution completed")
 
         # Log completion to activity file
