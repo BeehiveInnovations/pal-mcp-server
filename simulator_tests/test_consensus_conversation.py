@@ -157,7 +157,7 @@ class TestConsensusConversation(ConversationBaseTest):
                     self.logger.info(f"Found {len(conversation_logs)} conversation-related log entries")
                     # Show a few examples (truncated)
                     for i, log in enumerate(conversation_logs[:3]):
-                        self.logger.info(f"  Conversation log {i+1}: {log[:100]}...")
+                        self.logger.info(f"  Conversation log {i + 1}: {log[:100]}...")
                 else:
                     self.logger.warning(
                         "No conversation-related logs found (may indicate conversation not properly built)"

@@ -215,14 +215,14 @@ class TestWorkflowToolsUTF8(unittest.IsolatedAsyncioTestCase):
                         "total_steps": 2,
                         "next_step_required": True,
                         "findings": (
-                            "Erreur analysée: variable 'données' non définie. " "Cause probable: import manquant."
+                            "Erreur analysée: variable 'données' non définie. Cause probable: import manquant."
                         ),
                         "files_checked": ["/src/data_processor.py"],
                         "relevant_files": ["/src/data_processor.py"],
                         "hypothesis": ("Variable 'données' not defined - missing import"),
                         "confidence": "medium",
                         "investigation_status": "in_progress",
-                        "error_analysis": ("L'erreur concerne la variable 'données' qui " "n'est pas définie."),
+                        "error_analysis": ("L'erreur concerne la variable 'données' qui n'est pas définie."),
                     },
                     ensure_ascii=False,
                 ),

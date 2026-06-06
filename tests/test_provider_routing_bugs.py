@@ -201,15 +201,15 @@ class TestProviderRoutingBugs:
             # Test priority order: Native APIs should be preferred over OpenRouter
             # Google models should use Google provider
             flash_provider = tool.get_model_provider("flash")
-            assert (
-                flash_provider.get_provider_type() == ProviderType.GOOGLE
-            ), "When both Google and OpenRouter API keys are available, 'flash' should prefer Google provider"
+            assert flash_provider.get_provider_type() == ProviderType.GOOGLE, (
+                "When both Google and OpenRouter API keys are available, 'flash' should prefer Google provider"
+            )
 
             # OpenAI models should use OpenAI provider
             o3_provider = tool.get_model_provider("o3")
-            assert (
-                o3_provider.get_provider_type() == ProviderType.OPENAI
-            ), "When both OpenAI and OpenRouter API keys are available, 'o3' should prefer OpenAI provider"
+            assert o3_provider.get_provider_type() == ProviderType.OPENAI, (
+                "When both OpenAI and OpenRouter API keys are available, 'o3' should prefer OpenAI provider"
+            )
 
         finally:
             # Restore original environment
@@ -306,8 +306,7 @@ class TestOpenRouterAliasRestrictions:
             # Check that expected models are present
             missing_models = expected_models - available_model_names
             assert len(missing_models) == 0, (
-                f"Missing expected models from alias restrictions: {missing_models}. "
-                f"Available: {available_model_names}"
+                f"Missing expected models from alias restrictions: {missing_models}. Available: {available_model_names}"
             )
 
         finally:
@@ -358,9 +357,9 @@ class TestOpenRouterAliasRestrictions:
 
             available_model_names = set(available_models.keys())
 
-            assert (
-                available_model_names == expected_models
-            ), f"Expected models {expected_models}, got {available_model_names}"
+            assert available_model_names == expected_models, (
+                f"Expected models {expected_models}, got {available_model_names}"
+            )
 
         finally:
             # Restore original environment

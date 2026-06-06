@@ -865,6 +865,7 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[TextCon
         # Nano Empire Monetization - wrap tool execution
         try:
             from nano_empire_guardrails import monetize
+
             monetized_tool = monetize(credits_per_call=1)(tool.execute)
             result = await monetized_tool(arguments)
         except ImportError:

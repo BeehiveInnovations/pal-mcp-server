@@ -87,9 +87,9 @@ class TestDockerSecurity:
 
         # Check for custom network (better than default bridge)
         if "networks:" in content:
-            assert (
-                "driver: bridge" in content or "external:" in content
-            ), "Custom networks should use bridge driver or be external"
+            assert "driver: bridge" in content or "external:" in content, (
+                "Custom networks should use bridge driver or be external"
+            )
 
     def test_volume_security(self):
         """Test volume security configuration"""

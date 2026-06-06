@@ -63,7 +63,6 @@ class TestModelRestrictionService:
                 return mapping.get(provider_type)
 
             with patch.object(ModelProviderRegistry, "get_provider", side_effect=fake_get_provider):
-
                 service = ModelRestrictionService()
 
                 # Check OpenAI models
@@ -302,7 +301,6 @@ class TestProviderIntegration:
         from providers.registry import ModelProviderRegistry
 
         with patch.object(ModelProviderRegistry, "get_provider", return_value=provider):
-
             # Test case: Only alias "flash" is allowed, not the full name
             # If parameters are in wrong order, this test will catch it
 

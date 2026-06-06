@@ -189,9 +189,9 @@ class TestO3TemperatureParameterFixSimple:
 
         for model in o3_o4_models:
             capabilities = provider.get_capabilities(model)
-            assert hasattr(
-                capabilities, "supports_temperature"
-            ), f"Model {model} capabilities should have supports_temperature field"
+            assert hasattr(capabilities, "supports_temperature"), (
+                f"Model {model} capabilities should have supports_temperature field"
+            )
             assert capabilities.supports_temperature is False, f"Model {model} should have supports_temperature=False"
 
         # Test that regular models DO support temperature parameter
@@ -200,9 +200,9 @@ class TestO3TemperatureParameterFixSimple:
         for model in regular_models:
             try:
                 capabilities = provider.get_capabilities(model)
-                assert hasattr(
-                    capabilities, "supports_temperature"
-                ), f"Model {model} capabilities should have supports_temperature field"
+                assert hasattr(capabilities, "supports_temperature"), (
+                    f"Model {model} capabilities should have supports_temperature field"
+                )
                 assert capabilities.supports_temperature is True, f"Model {model} should have supports_temperature=True"
             except ValueError:
                 # Skip if model not in MODEL_CAPABILITIES (that's okay for this test)

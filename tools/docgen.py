@@ -308,7 +308,7 @@ class DocgenTool(WorkflowTool):
                 f"MANDATORY: DO NOT call the {self.get_name()} tool again immediately. You MUST first perform "
                 f"FILE DISCOVERY step by step. DO NOT DOCUMENT ANYTHING YET. "
                 f"MANDATORY ACTIONS before calling {self.get_name()} step {step_number + 1}:\n"
-                + "\n".join(f"{i+1}. {action}" for i, action in enumerate(required_actions))
+                + "\n".join(f"{i + 1}. {action}" for i, action in enumerate(required_actions))
                 + f"\n\nCRITICAL: When you call {self.get_name()} step 2, set total_files_to_document to the exact count "
                 f"of files needing documentation and set num_files_documented to 0 (haven't started documenting yet). "
                 f"Your total_steps will be automatically calculated as 1 (discovery) + number of files to document. "
@@ -320,7 +320,7 @@ class DocgenTool(WorkflowTool):
                 f"DOCUMENTATION PHASE BEGINS! ABSOLUTE RULE: DO NOT ALTER ANY CODE LOGIC! DOCUMENTATION ONLY!\n"
                 f"START FILE-BY-FILE APPROACH! Focus on ONE file until 100% complete. "
                 f"MANDATORY ACTIONS before calling {self.get_name()} step {step_number + 1}:\n"
-                + "\n".join(f"{i+1}. {action}" for i, action in enumerate(required_actions))
+                + "\n".join(f"{i + 1}. {action}" for i, action in enumerate(required_actions))
                 + f"\n\nREPORT your progress: which specific functions did you document? Update num_files_documented from 0 to 1 when first file complete. "
                 f"REPORT counters: current num_files_documented out of total_files_to_document. "
                 f"CRITICAL: If you found ANY bugs/logic errors, STOP documenting and ask user what to do before continuing. "
@@ -332,7 +332,7 @@ class DocgenTool(WorkflowTool):
                 f"ABSOLUTE RULE: DO NOT ALTER ANY CODE LOGIC! DOCUMENTATION ONLY!\n"
                 f"CONTINUE FILE-BY-FILE APPROACH! Focus on ONE file until 100% complete. "
                 f"MANDATORY ACTIONS before calling {self.get_name()} step {step_number + 1}:\n"
-                + "\n".join(f"{i+1}. {action}" for i, action in enumerate(required_actions))
+                + "\n".join(f"{i + 1}. {action}" for i, action in enumerate(required_actions))
                 + f"\n\nREPORT your progress: which specific functions did you document? Update num_files_documented when file complete. "
                 f"REPORT counters: current num_files_documented out of total_files_to_document. "
                 f"CRITICAL: If you found ANY bugs/logic errors, STOP documenting and ask user what to do before continuing. "
@@ -344,7 +344,7 @@ class DocgenTool(WorkflowTool):
                 f"ABSOLUTE RULE: DO NOT ALTER ANY CODE LOGIC! DOCUMENTATION ONLY!\n"
                 f"CRITICAL: Check if MORE FILES need documentation before finishing! "
                 f"REQUIRED ACTIONS before calling {self.get_name()} step {step_number + 1}:\n"
-                + "\n".join(f"{i+1}. {action}" for i, action in enumerate(required_actions))
+                + "\n".join(f"{i + 1}. {action}" for i, action in enumerate(required_actions))
                 + f"\n\nREPORT which functions you documented and update num_files_documented when file complete. "
                 f"CHECK: If num_files_documented < total_files_to_document, RESTART {self.get_name()} with next step! "
                 f"CRITICAL: Only set next_step_required=false when num_files_documented equals total_files_to_document! "

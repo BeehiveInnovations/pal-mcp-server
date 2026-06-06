@@ -54,9 +54,9 @@ class TestDeploymentScripts:
                     "$",  # PowerShell variables
                 ]
 
-                assert any(
-                    indicator in content for indicator in ps_indicators
-                ), f"Script {script} should contain PowerShell syntax"
+                assert any(indicator in content for indicator in ps_indicators), (
+                    f"Script {script} should contain PowerShell syntax"
+                )
 
     @patch("subprocess.run")
     def test_deploy_script_docker_commands(self, mock_run):
@@ -80,9 +80,9 @@ class TestDeploymentScripts:
             content = build_script.read_text()
 
             # Should contain Docker build commands
-            assert (
-                "docker build" in content or "docker-compose build" in content
-            ), "Build script should contain Docker build commands"
+            assert "docker build" in content or "docker-compose build" in content, (
+                "Build script should contain Docker build commands"
+            )
 
     def test_deploy_script_health_check_integration(self):
         """Test deploy script includes health check validation"""
@@ -270,9 +270,9 @@ class TestScriptIntegration:
 
                 references_compose = any(ref in content for ref in compose_refs)
 
-                assert (
-                    references_compose or "docker build" in content
-                ), "Deploy script should use either compose or direct Docker"
+                assert references_compose or "docker build" in content, (
+                    "Deploy script should use either compose or direct Docker"
+                )
 
     def test_cross_platform_compatibility(self):
         """Test cross-platform script compatibility"""

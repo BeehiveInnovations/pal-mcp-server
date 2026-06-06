@@ -294,9 +294,9 @@ class TestDockerPerformance:
         # Simulate a startup time measurement
         simulated_startup_time = 3  # seconds
 
-        assert (
-            simulated_startup_time <= expected_startup_time_seconds
-        ), f"Startup time too long: {simulated_startup_time}s"
+        assert simulated_startup_time <= expected_startup_time_seconds, (
+            f"Startup time too long: {simulated_startup_time}s"
+        )
 
 
 @pytest.fixture

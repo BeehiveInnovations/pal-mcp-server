@@ -144,9 +144,9 @@ class TestBuggyBehaviorPrevention:
 
         # Alias-aware variant should contain everything from the baseline
         for model in baseline_models:
-            assert model.lower() in [
-                m.lower() for m in alias_aware_models
-            ], f"Alias-aware listing missing baseline model {model}"
+            assert model.lower() in [m.lower() for m in alias_aware_models], (
+                f"Alias-aware listing missing baseline model {model}"
+            )
 
         # Alias-aware variant should include canonical targets as well
         for target in ("o4-mini", "o3-mini"):

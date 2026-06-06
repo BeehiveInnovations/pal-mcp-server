@@ -92,9 +92,9 @@ class TestModelEnumeration:
         ]
 
         # No native provider models should be present without API keys
-        assert (
-            len(non_openrouter_models) == 0
-        ), f"No native models should be available without API keys, but found: {non_openrouter_models}"
+        assert len(non_openrouter_models) == 0, (
+            f"No native models should be available without API keys, but found: {non_openrouter_models}"
+        )
 
     def test_openrouter_models_without_api_key(self):
         """Test that OpenRouter models are NOT included when API key is not configured."""

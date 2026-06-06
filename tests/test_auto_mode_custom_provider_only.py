@@ -200,9 +200,9 @@ class TestAutoModeCustomProviderOnly:
                 print(f"Fallback model for FAST_RESPONSE: {fallback_model}")
 
                 # Should get a valid model name, not the hardcoded fallback
-                assert (
-                    fallback_model != "gemini-2.5-flash"
-                ), "Should not fallback to hardcoded Gemini model when custom provider is available"
+                assert fallback_model != "gemini-2.5-flash", (
+                    "Should not fallback to hardcoded Gemini model when custom provider is available"
+                )
 
             except Exception as e:
                 pytest.fail(f"Getting fallback model failed: {e}")

@@ -241,9 +241,9 @@ class TestOpenRouterAutoMode:
 
         expected_allowed = {"google/gemini-2.5-flash", "anthropic/claude-opus-4.1"}
 
-        assert (
-            set(available_models.keys()) == expected_allowed
-        ), f"Expected {expected_allowed}, but got {set(available_models.keys())}"
+        assert set(available_models.keys()) == expected_allowed, (
+            f"Expected {expected_allowed}, but got {set(available_models.keys())}"
+        )
 
     @pytest.mark.no_mock_provider
     def test_no_providers_fails_auto_mode(self):

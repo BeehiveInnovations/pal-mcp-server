@@ -318,7 +318,7 @@ def resolve_and_validate_path(path_str: str) -> Path:
     # Step 5: Check if it's the home directory root
     if is_home_directory_root(resolved_path):
         raise PermissionError(
-            f"Cannot scan entire home directory: {path_str}\n" f"Please specify a subdirectory within your home folder."
+            f"Cannot scan entire home directory: {path_str}\nPlease specify a subdirectory within your home folder."
         )
 
     return resolved_path

@@ -331,9 +331,9 @@ class TestAutoModeProviderSelection:
 
                 # Test alias resolution
                 resolved_model_name = provider._resolve_model_name(alias)
-                assert (
-                    resolved_model_name == expected_resolved_name
-                ), f"Alias '{alias}' should resolve to '{expected_resolved_name}', got '{resolved_model_name}'"
+                assert resolved_model_name == expected_resolved_name, (
+                    f"Alias '{alias}' should resolve to '{expected_resolved_name}', got '{resolved_model_name}'"
+                )
 
         finally:
             # Restore original environment

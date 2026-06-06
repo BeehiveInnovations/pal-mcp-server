@@ -439,14 +439,14 @@ class TestGenTool(WorkflowTool):
             next_steps = (
                 f"STOP! Do NOT call {self.get_name()} again yet. Based on your findings, you've identified areas that need "
                 f"deeper analysis for test generation. MANDATORY ACTIONS before calling {self.get_name()} step {step_number + 1}:\\n"
-                + "\\n".join(f"{i+1}. {action}" for i, action in enumerate(required_actions))
+                + "\\n".join(f"{i + 1}. {action}" for i, action in enumerate(required_actions))
                 + f"\\n\\nOnly call {self.get_name()} again with step_number: {step_number + 1} AFTER "
                 + "completing these test planning tasks."
             )
         elif confidence in ["medium", "high"]:
             next_steps = (
                 f"WAIT! Your test generation analysis needs final verification. DO NOT call {self.get_name()} immediately. REQUIRED ACTIONS:\\n"
-                + "\\n".join(f"{i+1}. {action}" for i, action in enumerate(required_actions))
+                + "\\n".join(f"{i + 1}. {action}" for i, action in enumerate(required_actions))
                 + f"\\n\\nREMEMBER: Ensure you have identified all test scenarios including edge cases and error conditions. "
                 f"Document findings with specific test cases to implement, then call {self.get_name()} "
                 f"with step_number: {step_number + 1}."

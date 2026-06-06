@@ -9,7 +9,6 @@ Tests custom API endpoint functionality with Ollama-style local models, includin
 - Model alias resolution for local models
 """
 
-
 from .base_test import BaseSimulatorTest
 
 

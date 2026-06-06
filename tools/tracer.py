@@ -404,7 +404,7 @@ class TracerTool(WorkflowTool):
             response_data["next_steps"] = (
                 f"STOP! Do NOT call {self.get_name()} again yet. Based on your findings, you've identified areas that need "
                 f"deeper tracing analysis. MANDATORY ACTIONS before calling {self.get_name()} step {next_step}:\\n"
-                + "\\n".join(f"{i+1}. {action}" for i, action in enumerate(required_actions))
+                + "\\n".join(f"{i + 1}. {action}" for i, action in enumerate(required_actions))
                 + f"\\n\\nOnly call {self.get_name()} again with step_number: {next_step} AFTER "
                 + "completing these tracing investigations."
             )
@@ -413,7 +413,7 @@ class TracerTool(WorkflowTool):
             response_data["next_steps"] = (
                 f"WAIT! Your tracing analysis needs final verification. DO NOT call {self.get_name()} immediately. "
                 f"REQUIRED ACTIONS:\\n"
-                + "\\n".join(f"{i+1}. {action}" for i, action in enumerate(required_actions))
+                + "\\n".join(f"{i + 1}. {action}" for i, action in enumerate(required_actions))
                 + f"\\n\\nREMEMBER: Ensure you have traced all significant relationships and execution paths. "
                 f"Document findings with specific file references and method signatures, then call {self.get_name()} "
                 f"with step_number: {next_step}."

@@ -195,9 +195,9 @@ class TestAliasTargetRestrictions:
             assert model_name.lower() in openai_all_known
             if isinstance(config, str):  # This is an alias
                 # The target should also be in the known models
-                assert (
-                    config.lower() in openai_all_known
-                ), f"Target '{config}' for alias '{model_name}' not in known models"
+                assert config.lower() in openai_all_known, (
+                    f"Target '{config}' for alias '{model_name}' not in known models"
+                )
 
         # Test Gemini provider
         gemini_provider = GeminiModelProvider(api_key="test-key")
@@ -210,9 +210,9 @@ class TestAliasTargetRestrictions:
             assert model_name.lower() in gemini_all_known
             if isinstance(config, str):  # This is an alias
                 # The target should also be in the known models
-                assert (
-                    config.lower() in gemini_all_known
-                ), f"Target '{config}' for alias '{model_name}' not in known models"
+                assert config.lower() in gemini_all_known, (
+                    f"Target '{config}' for alias '{model_name}' not in known models"
+                )
 
     def test_no_duplicate_models_in_alias_aware_listing(self):
         """Test that alias-aware list_models variant doesn't return duplicates."""

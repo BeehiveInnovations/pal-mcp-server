@@ -121,12 +121,12 @@ class TestCustomOpenAITemperatureParameterFix:
                 mock_client.chat.completions.create.assert_called_once()
                 call_kwargs = mock_client.chat.completions.create.call_args[1]
 
-                assert (
-                    "temperature" not in call_kwargs
-                ), "Custom OpenAI models with supports_temperature=false should not include temperature parameter"
-                assert (
-                    "max_tokens" not in call_kwargs
-                ), "Custom OpenAI models with supports_temperature=false should not include max_tokens parameter"
+                assert "temperature" not in call_kwargs, (
+                    "Custom OpenAI models with supports_temperature=false should not include temperature parameter"
+                )
+                assert "max_tokens" not in call_kwargs, (
+                    "Custom OpenAI models with supports_temperature=false should not include max_tokens parameter"
+                )
                 assert call_kwargs["model"] == "gpt-5-2025-08-07"
                 assert "messages" in call_kwargs
 
@@ -205,12 +205,12 @@ class TestCustomOpenAITemperatureParameterFix:
             mock_client.chat.completions.create.assert_called_once()
             call_kwargs = mock_client.chat.completions.create.call_args[1]
 
-            assert (
-                call_kwargs["temperature"] == 0.5
-            ), "Custom OpenAI models with supports_temperature=true should include temperature parameter"
-            assert (
-                call_kwargs["max_tokens"] == 100
-            ), "Custom OpenAI models with supports_temperature=true should include max_tokens parameter"
+            assert call_kwargs["temperature"] == 0.5, (
+                "Custom OpenAI models with supports_temperature=true should include temperature parameter"
+            )
+            assert call_kwargs["max_tokens"] == 100, (
+                "Custom OpenAI models with supports_temperature=true should include max_tokens parameter"
+            )
             assert call_kwargs["model"] == "gpt-4-custom"
 
     @patch("utils.model_restrictions.get_restriction_service")

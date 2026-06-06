@@ -365,7 +365,6 @@ class TestConsensusTool:
             patch.object(tool, "_get_stance_enhanced_prompt") as mock_get_prompt,
             patch.object(tool, "get_name", return_value="consensus"),
         ):
-
             # Setup mocks
             mock_provider = Mock()
             mock_provider.generate_content = AsyncMock(return_value={"response": "test response"})
