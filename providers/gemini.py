@@ -75,6 +75,10 @@ def _parse_429_reason(error_body: dict) -> tuple[str, int]:
 # ---------------------------------------------------------------------------
 
 _GEMMA_MODEL = "gemma-4-26b-a4b-it"
+# TASK-20260611-097: HTTP-500 fallback model. When the 4-26b deployment returns a
+# server-side 5xx fault, retry the SAME request ONCE on the 4-31b sibling model
+# (model-side redundancy, NOT key/quota rotation). Bounded to one extra call.
+_GEMMA_FALLBACK_MODEL = "gemma-4-31b-it"
 _GEMMA_ENDPOINT_TMPL = (
     "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 )
@@ -181,10 +185,37 @@ class _GemmaApiKeyAdapter:
                     error_body = {}
                 reason, reset_ms = _parse_429_reason(error_body)
                 raise _RateLimit429(reason, reset_ms, str(error_body)) from exc
-            raise RuntimeError(
-                f"Gemma API key generateContent HTTP {exc.code} for tool={tool_ctx}. "
-                "Check key validity or quota."
-            ) from exc
+            # TASK-20260611-097: server-side 5xx on the 4-26b deployment → retry the
+            # SAME request ONCE on the 4-31b sibling model (model-side redundancy).
+            # Bounded to one extra call; NOT for 429/quota (those stay above).
+            if exc.code >= 500:
+                logger.warning(
+                    "_GemmaApiKeyAdapter: HTTP %d from %s for tool=%s; retrying once on %s",
+                    exc.code, _GEMMA_MODEL, tool_ctx, _GEMMA_FALLBACK_MODEL,
+                )
+                fallback_url = _GEMMA_ENDPOINT_TMPL.format(model=_GEMMA_FALLBACK_MODEL)
+                fallback_req = _url_req.Request(
+                    fallback_url,
+                    data=body,
+                    headers={
+                        "x-goog-api-key": api_key,
+                        "Content-Type": "application/json",
+                    },
+                    method="POST",
+                )
+                try:
+                    with _url_req.urlopen(fallback_req, timeout=timeout_s) as fb_resp:
+                        data = json.loads(fb_resp.read().decode("utf-8"))
+                except Exception as fb_exc:  # noqa: BLE001 — any fallback failure → surface original 5xx
+                    raise RuntimeError(
+                        f"Gemma API key generateContent HTTP {exc.code} for tool={tool_ctx}; "
+                        f"{_GEMMA_FALLBACK_MODEL} fallback also failed: {fb_exc}"
+                    ) from exc
+            else:
+                raise RuntimeError(
+                    f"Gemma API key generateContent HTTP {exc.code} for tool={tool_ctx}. "
+                    "Check key validity or quota."
+                ) from exc
         except _url_err.URLError as exc:
             raise RuntimeError(f"Gemma API key generateContent network error: {exc}") from exc
 

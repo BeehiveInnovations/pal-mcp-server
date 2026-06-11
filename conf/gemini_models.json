@@ -151,6 +151,27 @@
       "supports_images": false,
       "supports_temperature": true,
       "max_image_size_mb": 0.0
+    },
+    {
+      "model_name": "gemma-4-31b-it",
+      "friendly_name": "Gemma 4 31B (API key fallback)",
+      "aliases": [
+        "gemma31",
+        "gemma-4-31b"
+      ],
+      "intelligence_score": 14,
+      "description": "Gemma 4 31B via generativelanguage.googleapis.com API key (TASK-20260611-097, HTTP-500 fallback for gemma-4-26b-a4b-it)",
+      "context_window": 262144,
+      "max_output_tokens": 32768,
+      "max_thinking_tokens": 0,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": false,
+      "supports_function_calling": false,
+      "supports_json_mode": false,
+      "supports_images": false,
+      "supports_temperature": true,
+      "max_image_size_mb": 0.0
     }
   ]
 }
