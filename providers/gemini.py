@@ -787,6 +787,25 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
         if not allowed_models:
             return None
 
+        # TASK-20260613-204 (Hamad NO-FLASH HARD RULE, msg-46143; spec §7.4):
+        # get_preferred_model() must NEVER return a Gemini Flash / Flash-Lite model.
+        # The live _GemmaApiKeyAdapter ignores model_name and always POSTs _GEMMA_MODEL
+        # ('gemma-4-26b-a4b-it'); the 31b sibling is reached ONLY via the adapter's
+        # one-shot HTTP-500 fallback, never through this selection helper. Returning the
+        # canonical Gemma model here makes the advertised name match what is actually
+        # called. All "flash" preference branches are removed; any Flash member of
+        # allowed_models is filtered out so no caller-restriction can resurrect Flash.
+        flash_free = [m for m in allowed_models if "flash" not in m.lower()]
+
+        # Canonical Gemma primary is the preferred answer when permitted by restrictions.
+        if _GEMMA_MODEL in flash_free:
+            return _GEMMA_MODEL
+
+        if not flash_free:
+            # allowed_models contained only Flash variants → none are permissible.
+            # NO-FLASH is absolute: surface "no model" rather than a banned Flash.
+            return None
+
         capability_map = self.get_all_model_capabilities()
 
         # Helper to find best model from candidates
@@ -799,7 +818,7 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
             # First try Pro models that support thinking
             pro_thinking = [
                 m
-                for m in allowed_models
+                for m in flash_free
                 if "pro" in m and m in capability_map and capability_map[m].supports_extended_thinking
             ]
             if pro_thinking:
@@ -807,34 +826,24 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
 
             # Then any model that supports thinking
             any_thinking = [
-                m for m in allowed_models if m in capability_map and capability_map[m].supports_extended_thinking
+                m for m in flash_free if m in capability_map and capability_map[m].supports_extended_thinking
             ]
             if any_thinking:
                 return find_best(any_thinking)
 
             # Finally, just prefer Pro models even without thinking
-            pro_models = [m for m in allowed_models if "pro" in m]
+            pro_models = [m for m in flash_free if "pro" in m]
             if pro_models:
                 return find_best(pro_models)
 
-        elif category == ToolModelCategory.FAST_RESPONSE:
-            # Prefer Flash models for speed
-            flash_models = [m for m in allowed_models if "flash" in m]
-            if flash_models:
-                return find_best(flash_models)
-
-        # Default for BALANCED or as fallback
-        # Prefer Flash for balanced use, then Pro, then anything
-        flash_models = [m for m in allowed_models if "flash" in m]
-        if flash_models:
-            return find_best(flash_models)
-
-        pro_models = [m for m in allowed_models if "pro" in m]
+        # Default for BALANCED / FAST_RESPONSE / fallback: NO Flash. Prefer Pro, then
+        # any non-Flash model. Flash is never a candidate.
+        pro_models = [m for m in flash_free if "pro" in m]
         if pro_models:
             return find_best(pro_models)
 
-        # Ultimate fallback to best available model
-        return find_best(allowed_models)
+        # Ultimate fallback to best available non-Flash model.
+        return find_best(flash_free)
 
 
 # Load registry data at import time for registry consumers
