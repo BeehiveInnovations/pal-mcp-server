@@ -440,13 +440,22 @@ class SimpleTool(BaseTool):
             # Resolve model capabilities for feature gating
             supports_thinking = capabilities.supports_extended_thinking
 
-            # Generate content with provider abstraction
-            import concurrent.futures as _cf
+            # Generate content with provider abstraction.
+            #
+            # TASK-20260614-266 Fix C — async offload (completes Fix 8 / TASK-265).
+            # The prior ThreadPoolExecutor + _fut.result(timeout) BLOCKED the asyncio
+            # event-loop thread for the full HTTP duration (Fix 8 applied
+            # asyncio.to_thread only to the consensus path, not simple tools — the
+            # most-used QC-gating path: challenge/codereview/precommit/secaudit/
+            # thinkdeep). Now the blocking provider call runs in a worker thread via
+            # asyncio.to_thread and is awaited under asyncio.wait_for, so the stdio
+            # heartbeat is never starved. Degraded path preserved on TimeoutError.
+            import asyncio as _asyncio
             import os as _os
             _deadline = float(_os.environ.get("PAL_EXPERT_DEADLINE_S", "120"))
-            with _cf.ThreadPoolExecutor(max_workers=1) as _pool:
-                try:
-                    _fut = _pool.submit(
+            try:
+                model_response = await _asyncio.wait_for(
+                    _asyncio.to_thread(
                         provider.generate_content,
                         prompt=prompt,
                         model_name=self._current_model_name,
@@ -454,20 +463,21 @@ class SimpleTool(BaseTool):
                         temperature=temperature,
                         thinking_mode=thinking_mode if supports_thinking else None,
                         images=images if images else None,
-                    )
-                    model_response = _fut.result(timeout=_deadline)
-                except _cf.TimeoutError:
-                    # Degraded path: return via the SAME serialization contract as the
-                    # success path below (model_dump_json() wrapped in TextContent).
-                    # Returning a bare ToolOutput here produced a Pydantic
-                    # CallToolResult validation error (tuple-vs-TextContent) because
-                    # execute() must yield list[TextContent], not a ToolOutput object.
-                    degraded_output = ToolOutput(
-                        status="success",
-                        content="analysis unavailable — Gemini slow/rate-limited; PAL staying alive",
-                        content_type="text",
-                    )
-                    return [TextContent(type="text", text=degraded_output.model_dump_json())]
+                    ),
+                    timeout=_deadline,
+                )
+            except _asyncio.TimeoutError:
+                # Degraded path: return via the SAME serialization contract as the
+                # success path below (model_dump_json() wrapped in TextContent).
+                # Returning a bare ToolOutput here produced a Pydantic
+                # CallToolResult validation error (tuple-vs-TextContent) because
+                # execute() must yield list[TextContent], not a ToolOutput object.
+                degraded_output = ToolOutput(
+                    status="success",
+                    content="analysis unavailable — Gemini slow/rate-limited; PAL staying alive",
+                    content_type="text",
+                )
+                return [TextContent(type="text", text=degraded_output.model_dump_json())]
 
             logger.info(f"Received response from {provider.get_provider_type().value} API for {self.get_name()}")
 

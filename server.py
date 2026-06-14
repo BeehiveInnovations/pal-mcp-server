@@ -20,6 +20,7 @@ as defined by the MCP protocol.
 
 import asyncio
 import atexit
+import io
 import logging
 import os
 import sys
@@ -27,6 +28,8 @@ import time
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Any, Optional
+
+import anyio  # noqa: E402
 
 from mcp.server import Server  # noqa: E402
 from mcp.server.models import InitializationOptions  # noqa: E402
@@ -1571,8 +1574,19 @@ async def main():
         )
 
     # Run the server using stdio transport (standard input/output)
-    # This allows the server to be launched by MCP clients as a subprocess
-    async with stdio_server() as (read_stream, write_stream):
+    # This allows the server to be launched by MCP clients as a subprocess.
+    #
+    # TASK-20260614-266 Fix A — CRLF stdout injection (independent of the
+    # already-fixed block-buffering bug). The MCP SDK (mcp/server/stdio.py:49)
+    # re-wraps sys.stdout.buffer in TextIOWrapper WITHOUT newline="" → defaults
+    # to newline=None → on Windows every JSON-RPC "\n" is translated to "\r\n",
+    # producing spec-non-compliant `{...}\r\n` framing. We override stdout with an
+    # explicit newline="" TextIOWrapper so the SDK's writer "\n" passes through as
+    # bare LF. stdin is left as the SDK default (universal-newlines read = safe).
+    _stdout_lf = anyio.wrap_file(
+        io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", newline="")
+    )
+    async with stdio_server(stdout=_stdout_lf) as (read_stream, write_stream):
         await server.run(
             read_stream,
             write_stream,
