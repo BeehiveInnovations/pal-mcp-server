@@ -75,13 +75,65 @@ def _parse_429_reason(error_body: dict) -> tuple[str, int]:
 # ---------------------------------------------------------------------------
 
 _GEMMA_MODEL = "gemma-4-26b-a4b-it"
-# TASK-20260611-097: HTTP-500 fallback model. When the 4-26b deployment returns a
-# server-side 5xx fault, retry the SAME request ONCE on the 4-31b sibling model
-# (model-side redundancy, NOT key/quota rotation). Bounded to one extra call.
+# TASK-20260611-097: HTTP-500 fallback sibling model. Retained as the 31b name used
+# in the cascade rotation (default attempts 2 and 4).
 _GEMMA_FALLBACK_MODEL = "gemma-4-31b-it"
 _GEMMA_ENDPOINT_TMPL = (
     "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 )
+
+# ---------------------------------------------------------------------------
+# TASK-20260614-291 — 26b→31b→26b→31b retry cascade with exponential backoff.
+#
+# Replaces the prior one-shot 5xx→31b fallback. On a RECOVERABLE Gemma failure
+# (HTTP 5xx, connection timeout, transient RPM RATE_LIMIT_EXCEEDED) the adapter
+# alternates models across attempts with exponential backoff between each:
+#   attempt 1: gemma-4-26b-a4b-it
+#   attempt 2: gemma-4-31b-it        (after base ms)
+#   attempt 3: gemma-4-26b-a4b-it    (after base*factor ms)
+#   attempt 4: gemma-4-31b-it        (after base*factor^2 ms)
+# PERMANENT failures (4xx except 429, daily quota exhaustion, auth) do NOT enter
+# the cascade — they raise immediately (preserves loud misconfiguration + quota
+# semantics). No key rotation: alternation is MODEL-only on the same dedicated key
+# (cross-endpoint key fallback BANNED, Hamad msg-34515).
+#
+# ENV-tunable (ENV-001). Identical constant names + defaults are mirrored by the JS
+# cascade in .claude/hooks/lib/gemini-chain.js for dual-runtime parity.
+# ---------------------------------------------------------------------------
+_GEMMA_CASCADE_MODELS_DEFAULT = (
+    "gemma-4-26b-a4b-it,gemma-4-31b-it,gemma-4-26b-a4b-it,gemma-4-31b-it"
+)
+
+
+def _cascade_models() -> list[str]:
+    """Return the ordered model rotation for the cascade (ENV-tunable)."""
+    raw = os.environ.get("GEMMA_CASCADE_MODELS", _GEMMA_CASCADE_MODELS_DEFAULT)
+    models = [m.strip() for m in raw.split(",") if m.strip()]
+    return models or [_GEMMA_MODEL]
+
+
+def _cascade_backoff_ms(attempt_index: int) -> int:
+    """Backoff in ms BEFORE the given (1-based) attempt.
+
+    attempt_index 1 → 0 (no wait before the first attempt). For attempt n>=2 the
+    wait is base * factor^(n-2), capped, with ±jitter to de-sync concurrent agents.
+    Mirrors GEMMA_CASCADE_BACKOFF_* constants used by the JS cascade.
+    """
+    if attempt_index <= 1:
+        return 0
+    try:
+        base = float(os.environ.get("GEMMA_CASCADE_BACKOFF_BASE_MS", "1000"))
+        factor = float(os.environ.get("GEMMA_CASCADE_BACKOFF_FACTOR", "2.0"))
+        cap = float(os.environ.get("GEMMA_CASCADE_BACKOFF_CAP_MS", "8000"))
+        jitter = float(os.environ.get("GEMMA_CASCADE_BACKOFF_JITTER", "0.3"))
+    except (TypeError, ValueError):
+        base, factor, cap, jitter = 1000.0, 2.0, 8000.0, 0.3
+    wait = base * (factor ** (attempt_index - 2))
+    wait = min(wait, cap)
+    if jitter > 0:
+        import random as _random
+        wait *= 1.0 + _random.uniform(-jitter, jitter)
+    return max(0, int(wait))
 
 # Tools where full reasoning (thought parts) is KEPT in the response text.
 # For all other tools, thought parts are stripped so only the answer remains.
@@ -161,63 +213,103 @@ class _GemmaApiKeyAdapter:
             body_dict["generationConfig"] = gen_cfg
 
         body = json.dumps(body_dict).encode()
-        url = _GEMMA_ENDPOINT_TMPL.format(model=_GEMMA_MODEL)
+        timeout_s = float(os.environ.get("PAL_HTTP_ATTEMPT_TIMEOUT_S", "240"))
 
-        req = _url_req.Request(
-            url,
-            data=body,
-            headers={
-                "x-goog-api-key": api_key,
-                "Content-Type": "application/json",
-            },
-            method="POST",
-        )
+        def _post_once(model: str) -> dict:
+            """Single POST to the Gemma endpoint for one model. Raises on failure.
 
-        try:
-            timeout_s = float(os.environ.get("PAL_HTTP_ATTEMPT_TIMEOUT_S", "240"))
-            with _url_req.urlopen(req, timeout=timeout_s) as resp:
-                data = json.loads(resp.read().decode("utf-8"))
-        except _url_err.HTTPError as exc:
-            if exc.code == 429:
-                try:
-                    error_body = json.loads(exc.read().decode("utf-8"))
-                except Exception:
-                    error_body = {}
-                reason, reset_ms = _parse_429_reason(error_body)
-                raise _RateLimit429(reason, reset_ms, str(error_body)) from exc
-            # TASK-20260611-097: server-side 5xx on the 4-26b deployment → retry the
-            # SAME request ONCE on the 4-31b sibling model (model-side redundancy).
-            # Bounded to one extra call; NOT for 429/quota (those stay above).
-            if exc.code >= 500:
-                logger.warning(
-                    "_GemmaApiKeyAdapter: HTTP %d from %s for tool=%s; retrying once on %s",
-                    exc.code, _GEMMA_MODEL, tool_ctx, _GEMMA_FALLBACK_MODEL,
-                )
-                fallback_url = _GEMMA_ENDPOINT_TMPL.format(model=_GEMMA_FALLBACK_MODEL)
-                fallback_req = _url_req.Request(
-                    fallback_url,
-                    data=body,
-                    headers={
-                        "x-goog-api-key": api_key,
-                        "Content-Type": "application/json",
-                    },
-                    method="POST",
-                )
-                try:
-                    with _url_req.urlopen(fallback_req, timeout=timeout_s) as fb_resp:
-                        data = json.loads(fb_resp.read().decode("utf-8"))
-                except Exception as fb_exc:  # noqa: BLE001 — any fallback failure → surface original 5xx
-                    raise RuntimeError(
-                        f"Gemma API key generateContent HTTP {exc.code} for tool={tool_ctx}; "
-                        f"{_GEMMA_FALLBACK_MODEL} fallback also failed: {fb_exc}"
-                    ) from exc
-            else:
+            Classifies failures: HTTPError with a transient code (5xx) is re-raised
+            as-is for the cascade to catch; 429 is parsed — transient RPM raises
+            _RateLimit429(reason='RATE_LIMIT_EXCEEDED'), daily exhaustion raises
+            _RateLimit429(reason='daily'); any other 4xx raises RuntimeError
+            (permanent). URLError (timeout/connection) propagates for the cascade.
+            """
+            url = _GEMMA_ENDPOINT_TMPL.format(model=model)
+            req = _url_req.Request(
+                url,
+                data=body,
+                headers={
+                    "x-goog-api-key": api_key,
+                    "Content-Type": "application/json",
+                },
+                method="POST",
+            )
+            try:
+                with _url_req.urlopen(req, timeout=timeout_s) as resp:
+                    return json.loads(resp.read().decode("utf-8"))
+            except _url_err.HTTPError as exc:
+                if exc.code == 429:
+                    try:
+                        error_body = json.loads(exc.read().decode("utf-8"))
+                    except Exception:
+                        error_body = {}
+                    reason, reset_ms = _parse_429_reason(error_body)
+                    raise _RateLimit429(reason, reset_ms, str(error_body)) from exc
+                if exc.code >= 500:
+                    # Transient server fault — let the cascade alternate models.
+                    raise
+                # 4xx (other than 429) = permanent; do NOT enter the cascade.
                 raise RuntimeError(
                     f"Gemma API key generateContent HTTP {exc.code} for tool={tool_ctx}. "
                     "Check key validity or quota."
                 ) from exc
-        except _url_err.URLError as exc:
-            raise RuntimeError(f"Gemma API key generateContent network error: {exc}") from exc
+
+        # ---- TASK-20260614-291: 26b→31b→26b→31b cascade with exponential backoff ----
+        # Recoverable classes (HTTP 5xx, connection timeout/URLError, transient RPM
+        # RATE_LIMIT_EXCEEDED) advance to the next model after a growing backoff.
+        # PERMANENT classes (4xx≠429, daily quota, auth) raise immediately.
+        cascade = _cascade_models()
+        last_exc: Optional[Exception] = None
+        data = None
+        for idx, model in enumerate(cascade, start=1):
+            wait_ms = _cascade_backoff_ms(idx)
+            if wait_ms > 0:
+                logger.info(
+                    "_GemmaApiKeyAdapter: cascade backoff %dms before attempt %d (%s) tool=%s",
+                    wait_ms, idx, model, tool_ctx,
+                )
+                time.sleep(wait_ms / 1000.0)
+            logger.info(
+                "paif_model_rotation_event: tool=%s attempt=%d/%d model=%s",
+                tool_ctx, idx, len(cascade), model,
+            )
+            try:
+                data = _post_once(model)
+                break
+            except _RateLimit429 as exc:
+                # Transient RPM throttle → retriable; daily exhaustion → terminal.
+                if exc.reason == "RATE_LIMIT_EXCEEDED":
+                    last_exc = exc
+                    logger.warning(
+                        "_GemmaApiKeyAdapter: transient RPM-429 on attempt %d (%s) tool=%s; "
+                        "advancing cascade", idx, model, tool_ctx,
+                    )
+                    continue
+                # daily exhaustion is terminal — surface to the daily-quota handler.
+                raise
+            except _url_err.HTTPError as exc:
+                # Only 5xx reaches here (4xx≠429 raised RuntimeError inside _post_once).
+                last_exc = exc
+                logger.warning(
+                    "_GemmaApiKeyAdapter: HTTP %d on attempt %d (%s) tool=%s; advancing cascade",
+                    exc.code, idx, model, tool_ctx,
+                )
+                continue
+            except _url_err.URLError as exc:
+                # Connection/timeout — transient; advance to the next model.
+                last_exc = exc
+                logger.warning(
+                    "_GemmaApiKeyAdapter: network error on attempt %d (%s) tool=%s: %s; "
+                    "advancing cascade", idx, model, tool_ctx, exc,
+                )
+                continue
+
+        if data is None:
+            # All cascade attempts exhausted on recoverable failures — surface final.
+            raise RuntimeError(
+                f"Gemma API key generateContent cascade exhausted "
+                f"({len(cascade)} attempts) for tool={tool_ctx}: {last_exc}"
+            ) from last_exc
 
         # generativelanguage.googleapis.com returns the response directly (no "response" wrapper).
         candidates = data.get("candidates", [])
@@ -461,9 +553,18 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
                 actual_thinking_budget = int(max_thinking_tokens * self.THINKING_BUDGETS[effective_thinking_mode])
                 generation_config.thinking_config = types.ThinkingConfig(thinking_budget=actual_thinking_budget)
 
-        # Retry logic with progressive delays
-        max_retries = 4  # Total of 4 attempts
-        retry_delays = [1, 3, 5, 8]  # Progressive delays: 1s, 3s, 5s, 8s
+        # Retry logic with progressive delays.
+        # TASK-20260614-291: when the Gemma API-key adapter is active it owns the FULL
+        # 26b→31b→26b→31b cascade + exponential backoff internally. The outer retry loop
+        # must NOT re-cascade (that would multiply to 16 HTTP calls). So with the adapter
+        # the outer loop is a single pass (cascade is the sole retry authority); the SDK
+        # client path (no adapter) keeps the original 4-attempt progressive backoff.
+        if self._model_adapter is not None:
+            max_retries = 1
+            retry_delays = []
+        else:
+            max_retries = 4  # Total of 4 attempts
+            retry_delays = [1, 3, 5, 8]  # Progressive delays: 1s, 3s, 5s, 8s
         attempt_counter = {"value": 0}
 
         def _attempt() -> ModelResponse:
