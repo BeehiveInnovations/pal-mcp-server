@@ -3,7 +3,8 @@
   "command": "codex",
   "additional_args": [
     "--json",
-    "--dangerously-bypass-approvals-and-sandbox"
+    "--sandbox", "workspace-write",
+    "-c", "approval_policy=\"never\""
   ],
   "env": {},
   "roles": {
