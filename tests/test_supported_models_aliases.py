@@ -25,6 +25,8 @@ class TestSupportedModelsAliases:
         assert "flash2" in provider.MODEL_CAPABILITIES["gemini-2.0-flash"].aliases
         assert "flashlite" in provider.MODEL_CAPABILITIES["gemini-2.0-flash-lite"].aliases
         assert "flash-lite" in provider.MODEL_CAPABILITIES["gemini-2.0-flash-lite"].aliases
+        assert "gemini3.1" in provider.MODEL_CAPABILITIES["gemini-3.1-pro"].aliases
+        assert "pro3.1" in provider.MODEL_CAPABILITIES["gemini-3.1-pro"].aliases
 
         # Test alias resolution
         assert provider._resolve_model_name("flash") == "gemini-2.5-flash"
@@ -32,6 +34,11 @@ class TestSupportedModelsAliases:
         assert provider._resolve_model_name("flash-2.0") == "gemini-2.0-flash"
         assert provider._resolve_model_name("flash2") == "gemini-2.0-flash"
         assert provider._resolve_model_name("flashlite") == "gemini-2.0-flash-lite"
+
+        assert provider._resolve_model_name("gemini3.1") == "gemini-3.1-pro"
+        assert provider._resolve_model_name("pro3.1") == "gemini-3.1-pro"
+        assert provider._resolve_model_name("gemini-3.1") == "gemini-3.1-pro"
+        assert provider._resolve_model_name("gemini-3.1-pro") == "gemini-3.1-pro"
 
         # Test case insensitive resolution
         assert provider._resolve_model_name("Flash") == "gemini-2.5-flash"

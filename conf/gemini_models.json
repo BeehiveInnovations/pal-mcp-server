@@ -49,6 +49,29 @@
       "max_image_size_mb": 32.0
     },
     {
+      "model_name": "gemini-3.1-pro",
+      "friendly_name": "Gemini Pro 3.1",
+      "aliases": [
+        "gemini3.1",
+        "pro3.1",
+        "gemini-3.1"
+      ],
+      "intelligence_score": 19,
+      "description": "Gemini 3.1 Pro (1M context) - Latest reasoning model, complex problems and deep analysis",
+      "context_window": 1048576,
+      "max_output_tokens": 65536,
+      "max_thinking_tokens": 32768,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "allow_code_generation": true,
+      "max_image_size_mb": 32.0
+    },
+    {
       "model_name": "gemini-2.5-pro",
       "friendly_name": "Gemini Pro 2.5",
       "aliases": [
