@@ -72,7 +72,12 @@ from tools import (  # noqa: E402
 )
 from tools.models import ToolOutput  # noqa: E402
 from tools.shared.exceptions import ToolExecutionError  # noqa: E402
-from utils.env import env_override_enabled, get_env  # noqa: E402
+from utils.env import (  # noqa: E402
+    env_override_enabled,
+    get_env,
+    reset_tool_context,
+    set_tool_context,
+)
 
 # Configure logging for server operations
 # Can be controlled via LOG_LEVEL environment variable (DEBUG, INFO, WARNING, ERROR)
@@ -935,21 +940,29 @@ async def _dispatch_tool_call(name: str, arguments: dict[str, Any]) -> list[Text
                 logger.warning(f"File size check failed for {name} with model {model_name}")
                 raise ToolExecutionError(ToolOutput(**file_size_check).model_dump_json())
 
-        # Set PAL_TOOL_CONTEXT so _GemmaApiKeyAdapter routes to the per-tool dedicated key.
-        # (TASK-20260529-298: Gemma API key path reads this at generate_content call time.)
-        os.environ["PAL_TOOL_CONTEXT"] = name
-
-        # Execute tool with pre-resolved model context
-        result = await tool.execute(arguments)
-        logger.info(f"Tool '{name}' execution completed")
-
-        # Log completion to activity file
+        # Set the per-call tool context so _GemmaApiKeyAdapter routes to the
+        # per-tool dedicated key. (TASK-20260529-298: Gemma API key path reads
+        # this at generate_content call time.)
+        #
+        # TASK-20260619-397-P2 (RC-5): use a ContextVar instead of a process-
+        # global os.environ. asyncio.to_thread copies the current context into
+        # the adapter's worker thread, so concurrent tool calls no longer race
+        # on a shared mutable global. reset in finally restores prior context.
+        _tool_ctx_token = set_tool_context(name)
         try:
-            mcp_activity_logger = logging.getLogger("mcp_activity")
-            mcp_activity_logger.info(f"TOOL_COMPLETED: {name}")
-        except Exception:
-            pass
-        return result
+            # Execute tool with pre-resolved model context
+            result = await tool.execute(arguments)
+            logger.info(f"Tool '{name}' execution completed")
+
+            # Log completion to activity file
+            try:
+                mcp_activity_logger = logging.getLogger("mcp_activity")
+                mcp_activity_logger.info(f"TOOL_COMPLETED: {name}")
+            except Exception:
+                pass
+            return result
+        finally:
+            reset_tool_context(_tool_ctx_token)
 
     # Handle unknown tool requests gracefully
     else:

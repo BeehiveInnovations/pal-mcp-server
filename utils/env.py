@@ -2,10 +2,57 @@
 
 from __future__ import annotations
 
+import contextvars
 import os
 from collections.abc import Mapping
 from contextlib import contextmanager
 from pathlib import Path
+
+# ---------------------------------------------------------------------------
+# Per-call tool context (TASK-20260619-397-P2 — RC-5 TOCTOU fix)
+# ---------------------------------------------------------------------------
+# The active PAL tool name (e.g. "precommit", "codereview") must be visible to
+# the Gemma API-key adapter so it routes to that tool's dedicated key. It was
+# previously stored in os.environ["PAL_TOOL_CONTEXT"] — a PROCESS-GLOBAL that is
+# a TOCTOU race: PAL runs tool calls concurrently in one asyncio loop and the
+# adapter reads the value later inside an asyncio.to_thread worker. Tool B could
+# overwrite the global before tool A's worker reached _get_api_key(), routing A
+# through B's key / wrong keep_thoughts (RC-5, TASK-20260619-395 deep-dive).
+#
+# A ContextVar gives per-call isolation: each tool call sets it in its own
+# logical context, and asyncio.to_thread COPIES the caller's contextvars.Context
+# into the worker thread (Python 3.9+), so the worker reads the value that was
+# set for ITS call — never a concurrent call's value. No cross-request bleed.
+_PAL_TOOL_CONTEXT: contextvars.ContextVar[str] = contextvars.ContextVar(
+    "PAL_TOOL_CONTEXT", default=""
+)
+
+
+def set_tool_context(name: str) -> contextvars.Token:
+    """Set the active PAL tool name for the current logical context.
+
+    Returns the Token so callers may restore the prior value via
+    reset_tool_context() once the tool call completes.
+    """
+
+    return _PAL_TOOL_CONTEXT.set(name or "")
+
+
+def reset_tool_context(token: contextvars.Token) -> None:
+    """Restore the tool context to the value held before set_tool_context()."""
+
+    try:
+        _PAL_TOOL_CONTEXT.reset(token)
+    except (ValueError, LookupError):
+        # Token created in a different Context (rare cross-context teardown);
+        # safe to ignore — the ContextVar default already isolates per call.
+        pass
+
+
+def get_tool_context() -> str:
+    """Return the active PAL tool name for the current context ("" if unset)."""
+
+    return _PAL_TOOL_CONTEXT.get()
 
 try:
     from dotenv import dotenv_values, load_dotenv

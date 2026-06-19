@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 from google import genai
 from google.genai import types
 
-from utils.env import get_env
+from utils.env import get_env, get_tool_context
 from utils.image_utils import validate_image
 
 from .base import ModelProvider
@@ -69,7 +69,8 @@ def _parse_429_reason(error_body: dict) -> tuple[str, int]:
 # Endpoint: generativelanguage.googleapis.com/v1beta/models/gemma-4-26b-a4b-it:generateContent
 # Auth: x-goog-api-key header (NOT Bearer).
 # Activation: PAL_USE_API_KEYS=1 in PAL MCP env.
-# Per-tool key routing: reads PAL_TOOL_CONTEXT env var set by server.py at dispatch time.
+# Per-tool key routing: reads the per-call PAL tool-context ContextVar set by
+# server.py at dispatch time (utils.env.get_tool_context; TASK-20260619-397-P2).
 # Thought-part handling: Gemma returns reasoning in parts with thought:true; strip for clean
 #   verdicts EXCEPT for tools that benefit from full reasoning (challenge, debug, codereview).
 # ---------------------------------------------------------------------------
@@ -170,7 +171,9 @@ class _GemmaApiKeyAdapter:
         Raises RuntimeError if the dedicated key is missing — this is intentional
         (misconfiguration should be loud, not silently routed to another key).
         """
-        tool_ctx = os.environ.get("PAL_TOOL_CONTEXT", "").lower().strip()
+        # TASK-20260619-397-P2 (RC-5): read the per-call ContextVar, not a
+        # process-global env var, so concurrent tool calls cannot cross-route.
+        tool_ctx = get_tool_context().lower().strip()
         env_var = _GEMMA_TOOL_KEY_MAP.get(tool_ctx, "GEMINI_API_KEY_GENERAL")
         key = os.environ.get(env_var, "")
         if not key:
@@ -192,7 +195,8 @@ class _GemmaApiKeyAdapter:
         import urllib.error as _url_err
 
         api_key = self._get_api_key()
-        tool_ctx = os.environ.get("PAL_TOOL_CONTEXT", "").lower().strip()
+        # TASK-20260619-397-P2 (RC-5): per-call ContextVar (see _get_api_key).
+        tool_ctx = get_tool_context().lower().strip()
         keep_thoughts = tool_ctx in _GEMMA_KEEP_THOUGHTS_TOOLS
 
         # Build request body (generativelanguage.googleapis.com schema — no "request" wrapper).
