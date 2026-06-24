@@ -949,15 +949,40 @@ async def _dispatch_tool_call(name: str, arguments: dict[str, Any]) -> list[Text
         # the adapter's worker thread, so concurrent tool calls no longer race
         # on a shared mutable global. reset in finally restores prior context.
         _tool_ctx_token = set_tool_context(name)
+        # TASK-20260623-546 (Hamad APD msg-51617): per-call PAL telemetry — wall-clock latency
+        # around tool.execute + best-effort token counts on the TOOL_COMPLETED activity line.
+        _tool_start = time.monotonic()
         try:
             # Execute tool with pre-resolved model context
             result = await tool.execute(arguments)
             logger.info(f"Tool '{name}' execution completed")
 
-            # Log completion to activity file
+            # Log completion to activity file (now with latency_ms + best-effort token counts).
             try:
                 mcp_activity_logger = logging.getLogger("mcp_activity")
-                mcp_activity_logger.info(f"TOOL_COMPLETED: {name}")
+                latency_ms = int((time.monotonic() - _tool_start) * 1000)
+                # Best-effort token extraction. tool.execute returns serialized MCP content
+                # (usually list[TextContent]); token counts are not guaranteed on the result.
+                # We probe a few well-known shapes and fall back to nulls — never raise.
+                tokens_in = tokens_out = total_tokens = None
+                try:
+                    meta = None
+                    if isinstance(result, dict):
+                        meta = result.get("metadata") or result.get("usage")
+                    else:
+                        meta = getattr(result, "usage", None) or getattr(result, "metadata", None)
+                    if isinstance(meta, dict):
+                        usage = meta.get("usage") if isinstance(meta.get("usage"), dict) else meta
+                        if isinstance(usage, dict):
+                            tokens_in = usage.get("input_tokens") or usage.get("promptTokenCount")
+                            tokens_out = usage.get("output_tokens") or usage.get("candidatesTokenCount")
+                            total_tokens = usage.get("total_tokens") or usage.get("totalTokenCount")
+                except Exception:
+                    pass
+                mcp_activity_logger.info(
+                    f"TOOL_COMPLETED: {name} | latency_ms={latency_ms} | "
+                    f"tokens_in={tokens_in} | tokens_out={tokens_out} | total_tokens={total_tokens}"
+                )
             except Exception:
                 pass
             return result

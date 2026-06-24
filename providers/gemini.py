@@ -184,6 +184,55 @@ class _GemmaApiKeyAdapter:
             )
         return key
 
+    def _log_gemma_call(self, tool_name: str, model: str, tokens_in: int, tokens_out: int,
+                         latency_ms: float, success: bool, error: str = None) -> None:
+        """Fail-open structured log of every Gemma API call to pal-gemma-log.jsonl."""
+        try:
+            from datetime import datetime, timedelta
+            log_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "logs")
+            os.makedirs(log_dir, exist_ok=True)
+            log_path = os.path.join(log_dir, "pal-gemma-log.jsonl")
+            entry = {
+                "ts": datetime.utcnow().isoformat() + "Z",
+                "tool": tool_name,
+                "model": model,
+                "tokens_in": tokens_in,
+                "tokens_out": tokens_out,
+                "latency_ms": round(latency_ms, 1),
+                "success": success,
+                "error": error,
+            }
+            # Read + prune existing entries (14-day TTL, mirrors writeGemmaResponseLog)
+            try:
+                ttl_days = float(os.environ.get("GEMMA_LOG_TTL_DAYS", "14") or "14")
+                if ttl_days <= 0:
+                    ttl_days = 14.0
+            except (TypeError, ValueError):
+                ttl_days = 14.0
+            cutoff = datetime.utcnow() - timedelta(days=ttl_days)
+            lines = []
+            if os.path.exists(log_path):
+                with open(log_path, "r", encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if not line:
+                            continue
+                        try:
+                            rec = json.loads(line)
+                            rec_ts = datetime.fromisoformat(rec["ts"].rstrip("Z"))
+                            if rec_ts >= cutoff:
+                                lines.append(line)
+                        except Exception:
+                            pass
+            lines.append(json.dumps(entry))
+            # Atomic write: write to .tmp then os.replace (single-writer safe)
+            tmp_path = log_path + ".tmp"
+            with open(tmp_path, "w", encoding="utf-8") as f:
+                f.write("\n".join(lines) + "\n")
+            os.replace(tmp_path, log_path)
+        except Exception:
+            pass  # fail-open: never block the caller
+
     def generate_content(
         self,
         model_name: str,
@@ -265,6 +314,8 @@ class _GemmaApiKeyAdapter:
         cascade = _cascade_models()
         last_exc: Optional[Exception] = None
         data = None
+        _t0 = time.monotonic()  # TASK-20260624-561: wall-clock start for latency logging
+        _winning_model = cascade[0] if cascade else model_name  # track which model succeeded
         for idx, model in enumerate(cascade, start=1):
             wait_ms = _cascade_backoff_ms(idx)
             if wait_ms > 0:
@@ -279,6 +330,7 @@ class _GemmaApiKeyAdapter:
             )
             try:
                 data = _post_once(model)
+                _winning_model = model  # TASK-20260624-561: record the successful model
                 break
             except _RateLimit429 as exc:
                 # Transient RPM throttle → retriable; daily exhaustion → terminal.
@@ -289,7 +341,16 @@ class _GemmaApiKeyAdapter:
                         "advancing cascade", idx, model, tool_ctx,
                     )
                     continue
-                # daily exhaustion is terminal — surface to the daily-quota handler.
+                # daily exhaustion is terminal — log then surface to daily-quota handler.
+                self._log_gemma_call(
+                    tool_name=tool_ctx,
+                    model=model,
+                    tokens_in=0,
+                    tokens_out=0,
+                    latency_ms=(time.monotonic() - _t0) * 1000.0,
+                    success=False,
+                    error=f"daily_quota_exhausted:{exc}",
+                )
                 raise
             except _url_err.HTTPError as exc:
                 # Only 5xx reaches here (4xx≠429 raised RuntimeError inside _post_once).
@@ -310,6 +371,16 @@ class _GemmaApiKeyAdapter:
 
         if data is None:
             # All cascade attempts exhausted on recoverable failures — surface final.
+            # TASK-20260624-561: log the failure before raising.
+            self._log_gemma_call(
+                tool_name=tool_ctx,
+                model=_winning_model,
+                tokens_in=0,
+                tokens_out=0,
+                latency_ms=(time.monotonic() - _t0) * 1000.0,
+                success=False,
+                error=f"cascade_exhausted:{last_exc}",
+            )
             raise RuntimeError(
                 f"Gemma API key generateContent cascade exhausted "
                 f"({len(cascade)} attempts) for tool={tool_ctx}: {last_exc}"
@@ -335,6 +406,21 @@ class _GemmaApiKeyAdapter:
         logger.debug(
             "_GemmaApiKeyAdapter: tool=%s keep_thoughts=%s candidates=%d",
             tool_ctx, keep_thoughts, len(candidates),
+        )
+        # TASK-20260624-561: structured success log — parse usageMetadata for token counts.
+        try:
+            _usage_meta = data.get("usageMetadata", {})
+            _tokens_in = int(_usage_meta.get("promptTokenCount") or 0)
+            _tokens_out = int(_usage_meta.get("candidatesTokenCount") or 0)
+        except Exception:
+            _tokens_in, _tokens_out = 0, 0
+        self._log_gemma_call(
+            tool_name=tool_ctx,
+            model=_winning_model,
+            tokens_in=_tokens_in,
+            tokens_out=_tokens_out,
+            latency_ms=(time.monotonic() - _t0) * 1000.0,
+            success=True,
         )
         return data
 

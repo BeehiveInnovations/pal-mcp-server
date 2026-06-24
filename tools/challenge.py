@@ -1,11 +1,15 @@
 """
-Challenge tool - Encourages critical thinking and thoughtful disagreement
+Challenge tool - Independent adversarial red-team review via Gemma
 
-This tool takes a user's statement and returns it wrapped in instructions that
-encourage the CLI agent to challenge ideas and think critically before agreeing. It helps
-avoid reflexive agreement by prompting deeper analysis and genuine evaluation.
+This tool takes a statement and submits it to an external Gemma model acting as an
+adversarial red-team reviewer. The model actively tries to break the reasoning, exposes
+weak assumptions, and identifies risks, then ends with a deterministic
+`VERDICT: pass|fail|tie` line. Absent/malformed verdict defaults to fail (no silent pass).
 
-This is a simple, self-contained tool that doesn't require AI model access.
+TASK-20260624-560: this tool previously string-wrapped the prompt and never called any
+model (requires_model()=False, custom execute() override). It now inherits
+SimpleTool.execute() and makes a REAL Gemma call (26b primary, 31b cascade fallback via
+the provider), matching what pal-mcp-protocol Rule 6.a has always claimed.
 """
 
 from typing import TYPE_CHECKING, Any, Optional
@@ -17,7 +21,6 @@ if TYPE_CHECKING:
 
 from config import TEMPERATURE_ANALYTICAL
 from tools.shared.base_models import ToolRequest
-from tools.shared.exceptions import ToolExecutionError
 
 from .simple.base import SimpleTool
 
@@ -28,6 +31,20 @@ CHALLENGE_FIELD_DESCRIPTIONS = {
         "Automatic invocations send the full user message as-is; do not modify it."
     ),
 }
+
+# System prompt instructing Gemma to act as an adversarial red-team reviewer and to end
+# its response with a single deterministic verdict line. Default-to-fail on uncertainty
+# preserves the requirements-gate "no silent APPROVED" guarantee (TASK-20260624-560).
+CHALLENGE_SYSTEM_PROMPT = """You are an adversarial red-team reviewer. Your job is to actively challenge the reasoning presented, find logical flaws, expose weak assumptions, and identify risks (technical correctness, completeness, edge cases, cascade risk, governance compliance).
+
+Be a devil's advocate. Try hard to BREAK the argument. If you genuinely cannot find fatal flaws, say so — but look hard first.
+
+After your critique, end your response with EXACTLY ONE line, and nothing after it:
+VERDICT: pass
+VERDICT: fail
+VERDICT: tie
+
+Use "pass" only when no material flaws remain, "fail" when material flaws are found, and "tie" when genuinely balanced. Default to VERDICT: fail if you are uncertain."""
 
 
 class ChallengeRequest(ToolRequest):
@@ -40,13 +57,14 @@ class ChallengeTool(SimpleTool):
     """
     Challenge tool for encouraging critical thinking and avoiding automatic agreement.
 
-    This tool wraps user statements in instructions that encourage the CLI agent to:
-    - Challenge ideas and think critically before responding
-    - Evaluate whether they actually agree or disagree
-    - Provide thoughtful analysis rather than reflexive agreement
+    This tool submits the statement to an external Gemma model acting as an adversarial
+    red-team reviewer, which:
+    - Actively challenges the reasoning and tries to break the argument
+    - Exposes weak assumptions, edge cases, cascade risk, and governance gaps
+    - Ends with a deterministic VERDICT: pass|fail|tie line (default fail on uncertainty)
 
-    The tool is self-contained and doesn't require AI model access - it simply
-    transforms the input prompt into a structured critical thinking challenge.
+    TASK-20260624-560: inherits SimpleTool.execute() and makes a REAL Gemma call. The
+    prior self-contained string-wrap (requires_model()=False) is removed.
     """
 
     def get_name(self) -> str:
@@ -59,29 +77,31 @@ class ChallengeTool(SimpleTool):
         )
 
     def get_system_prompt(self) -> str:
-        # Challenge tool doesn't need a system prompt since it doesn't call AI
-        return ""
+        # Adversarial red-team system prompt; forces a trailing VERDICT line (TASK-560).
+        return CHALLENGE_SYSTEM_PROMPT
 
     def get_default_temperature(self) -> float:
         return TEMPERATURE_ANALYTICAL
 
     def get_model_category(self) -> "ToolModelCategory":
-        """Challenge doesn't need a model category since it doesn't use AI"""
+        """Challenge needs thorough adversarial reasoning, like precommit/codereview."""
         from tools.models import ToolModelCategory
 
-        return ToolModelCategory.FAST_RESPONSE  # Default, but not used
+        return ToolModelCategory.EXTENDED_REASONING
 
     def requires_model(self) -> bool:
         """
-        Challenge tool doesn't require model resolution at the MCP boundary.
+        Challenge requires model resolution: it makes a REAL Gemma call via the inherited
+        SimpleTool.execute() to perform an independent adversarial red-team review.
 
-        Like the planner tool, this is a pure data processing tool that transforms
-        the input without calling external AI models.
+        TASK-20260624-560: was False (string-wrap, zero Gemma calls). Now True so the
+        MCP boundary resolves a model context and the inherited execute() calls Gemma
+        (26b primary, 31b cascade fallback handled at the provider level).
 
         Returns:
-            bool: False - challenge doesn't need AI model access
+            bool: True - challenge calls an external AI model
         """
-        return False
+        return True
 
     def get_request_model(self):
         """Return the Challenge-specific request model"""
@@ -91,7 +111,11 @@ class ChallengeTool(SimpleTool):
         """
         Generate input schema for the challenge tool.
 
-        Since this tool doesn't require a model, we exclude model-related fields.
+        TASK-20260624-560: challenge now calls Gemma, so an OPTIONAL `model` field is
+        exposed. It is intentionally NOT required — existing callers that pass only
+        `prompt` keep working, and the inherited SimpleTool.execute() resolves
+        DEFAULT_MODEL (gemma-4-26b-a4b-it) when `model` is omitted (base.py model
+        fallback), so a real Gemma call always occurs.
         """
         schema = {
             "type": "object",
@@ -100,60 +124,17 @@ class ChallengeTool(SimpleTool):
                     "type": "string",
                     "description": CHALLENGE_FIELD_DESCRIPTIONS["prompt"],
                 },
+                "model": self.get_model_field_schema(),
             },
             "required": ["prompt"],
         }
 
         return schema
 
-    async def execute(self, arguments: dict[str, Any]) -> list:
-        """
-        Execute the challenge tool by wrapping the prompt in critical thinking instructions.
-
-        This is the main execution method that transforms the user's statement into
-        a structured challenge that encourages thoughtful re-evaluation.
-        """
-        import json
-
-        from mcp.types import TextContent
-
-        try:
-            # Validate request
-            request = self.get_request_model()(**arguments)
-
-            # Wrap the prompt in challenge instructions
-            wrapped_prompt = self._wrap_prompt_for_challenge(request.prompt)
-
-            # Return the wrapped prompt as the response
-            response_data = {
-                "status": "challenge_accepted",
-                "original_statement": request.prompt,
-                "challenge_prompt": wrapped_prompt,
-                "instructions": (
-                    "Present the challenge_prompt to yourself and follow its instructions. "
-                    "Reassess the statement carefully and critically before responding. "
-                    "If, after reflection, you find reasons to disagree or qualify it, explain your reasoning. "
-                    "Likewise, if you find reasons to agree, articulate them clearly and justify your agreement."
-                ),
-            }
-
-            return [TextContent(type="text", text=json.dumps(response_data, indent=2, ensure_ascii=False))]
-
-        except ToolExecutionError:
-            raise
-        except Exception as e:
-            import logging
-
-            logger = logging.getLogger(__name__)
-            logger.error(f"Error in challenge tool execution: {e}", exc_info=True)
-
-            error_data = {
-                "status": "error",
-                "error": str(e),
-                "content": f"Failed to create challenge prompt: {str(e)}",
-            }
-
-            raise ToolExecutionError(json.dumps(error_data, ensure_ascii=False)) from e
+    # NOTE (TASK-20260624-560): the former custom execute() override (a pure string-wrap
+    # that never called Gemma) has been DELETED. ChallengeTool now inherits
+    # SimpleTool.execute() (tools/simple/base.py), which performs the real Gemma call via
+    # provider.generate_content using get_system_prompt() + prepare_prompt() below.
 
     def _wrap_prompt_for_challenge(self, prompt: str) -> str:
         """
@@ -177,11 +158,24 @@ class ChallengeTool(SimpleTool):
     # Required method implementations from SimpleTool
 
     async def prepare_prompt(self, request: ChallengeRequest) -> str:
-        """Not used since challenge doesn't call AI models"""
-        return ""
+        """
+        Build the user prompt for the Gemma red-team call.
+
+        Wraps the statement in the proven critique framing, then runs it through
+        build_standard_prompt() so the CHALLENGE_SYSTEM_PROMPT, web-search guidance,
+        and any file context are assembled consistently with the other SimpleTools.
+        The trailing VERDICT: line is enforced by the system prompt (TASK-560).
+        """
+        wrapped = self._wrap_prompt_for_challenge(request.prompt)
+        return self.build_standard_prompt(self.get_system_prompt(), wrapped, request)
 
     def format_response(self, response: str, request: ChallengeRequest, model_info: Optional[dict] = None) -> str:
-        """Not used since challenge doesn't call AI models"""
+        """
+        Return Gemma's full critique verbatim, including the trailing VERDICT: line.
+
+        Callers normalize pass/fail/tie from the VERDICT line; absent/malformed verdict
+        is treated as fail by the consumer (no silent APPROVED — TASK-560).
+        """
         return response
 
     def get_tool_fields(self) -> dict[str, dict[str, Any]]:
