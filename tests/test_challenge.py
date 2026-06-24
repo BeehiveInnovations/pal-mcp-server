@@ -1,17 +1,17 @@
 """
-Tests for Challenge tool - validating critical challenge prompt wrapper
+Tests for Challenge tool - validating real Gemma adversarial red-team call behavior
 
 This module contains unit tests to ensure that the Challenge tool
-properly wraps statements to encourage critical thinking and avoid
-automatic agreement patterns.
+correctly calls Gemma via the inherited SimpleTool.execute() and returns
+the verbatim model response (TASK-20260624-560).
 """
 
 import json
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from tools.challenge import ChallengeRequest, ChallengeTool
+from tools.challenge import CHALLENGE_SYSTEM_PROMPT, ChallengeRequest, ChallengeTool
 from tools.shared.exceptions import ToolExecutionError
 
 
@@ -31,11 +31,11 @@ class TestChallengeTool:
         assert self.tool.get_default_temperature() == 1.0  # TEMPERATURE_ANALYTICAL
 
     def test_requires_model(self):
-        """Test that challenge tool doesn't require a model"""
-        assert self.tool.requires_model() is False
+        """Test that challenge tool requires a model (makes real Gemma call)"""
+        assert self.tool.requires_model() is True
 
     def test_schema_structure(self):
-        """Test that schema has correct structure and excludes model fields"""
+        """Test that schema has correct structure and includes optional model field"""
         schema = self.tool.get_input_schema()
 
         # Basic schema structure
@@ -51,11 +51,8 @@ class TestChallengeTool:
         properties = schema["properties"]
         assert "prompt" in properties
 
-        # Should NOT have model-related fields since it doesn't require a model
-        assert "model" not in properties
-        assert "temperature" not in properties
-        assert "thinking_mode" not in properties
-        assert "continuation_id" not in properties
+        # model field is now present (optional) since challenge calls Gemma (TASK-560)
+        assert "model" in properties
 
     def test_request_model_validation(self):
         """Test that the request model validates correctly"""
@@ -80,43 +77,56 @@ class TestChallengeTool:
 
     @pytest.mark.asyncio
     async def test_execute_success(self):
-        """Test successful execution of challenge tool"""
-        arguments = {"prompt": "All software bugs are caused by syntax errors"}
+        """Test successful execution of challenge tool with mocked Gemma call"""
+        fake_gemma_response = (
+            "The claim that all software bugs are caused by syntax errors is clearly wrong.\n"
+            "Logic errors, race conditions, and off-by-one errors are common non-syntax bugs.\n"
+            "VERDICT: fail"
+        )
 
-        result = await self.tool.execute(arguments)
+        mock_provider = MagicMock()
+        mock_provider.get_provider_type.return_value = MagicMock(value="google")
+        mock_provider.generate_content.return_value = MagicMock(
+            content=fake_gemma_response,
+            usage={"input_tokens": 10, "output_tokens": 20},
+            model_name="gemma-4-26b-a4b-it",
+            metadata={"finish_reason": "STOP"},
+        )
+
+        mock_model_context = MagicMock()
+        mock_model_context.model_name = "gemma-4-26b-a4b-it"
+        mock_model_context.provider = mock_provider
+        mock_model_context.capabilities = MagicMock(supports_extended_thinking=False)
+
+        arguments = {
+            "prompt": "All software bugs are caused by syntax errors",
+            "_model_context": mock_model_context,
+        }
+
+        with patch("server.get_follow_up_instructions", return_value=""):
+            result = await self.tool.execute(arguments)
 
         # Should return a list with TextContent
         assert len(result) == 1
         assert result[0].type == "text"
 
-        # Parse the JSON response
+        # Parse the JSON response — format_response returns Gemma text verbatim
         response_data = json.loads(result[0].text)
-
-        # Check response structure
-        assert response_data["status"] == "challenge_accepted"
-        assert response_data["original_statement"] == "All software bugs are caused by syntax errors"
-        assert "challenge_prompt" in response_data
-        assert "instructions" in response_data
-
-        # Check that the challenge prompt contains critical thinking instructions
-        challenge_prompt = response_data["challenge_prompt"]
-        assert "CRITICAL REASSESSMENT – Do not automatically agree" in challenge_prompt
-        assert "Carefully evaluate the statement above" in challenge_prompt
-        assert response_data["original_statement"] in challenge_prompt
-        assert "flaws, gaps, or misleading points" in challenge_prompt
-        assert "thoughtful analysis" in challenge_prompt
+        assert response_data["status"] in ("success", "continuation_available")
+        assert response_data["content"] == fake_gemma_response
+        assert "VERDICT: fail" in response_data["content"]
 
     @pytest.mark.asyncio
     async def test_execute_error_handling(self):
         """Test error handling in execute method"""
-        # Test with invalid arguments (non-dict)
         with patch.object(self.tool, "get_request_model", side_effect=Exception("Test error")):
             with pytest.raises(ToolExecutionError) as exc_info:
                 await self.tool.execute({"prompt": "test"})
 
         response_data = json.loads(exc_info.value.payload)
         assert response_data["status"] == "error"
-        assert "Test error" in response_data["error"]
+        # SimpleTool.execute() puts the error message in "content", not "error"
+        assert "Test error" in response_data["content"]
 
     def test_wrap_prompt_for_challenge(self):
         """Test the prompt wrapping functionality"""
@@ -164,13 +174,20 @@ class TestChallengeTool:
 
     @pytest.mark.asyncio
     async def test_not_used_methods(self):
-        """Test that methods not used by challenge tool work correctly"""
+        """Test prepare_prompt and format_response behave correctly"""
         request = ChallengeRequest(prompt="test")
 
-        # These methods aren't used since challenge doesn't call AI
+        # prepare_prompt builds the full adversarial prompt (TASK-560: no longer empty)
+        # We need a minimal _model_context stub because build_standard_prompt reads it
+        self.tool._model_context = MagicMock()
+        self.tool._model_context.model_name = "gemma-4-26b-a4b-it"
+        self.tool._current_arguments = {}
         prompt = await self.tool.prepare_prompt(request)
-        assert prompt == ""
+        # prompt must be non-empty — it contains the CHALLENGE_SYSTEM_PROMPT + wrapped text
+        assert CHALLENGE_SYSTEM_PROMPT in prompt
+        assert "test" in prompt
 
+        # format_response passes through verbatim; format_response still works as before
         response = self.tool.format_response("test response", request)
         assert response == "test response"
 
@@ -185,15 +202,36 @@ class TestChallengeTool:
 
     @pytest.mark.asyncio
     async def test_unicode_support(self):
-        """Test that tool handles unicode characters correctly"""
+        """Test that tool handles unicode characters correctly with mocked Gemma call"""
         unicode_prompt = "软件开发中最重要的是写代码，测试不重要 🚀"
-        arguments = {"prompt": unicode_prompt}
+        fake_gemma_response = f"Challenging: {unicode_prompt}\nVERDICT: fail"
 
-        result = await self.tool.execute(arguments)
+        mock_provider = MagicMock()
+        mock_provider.get_provider_type.return_value = MagicMock(value="google")
+        mock_provider.generate_content.return_value = MagicMock(
+            content=fake_gemma_response,
+            usage={"input_tokens": 5, "output_tokens": 15},
+            model_name="gemma-4-26b-a4b-it",
+            metadata={"finish_reason": "STOP"},
+        )
+
+        mock_model_context = MagicMock()
+        mock_model_context.model_name = "gemma-4-26b-a4b-it"
+        mock_model_context.provider = mock_provider
+        mock_model_context.capabilities = MagicMock(supports_extended_thinking=False)
+
+        arguments = {
+            "prompt": unicode_prompt,
+            "_model_context": mock_model_context,
+        }
+
+        with patch("server.get_follow_up_instructions", return_value=""):
+            result = await self.tool.execute(arguments)
+
         response_data = json.loads(result[0].text)
-
-        assert response_data["original_statement"] == unicode_prompt
-        assert unicode_prompt in response_data["challenge_prompt"]
+        assert response_data["status"] in ("success", "continuation_available")
+        # format_response returns verbatim — mock response includes the unicode prompt
+        assert unicode_prompt in response_data["content"]
 
 
 if __name__ == "__main__":
