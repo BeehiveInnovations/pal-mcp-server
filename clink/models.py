@@ -47,12 +47,16 @@ class CLIClientConfig(BaseModel):
     command: str | None = None
     working_dir: str | None = None
     additional_args: list[str] = Field(default_factory=list)
+    pre_subcommand_args: list[str] = Field(
+        default_factory=list,
+        description="Flags that must appear after the executable but before the subcommand (e.g. codex --enable).",
+    )
     env: dict[str, str] = Field(default_factory=dict)
     timeout_seconds: PositiveInt | None = Field(default=None)
     roles: dict[str, CLIRoleConfig] = Field(default_factory=dict)
     output_to_file: OutputCaptureConfig | None = None
 
-    @field_validator("additional_args", mode="before")
+    @field_validator("additional_args", "pre_subcommand_args", mode="before")
     @classmethod
     def _ensure_args_list(cls, value: Any) -> list[str]:
         if value is None:
@@ -61,7 +65,7 @@ class CLIClientConfig(BaseModel):
             return [str(item) for item in value]
         if isinstance(value, str):
             return [value]
-        raise TypeError("additional_args must be a list of strings or a single string")
+        raise TypeError("args must be a list of strings or a single string")
 
 
 class ResolvedCLIRole(BaseModel):
@@ -80,6 +84,7 @@ class ResolvedCLIClient(BaseModel):
     executable: list[str]
     working_dir: Path | None
     internal_args: list[str] = Field(default_factory=list)
+    pre_subcommand_args: list[str] = Field(default_factory=list)
     config_args: list[str] = Field(default_factory=list)
     env: dict[str, str] = Field(default_factory=dict)
     timeout_seconds: int

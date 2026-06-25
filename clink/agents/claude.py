@@ -13,6 +13,7 @@ class ClaudeAgent(BaseCLIAgent):
 
     def _build_command(self, *, role: ResolvedCLIRole, system_prompt: str | None) -> list[str]:
         command = list(self.client.executable)
+        command.extend(self.client.pre_subcommand_args)
         command.extend(self.client.internal_args)
         command.extend(self.client.config_args)
 

@@ -137,6 +137,7 @@ class ClinkRegistry:
         executable = self._resolve_executable(raw, internal_defaults, source_path)
 
         internal_args = list(internal_defaults.additional_args) if internal_defaults else []
+        pre_subcommand_args = list(raw.pre_subcommand_args)
         config_args = list(raw.additional_args)
 
         timeout_seconds = raw.timeout_seconds or (
@@ -161,6 +162,7 @@ class ClinkRegistry:
             name=normalized_name,
             executable=executable,
             internal_args=internal_args,
+            pre_subcommand_args=pre_subcommand_args,
             config_args=config_args,
             env=env,
             timeout_seconds=int(timeout_seconds),

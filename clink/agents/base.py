@@ -192,6 +192,7 @@ class BaseCLIAgent:
 
     def _build_command(self, *, role: ResolvedCLIRole, system_prompt: str | None) -> list[str]:
         base = list(self.client.executable)
+        base.extend(self.client.pre_subcommand_args)
         base.extend(self.client.internal_args)
         base.extend(self.client.config_args)
         base.extend(role.role_args)

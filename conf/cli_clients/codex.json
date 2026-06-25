@@ -1,11 +1,13 @@
 {
   "name": "codex",
   "command": "codex",
-  "additional_args": [
-    "--json",
-    "--dangerously-bypass-approvals-and-sandbox",
+  "pre_subcommand_args": [
     "--enable",
     "web_search_request"
+  ],
+  "additional_args": [
+    "--json",
+    "--dangerously-bypass-approvals-and-sandbox"
   ],
   "env": {},
   "roles": {

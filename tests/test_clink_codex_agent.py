@@ -66,6 +66,29 @@ async def test_codex_agent_recovers_jsonl(monkeypatch, codex_agent):
 
 
 @pytest.mark.asyncio
+async def test_codex_agent_builds_command_with_pre_subcommand_args(codex_agent):
+    agent, role = codex_agent
+    client = agent.client.model_copy(
+        update={
+            "pre_subcommand_args": ["--enable", "web_search_request"],
+            "config_args": ["--json", "--dangerously-bypass-approvals-and-sandbox"],
+        }
+    )
+    agent = CodexAgent(client)
+
+    command = agent._build_command(role=role, system_prompt=None)
+
+    assert command == [
+        "codex",
+        "--enable",
+        "web_search_request",
+        "exec",
+        "--json",
+        "--dangerously-bypass-approvals-and-sandbox",
+    ]
+
+
+@pytest.mark.asyncio
 async def test_codex_agent_propagates_invalid_json(monkeypatch, codex_agent):
     agent, role = codex_agent
     stdout = b"not json"

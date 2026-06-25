@@ -140,7 +140,7 @@ Clink configurations live in `conf/cli_clients/`. We ship presets for the suppor
 
 - `gemini.json` – runs `gemini --telemetry false --yolo -o json`
 - `claude.json` – runs `claude --print --output-format json --permission-mode acceptEdits --model sonnet`
-- `codex.json` – runs `codex exec --json --dangerously-bypass-approvals-and-sandbox`
+- `codex.json` – runs `codex --enable web_search_request exec --json --dangerously-bypass-approvals-and-sandbox`
 
 > **CAUTION**: These flags intentionally bypass each CLI's safety prompts so they can edit files or launch tools autonomously via MCP. Only enable them in trusted sandboxes and tailor role prompts or CLI configs if you need more guardrails.
 
