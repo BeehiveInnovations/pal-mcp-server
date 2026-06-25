@@ -1,8 +1,9 @@
 import asyncio
-import shutil
 from pathlib import Path
 
 import pytest
+
+from clink.agents import base as clink_base
 
 from clink.agents.base import CLIAgentError
 from clink.agents.codex import CodexAgent
@@ -42,11 +43,11 @@ async def _run_agent_with_process(monkeypatch, agent, role, process):
     async def fake_create_subprocess_exec(*_args, **_kwargs):
         return process
 
-    def fake_which(executable_name):
+    def fake_which(executable_name, *, path=None):
         return f"/usr/bin/{executable_name}"
 
     monkeypatch.setattr(asyncio, "create_subprocess_exec", fake_create_subprocess_exec)
-    monkeypatch.setattr(shutil, "which", fake_which)
+    monkeypatch.setattr(clink_base.shutil, "which", fake_which)
     return await agent.run(role=role, prompt="do something", files=[], images=[])
 
 
