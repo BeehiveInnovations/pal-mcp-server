@@ -1532,7 +1532,9 @@ class BaseWorkflowMixin(ABC):
 
         except Exception as e:
             logger.error(f"Error calling expert analysis: {e}", exc_info=True)
-            return {"error": str(e), "status": "analysis_error"}
+            raise ToolExecutionError(
+                json.dumps({"error": str(e), "status": "analysis_error"}, ensure_ascii=False)
+            ) from e
 
     def _process_work_step(self, step_data: dict):
         """
