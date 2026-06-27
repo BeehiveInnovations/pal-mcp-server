@@ -1,0 +1,10 @@
+{
+  "name": "grok",
+  "command": "grok",
+  "additional_args": [],
+  "env": {},
+  "prompt_to_file": {"flag_template": "--prompt-file {path}"},
+  "roles": {
+    "default": {"prompt_path": "systemprompts/clink/default.txt", "role_args": []}
+  }
+}

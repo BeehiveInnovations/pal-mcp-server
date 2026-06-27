@@ -156,6 +156,7 @@ class ClinkRegistry:
         roles = self._resolve_roles(raw, internal_defaults, source_path)
 
         output_to_file = raw.output_to_file
+        prompt_to_file = raw.prompt_to_file
 
         return ResolvedCLIClient(
             name=normalized_name,
@@ -168,6 +169,7 @@ class ClinkRegistry:
             runner=runner_name,
             roles=roles,
             output_to_file=output_to_file,
+            prompt_to_file=prompt_to_file,
             working_dir=working_dir,
         )
 

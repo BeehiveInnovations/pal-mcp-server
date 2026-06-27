@@ -18,6 +18,18 @@ class OutputCaptureConfig(BaseModel):
     )
 
 
+class PromptFileConfig(BaseModel):
+    """Optional configuration for CLIs that read the prompt from a file."""
+
+    flag_template: str = Field(
+        ..., description="Template used to inject the prompt file path, e.g. '--prompt-file {path}'."
+    )
+    cleanup: bool = Field(
+        default=True,
+        description="Whether the temporary file should be removed after execution.",
+    )
+
+
 class CLIRoleConfig(BaseModel):
     """Role-specific configuration loaded from JSON manifests."""
 
@@ -51,6 +63,7 @@ class CLIClientConfig(BaseModel):
     timeout_seconds: PositiveInt | None = Field(default=None)
     roles: dict[str, CLIRoleConfig] = Field(default_factory=dict)
     output_to_file: OutputCaptureConfig | None = None
+    prompt_to_file: PromptFileConfig | None = None
 
     @field_validator("additional_args", mode="before")
     @classmethod
@@ -87,6 +100,7 @@ class ResolvedCLIClient(BaseModel):
     runner: str | None = None
     roles: dict[str, ResolvedCLIRole]
     output_to_file: OutputCaptureConfig | None = None
+    prompt_to_file: PromptFileConfig | None = None
 
     def list_roles(self) -> list[str]:
         return list(self.roles.keys())

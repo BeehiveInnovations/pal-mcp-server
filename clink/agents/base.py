@@ -89,7 +89,9 @@ class BaseCLIAgent:
         start_time = time.monotonic()
 
         output_file_path: Path | None = None
+        prompt_file_path: Path | None = None
         command_with_output_flag = list(command)
+        stdin_bytes = prompt.encode("utf-8")
 
         if self.client.output_to_file:
             fd, tmp_path = tempfile.mkstemp(prefix="clink-", suffix=".json")
@@ -102,6 +104,39 @@ class BaseCLIAgent:
                 raise CLIAgentError(f"Invalid output flag template '{flag_template}': missing placeholder {exc}")
             command_with_output_flag.extend(shlex.split(rendered_flag))
             sanitized_command = list(command_with_output_flag)
+
+        if self.client.prompt_to_file:
+            with tempfile.NamedTemporaryFile(
+                mode="w",
+                encoding="utf-8",
+                prefix="clink-",
+                suffix=".txt",
+                delete=False,
+            ) as tmp:
+                tmp.write(prompt)
+                prompt_file_path = Path(tmp.name)
+            flag_template = self.client.prompt_to_file.flag_template
+            # Split the template first, then substitute the path into each token, so a
+            # temp path containing spaces (common on Windows/macOS) stays a single arg
+            # instead of being re-split by shlex.
+            try:
+                rendered_args = [part.format(path=str(prompt_file_path)) for part in shlex.split(flag_template)]
+            except KeyError as exc:  # pragma: no cover - defensive
+                raise CLIAgentError(f"Invalid prompt flag template '{flag_template}': missing placeholder {exc}")
+            command_with_output_flag.extend(rendered_args)
+            sanitized_command = list(command_with_output_flag)
+            stdin_bytes = b""
+
+        def _cleanup_prompt_file() -> None:
+            # prompt_to_file agents receive the prompt via a temp file; remove it on
+            # every exit path (success, non-zero exit, parse error, timeout, launch
+            # failure) so prompts never linger on disk. Best-effort and idempotent —
+            # missing_ok covers a CLI that consumed/removed the file itself.
+            if prompt_file_path is not None and self.client.prompt_to_file and self.client.prompt_to_file.cleanup:
+                try:
+                    prompt_file_path.unlink(missing_ok=True)
+                except OSError:  # pragma: no cover - best effort cleanup
+                    pass
 
         self._logger.debug("Executing CLI command: %s", " ".join(sanitized_command))
         if cwd:
@@ -118,16 +153,18 @@ class BaseCLIAgent:
                 env=env,
             )
         except FileNotFoundError as exc:
+            _cleanup_prompt_file()
             raise CLIAgentError(f"Executable not found for CLI '{self.client.name}': {exc}") from exc
 
         try:
             stdout_bytes, stderr_bytes = await asyncio.wait_for(
-                process.communicate(prompt.encode("utf-8")),
+                process.communicate(stdin_bytes),
                 timeout=self.client.timeout_seconds,
             )
         except asyncio.TimeoutError as exc:
             process.kill()
             await process.communicate()
+            _cleanup_prompt_file()
             raise CLIAgentError(
                 f"CLI '{self.client.name}' timed out after {self.client.timeout_seconds} seconds",
                 returncode=None,
@@ -148,6 +185,8 @@ class BaseCLIAgent:
 
             if output_file_content and not stdout_text.strip():
                 stdout_text = output_file_content
+
+        _cleanup_prompt_file()
 
         if return_code != 0:
             recovered = self._recover_from_error(
