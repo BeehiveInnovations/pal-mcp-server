@@ -6,7 +6,6 @@ import asyncio
 import logging
 import os
 import shlex
-import shutil
 import tempfile
 import time
 from collections.abc import Sequence
@@ -16,6 +15,7 @@ from pathlib import Path
 from clink.constants import DEFAULT_STREAM_LIMIT
 from clink.models import ResolvedCLIClient, ResolvedCLIRole
 from clink.parsers import BaseParser, ParsedCLIResponse, ParserError, get_parser
+from clink.path_resolution import augment_path, resolve_cli_executable
 
 logger = logging.getLogger("clink.agent")
 
@@ -70,13 +70,14 @@ class BaseCLIAgent:
 
         # Resolve executable path for cross-platform compatibility (especially Windows)
         executable_name = command[0]
-        resolved_executable = shutil.which(executable_name)
+        resolved_executable = resolve_cli_executable(executable_name, path=env.get("PATH"))
         if resolved_executable is None:
             raise CLIAgentError(
                 f"Executable '{executable_name}' not found in PATH for CLI '{self.client.name}'. "
                 f"Ensure the command is installed and accessible."
             )
         command[0] = resolved_executable
+        env["PATH"] = augment_path(env.get("PATH"))
 
         sanitized_command = list(command)
 
