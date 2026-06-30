@@ -635,6 +635,11 @@ def _plan_file_inclusion_by_size(all_files: list[str], max_file_tokens: int) -> 
     return files_to_include, files_to_skip, total_tokens
 
 
+def has_embedded_conversation_history(prompt: str) -> bool:
+    """Return True when a prompt already contains server-built conversation history."""
+    return "=== CONVERSATION HISTORY" in prompt and "=== END CONVERSATION HISTORY ===" in prompt
+
+
 def build_conversation_history(context: ThreadContext, model_context=None, read_files_func=None) -> tuple[str, int]:
     """
     Build formatted conversation history for tool prompts with embedded file contents.

@@ -1,8 +1,40 @@
 """Integration test for conversation continuation persistence."""
 
 from tools.chat import ChatRequest, ChatTool
-from utils.conversation_memory import get_thread
+from utils.conversation_memory import get_thread, has_embedded_conversation_history
 from utils.storage_backend import get_storage_backend
+
+
+def test_has_embedded_conversation_history_detects_continuation_header():
+    prompt = """=== CONVERSATION HISTORY (CONTINUATION) ===
+Thread: 12345678-1234-1234-1234-123456789012
+Previous conversation turns:
+
+--- Turn 1 (Agent) ---
+hello
+
+=== END CONVERSATION HISTORY ===
+
+=== NEW USER INPUT ===
+continue
+"""
+    assert has_embedded_conversation_history(prompt) is True
+
+
+def test_has_embedded_conversation_history_detects_legacy_header():
+    prompt = """=== CONVERSATION HISTORY ===
+Thread: 12345678-1234-1234-1234-123456789012
+
+=== END CONVERSATION HISTORY ===
+
+=== NEW USER INPUT ===
+continue
+"""
+    assert has_embedded_conversation_history(prompt) is True
+
+
+def test_has_embedded_conversation_history_rejects_plain_prompt():
+    assert has_embedded_conversation_history("continue the discussion") is False
 
 
 def test_first_response_persisted_in_conversation_history(tmp_path):

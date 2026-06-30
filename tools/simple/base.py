@@ -332,7 +332,14 @@ class SimpleTool(BaseTool):
             if continuation_id:
                 # Check if conversation history is already embedded
                 field_value = self.get_request_prompt(request)
-                if "=== CONVERSATION HISTORY ===" in field_value:
+                from utils.conversation_memory import (
+                    add_turn,
+                    build_conversation_history,
+                    get_thread,
+                    has_embedded_conversation_history,
+                )
+
+                if has_embedded_conversation_history(field_value):
                     # Use pre-embedded history
                     prompt = field_value
                     logger.debug(f"{self.get_name()}: Using pre-embedded conversation history")
@@ -341,8 +348,6 @@ class SimpleTool(BaseTool):
                     logger.debug(f"{self.get_name()}: No embedded history found, reconstructing conversation")
 
                     # Get thread context
-                    from utils.conversation_memory import add_turn, build_conversation_history, get_thread
-
                     thread_context = get_thread(continuation_id)
 
                     if thread_context:

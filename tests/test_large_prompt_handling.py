@@ -620,14 +620,15 @@ class TestLargePromptHandling:
 
         # Mock huge conversation history (simulates many turns of conversation)
         # Calculate repetitions needed to exceed MCP_PROMPT_SIZE_LIMIT
-        base_text = "=== CONVERSATION HISTORY ===\n"
+        base_text = "=== CONVERSATION HISTORY (CONTINUATION) ===\n"
         repeat_text = "Previous message content\n"
+        end_text = "=== END CONVERSATION HISTORY ===\n"
         # Add buffer to ensure we exceed the limit
         target_size = MCP_PROMPT_SIZE_LIMIT + 1000
-        available_space = target_size - len(base_text)
+        available_space = target_size - len(base_text) - len(end_text)
         repetitions_needed = (available_space // len(repeat_text)) + 1
 
-        huge_conversation_history = base_text + (repeat_text * repetitions_needed)
+        huge_conversation_history = base_text + (repeat_text * repetitions_needed) + end_text
 
         # Ensure the history exceeds MCP limits
         assert len(huge_conversation_history) > MCP_PROMPT_SIZE_LIMIT
@@ -677,7 +678,7 @@ class TestLargePromptHandling:
                     # Simulate the case where conversation history is already embedded in prompt
                     # by server.py before calling the tool
                     field_value = arguments.get("prompt", "")
-                    if "=== CONVERSATION HISTORY ===" in field_value:
+                    if "=== CONVERSATION HISTORY" in field_value and "=== END CONVERSATION HISTORY ===" in field_value:
                         # Set the flag that history is embedded
                         self._has_embedded_history = True
 
