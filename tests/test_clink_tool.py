@@ -5,7 +5,7 @@ import pytest
 from clink import get_registry
 from clink.agents import AgentOutput
 from clink.parsers.base import ParsedCLIResponse
-from tools.clink import MAX_RESPONSE_CHARS, CLinkTool
+from tools.clink import MAX_RESPONSE_CHARS, CLinkRequest, CLinkTool
 
 
 @pytest.mark.asyncio
@@ -185,3 +185,53 @@ async def test_clink_tool_truncates_without_summary(monkeypatch):
     assert metadata.get("output_truncated") is True
     assert metadata.get("events_removed_for_normal") is True
     assert metadata.get("output_original_length") == len(long_text)
+
+
+@pytest.mark.parametrize(
+    ("cli_name", "expected_phrase"),
+    [
+        ("claude", "Claude Code agent"),
+        ("codex", "Codex CLI agent"),
+        ("gemini", "Gemini CLI agent"),
+    ],
+)
+def test_agent_capabilities_guidance_reflects_cli_name(cli_name, expected_phrase):
+    tool = CLinkTool()
+    client = tool._registry.get_client(cli_name)
+    guidance = tool._agent_capabilities_guidance(client)
+    assert expected_phrase in guidance
+    if cli_name != "gemini":
+        assert "Gemini CLI agent" not in guidance
+
+
+@pytest.mark.asyncio
+async def test_prepare_prompt_includes_cli_specific_guidance():
+    tool = CLinkTool()
+    client = tool._registry.get_client("claude")
+    role = client.get_role("default")
+    request = CLinkRequest(
+        prompt="Review auth module",
+        cli_name="claude",
+        role="default",
+    )
+
+    prompt = await tool._prepare_prompt_for_role(
+        request,
+        role,
+        client=client,
+        system_prompt="",
+        include_system_prompt=False,
+    )
+
+    assert "Claude Code agent" in prompt
+    assert "Gemini CLI agent" not in prompt
+
+
+@pytest.mark.asyncio
+async def test_prepare_prompt_defaults_cli_name():
+    tool = CLinkTool()
+    request = CLinkRequest(prompt="Review auth module")
+
+    prompt = await tool.prepare_prompt(request)
+
+    assert "Gemini CLI agent" in prompt

@@ -24,6 +24,11 @@ logger = logging.getLogger(__name__)
 
 MAX_RESPONSE_CHARS = 20_000
 SUMMARY_PATTERN = re.compile(r"<SUMMARY>(.*?)</SUMMARY>", re.IGNORECASE | re.DOTALL)
+_CLI_AGENT_DISPLAY_NAMES: dict[str, str] = {
+    "claude": "Claude Code agent",
+    "codex": "Codex CLI agent",
+    "gemini": "Gemini CLI agent",
+}
 
 
 class CLinkRequest(BaseModel):
@@ -196,6 +201,7 @@ class CLinkTool(SimpleTool):
             prompt_text = await self._prepare_prompt_for_role(
                 request,
                 role_config,
+                client=client_config,
                 system_prompt=system_prompt_text,
                 include_system_prompt=include_system_prompt,
             )
@@ -259,13 +265,17 @@ class CLinkTool(SimpleTool):
         return [TextContent(type="text", text=tool_output.model_dump_json())]
 
     async def prepare_prompt(self, request) -> str:
-        client_config = self._registry.get_client(request.cli_name)
+        selected_cli = request.cli_name or self._default_cli_name
+        if not selected_cli:
+            self._raise_tool_error("No CLI clients are configured for clink.")
+        client_config = self._registry.get_client(selected_cli)
         role_config = client_config.get_role(request.role)
         system_prompt_text = role_config.prompt_path.read_text(encoding="utf-8")
         include_system_prompt = not self._use_external_system_prompt(client_config)
         return await self._prepare_prompt_for_role(
             request,
             role_config,
+            client=client_config,
             system_prompt=system_prompt_text,
             include_system_prompt=include_system_prompt,
         )
@@ -275,6 +285,7 @@ class CLinkTool(SimpleTool):
         request: CLinkRequest,
         role: ResolvedCLIRole,
         *,
+        client: ResolvedCLIClient,
         system_prompt: str,
         include_system_prompt: bool,
     ) -> str:
@@ -282,7 +293,7 @@ class CLinkTool(SimpleTool):
         self._active_system_prompt = system_prompt
         try:
             user_content = self.handle_prompt_file_with_fallback(request).strip()
-            guidance = self._agent_capabilities_guidance()
+            guidance = self._agent_capabilities_guidance(client)
             file_section = self._format_file_references(self.get_request_files(request))
 
             sections: list[str] = []
@@ -438,9 +449,10 @@ class CLinkTool(SimpleTool):
         error_output = ToolOutput(status="error", content=message, content_type="text", metadata=metadata)
         raise ToolExecutionError(error_output.model_dump_json())
 
-    def _agent_capabilities_guidance(self) -> str:
+    def _agent_capabilities_guidance(self, client: ResolvedCLIClient) -> str:
+        display_name = _CLI_AGENT_DISPLAY_NAMES.get(client.name.lower(), f"{client.name} CLI agent")
         return (
-            "You are operating through the Gemini CLI agent. You have access to your full suite of "
+            f"You are operating through the {display_name}. You have access to your full suite of "
             "CLI capabilities—including launching web searches, reading files, and using any other "
             "available tools. Gather current information yourself and deliver the final answer without "
             "asking the PAL MCP host to perform searches or file reads."
