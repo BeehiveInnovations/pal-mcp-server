@@ -45,4 +45,16 @@ INTERNAL_DEFAULTS: dict[str, CLIInternalDefaults] = {
         default_role_prompt="systemprompts/clink/default.txt",
         runner="claude",
     ),
+    "grok": CLIInternalDefaults(
+        parser="grok_json",
+        additional_args=[],
+        default_role_prompt="systemprompts/clink/default.txt",
+        runner="grok",
+    ),
+    "opencode": CLIInternalDefaults(
+        parser="opencode_jsonl",
+        additional_args=["run"],
+        default_role_prompt="systemprompts/clink/default.txt",
+        runner="opencode",
+    ),
 }

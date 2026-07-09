@@ -8,11 +8,15 @@ from .base import AgentOutput, BaseCLIAgent, CLIAgentError
 from .claude import ClaudeAgent
 from .codex import CodexAgent
 from .gemini import GeminiAgent
+from .grok import GrokAgent
+from .opencode import OpenCodeAgent
 
 _AGENTS: dict[str, type[BaseCLIAgent]] = {
     "gemini": GeminiAgent,
     "codex": CodexAgent,
     "claude": ClaudeAgent,
+    "grok": GrokAgent,
+    "opencode": OpenCodeAgent,
 }
 
 

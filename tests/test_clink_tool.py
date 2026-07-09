@@ -55,10 +55,12 @@ async def test_clink_tool_execute(monkeypatch):
 def test_registry_lists_roles():
     registry = get_registry()
     clients = registry.list_clients()
-    assert {"codex", "gemini"}.issubset(set(clients))
+    assert {"codex", "gemini", "grok", "opencode"}.issubset(set(clients))
     roles = registry.list_roles("gemini")
     assert "default" in roles
     assert "default" in registry.list_roles("codex")
+    assert "default" in registry.list_roles("grok")
+    assert "default" in registry.list_roles("opencode")
     codex_client = registry.get_client("codex")
     # Verify codex uses --enable web_search_request (not --search which is unsupported by exec)
     assert codex_client.config_args == [
@@ -67,6 +69,13 @@ def test_registry_lists_roles():
         "--enable",
         "web_search_request",
     ]
+    grok_client = registry.get_client("grok")
+    assert grok_client.config_args == ["--output-format", "json", "--always-approve"]
+    assert grok_client.parser == "grok_json"
+    opencode_client = registry.get_client("opencode")
+    assert opencode_client.internal_args == ["run"]
+    assert opencode_client.config_args == ["--format", "json", "--auto"]
+    assert opencode_client.parser == "opencode_jsonl"
 
 
 @pytest.mark.asyncio

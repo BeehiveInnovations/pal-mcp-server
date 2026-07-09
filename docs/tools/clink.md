@@ -4,7 +4,7 @@
 
 The `clink` tool transforms your CLI into a multi-agent orchestrator. Launch isolated Codex instances from _within_ Codex, delegate to Gemini's 1M context, or run specialized Claude agents—all while preserving conversation continuity. Instead of context-switching or token bloat, spawn fresh subagents that handle complex tasks in isolation and return only the results you need.
 
-> **CAUTION**: Clink launches real CLI agents with relaxed permission flags (Gemini ships with `--yolo`, Codex with `--dangerously-bypass-approvals-and-sandbox`, Claude with `--permission-mode acceptEdits`) so they can edit files and run tools autonomously via MCP. If that’s more access than you want, remove those flags—the CLI can still open/read files and report findings, it just won’t auto-apply edits. You can also tighten role prompts or system prompts with stop-words/guardrails, or disable clink entirely. Otherwise, keep the shipped presets confined to workspaces you fully trust.
+> **CAUTION**: Clink launches real CLI agents with relaxed permission flags (Gemini ships with `--yolo`, Codex with `--dangerously-bypass-approvals-and-sandbox`, Claude with `--permission-mode acceptEdits`, Grok Build with `--always-approve`, OpenCode with `--auto`) so they can edit files and run tools autonomously via MCP. If that’s more access than you want, remove those flags—the CLI can still open/read files and report findings, it just won’t auto-apply edits. You can also tighten role prompts or system prompts with stop-words/guardrails, or disable clink entirely. Otherwise, keep the shipped presets confined to workspaces you fully trust.
 
 ## Why Use Clink (CLI + Link)?
 
@@ -78,7 +78,7 @@ You can make your own custom roles in `conf/cli_clients/` or tweak any of the sh
 ## Tool Parameters
 
 - `prompt`: Your question or task for the external CLI (required)
-- `cli_name`: Which CLI to use - `gemini` (default), `claude`, `codex`, or add your own in `conf/cli_clients/`
+- `cli_name`: Which CLI to use - `gemini` (default), `claude`, `codex`, `grok`, `opencode`, or add your own in `conf/cli_clients/`
 - `role`: Preset role - `default`, `planner`, `codereviewer` (default: `default`)
 - `files`: Optional file paths for context (references only, CLI opens files itself)
 - `images`: Optional image paths for visual context
@@ -99,6 +99,16 @@ clink to gemini codereviewer: Review payment_service.py for race conditions and 
 **Codex Code Review:**
 ```
 "clink with codex cli and perform a full code review using the codereview role"
+```
+
+**Grok Build headless:**
+```
+"clink with grok to summarize recent auth changes and suggest tests"
+```
+
+**OpenCode headless:**
+```
+"clink with opencode codereviewer to review payment_service.py for race conditions"
 ```
 
 **Quick Research Question:**
@@ -141,12 +151,18 @@ Clink configurations live in `conf/cli_clients/`. We ship presets for the suppor
 - `gemini.json` – runs `gemini --telemetry false --yolo -o json`
 - `claude.json` – runs `claude --print --output-format json --permission-mode acceptEdits --model sonnet`
 - `codex.json` – runs `codex exec --json --dangerously-bypass-approvals-and-sandbox`
+- `grok.json` – runs Grok Build headless via `grok --prompt-file <tmp> --output-format json --always-approve`
+- `opencode.json` – runs `opencode run --format json --auto <message>`
 
 > **CAUTION**: These flags intentionally bypass each CLI's safety prompts so they can edit files or launch tools autonomously via MCP. Only enable them in trusted sandboxes and tailor role prompts or CLI configs if you need more guardrails.
 
 Each preset points to role-specific prompts in `systemprompts/clink/`. Duplicate those files to add more roles or adjust CLI flags.
 
 > **Why `--yolo` for Gemini?** The Gemini CLI currently requires automatic approvals to execute its own tools (for example `run_shell_command`). Without the flag it errors with `Tool "run_shell_command" not found in registry`. See [issue #5382](https://github.com/google-gemini/gemini-cli/issues/5382) for more details.
+
+> **Grok Build notes:** Headless mode does not read the prompt from stdin. Clink writes the prepared prompt to a temporary file and invokes `--prompt-file`. Use `--always-approve` only in trusted workspaces (equivalent automation intent to Gemini `--yolo` / Codex sandbox bypass).
+
+> **OpenCode notes:** The prompt is passed as a positional `run` message. Very large prompts are attached with `--file` to avoid OS command-line length limits. `--auto` auto-approves permissions that are not explicitly denied.
 
 **Adding new CLIs**: Drop a JSON config into `conf/cli_clients/`, create role prompts in `systemprompts/clink/`, and register a parser/agent if the CLI outputs a new format.
 
@@ -164,6 +180,8 @@ Ensure the relevant CLI is installed and configured:
 - [Claude Code](https://www.anthropic.com/claude-code)
 - [Gemini CLI](https://github.com/google-gemini/gemini-cli)
 - [Codex CLI](https://docs.sourcegraph.com/codex)
+- [Grok Build](https://grok.x.ai/) (`grok` CLI, authenticate via `grok login` or `XAI_API_KEY`)
+- [OpenCode](https://opencode.ai/) (`opencode` CLI, configure providers/auth as needed)
 
 ## Related Guides
 
