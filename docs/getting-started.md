@@ -207,6 +207,41 @@ Edit `~/.config/opencode/opencode.json`:
 
 Add any other API keys you rely on (`OPENAI_API_KEY`, `OPENROUTER_API_KEY`, etc.).
 
+**For Grok Build:**
+
+CLI (recommended):
+
+```bash
+# Local checkout of this repo (development / your fork)
+grok mcp add pal --scope user -- \
+  /path/to/pal-mcp-server/.pal_venv/bin/python \
+  /path/to/pal-mcp-server/server.py
+
+# Or always pull from git via uvx
+grok mcp add pal --scope user -- bash -c \
+  'for p in $(which uvx 2>/dev/null) $HOME/.local/bin/uvx /opt/homebrew/bin/uvx /usr/local/bin/uvx uvx; do [ -x "$p" ] && exec "$p" --from git+https://github.com/skibitskiy/pal-mcp-server.git pal-mcp-server; done; echo "uvx not found" >&2; exit 1'
+```
+
+Or edit `~/.grok/config.toml` directly:
+
+```toml
+[mcp_servers.pal]
+command = "/path/to/pal-mcp-server/.pal_venv/bin/python"
+args = ["/path/to/pal-mcp-server/server.py"]
+enabled = true
+startup_timeout_sec = 60
+tool_timeout_sec = 1200  # long-running tools (thinkdeep, consensus, clink, …)
+```
+
+Ensure the server has at least one provider configured in the project `.env` (for example `GEMINI_API_KEY`, `OPENAI_API_KEY`, `XAI_API_KEY`, `OPENROUTER_API_KEY`, or `CUSTOM_API_URL` for Ollama). Then verify:
+
+```bash
+grok mcp list
+grok mcp doctor pal
+```
+
+Restart Grok Build after changing MCP config so the new tools load.
+
 #### IDE Clients (Cursor & VS Code)
 
 PAL works in GUI IDEs that speak MCP. The configuration mirrors the CLI examples above—point the client at the `uvx` launcher and set any required environment variables.

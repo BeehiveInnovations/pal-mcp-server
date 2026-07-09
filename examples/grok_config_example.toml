@@ -1,0 +1,25 @@
+# Example Grok Build configuration for PAL MCP Server
+# Copy relevant sections into ~/.grok/config.toml (user scope)
+# or into <project>/.grok/config.toml (project scope).
+#
+# Preferred: use the CLI instead of hand-editing:
+#   grok mcp add pal --scope user -- /path/to/pal-mcp-server/.pal_venv/bin/python /path/to/pal-mcp-server/server.py
+#
+# Verify:
+#   grok mcp list
+#   grok mcp doctor pal
+
+[mcp_servers.pal]
+command = "/path/to/pal-mcp-server/.pal_venv/bin/python"
+args = ["/path/to/pal-mcp-server/server.py"]
+enabled = true
+startup_timeout_sec = 60
+tool_timeout_sec = 1200
+
+# Optional: pass provider keys here if you do not use the project .env file.
+# Prefer putting secrets in the server's .env (loaded automatically from the repo root).
+# [mcp_servers.pal.env]
+# GEMINI_API_KEY = "your_api_key_here"
+# OPENAI_API_KEY = "your_api_key_here"
+# XAI_API_KEY = "your_api_key_here"
+# OPENROUTER_API_KEY = "your_api_key_here"
