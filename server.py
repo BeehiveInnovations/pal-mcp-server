@@ -288,6 +288,15 @@ TOOLS = {
 }
 TOOLS = filter_disabled_tools(TOOLS)
 
+# TASK-20260711-PALCONTAMINATION (Option B): WorkflowTool/SimpleTool subclasses store
+# per-request state on self (e.g. self._current_arguments, self._model_context in
+# tools/workflow/workflow_mixin.py) and read it back after an awaited expert-analysis
+# call. Concurrent tool calls sharing one singleton instance clobber each other's
+# state mid-await. TOOL_CLASSES lets the dispatch path build a fresh instance per
+# call instead of reusing the shared TOOLS singleton; TOOLS itself is kept for
+# stateless uses (schema/listing, requires_model() checks).
+TOOL_CLASSES = {name: type(instance) for name, instance in TOOLS.items()}
+
 # Rich prompt templates for all tools
 PROMPT_TEMPLATES = {
     "chat": {
@@ -859,7 +868,9 @@ async def _dispatch_tool_call(name: str, arguments: dict[str, Any]) -> list[Text
     # Route to AI-powered tools that require Gemini API calls
     if name in TOOLS:
         logger.info(f"Executing tool '{name}' with {len(arguments)} parameter(s)")
-        tool = TOOLS[name]
+        # TASK-20260711-PALCONTAMINATION: fresh instance per call, not the shared
+        # TOOLS singleton -- see TOOL_CLASSES comment above.
+        tool = TOOL_CLASSES[name]()
 
         # EARLY MODEL RESOLUTION AT MCP BOUNDARY
         # Resolve model before passing to tool - this ensures consistent model handling
