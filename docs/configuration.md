@@ -151,8 +151,8 @@ The `allow_code_generation` capability enables models to generate complete, prod
 
 **Default Thinking Mode for ThinkDeep:**
 ```env
-# Only applies to models supporting extended thinking (e.g., Gemini 3.0 Pro)
-# Starting with Gemini 3.0 Pro, `thinking level` should stick to `high`
+# Only applies to models supporting extended thinking (e.g., Gemini 3.1 Pro)
+# Gemini 3.1 Pro supports `low`, `medium`, and `high` thinking levels (defaults to `high`)
 
 DEFAULT_THINKING_MODE_THINKDEEP=high
 

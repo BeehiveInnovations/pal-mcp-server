@@ -33,7 +33,7 @@ Regardless of your default configuration, you can specify models per request:
 
 | Model | Provider | Context | Strengths | Auto Mode Usage |
 |-------|----------|---------|-----------|------------------|
-| **`pro`** (Gemini 3.0 Pro) | Google | 1M tokens | Extended thinking (up to 32K tokens), deep analysis | Complex architecture, security reviews, deep debugging |
+| **`pro`** (Gemini 3.1 Pro) | Google | 1M tokens | Extended thinking (up to 32K tokens), deep analysis | Complex architecture, security reviews, deep debugging |
 | **`flash`** (Gemini 2.5 Flash) | Google | 1M tokens | Ultra-fast responses with thinking | Quick checks, formatting, simple analysis |
 | **`flash-2.0`** (Gemini 2.0 Flash) | Google | 1M tokens | Latest fast model with audio/video support | Quick analysis with multimodal input |
 | **`flashlite`** (Gemini 2.0 Flash Lite) | Google | 1M tokens | Lightweight text-only model | Fast text processing without vision |
@@ -105,7 +105,7 @@ OPENAI_ALLOWED_MODELS=o3,o4-mini
 
 ### Thinking Modes & Token Budgets
 
-These only apply to models that support customizing token usage for extended thinking, such as Gemini 3.0 Pro.
+These only apply to models that support customizing token usage for extended thinking, such as Gemini 3.1 Pro.
 
 | Mode | Token Budget | Use Case | Cost Impact |
 |------|-------------|----------|-------------|
@@ -153,7 +153,7 @@ These only apply to models that support customizing token usage for extended thi
 # Complex debugging, letting claude pick the best model
 "Use pal to debug this race condition with max thinking mode"
 
-# Architecture analysis with Gemini 3.0 Pro
+# Architecture analysis with Gemini 3.1 Pro
 "Analyze the entire src/ directory architecture with high thinking using pro"
 ```
 
@@ -344,7 +344,7 @@ To help choose the right tool for your needs:
 The PAL MCP server supports vision-capable models for analyzing images, diagrams, screenshots, and visual content. Vision support works seamlessly with all tools and conversation threading.
 
 **Supported Models:**
-- **Gemini 3.0 Pro & Flash**: Excellent for diagrams, architecture analysis, UI mockups (up to 20MB total)
+- **Gemini 3.1 Pro & Flash**: Excellent for diagrams, architecture analysis, UI mockups (up to 20MB total)
 - **OpenAI O3/O4 series**: Strong for visual debugging, error screenshots (up to 20MB total)
 - **Claude models via OpenRouter**: Good for code screenshots, visual analysis (up to 5MB total)
 - **Custom models**: Support varies by model, with 40MB maximum enforced for abuse prevention

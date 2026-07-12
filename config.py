@@ -43,7 +43,7 @@ IS_AUTO_MODE = DEFAULT_MODEL.lower() == "auto"
 
 
 # Temperature defaults for different tool types
-# NOTE: Gemini 3.0 Pro notes suggest temperature should be set at 1.0
+# NOTE: Gemini 3.1 Pro notes suggest temperature should be set at 1.0
 # in most cases. Lowering it can affect the models 'reasoning' abilities.
 # Newer models / inference stacks are able to handle their randomness better.
 

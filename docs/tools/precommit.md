@@ -59,7 +59,7 @@ to **Publish all Changes** was made after a rigorous set of prompts where it exa
 from different angles (performance, bugs, anti-patterns etc). After confirming that unit tests were 
 passing, it went ahead with an initial review with O3; came back clean - all good to go. O3 was happy, everything looked great.
 
-Then it shared the changes and relevant code with Gemini 3.0 Pro - the following is the outcome:
+Then it shared the changes and relevant code with Gemini 3.1 Pro - the following is the outcome:
 
 ```
 ⏺ pal:precommit (MCP)(step: "FINAL VALIDATION COMPLETE. All changes have been thoroughly analyzed and are ready for
@@ -85,7 +85,7 @@ Then it shared the changes and relevant code with Gemini 3.0 Pro - the following
 
 ⏺ 🔍 Pre-Commit Validation Complete
 
-  Based on comprehensive analysis using both O3 and Gemini 3.0 Pro models, I can provide the following assessment:
+  Based on comprehensive analysis using both O3 and Gemini 3.1 Pro models, I can provide the following assessment:
 
   ✅ APPROVED WITH CRITICAL FIX REQUIRED
 

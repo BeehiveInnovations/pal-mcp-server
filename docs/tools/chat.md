@@ -62,11 +62,11 @@ word verdict in the end.
 
 ## Structured Code Generation
 
-When using advanced reasoning models like **GPT-5.2 Pro** or **Gemini 3.0 Pro**, the chat tool can generate complete, production-ready code implementations in a structured format.
+When using advanced reasoning models like **GPT-5.2 Pro** or **Gemini 3.1 Pro**, the chat tool can generate complete, production-ready code implementations in a structured format.
 
 ### How It Works
 
-1. You ask your AI agent to implement a complex new feature using `chat` with a higher-reasoning model such as **GPT-5.2 Pro** or **Gemini 3.0 Pro**
+1. You ask your AI agent to implement a complex new feature using `chat` with a higher-reasoning model such as **GPT-5.2 Pro** or **Gemini 3.1 Pro**
 2. The model generates structured implementation and shares the complete implementation with PAL
 3. PAL saves the code to `pal_generated.code` and asks AI agent to implement the plan
 4. AI agent continues from the previous context, reads the file, applies the implementation

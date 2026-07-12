@@ -128,7 +128,7 @@ and review into consideration to aid with its final pre-commit review.
 For best results when using [Claude Code](https://claude.ai/code):  
 
 - **Sonnet 4.5** - All agentic work and orchestration
-- **Gemini 3.0 Pro** OR **GPT-5.2 / Pro** - Deep thinking, additional code reviews, debugging and validations, pre-commit analysis
+- **Gemini 3.1 Pro** OR **GPT-5.2 / Pro** - Deep thinking, additional code reviews, debugging and validations, pre-commit analysis
 </details>
 
 <details>
@@ -137,7 +137,7 @@ For best results when using [Claude Code](https://claude.ai/code):
 For best results when using [Codex CLI](https://developers.openai.com/codex/cli):  
 
 - **GPT-5.2 Codex Medium** - All agentic work and orchestration
-- **Gemini 3.0 Pro** OR **GPT-5.2-Pro** - Deep thinking, additional code reviews, debugging and validations, pre-commit analysis
+- **Gemini 3.1 Pro** OR **GPT-5.2-Pro** - Deep thinking, additional code reviews, debugging and validations, pre-commit analysis
 </details>
 
 ## Quick Start (5 minutes)
@@ -208,7 +208,7 @@ PAL activates any provider that has credentials in your `.env`. See `.env.exampl
 
 **Collaboration & Planning** *(Enabled by default)*
 - **[`clink`](docs/tools/clink.md)** - Bridge requests to external AI CLIs (Gemini planner, codereviewer, etc.)
-- **[`chat`](docs/tools/chat.md)** - Brainstorm ideas, get second opinions, validate approaches. With capable models (GPT-5.2 Pro, Gemini 3.0 Pro), generates complete code / implementation
+- **[`chat`](docs/tools/chat.md)** - Brainstorm ideas, get second opinions, validate approaches. With capable models (GPT-5.2 Pro, Gemini 3.1 Pro), generates complete code / implementation
 - **[`thinkdeep`](docs/tools/thinkdeep.md)** - Extended reasoning, edge case analysis, alternative perspectives
 - **[`planner`](docs/tools/planner.md)** - Break down complex projects into structured, actionable plans
 - **[`consensus`](docs/tools/consensus.md)** - Get expert opinions from multiple AI models with stance steering
@@ -382,7 +382,7 @@ DISABLED_TOOLS=
 
 **Model Support**
 - **Multiple providers** - Gemini, OpenAI, Azure, X.AI, OpenRouter, DIAL, Ollama
-- **Latest models** - GPT-5, Gemini 3.0 Pro, O3, Grok-4, local Llama
+- **Latest models** - GPT-5, Gemini 3.1 Pro, O3, Grok-4, local Llama
 - **[Thinking modes](docs/advanced-usage.md#thinking-modes)** - Control reasoning depth vs cost
 - **Vision support** - Analyze images, diagrams, screenshots
 
