@@ -1,0 +1,10 @@
+{
+  "name": "agy",
+  "command": "agy",
+  "additional_args": ["--sandbox"],
+  "env": {},
+  "prompt_to_arg": {"flag_template": "--print {prompt}"},
+  "roles": {
+    "default": {"prompt_path": "systemprompts/clink/default.txt", "role_args": []}
+  }
+}

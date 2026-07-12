@@ -45,4 +45,10 @@ INTERNAL_DEFAULTS: dict[str, CLIInternalDefaults] = {
         default_role_prompt="systemprompts/clink/default.txt",
         runner="claude",
     ),
+    "agy": CLIInternalDefaults(
+        parser="agy_text",
+        additional_args=[],
+        default_role_prompt="systemprompts/clink/default.txt",
+        runner=None,
+    ),
 }

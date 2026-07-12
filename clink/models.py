@@ -18,6 +18,17 @@ class OutputCaptureConfig(BaseModel):
     )
 
 
+class PromptArgConfig(BaseModel):
+    """Optional configuration for CLIs that take the prompt as a command-line argument.
+
+    Some CLIs (e.g. Antigravity's `agy`) require the prompt as the value of their
+    print flag rather than reading it from stdin. When configured, the base agent
+    renders the prompt into `flag_template` and sends empty stdin instead.
+    """
+
+    flag_template: str = Field(..., description="Template used to inject the prompt text, e.g. '--print {prompt}'.")
+
+
 class CLIRoleConfig(BaseModel):
     """Role-specific configuration loaded from JSON manifests."""
 
@@ -51,6 +62,7 @@ class CLIClientConfig(BaseModel):
     timeout_seconds: PositiveInt | None = Field(default=None)
     roles: dict[str, CLIRoleConfig] = Field(default_factory=dict)
     output_to_file: OutputCaptureConfig | None = None
+    prompt_to_arg: PromptArgConfig | None = None
 
     @field_validator("additional_args", mode="before")
     @classmethod
@@ -87,6 +99,7 @@ class ResolvedCLIClient(BaseModel):
     runner: str | None = None
     roles: dict[str, ResolvedCLIRole]
     output_to_file: OutputCaptureConfig | None = None
+    prompt_to_arg: PromptArgConfig | None = None
 
     def list_roles(self) -> list[str]:
         return list(self.roles.keys())

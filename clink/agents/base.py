@@ -90,6 +90,8 @@ class BaseCLIAgent:
 
         output_file_path: Path | None = None
         command_with_output_flag = list(command)
+        stdin_bytes = prompt.encode("utf-8")
+        stdin_mode = asyncio.subprocess.PIPE
 
         if self.client.output_to_file:
             fd, tmp_path = tempfile.mkstemp(prefix="clink-", suffix=".json")
@@ -103,6 +105,27 @@ class BaseCLIAgent:
             command_with_output_flag.extend(shlex.split(rendered_flag))
             sanitized_command = list(command_with_output_flag)
 
+        if self.client.prompt_to_arg:
+            # Some CLIs (e.g. agy) require the prompt as the value of their print
+            # flag rather than reading it from stdin. Render the real prompt into
+            # the flag for execution, but keep a redacted copy for logs/metadata so
+            # the (potentially large) prompt text isn't duplicated into every debug
+            # log line and success response.
+            flag_template = self.client.prompt_to_arg.flag_template
+            if "{prompt}" not in flag_template:
+                raise CLIAgentError(f"Invalid prompt flag template '{flag_template}': missing '{{prompt}}' placeholder")
+            rendered_args = [part.replace("{prompt}", prompt) for part in shlex.split(flag_template)]
+            redacted_args = [part.replace("{prompt}", "<prompt omitted>") for part in shlex.split(flag_template)]
+            sanitized_command = list(command_with_output_flag) + redacted_args
+            command_with_output_flag = command_with_output_flag + rendered_args
+            stdin_bytes = b""
+            # No prompt is written to stdin in this mode, so leave the child's
+            # stdin closed rather than an open-but-empty pipe: some CLIs (e.g.
+            # pre-1.1.1 Antigravity, see google-antigravity/antigravity-cli#76)
+            # block waiting for stdin EOF/input when spawned non-interactively
+            # with an open stdin pipe.
+            stdin_mode = asyncio.subprocess.DEVNULL
+
         self._logger.debug("Executing CLI command: %s", " ".join(sanitized_command))
         if cwd:
             self._logger.debug("Working directory: %s", cwd)
@@ -110,7 +133,7 @@ class BaseCLIAgent:
         try:
             process = await asyncio.create_subprocess_exec(
                 *command_with_output_flag,
-                stdin=asyncio.subprocess.PIPE,
+                stdin=stdin_mode,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
                 cwd=cwd,
@@ -121,8 +144,9 @@ class BaseCLIAgent:
             raise CLIAgentError(f"Executable not found for CLI '{self.client.name}': {exc}") from exc
 
         try:
+            communicate_input = stdin_bytes if stdin_mode == asyncio.subprocess.PIPE else None
             stdout_bytes, stderr_bytes = await asyncio.wait_for(
-                process.communicate(prompt.encode("utf-8")),
+                process.communicate(communicate_input),
                 timeout=self.client.timeout_seconds,
             )
         except asyncio.TimeoutError as exc:
