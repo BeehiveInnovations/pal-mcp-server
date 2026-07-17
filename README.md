@@ -15,7 +15,7 @@
 [Claude Code](https://www.anthropic.com/claude-code) · [Gemini CLI](https://github.com/google-gemini/gemini-cli) · [Codex CLI](https://github.com/openai/codex) · [Qwen Code CLI](https://qwenlm.github.io/qwen-code-docs/) · [Cursor](https://cursor.com) · _and more_
 
 **With multiple models within a single prompt:**  
-Gemini · OpenAI · Anthropic · Grok · Azure · Ollama · OpenRouter · DIAL · On-Device Model
+Gemini · OpenAI · DeepSeek · Anthropic · Grok · Azure · Ollama · OpenRouter · DIAL · On-Device Model
 
 </div>
 
@@ -149,6 +149,7 @@ For best results when using [Codex CLI](https://developers.openai.com/codex/cli)
 - **[Gemini](https://makersuite.google.com/app/apikey)** - Google's latest models
 - **[OpenAI](https://platform.openai.com/api-keys)** - O3, GPT-5 series
 - **[Azure OpenAI](https://learn.microsoft.com/azure/ai-services/openai/)** - Enterprise deployments of GPT-4o, GPT-4.1, GPT-5 family
+- **[DeepSeek](https://platform.deepseek.com/)** - DeepSeek V3.1 models
 - **[X.AI](https://console.x.ai/)** - Grok models
 - **[DIAL](https://dialx.ai/)** - Vendor-agnostic model access
 - **[Ollama](https://ollama.ai/)** - Local models (free)
@@ -278,6 +279,8 @@ DISABLED_TOOLS=
         // API configuration
         "GEMINI_API_KEY": "your-gemini-key",
         "OPENAI_API_KEY": "your-openai-key",
+        "DEEPSEEK_API_KEY": "your-deepseek-key",
+        "DEEPSEEK_BASE_URL": "https://api.deepseek.com",  // Optional custom endpoint
         "OPENROUTER_API_KEY": "your-openrouter-key",
         
         // Logging and performance

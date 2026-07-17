@@ -77,6 +77,8 @@ The available models depend on your configuration:
 **API Keys Required:**
 - `GEMINI_API_KEY` - Enables Gemini Pro and Flash models
 - `OPENAI_API_KEY` - Enables OpenAI O3, O4-mini, and GPT models
+- `DEEPSEEK_API_KEY` - Enables DeepSeek Chat and Reasoner models
+- `DEEPSEEK_BASE_URL` - (Optional) Custom DeepSeek API endpoint
 - `OPENROUTER_API_KEY` - Enables access to multiple providers through OpenRouter
 - `CUSTOM_API_URL` - Enables local/custom models (Ollama, vLLM, etc.)
 

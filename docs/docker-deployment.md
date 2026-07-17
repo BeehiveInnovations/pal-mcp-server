@@ -38,6 +38,10 @@ GEMINI_API_KEY=your_gemini_api_key_here
 # OpenAI
 OPENAI_API_KEY=your_openai_api_key_here
 
+# DeepSeek
+DEEPSEEK_API_KEY=your_deepseek_api_key_here
+# DEEPSEEK_BASE_URL=https://api.deepseek.com   # Optional: custom API endpoint
+
 # X.AI GROK
 XAI_API_KEY=your_xai_api_key_here
 
@@ -432,6 +436,8 @@ Configure Claude Desktop to use the containerized server. **Choose one of the co
 # At least one API key is required
 GEMINI_API_KEY=your_gemini_key
 OPENAI_API_KEY=your_openai_key
+DEEPSEEK_API_KEY=your_deepseek_key
+# DEEPSEEK_BASE_URL=https://api.deepseek.com
 # ... other keys
 ```
 

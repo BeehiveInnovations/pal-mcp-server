@@ -380,20 +380,28 @@ def configure_providers():
     Configure and validate AI providers based on available API keys.
 
     This function checks for API keys and registers the appropriate providers.
-    At least one valid API key (Gemini or OpenAI) is required.
+    At least one valid API key (Gemini, OpenAI, DeepSeek, etc.) is required.
 
     Raises:
         ValueError: If no valid API keys are found or conflicting configurations detected
     """
     # Log environment variable status for debugging
     logger.debug("Checking environment variables for API keys...")
-    api_keys_to_check = ["OPENAI_API_KEY", "OPENROUTER_API_KEY", "GEMINI_API_KEY", "XAI_API_KEY", "CUSTOM_API_URL"]
+    api_keys_to_check = [
+        "OPENAI_API_KEY",
+        "OPENROUTER_API_KEY",
+        "GEMINI_API_KEY",
+        "DEEPSEEK_API_KEY",
+        "XAI_API_KEY",
+        "CUSTOM_API_URL",
+    ]
     for key in api_keys_to_check:
         value = get_env(key)
         logger.debug(f"  {key}: {'[PRESENT]' if value else '[MISSING]'}")
     from providers import ModelProviderRegistry
     from providers.azure_openai import AzureOpenAIProvider
     from providers.custom import CustomProvider
+    from providers.deepseek import DeepSeekModelProvider
     from providers.dial import DIALModelProvider
     from providers.gemini import GeminiModelProvider
     from providers.openai import OpenAIModelProvider
@@ -447,6 +455,13 @@ def configure_providers():
                 )
         except Exception as exc:
             logger.warning(f"Failed to load Azure OpenAI models: {exc}")
+
+    # Check for DeepSeek API key
+    deepseek_key = get_env("DEEPSEEK_API_KEY")
+    if deepseek_key and deepseek_key != "your_deepseek_api_key_here":
+        valid_providers.append("DeepSeek")
+        has_native_apis = True
+        logger.info("DeepSeek API key found - DeepSeek models available")
 
     # Check for X.AI API key
     xai_key = get_env("XAI_API_KEY")
@@ -509,6 +524,10 @@ def configure_providers():
             ModelProviderRegistry.register_provider(ProviderType.AZURE, AzureOpenAIProvider)
             registered_providers.append(ProviderType.AZURE.value)
             logger.debug(f"Registered provider: {ProviderType.AZURE.value}")
+        if deepseek_key and deepseek_key != "your_deepseek_api_key_here":
+            ModelProviderRegistry.register_provider(ProviderType.DEEPSEEK, DeepSeekModelProvider)
+            registered_providers.append(ProviderType.DEEPSEEK.value)
+            logger.debug(f"Registered provider: {ProviderType.DEEPSEEK.value}")
         if xai_key and xai_key != "your_xai_api_key_here":
             ModelProviderRegistry.register_provider(ProviderType.XAI, XAIModelProvider)
             registered_providers.append(ProviderType.XAI.value)
@@ -546,6 +565,7 @@ def configure_providers():
             "At least one API configuration is required. Please set either:\n"
             "- GEMINI_API_KEY for Gemini models\n"
             "- OPENAI_API_KEY for OpenAI models\n"
+            "- DEEPSEEK_API_KEY for DeepSeek models\n"
             "- XAI_API_KEY for X.AI GROK models\n"
             "- DIAL_API_KEY for DIAL models\n"
             "- OPENROUTER_API_KEY for OpenRouter (multiple models)\n"
@@ -557,7 +577,7 @@ def configure_providers():
     # Log provider priority
     priority_info = []
     if has_native_apis:
-        priority_info.append("Native APIs (Gemini, OpenAI)")
+        priority_info.append("Native APIs (Gemini, OpenAI, DeepSeek, Azure, X.AI, DIAL)")
     if has_custom:
         priority_info.append("Custom endpoints")
     if has_openrouter:
@@ -600,7 +620,13 @@ def configure_providers():
 
         # Validate restrictions against known models
         provider_instances = {}
-        provider_types_to_validate = [ProviderType.GOOGLE, ProviderType.OPENAI, ProviderType.XAI, ProviderType.DIAL]
+        provider_types_to_validate = [
+            ProviderType.GOOGLE,
+            ProviderType.OPENAI,
+            ProviderType.DEEPSEEK,
+            ProviderType.XAI,
+            ProviderType.DIAL,
+        ]
         for provider_type in provider_types_to_validate:
             provider = ModelProviderRegistry.get_provider(provider_type)
             if provider:
