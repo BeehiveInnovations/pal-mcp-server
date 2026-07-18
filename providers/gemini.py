@@ -44,22 +44,46 @@ class _RateLimit429(Exception):
 def _parse_429_reason(error_body: dict) -> tuple[str, int]:
     """Parse a 429 error response body to classify reason + reset window.
 
+    Mirrors gemini-chain.js RC1 (SHA e22f73bb, TASK-20260718-GEMINIQUOTA-
+    DEEPDIVE-BRAINSTORM): a 429 is classified as terminal 'daily' (RPD) ONLY
+    when the body carries an explicit per-day quota marker AND no per-minute
+    marker AND the status is not the explicit transient RATE_LIMIT_EXCEEDED.
+    Every other 429 — including an unparseable/ambiguous one — is transient
+    'RATE_LIMIT_EXCEEDED' so the 26b→31b→26b→31b cascade actually advances
+    instead of terminating on attempt 1. The prior logic defaulted to 'daily'
+    on any body without a 'reset after Ns' hint, which short-circuited the
+    cascade and sent 100% of traffic to 26b / 0% to 31b. retryDelay / reset
+    hints seed backoff timing only — never the day-vs-minute decision.
+
     Returns:
         (reason_str, reset_after_ms): reason is 'RATE_LIMIT_EXCEEDED' for RPM
-        throttles, 'daily' for daily quota exhaustion. reset_after_ms from
-        'reset after Ns' hint in the message (0 if absent).
+        throttles / ambiguous 429s, 'daily' for confirmed daily-quota
+        exhaustion. reset_after_ms from a 'reset after Ns' hint or a RetryInfo
+        retryDelay in the body (0 if absent).
     """
-    msg = (error_body.get("error", {}).get("message", "") or "").lower()
-    # Look for "reset after Ns" hint (gemini-chain.js TASK-179 pattern)
+    err = error_body.get("error", {}) or {}
+    msg = (err.get("message", "") or "").lower()
+    status = (err.get("status", "") or "").upper()
+
     import re
+    # Backoff-timing hint only (does NOT influence the day/minute decision).
     m = re.search(r"reset\s+after\s+(\d+(?:\.\d+)?)\s*s", msg)
     reset_ms = int(float(m.group(1)) * 1000) if m else 0
+    if not reset_ms:
+        rd = re.search(r'"retrydelay"\s*:\s*"(\d+(?:\.\d+)?)s"', msg)
+        if rd:
+            reset_ms = int(float(rd.group(1)) * 1000)
 
-    # RATE_LIMIT_EXCEEDED = RPM throttle (short cooldown)
-    # "quota exceeded" / "resource exhausted" without reset hint = daily
-    if "rate_limit_exceeded" in msg or (reset_ms > 0 and reset_ms < 300_000):
-        return "RATE_LIMIT_EXCEEDED", reset_ms
-    return "daily", reset_ms
+    # DAILY (RPD) only on an explicit per-day quota marker with no per-minute
+    # marker and not the explicit transient status. quotaId strings look like
+    # '...RequestsPerDayPerProjectPerModel' / '...PerMinutePerProjectPerModel'.
+    has_daily_marker = bool(re.search(r"per[\s_-]?day|requests?_per_day|perdayper", msg))
+    has_minute_marker = bool(re.search(r"per[\s_-]?minute|requests?_per_minute|perminuteper", msg))
+    is_daily = has_daily_marker and not has_minute_marker and status != "RATE_LIMIT_EXCEEDED"
+
+    if is_daily:
+        return "daily", reset_ms
+    return "RATE_LIMIT_EXCEEDED", reset_ms
 
 
 # ---------------------------------------------------------------------------
@@ -195,12 +219,15 @@ class _GemmaApiKeyAdapter:
             entry = {
                 "ts": datetime.utcnow().isoformat() + "Z",
                 "tool": tool_name,
+                "consumer": "pal-" + (tool_name or "unknown"),
                 "model": model,
                 "tokens_in": tokens_in,
                 "tokens_out": tokens_out,
+                "total_tokens": (tokens_in + tokens_out) if (tokens_in is not None and tokens_out is not None) else None,
                 "latency_ms": round(latency_ms, 1),
                 "success": success,
                 "error": error,
+                "runtime": "python-pal",
             }
             # Read + prune existing entries (14-day TTL, mirrors writeGemmaResponseLog)
             try:
@@ -261,12 +288,23 @@ class _GemmaApiKeyAdapter:
             except AttributeError:
                 pass
 
+        # TASK-20260628-683: Gemma-4 runs server-side reasoning ON by default on v1beta.
+        # thinkingLevel:"MINIMAL" suppresses it at the API (probe-proven HTTP 200, ~8x fewer
+        # tokens, clean output). DICT form — NOT types.ThinkingConfig (SDK path gated off for
+        # Gemma) and NOT thinkingBudget:0 (probe-proven HTTP 400 "not supported").
+        gen_cfg["thinkingConfig"] = {"thinkingLevel": "MINIMAL"}
+
         body_dict: dict = {"contents": contents}
         if gen_cfg:
             body_dict["generationConfig"] = gen_cfg
 
         body = json.dumps(body_dict).encode()
-        timeout_s = float(os.environ.get("PAL_HTTP_ATTEMPT_TIMEOUT_S", "240"))
+        # TASK-20260624-602: default 240->45. The cascade makes up to 4 attempts; a 240s
+        # per-attempt timeout meant a single stalled 26b attempt could exceed the outer
+        # asyncio deadline before the healthy-31b fallback was ever tried. 45s is ample for
+        # a real gemma response (~3-8s typical, transient 500s return in ~1s) while letting
+        # the FULL cascade fail-fast inside the 240s outer deadline (tools/simple/base.py).
+        timeout_s = float(os.environ.get("PAL_HTTP_ATTEMPT_TIMEOUT_S", "45"))
 
         def _post_once(model: str) -> dict:
             """Single POST to the Gemma endpoint for one model. Raises on failure.
