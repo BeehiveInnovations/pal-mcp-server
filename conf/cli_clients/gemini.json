@@ -1,6 +1,6 @@
 {
   "name": "gemini",
-  "command": "gemini",
+  "command": "gemini.cmd",
   "additional_args": [
     "--yolo"
   ],

@@ -51,6 +51,8 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
         self._base_url = kwargs.get("base_url", None)  # Optional custom endpoint
         self._timeout_override = self._resolve_http_timeout()
         self._invalidate_capability_cache()
+        # Optional secondary key used when the primary key's quota is exhausted.
+        self._fallback_api_key = get_env("GEMINI_API_KEY_FALLBACK") or None
 
     # ------------------------------------------------------------------
     # Capability surface
@@ -60,26 +62,29 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
     # Client access
     # ------------------------------------------------------------------
 
+    def _build_client(self, api_key: str):
+        """Construct a Gemini SDK client for the given key, honoring base_url/timeout overrides."""
+        http_options_kwargs: dict[str, object] = {}
+        if self._base_url:
+            http_options_kwargs["base_url"] = self._base_url
+        if self._timeout_override is not None:
+            http_options_kwargs["timeout"] = self._timeout_override
+
+        if http_options_kwargs:
+            http_options = types.HttpOptions(**http_options_kwargs)
+            logger.debug(
+                "Initializing Gemini client with options: base_url=%s timeout=%s",
+                http_options_kwargs.get("base_url"),
+                http_options_kwargs.get("timeout"),
+            )
+            return genai.Client(api_key=api_key, http_options=http_options)
+        return genai.Client(api_key=api_key)
+
     @property
     def client(self):
-        """Lazy initialization of Gemini client."""
+        """Lazy initialization of Gemini client using the primary API key."""
         if self._client is None:
-            http_options_kwargs: dict[str, object] = {}
-            if self._base_url:
-                http_options_kwargs["base_url"] = self._base_url
-            if self._timeout_override is not None:
-                http_options_kwargs["timeout"] = self._timeout_override
-
-            if http_options_kwargs:
-                http_options = types.HttpOptions(**http_options_kwargs)
-                logger.debug(
-                    "Initializing Gemini client with options: base_url=%s timeout=%s",
-                    http_options_kwargs.get("base_url"),
-                    http_options_kwargs.get("timeout"),
-                )
-                self._client = genai.Client(api_key=self.api_key, http_options=http_options)
-            else:
-                self._client = genai.Client(api_key=self.api_key)
+            self._client = self._build_client(self.api_key)
         return self._client
 
     def _resolve_http_timeout(self) -> Optional[float]:
@@ -140,6 +145,10 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
         """
         # Validate parameters and fetch capabilities
         self.validate_parameters(model_name, temperature)
+        if thinking_mode not in self.THINKING_BUDGETS:
+            raise ValueError(
+                f"Invalid thinking_mode '{thinking_mode}'. Must be one of: {', '.join(self.THINKING_BUDGETS)}"
+            )
         capabilities = self.get_capabilities(model_name)
         capability_map = self.get_all_model_capabilities()
 
@@ -158,15 +167,22 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
 
         # Add images if provided and model supports vision
         if images and capabilities.supports_images:
+            processed_image_count = 0
             for image_path in images:
                 try:
                     image_part = self._process_image(image_path)
                     if image_part:
                         parts.append(image_part)
+                        processed_image_count += 1
                 except Exception as e:
                     logger.warning(f"Failed to process image {image_path}: {e}")
                     # Continue with other images and text
                     continue
+            if processed_image_count == 0:
+                raise ValueError(
+                    f"All {len(images)} image(s) failed to process for model {resolved_model_name}; "
+                    "refusing to silently downgrade to a text-only request."
+                )
         elif images and not capabilities.supports_images:
             logger.warning(f"Model {resolved_model_name} does not support images, ignoring {len(images)} image(s)")
 
@@ -200,15 +216,23 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
                 max_thinking_tokens = model_config.max_thinking_tokens
                 actual_thinking_budget = int(max_thinking_tokens * self.THINKING_BUDGETS[effective_thinking_mode])
                 generation_config.thinking_config = types.ThinkingConfig(thinking_budget=actual_thinking_budget)
+                if max_output_tokens and actual_thinking_budget >= max_output_tokens:
+                    logger.warning(
+                        "Thinking budget (%s tokens) for %s meets or exceeds max_output_tokens (%s); "
+                        "the response may be truncated with little or no visible output.",
+                        actual_thinking_budget,
+                        resolved_model_name,
+                        max_output_tokens,
+                    )
 
         # Retry logic with progressive delays
         max_retries = 4  # Total of 4 attempts
         retry_delays = [1, 3, 5, 8]  # Progressive delays: 1s, 3s, 5s, 8s
         attempt_counter = {"value": 0}
 
-        def _attempt() -> ModelResponse:
+        def _attempt(client) -> ModelResponse:
             attempt_counter["value"] += 1
-            response = self.client.models.generate_content(
+            response = client.models.generate_content(
                 model=resolved_model_name,
                 contents=contents,
                 config=generation_config,
@@ -220,55 +244,68 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
             is_blocked_by_safety = False
             safety_feedback_details = None
 
+            # Finish reasons that indicate the model's output was withheld/altered for safety,
+            # as opposed to a normal completion (STOP/MAX_TOKENS) or a benign edge case.
+            SAFETY_FINISH_REASONS = {"SAFETY", "PROHIBITED_CONTENT", "SPII", "BLOCKLIST"}
+
             if response.candidates:
                 candidate = response.candidates[0]
 
                 try:
                     finish_reason_enum = candidate.finish_reason
-                    if finish_reason_enum:
-                        try:
-                            finish_reason_str = finish_reason_enum.name
-                        except AttributeError:
-                            finish_reason_str = str(finish_reason_enum)
-                    else:
-                        finish_reason_str = "STOP"
                 except AttributeError:
-                    finish_reason_str = "STOP"
+                    finish_reason_enum = None
 
-                if not response.text:
+                if finish_reason_enum:
                     try:
-                        safety_ratings = candidate.safety_ratings
-                        if safety_ratings:
-                            for rating in safety_ratings:
-                                try:
-                                    if rating.blocked:
-                                        is_blocked_by_safety = True
-                                        category_name = "UNKNOWN"
-                                        probability_name = "UNKNOWN"
+                        finish_reason_str = finish_reason_enum.name
+                    except AttributeError:
+                        finish_reason_str = str(finish_reason_enum)
+                # else: no finish_reason on the candidate — leave finish_reason_str as "UNKNOWN"
+                # rather than guessing "STOP", so callers aren't told a request completed
+                # normally when the SDK didn't actually say so.
 
-                                        try:
-                                            category_name = rating.category.name
-                                        except (AttributeError, TypeError):
-                                            pass
+                if finish_reason_str in SAFETY_FINISH_REASONS:
+                    is_blocked_by_safety = True
 
-                                        try:
-                                            probability_name = rating.probability.name
-                                        except (AttributeError, TypeError):
-                                            pass
+                # Safety ratings are checked regardless of whether text was returned:
+                # a candidate can carry partial text alongside a safety-relevant rating.
+                try:
+                    safety_ratings = candidate.safety_ratings
+                    if safety_ratings:
+                        for rating in safety_ratings:
+                            try:
+                                if rating.blocked:
+                                    is_blocked_by_safety = True
+                                    category_name = "UNKNOWN"
+                                    probability_name = "UNKNOWN"
 
-                                        safety_feedback_details = (
-                                            f"Category: {category_name}, Probability: {probability_name}"
-                                        )
-                                        break
-                                except (AttributeError, TypeError):
-                                    continue
-                    except (AttributeError, TypeError):
-                        pass
+                                    try:
+                                        category_name = rating.category.name
+                                    except (AttributeError, TypeError):
+                                        pass
+
+                                    try:
+                                        probability_name = rating.probability.name
+                                    except (AttributeError, TypeError):
+                                        pass
+
+                                    safety_feedback_details = (
+                                        f"Category: {category_name}, Probability: {probability_name}"
+                                    )
+                                    break
+                            except (AttributeError, TypeError):
+                                continue
+                except (AttributeError, TypeError):
+                    pass
+
+                if is_blocked_by_safety and safety_feedback_details is None:
+                    safety_feedback_details = f"Finish reason: {finish_reason_str}"
 
             elif response.candidates is not None and len(response.candidates) == 0:
-                is_blocked_by_safety = True
-                finish_reason_str = "SAFETY"
-                safety_feedback_details = "Prompt blocked, reason unavailable"
+                # An empty candidate list isn't necessarily a safety block — only report it as
+                # one when prompt_feedback actually confirms a block_reason.
+                finish_reason_str = "EMPTY_RESPONSE"
 
                 try:
                     prompt_feedback = response.prompt_feedback
@@ -277,9 +314,13 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
                             block_reason_name = prompt_feedback.block_reason.name
                         except AttributeError:
                             block_reason_name = str(prompt_feedback.block_reason)
+                        is_blocked_by_safety = True
+                        finish_reason_str = "SAFETY"
                         safety_feedback_details = f"Prompt blocked, reason: {block_reason_name}"
+                    else:
+                        safety_feedback_details = "Empty response with no candidates and no prompt_feedback"
                 except (AttributeError, TypeError):
-                    pass
+                    safety_feedback_details = "Empty response with no candidates; prompt_feedback unavailable"
 
             return ModelResponse(
                 content=response.text,
@@ -295,14 +336,50 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
                 },
             )
 
+        def _is_quota_exhausted(exc: Exception) -> bool:
+            # Prefer structured SDK error fields (google.genai raises errors exposing
+            # `code`/`status`) over text matching, which is brittle against message changes.
+            code = getattr(exc, "code", None)
+            status = str(getattr(exc, "status", "") or "").upper()
+            if code == 429 or status == "RESOURCE_EXHAUSTED":
+                return True
+            error_str = str(exc).lower()
+            return "resource_exhausted" in error_str or ("quota" in error_str and "exceeded" in error_str)
+
         try:
             return self._run_with_retries(
-                operation=_attempt,
+                operation=lambda: _attempt(self.client),
                 max_attempts=max_retries,
                 delays=retry_delays,
                 log_prefix=f"Gemini API ({resolved_model_name})",
             )
         except Exception as exc:
+            if self._fallback_api_key and self._fallback_api_key != self.api_key and _is_quota_exhausted(exc):
+                logger.warning(
+                    "Gemini primary API key hit its quota for %s; retrying this request with "
+                    "GEMINI_API_KEY_FALLBACK (primary key is left untouched for future calls).",
+                    resolved_model_name,
+                )
+                # Build a request-local client for the fallback key instead of mutating
+                # self.api_key/self._client, so this doesn't permanently switch the provider
+                # for later, unrelated calls and doesn't race with concurrent requests.
+                fallback_client = self._build_client(self._fallback_api_key)
+                attempt_counter["value"] = 0
+                try:
+                    return self._run_with_retries(
+                        operation=lambda: _attempt(fallback_client),
+                        max_attempts=max_retries,
+                        delays=retry_delays,
+                        log_prefix=f"Gemini API ({resolved_model_name}, fallback key)",
+                    )
+                except Exception as fallback_exc:
+                    attempts = max(attempt_counter["value"], 1)
+                    error_msg = (
+                        f"Gemini API error for model {resolved_model_name} after {attempts} attempt"
+                        f"{'s' if attempts > 1 else ''} on fallback key: {fallback_exc}"
+                    )
+                    raise RuntimeError(error_msg) from fallback_exc
+
             attempts = max(attempt_counter["value"], 1)
             error_msg = (
                 f"Gemini API error for model {resolved_model_name} after {attempts} attempt"
@@ -433,18 +510,12 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
     def _process_image(self, image_path: str) -> Optional[dict]:
         """Process an image for Gemini API."""
         try:
-            # Use base class validation
+            # Use base class validation, then always re-encode the *validated* bytes rather
+            # than forwarding the original data-URL string — the decoder is permissive, so
+            # forwarding it as-is could let invalid/extra characters reach the API.
             image_bytes, mime_type = validate_image(image_path)
-
-            # For data URLs, extract the base64 data directly
-            if image_path.startswith("data:"):
-                # Extract base64 data from data URL
-                _, data = image_path.split(",", 1)
-                return {"inline_data": {"mime_type": mime_type, "data": data}}
-            else:
-                # For file paths, encode the bytes
-                image_data = base64.b64encode(image_bytes).decode()
-                return {"inline_data": {"mime_type": mime_type, "data": image_data}}
+            image_data = base64.b64encode(image_bytes).decode()
+            return {"inline_data": {"mime_type": mime_type, "data": image_data}}
 
         except ValueError as e:
             logger.warning(str(e))

@@ -1,6 +1,6 @@
 {
   "name": "codex",
-  "command": "codex",
+  "command": "codex.cmd",
   "additional_args": [
     "--json",
     "--dangerously-bypass-approvals-and-sandbox",
