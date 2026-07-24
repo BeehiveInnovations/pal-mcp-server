@@ -78,6 +78,13 @@ class BaseCLIAgent:
             )
         command[0] = resolved_executable
 
+        # asyncio.create_subprocess_exec calls CreateProcess directly on Windows, which
+        # cannot launch .cmd/.bat shims (e.g. npm-installed CLIs) without going through
+        # cmd.exe first — doing so raises WinError 193.
+        if os.name == "nt" and resolved_executable.lower().endswith((".cmd", ".bat")):
+            comspec = os.environ.get("ComSpec", "cmd.exe")
+            command = [comspec, "/d", "/s", "/c", *command]
+
         sanitized_command = list(command)
 
         cwd = str(self.client.working_dir) if self.client.working_dir else None

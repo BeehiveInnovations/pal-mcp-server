@@ -1,6 +1,6 @@
 {
   "name": "claude",
-  "command": "claude",
+  "command": "claude.cmd",
   "additional_args": [
     "--permission-mode",
     "acceptEdits",
