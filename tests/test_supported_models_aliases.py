@@ -25,8 +25,8 @@ class TestSupportedModelsAliases:
         assert "flash2" in provider.MODEL_CAPABILITIES["gemini-2.0-flash"].aliases
         assert "flashlite" in provider.MODEL_CAPABILITIES["gemini-2.0-flash-lite"].aliases
         assert "flash-lite" in provider.MODEL_CAPABILITIES["gemini-2.0-flash-lite"].aliases
-        assert "gemini3.1" in provider.MODEL_CAPABILITIES["gemini-3.1-pro"].aliases
-        assert "pro3.1" in provider.MODEL_CAPABILITIES["gemini-3.1-pro"].aliases
+        assert "gemini3.1" in provider.MODEL_CAPABILITIES["gemini-3.1-pro-preview"].aliases
+        assert "pro3.1" in provider.MODEL_CAPABILITIES["gemini-3.1-pro-preview"].aliases
 
         # Test alias resolution
         assert provider._resolve_model_name("flash") == "gemini-2.5-flash"
@@ -35,10 +35,14 @@ class TestSupportedModelsAliases:
         assert provider._resolve_model_name("flash2") == "gemini-2.0-flash"
         assert provider._resolve_model_name("flashlite") == "gemini-2.0-flash-lite"
 
-        assert provider._resolve_model_name("gemini3.1") == "gemini-3.1-pro"
-        assert provider._resolve_model_name("pro3.1") == "gemini-3.1-pro"
-        assert provider._resolve_model_name("gemini-3.1") == "gemini-3.1-pro"
-        assert provider._resolve_model_name("gemini-3.1-pro") == "gemini-3.1-pro"
+        # "gemini-3.1-pro" (no suffix) is deliberately just an alias, not the canonical
+        # name: the live Gemini API only serves this model under "-preview" and 404s
+        # on the bare name, so the canonical id must match what generateContent accepts.
+        assert provider._resolve_model_name("gemini3.1") == "gemini-3.1-pro-preview"
+        assert provider._resolve_model_name("pro3.1") == "gemini-3.1-pro-preview"
+        assert provider._resolve_model_name("gemini-3.1") == "gemini-3.1-pro-preview"
+        assert provider._resolve_model_name("gemini-3.1-pro") == "gemini-3.1-pro-preview"
+        assert provider._resolve_model_name("gemini-3.1-pro-preview") == "gemini-3.1-pro-preview"
 
         # Test case insensitive resolution
         assert provider._resolve_model_name("Flash") == "gemini-2.5-flash"
@@ -64,6 +68,8 @@ class TestSupportedModelsAliases:
         assert "gpt5.2" in provider.MODEL_CAPABILITIES["gpt-5.2"].aliases
         assert "gpt5.1-codex" in provider.MODEL_CAPABILITIES["gpt-5.1-codex"].aliases
         assert "codex-mini" in provider.MODEL_CAPABILITIES["gpt-5.1-codex-mini"].aliases
+        assert "sol" in provider.MODEL_CAPABILITIES["gpt-5.6-sol"].aliases
+        assert "gpt-5.6" in provider.MODEL_CAPABILITIES["gpt-5.6-sol"].aliases
 
         # Test alias resolution
         assert provider._resolve_model_name("mini") == "gpt-5-mini"  # mini -> gpt-5-mini now
@@ -75,6 +81,8 @@ class TestSupportedModelsAliases:
         assert provider._resolve_model_name("gpt5.1") == "gpt-5.2"
         assert provider._resolve_model_name("gpt5.1-codex") == "gpt-5.1-codex"
         assert provider._resolve_model_name("codex-mini") == "gpt-5.1-codex-mini"
+        assert provider._resolve_model_name("sol") == "gpt-5.6-sol"
+        assert provider._resolve_model_name("gpt5.6") == "gpt-5.6-sol"
 
         # Test case insensitive resolution
         assert provider._resolve_model_name("Mini") == "gpt-5-mini"  # mini -> gpt-5-mini now

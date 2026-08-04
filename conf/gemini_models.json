@@ -49,15 +49,16 @@
       "max_image_size_mb": 32.0
     },
     {
-      "model_name": "gemini-3.1-pro",
-      "friendly_name": "Gemini Pro 3.1",
+      "model_name": "gemini-3.1-pro-preview",
+      "friendly_name": "Gemini Pro 3.1 Preview",
       "aliases": [
+        "gemini-3.1-pro",
         "gemini3.1",
         "pro3.1",
         "gemini-3.1"
       ],
       "intelligence_score": 19,
-      "description": "Gemini 3.1 Pro (1M context) - Latest reasoning model, complex problems and deep analysis",
+      "description": "Gemini 3.1 Pro Preview (1M context) - Latest reasoning model, complex problems and deep analysis. NOTE: live Gemini API only serves this under the '-preview' suffix as of 2026-08-05; 'gemini-3.1-pro' (no suffix) 404s and is kept only as an alias.",
       "context_window": 1048576,
       "max_output_tokens": 65536,
       "max_thinking_tokens": 32768,
