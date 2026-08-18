@@ -142,16 +142,18 @@ For best results when using [Codex CLI](https://developers.openai.com/codex/cli)
 
 ## Quick Start (5 minutes)
 
-**Prerequisites:** Python 3.10+, Git, [uv installed](https://docs.astral.sh/uv/getting-started/installation/)
+**Prerequisites:** Python 3.9+, Git, [uv installed](https://docs.astral.sh/uv/getting-started/installation/)
 
-**1. Get API Keys** (choose one or more):
+**1. Get API Keys**:
 - **[OpenRouter](https://openrouter.ai/)** - Access multiple models with one API
+- **[DIAL](https://dialx.ai/)** - Vendor-agnostic model access
 - **[Gemini](https://makersuite.google.com/app/apikey)** - Google's latest models
 - **[OpenAI](https://platform.openai.com/api-keys)** - O3, GPT-5 series
 - **[Azure OpenAI](https://learn.microsoft.com/azure/ai-services/openai/)** - Enterprise deployments of GPT-4o, GPT-4.1, GPT-5 family
 - **[X.AI](https://console.x.ai/)** - Grok models
-- **[DIAL](https://dialx.ai/)** - Vendor-agnostic model access
 - **[Ollama](https://ollama.ai/)** - Local models (free)
+
+> You can combine native provider keys (Gemini, OpenAI, Azure, X.AI, Ollama) freely, but pick only **one** unified gateway — either OpenRouter **or** DIAL, not both — to avoid ambiguous model routing.
 
 **2. Install** (choose one):
 
@@ -163,13 +165,18 @@ cd pal-mcp-server
 # Handles everything: setup, config, API keys from system environment. 
 # Auto-configures Claude Desktop, Claude Code, Gemini CLI, Codex CLI, Qwen CLI
 # Enable / disable additional settings in .env
-./run-server.sh  
+
+# Linux / macOS / WSL:
+./run-server.sh
+
+# Windows (PowerShell):
+./run-server.ps1
 ```
 
 **Option B: Instant Setup with [uvx](https://docs.astral.sh/uv/getting-started/installation/)**
+
+Add to `~/.claude/settings.json` or `.mcp.json` (don't forget to add your API keys under `env`):
 ```json
-// Add to ~/.claude/settings.json or .mcp.json
-// Don't forget to add your API keys under env
 {
   "mcpServers": {
     "pal": {
@@ -238,6 +245,7 @@ PAL activates any provider that has credentials in your `.env`. See `.env.exampl
 To optimize context window usage, only essential tools are enabled by default:
 
 **Enabled by default:**
+- `clink` - Bridge requests to external AI CLIs
 - `chat`, `thinkdeep`, `planner`, `consensus` - Core collaboration tools
 - `codereview`, `precommit`, `debug` - Essential code quality tools
 - `apilookup` - Rapid API/SDK information lookup
@@ -264,23 +272,19 @@ DISABLED_TOOLS=
 ```
 
 **Option 2: Configure in MCP settings**
+
+In `~/.claude/settings.json` or `.mcp.json` — `DISABLED_TOOLS`/`DEFAULT_MODEL` control tool configuration, the `*_API_KEY` entries configure providers, and the rest control logging/performance:
 ```json
-// In ~/.claude/settings.json or .mcp.json
 {
   "mcpServers": {
     "pal": {
       "env": {
-        // Tool configuration
         "DISABLED_TOOLS": "refactor,testgen,secaudit,docgen,tracer",
         "DEFAULT_MODEL": "pro",
         "DEFAULT_THINKING_MODE_THINKDEEP": "high",
-        
-        // API configuration
         "GEMINI_API_KEY": "your-gemini-key",
         "OPENAI_API_KEY": "your-openai-key",
         "OPENROUTER_API_KEY": "your-openrouter-key",
-        
-        // Logging and performance
         "LOG_LEVEL": "INFO",
         "CONVERSATION_TIMEOUT_HOURS": "6",
         "MAX_CONVERSATION_TURNS": "50"
@@ -291,8 +295,9 @@ DISABLED_TOOLS=
 ```
 
 **Option 3: Enable all tools**
+
+Remove or empty `DISABLED_TOOLS` to enable everything:
 ```json
-// Remove or empty the DISABLED_TOOLS to enable everything
 {
   "mcpServers": {
     "pal": {
