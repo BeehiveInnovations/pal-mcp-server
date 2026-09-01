@@ -432,9 +432,9 @@ class OpenAICompatibleProvider(ModelProvider):
         else:
             logging.debug(f"Omitting 'store' parameter for OpenRouter provider (model: {model_name})")
 
-        # Add max tokens if specified (using max_completion_tokens for responses endpoint)
+        # Add max tokens if specified (the Responses API names this max_output_tokens)
         if max_output_tokens:
-            completion_params["max_completion_tokens"] = max_output_tokens
+            completion_params["max_output_tokens"] = max_output_tokens
 
         # For responses endpoint, we only add parameters that are explicitly supported
         # Remove unsupported chat completion parameters that may cause API errors
@@ -598,7 +598,13 @@ class OpenAICompatibleProvider(ModelProvider):
         # Add max tokens if specified and model supports it
         # O3/O4 models that don't support temperature also don't support max_tokens
         if max_output_tokens and supports_sampling:
-            completion_params["max_tokens"] = max_output_tokens
+            # OpenAI's own Chat Completions endpoint rejects the legacy max_tokens for
+            # every GPT-5+ model; max_completion_tokens is the canonical name there.
+            # Proxies (OpenRouter, DIAL, custom) still expect max_tokens.
+            if self.get_provider_type() == ProviderType.OPENAI:
+                completion_params["max_completion_tokens"] = max_output_tokens
+            else:
+                completion_params["max_tokens"] = max_output_tokens
 
         # Add any additional OpenAI-specific parameters
         # Use capabilities to filter parameters for reasoning models

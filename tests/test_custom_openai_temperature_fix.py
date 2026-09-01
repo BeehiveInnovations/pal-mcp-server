@@ -209,8 +209,8 @@ class TestCustomOpenAITemperatureParameterFix:
                 call_kwargs["temperature"] == 0.5
             ), "Custom OpenAI models with supports_temperature=true should include temperature parameter"
             assert (
-                call_kwargs["max_tokens"] == 100
-            ), "Custom OpenAI models with supports_temperature=true should include max_tokens parameter"
+                call_kwargs["max_completion_tokens"] == 100
+            ), "Custom OpenAI models with supports_temperature=true should include max_completion_tokens parameter"
             assert call_kwargs["model"] == "gpt-4-custom"
 
     @patch("utils.model_restrictions.get_restriction_service")
