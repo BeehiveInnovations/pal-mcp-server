@@ -58,6 +58,7 @@ class TestO3TemperatureParameterFixSimple:
 
         assert "temperature" not in call_kwargs, "O3 models should not include temperature parameter"
         assert "max_tokens" not in call_kwargs, "O3 models should not include max_tokens parameter"
+        assert "max_completion_tokens" not in call_kwargs, "O3 models should not include max_completion_tokens parameter"
         assert call_kwargs["model"] == "o3-mini"
         assert "messages" in call_kwargs
 
@@ -107,7 +108,9 @@ class TestO3TemperatureParameterFixSimple:
         call_kwargs = mock_client.chat.completions.create.call_args[1]
 
         assert call_kwargs["temperature"] == 0.5, "Regular models should include temperature parameter"
-        assert call_kwargs["max_tokens"] == 100, "Regular models should include max_tokens parameter"
+        assert (
+            call_kwargs["max_completion_tokens"] == 100
+        ), "Regular OpenAI models should include max_completion_tokens parameter"
         assert call_kwargs["model"] == "gpt-4.1-2025-04-14"
 
     @patch("utils.model_restrictions.get_restriction_service")
