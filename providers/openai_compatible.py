@@ -597,8 +597,24 @@ class OpenAICompatibleProvider(ModelProvider):
 
         # Add max tokens if specified and model supports it
         # O3/O4 models that don't support temperature also don't support max_tokens
-        if max_output_tokens and supports_sampling:
-            completion_params["max_tokens"] = max_output_tokens
+        # Fall back to the configured capability limit when the caller didn't specify one —
+        # without this, OpenRouter applies its own server-side default which can exceed the
+        # actual routed backend's cap (e.g. kimi-k2-thinking: OpenRouter defaults to 131072,
+        # but Novita/Google backends cap at 98304/102400).
+        # Skip this for generic/passthrough capabilities (unregistered "provider/model" slugs) —
+        # their max_output_tokens is a hardcoded guess, not a real per-model limit, so imposing it
+        # would newly cap models that previously relied on OpenRouter's own (often higher) default.
+        effective_max_output_tokens = max_output_tokens
+        if (
+            effective_max_output_tokens is None
+            and capabilities is not None
+            and capabilities.max_output_tokens
+            and not getattr(capabilities, "_is_generic", False)
+        ):
+            effective_max_output_tokens = capabilities.max_output_tokens
+
+        if effective_max_output_tokens and supports_sampling:
+            completion_params["max_tokens"] = effective_max_output_tokens
 
         # Add any additional OpenAI-specific parameters
         # Use capabilities to filter parameters for reasoning models

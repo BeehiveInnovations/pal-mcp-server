@@ -29,7 +29,7 @@ from mcp.types import TextContent
 from config import TEMPERATURE_ANALYTICAL
 from systemprompts import CONSENSUS_PROMPT
 from tools.shared.base_models import ConsolidatedFindings, WorkflowRequest
-from utils.conversation_memory import MAX_CONVERSATION_TURNS, create_thread, get_thread
+from utils.conversation_memory import MAX_CONVERSATION_TURNS, add_turn, create_thread, get_thread
 
 from .workflow.base import WorkflowTool
 
@@ -386,6 +386,47 @@ of the evidence, even when it strongly points in one direction.""",
         }
         return step_data
 
+    def _quorum(self) -> dict:
+        """Quorum facts for a finished council.
+
+        A member that 404s or returns an empty body does not stop the run -- the council
+        simply proceeds with fewer voices. Before 2026-08-27 this reported
+        `total_responses: 4, consensus_confidence: high` over a 3-model council, and
+        24+ silent Mistral 404s went unnoticed for weeks (5 of 60 audited councils ran a
+        seat short). Count SUCCESSES, and degrade confidence when the roster is incomplete.
+        """
+        acc = self.accumulated_responses or []
+        answered = [m for m in acc if m.get("status") != "error"]
+        failed = [m for m in acc if m.get("status") == "error"]
+        planned = len(self.models_to_consult) if self.models_to_consult else len(acc)
+
+        if failed or len(answered) < planned:
+            confidence = "degraded"
+        else:
+            confidence = "high"
+
+        q = {
+            "models_planned": planned,
+            "models_answered": len(answered),
+            "total_responses": len(answered),   # successes only; was len(acc)
+            "consensus_confidence": confidence,
+            "quorum_complete": not failed and len(answered) >= planned,
+        }
+        if failed:
+            q["failed_seats"] = [
+                {"model": m.get("model"), "stance": m.get("stance", "neutral"),
+                 "error": str(m.get("error"))[:300]}
+                for m in failed
+            ]
+            dissent = [m for m in failed if m.get("stance") == "against"]
+            q["quorum_warning"] = (
+                f"INCOMPLETE QUORUM: {len(failed)} of {planned} seats did not answer. "
+                f"Treat this as a {len(answered)}-model council and say so when reporting."
+                + (f" {len(dissent)} of the lost seats held the AGAINST stance, so dissent is "
+                   "under-weighted in this result." if dissent else "")
+            )
+        return q
+
     async def handle_work_completion(self, response_data: dict, request, arguments: dict) -> dict:  # noqa: ARG002
         """Handle consensus workflow completion - no expert analysis, just final synthesis."""
         response_data["consensus_complete"] = True
@@ -395,8 +436,7 @@ of the evidence, even when it strongly points in one direction.""",
         response_data["complete_consensus"] = {
             "initial_prompt": self.original_proposal if self.original_proposal else self.initial_prompt,
             "models_consulted": [m["model"] + ":" + m.get("stance", "neutral") for m in self.accumulated_responses],
-            "total_responses": len(self.accumulated_responses),
-            "consensus_confidence": "high",  # Consensus complete
+            **self._quorum(),
         }
 
         response_data["next_steps"] = (
@@ -444,6 +484,30 @@ of the evidence, even when it strongly points in one direction.""",
 
         # Resolve existing continuation_id or create a new one on first step
         continuation_id = request.continuation_id
+
+        # Restore consensus-specific state on continuation. ConsensusTool is registered as a
+        # single process-wide instance (see server.py TOOLS dict), so self.models_to_consult /
+        # self.accumulated_responses do NOT reliably persist across calls: if a second consensus
+        # thread's step_number==1 call runs on the same instance between this thread's steps
+        # (e.g. two /council runs kicked off concurrently), it overwrites this thread's state.
+        # Rehydrate from the thread's own stored turns instead of trusting self.* survived.
+        if continuation_id and request.step_number > 1:
+            thread = get_thread(continuation_id)
+            if thread and thread.turns:
+                for turn in reversed(thread.turns):
+                    if turn.role == "assistant" and turn.tool_name == self.get_name() and turn.model_metadata:
+                        state = turn.model_metadata
+                        if isinstance(state, dict) and "models_to_consult" in state:
+                            self.models_to_consult = state.get("models_to_consult", [])
+                            self.accumulated_responses = state.get("accumulated_responses", [])
+                            self.initial_request = state.get("initial_request")
+                            self.original_proposal = state.get("original_proposal")
+                            self.work_history = state.get("work_history", [])
+                            logger.debug(
+                                f"[consensus] Restored state for thread {continuation_id}: "
+                                f"{len(self.accumulated_responses)}/{len(self.models_to_consult)} models consulted"
+                            )
+                            break
 
         if request.step_number == 1:
             if not continuation_id:
@@ -508,8 +572,7 @@ of the evidence, even when it strongly points in one direction.""",
                         "models_consulted": [
                             f"{m['model']}:{m.get('stance', 'neutral')}" for m in self.accumulated_responses
                         ],
-                        "total_responses": len(self.accumulated_responses),
-                        "consensus_confidence": "high",
+                        **self._quorum(),
                     }
                     response_data["next_steps"] = (
                         "CONSENSUS GATHERING IS COMPLETE. Synthesize all perspectives and present:\n"
@@ -543,6 +606,32 @@ of the evidence, even when it strongly points in one direction.""",
 
         # Otherwise, use standard workflow execution
         return await super().execute_workflow(arguments)
+
+    def store_conversation_turn(self, continuation_id: str, response_data: dict, request) -> None:
+        """Persist consensus-specific state alongside the base workflow state.
+
+        Overrides WorkflowMixin.store_conversation_turn to additionally carry
+        models_to_consult / accumulated_responses / original_proposal, which the
+        base implementation doesn't know about. These are the fields execute_workflow
+        rehydrates on continuation — see the comment there for why that's required.
+        """
+        clean_content = self._extract_clean_workflow_content_for_history(response_data)
+        workflow_state = {
+            "work_history": self.work_history,
+            "initial_request": getattr(self, "initial_request", None),
+            "models_to_consult": self.models_to_consult,
+            "accumulated_responses": self.accumulated_responses,
+            "original_proposal": self.original_proposal,
+        }
+        add_turn(
+            thread_id=continuation_id,
+            role="assistant",
+            content=clean_content,
+            tool_name=self.get_name(),
+            files=self.get_request_relevant_files(request),
+            images=self.get_request_images(request),
+            model_metadata=workflow_state,
+        )
 
     def _build_continuation_offer(self, continuation_id: str) -> dict[str, Any] | None:
         """Create a continuation offer without exposing prior model responses."""
@@ -768,6 +857,8 @@ of the evidence, even when it strongly points in one direction.""",
                     "models_consulted": models_consulted,
                     "consensus_complete": True,
                     "total_models": len(self.models_to_consult) if self.models_to_consult else 0,
+                    **{k: v for k, v in self._quorum().items()
+                       if k in ("models_answered", "quorum_complete", "quorum_warning")},
                 }
             )
 
