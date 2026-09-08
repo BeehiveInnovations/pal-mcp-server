@@ -58,5 +58,7 @@ body:
           required: true
         - label: I am using `OPENROUTER_API_KEY`
           required: true
+        - label: I am using `REQUESTY_API_KEY`
+          required: true
         - label: I am using `CUSTOM_API_URL`
           required: true

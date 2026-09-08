@@ -55,6 +55,12 @@ else
     echo "❌ OPENROUTER_API_KEY not found"
 fi
 
+if [[ -n "$REQUESTY_API_KEY" ]] || grep -q "REQUESTY_API_KEY=" .env 2>/dev/null; then
+    echo "✅ REQUESTY_API_KEY configured"
+else
+    echo "❌ REQUESTY_API_KEY not found"
+fi
+
 if [[ -n "$CUSTOM_API_URL" ]] || grep -q "CUSTOM_API_URL=" .env 2>/dev/null; then
     echo "✅ CUSTOM_API_URL configured (local models)"
 else

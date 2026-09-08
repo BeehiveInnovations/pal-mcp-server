@@ -13,5 +13,6 @@ class ProviderType(Enum):
     AZURE = "azure"
     XAI = "xai"
     OPENROUTER = "openrouter"
+    REQUESTY = "requesty"
     CUSTOM = "custom"
     DIAL = "dial"

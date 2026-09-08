@@ -35,7 +35,8 @@ function Test-EnvironmentVariables {
         "OPENAI_API_KEY",
         "XAI_API_KEY",
         "DIAL_API_KEY",
-        "OPENROUTER_API_KEY"
+        "OPENROUTER_API_KEY",
+        "REQUESTY_API_KEY"
     )
     
     $hasApiKey = $false

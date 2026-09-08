@@ -81,8 +81,9 @@ class BaseTool(ABC):
     4. Register the tool in server.py's TOOLS dictionary
     """
 
-    # Class-level cache for OpenRouter registry to avoid multiple loads
+    # Class-level cache for OpenRouter/Requesty registries to avoid multiple loads
     _openrouter_registry_cache = None
+    _requesty_registry_cache = None
     _custom_registry_cache = None
 
     @classmethod
@@ -95,6 +96,16 @@ class BaseTool(ABC):
             BaseTool._openrouter_registry_cache = OpenRouterModelRegistry()
             logger.debug("Created cached OpenRouter registry instance")
         return BaseTool._openrouter_registry_cache
+
+    @classmethod
+    def _get_requesty_registry(cls):
+        """Get cached Requesty registry instance, creating if needed."""
+        if BaseTool._requesty_registry_cache is None:
+            from providers.registries.requesty import RequestyModelRegistry
+
+            BaseTool._requesty_registry_cache = RequestyModelRegistry()
+            logger.debug("Created cached Requesty registry instance")
+        return BaseTool._requesty_registry_cache
 
     @classmethod
     def _get_custom_registry(cls):
@@ -310,6 +321,19 @@ class BaseTool(ABC):
 
                 logging.debug(f"Failed to add OpenRouter models to enum: {e}")
 
+        # Add Requesty models if Requesty is configured
+        requesty_key = get_env("REQUESTY_API_KEY")
+        if requesty_key and requesty_key != "your_requesty_api_key_here":
+            try:
+                registry = self._get_requesty_registry()
+                for alias in registry.list_aliases():
+                    if alias not in all_models:
+                        all_models.append(alias)
+            except Exception as e:
+                import logging
+
+                logging.debug(f"Failed to add Requesty models to enum: {e}")
+
         # Add custom models if custom API is configured
         custom_url = get_env("CUSTOM_API_URL")
         if custom_url:
@@ -475,6 +499,7 @@ class BaseTool(ABC):
             "GOOGLE_ALLOWED_MODELS": "Google",
             "XAI_ALLOWED_MODELS": "X.AI",
             "OPENROUTER_ALLOWED_MODELS": "OpenRouter",
+            "REQUESTY_ALLOWED_MODELS": "Requesty",
             "DIAL_ALLOWED_MODELS": "DIAL",
         }
 
@@ -1336,6 +1361,20 @@ When recommending searches, be specific about what information you need and why 
                 import logging
 
                 logging.debug(f"Failed to add OpenRouter models to enum: {exc}")
+
+        # Add Requesty models and their aliases when Requesty is configured
+        requesty_key = get_env("REQUESTY_API_KEY")
+        if requesty_key and requesty_key != "your_requesty_api_key_here":
+            try:
+                registry = self._get_requesty_registry()
+
+                for alias in registry.list_aliases():
+                    if alias not in all_models:
+                        all_models.append(alias)
+            except Exception as exc:  # pragma: no cover - logged for observability
+                import logging
+
+                logging.debug(f"Failed to add Requesty models to enum: {exc}")
 
         # Add custom models (and their aliases) when a custom endpoint is available
         custom_url = get_env("CUSTOM_API_URL")

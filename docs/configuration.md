@@ -47,6 +47,16 @@ OPENROUTER_API_KEY=your_openrouter_api_key_here
 # If using OpenRouter, comment out native API keys above
 ```
 
+**Option 2b: Requesty (Access multiple models through one API)**
+```env
+# Requesty gateway for unified model access
+REQUESTY_API_KEY=your_requesty_api_key_here
+# Get from: https://app.requesty.ai/router
+# Optional: EU data-residency endpoint
+# REQUESTY_BASE_URL=https://router.eu.requesty.ai/v1
+# If using Requesty, comment out native API keys above
+```
+
 **Option 3: Custom API Endpoints (Local models)**
 ```env
 # For Ollama, vLLM, LM Studio, etc.
@@ -72,6 +82,7 @@ DEFAULT_MODEL=auto  # Claude picks best model for each task (recommended)
   - `conf/gemini_models.json` – Gemini catalogue (`GEMINI_MODELS_CONFIG_PATH`)
   - `conf/xai_models.json` – X.AI / GROK catalogue (`XAI_MODELS_CONFIG_PATH`)
   - `conf/openrouter_models.json` – OpenRouter catalogue (`OPENROUTER_MODELS_CONFIG_PATH`)
+  - `conf/requesty_models.json` – Requesty catalogue (`REQUESTY_MODELS_CONFIG_PATH`)
   - `conf/dial_models.json` – DIAL aggregation catalogue (`DIAL_MODELS_CONFIG_PATH`)
   - `conf/custom_models.json` – Custom/OpenAI-compatible endpoints (`CUSTOM_MODELS_CONFIG_PATH`)
 
@@ -85,6 +96,7 @@ DEFAULT_MODEL=auto  # Claude picks best model for each task (recommended)
   | Gemini | `gemini-2.5-pro`, `gemini-2.5-flash`, `gemini-2.0-flash`, `gemini-2.0-flash-lite` | `pro`, `gemini-pro`, `flash`, `flash-2.0`, `flashlite` |
   | X.AI | `grok-4`, `grok-4.1-fast` | `grok`, `grok4`, `grok-4.1-fast-reasoning` |
   | OpenRouter | See `conf/openrouter_models.json` for the continually evolving catalogue | e.g., `opus`, `sonnet`, `flash`, `pro`, `mistral` |
+  | Requesty | See `conf/requesty_models.json`; any `<vendor>/<model>` id from the Requesty catalogue also works | e.g., `opus`, `sonnet`, `gpt4o-mini`, `deepseek`, `grok` |
   | Custom | User-managed entries such as `llama3.2` | Define your own aliases per entry |
 
   Latest OpenAI entries (`gpt-5.2`, `gpt-5.1-codex`, `gpt-5.1-codex-mini`, `gpt-5.2-pro`) expose 400K-token contexts with large outputs, reasoning-token support, and multimodal inputs. `gpt-5.1-codex` and `gpt-5.2-pro` are Responses-only with streaming disabled, while the base `gpt-5.2` and Codex mini support streaming along with full code-generation flags. Update your manifests if you run custom deployments so these capability bits stay accurate.
@@ -183,6 +195,9 @@ XAI_ALLOWED_MODELS=grok-4,grok-4.1-fast-reasoning
 
 # OpenRouter model restrictions (affects models via custom provider)
 OPENROUTER_ALLOWED_MODELS=opus,sonnet,mistral
+
+# Requesty model restrictions
+REQUESTY_ALLOWED_MODELS=opus,sonnet,gpt4o-mini
 ```
 
 **Supported Model Names:** The names/aliases listed in the JSON manifests above are the authoritative source. Keep in mind:
@@ -220,6 +235,7 @@ OPENAI_MODELS_CONFIG_PATH=/path/to/openai_models.json
 GEMINI_MODELS_CONFIG_PATH=/path/to/gemini_models.json
 XAI_MODELS_CONFIG_PATH=/path/to/xai_models.json
 OPENROUTER_MODELS_CONFIG_PATH=/path/to/openrouter_models.json
+REQUESTY_MODELS_CONFIG_PATH=/path/to/requesty_models.json
 DIAL_MODELS_CONFIG_PATH=/path/to/dial_models.json
 CUSTOM_MODELS_CONFIG_PATH=/path/to/custom_models.json
 ```
@@ -287,6 +303,15 @@ OPENROUTER_ALLOWED_MODELS=opus,sonnet,gpt-4
 LOG_LEVEL=INFO
 ```
 
+### Requesty Only
+```env
+# Single API for multiple models via the Requesty gateway
+DEFAULT_MODEL=auto
+REQUESTY_API_KEY=your-requesty-key
+REQUESTY_ALLOWED_MODELS=opus,sonnet,gpt4o-mini
+LOG_LEVEL=INFO
+```
+
 ## Important Notes
 
 **Local Networking:**
@@ -294,8 +319,8 @@ LOG_LEVEL=INFO
 - The server runs as a native Python process
 
 **API Key Priority:**
-- Native APIs take priority over OpenRouter when both are configured
-- Avoid configuring both native and OpenRouter for the same models
+- Native APIs take priority over OpenRouter/Requesty when both are configured
+- Avoid configuring both native and OpenRouter/Requesty for the same models
 
 **Model Restrictions:**
 - Apply to all usage including auto mode

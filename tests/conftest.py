@@ -184,6 +184,7 @@ def clear_model_restriction_env(monkeypatch):
         "GOOGLE_ALLOWED_MODELS",
         "XAI_ALLOWED_MODELS",
         "OPENROUTER_ALLOWED_MODELS",
+        "REQUESTY_ALLOWED_MODELS",
         "DIAL_ALLOWED_MODELS",
     ]
 

@@ -43,6 +43,7 @@ class ModelProviderRegistry:
         ProviderType.DIAL,  # DIAL unified API access
         ProviderType.CUSTOM,  # Local/self-hosted models
         ProviderType.OPENROUTER,  # Catch-all for cloud models
+        ProviderType.REQUESTY,  # Catch-all for cloud models (Requesty gateway)
     ]
 
     def __new__(cls):
@@ -158,6 +159,7 @@ class ModelProviderRegistry:
         1. Native APIs (GOOGLE, OPENAI) - Most direct and efficient
         2. CUSTOM - For local/private models with specific endpoints
         3. OPENROUTER - Catch-all for cloud models via unified API
+        4. REQUESTY - Catch-all for cloud models via the Requesty gateway
 
         Args:
             model_name: Name of the model (e.g., "gemini-2.5-flash", "gpt5")
@@ -337,6 +339,7 @@ class ModelProviderRegistry:
             ProviderType.AZURE: "AZURE_OPENAI_API_KEY",
             ProviderType.XAI: "XAI_API_KEY",
             ProviderType.OPENROUTER: "OPENROUTER_API_KEY",
+            ProviderType.REQUESTY: "REQUESTY_API_KEY",
             ProviderType.CUSTOM: "CUSTOM_API_KEY",  # Can be empty for providers that don't need auth
             ProviderType.DIAL: "DIAL_API_KEY",
         }

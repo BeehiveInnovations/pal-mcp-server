@@ -319,9 +319,10 @@ class VersionTool(BaseTool):
                 ProviderType.XAI,
                 ProviderType.DIAL,
                 ProviderType.OPENROUTER,
+                ProviderType.REQUESTY,
                 ProviderType.CUSTOM,
             ]
-            provider_names = ["Google Gemini", "OpenAI", "X.AI", "DIAL", "OpenRouter", "Custom/Local"]
+            provider_names = ["Google Gemini", "OpenAI", "X.AI", "DIAL", "OpenRouter", "Requesty", "Custom/Local"]
 
             for provider_type, provider_name in zip(provider_types, provider_names):
                 provider = ModelProviderRegistry.get_provider(provider_type)

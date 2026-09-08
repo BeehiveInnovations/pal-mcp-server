@@ -1073,6 +1073,7 @@ setup_env_file() {
         "XAI_API_KEY:your_xai_api_key_here"
         "DIAL_API_KEY:your_dial_api_key_here"
         "OPENROUTER_API_KEY:your_openrouter_api_key_here"
+        "REQUESTY_API_KEY:your_requesty_api_key_here"
     )
 
     for key_pair in "${api_keys[@]}"; do
@@ -1117,6 +1118,7 @@ check_api_keys() {
         "XAI_API_KEY:your_xai_api_key_here"
         "DIAL_API_KEY:your_dial_api_key_here"
         "OPENROUTER_API_KEY:your_openrouter_api_key_here"
+        "REQUESTY_API_KEY:your_requesty_api_key_here"
     )
 
     for key_pair in "${api_keys[@]}"; do
@@ -1147,6 +1149,7 @@ check_api_keys() {
         echo "  XAI_API_KEY=your-actual-key"
         echo "  DIAL_API_KEY=your-actual-key"
         echo "  OPENROUTER_API_KEY=your-actual-key"
+        echo "  REQUESTY_API_KEY=your-actual-key"
         echo ""
         print_info "You can continue with development setup and add API keys later."
         echo ""
@@ -1200,6 +1203,7 @@ parse_env_variables() {
             "XAI_API_KEY"
             "DIAL_API_KEY"
             "OPENROUTER_API_KEY"
+            "REQUESTY_API_KEY"
             "CUSTOM_API_URL"
             "CUSTOM_API_KEY"
             "CUSTOM_MODEL_NAME"

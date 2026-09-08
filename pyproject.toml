@@ -28,6 +28,7 @@ py-modules = ["server", "config"]
 "conf" = [
     "conf/custom_models.json",
     "conf/openrouter_models.json",
+    "conf/requesty_models.json",
     "conf/azure_models.json",
     "conf/openai_models.json",
     "conf/gemini_models.json",
