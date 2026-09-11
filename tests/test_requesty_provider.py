@@ -248,9 +248,9 @@ class TestRequestyAutoMode:
 
             expected_allowed = {"google/gemini-2.5-flash", "anthropic/claude-opus-4-1-20250805"}
 
-            assert (
-                set(available_models.keys()) == expected_allowed
-            ), f"Expected {expected_allowed}, but got {set(available_models.keys())}"
+            assert set(available_models.keys()) == expected_allowed, (
+                f"Expected {expected_allowed}, but got {set(available_models.keys())}"
+            )
         finally:
             os.environ.pop("REQUESTY_ALLOWED_MODELS", None)
             utils.model_restrictions._restriction_service = None
