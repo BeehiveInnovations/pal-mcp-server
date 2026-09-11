@@ -270,7 +270,7 @@ assert capabilities.provider == ProviderType.EXAMPLE
 When a user requests a model, providers are checked in priority order:
 1. **Native providers** (Gemini, OpenAI, Example) - handle their specific models
 2. **Custom provider** - handles local/self-hosted models  
-3. **OpenRouter** - catch-all for everything else
+3. **OpenRouter / Requesty** - catch-all for everything else
 
 ### Model Validation
 `ModelProvider.validate_model_name()` delegates to `get_capabilities()` so most

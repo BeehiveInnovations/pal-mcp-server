@@ -1,0 +1,330 @@
+{
+  "_README": {
+    "description": "Model metadata for the Requesty-backed provider.",
+    "documentation": "https://github.com/BeehiveInnovations/pal-mcp-server/blob/main/docs/custom_models.md",
+    "usage": "Models listed here are exposed through Requesty (https://router.requesty.ai/v1). Aliases are case-insensitive. Any other Requesty model can be used via its full '<vendor>/<model>' id with generic capabilities. Full catalogue: https://app.requesty.ai/model-list",
+    "field_notes": "Matches providers/shared/model_capabilities.py.",
+    "field_descriptions": {
+      "model_name": "The model identifier - Requesty format (e.g., 'anthropic/claude-sonnet-4-20250514')",
+      "aliases": "Array of short names users can type instead of the full model name",
+      "context_window": "Total number of tokens the model can process (input + output combined)",
+      "max_output_tokens": "Maximum number of tokens the model can generate in a single response",
+      "supports_extended_thinking": "Whether the model supports extended reasoning tokens",
+      "supports_json_mode": "Whether the model can guarantee valid JSON output",
+      "supports_function_calling": "Whether the model supports function/tool calling",
+      "supports_images": "Whether the model can process images/visual input",
+      "max_image_size_mb": "Maximum total size in MB for all images combined (capped at 40MB max for custom models)",
+      "supports_temperature": "Whether the model accepts temperature parameter in API calls (set to false for O3/O4 reasoning models)",
+      "temperature_constraint": "Type of temperature constraint: 'fixed' (fixed value), 'range' (continuous range), 'discrete' (specific values), or omit for default range",
+      "use_openai_response_api": "Set to true when the model must use the /responses endpoint. Leave false/omit for standard chat completions.",
+      "default_reasoning_effort": "Default reasoning effort level for models that support it (e.g., 'low', 'medium', 'high'). Omit if not applicable.",
+      "description": "Human-readable description of the model",
+      "intelligence_score": "1-20 human rating used as the primary signal for auto-mode model ordering",
+      "allow_code_generation": "Whether this model can generate and suggest fully working code - complete with functions, files, and detailed implementation instructions - for your AI tool to use right away. Only set this to 'true' for a model more capable than the AI model / CLI you're currently using."
+    }
+  },
+  "models": [
+    {
+      "model_name": "anthropic/claude-opus-4-1-20250805",
+      "aliases": [
+        "opus",
+        "opus4.1",
+        "claude-opus"
+      ],
+      "context_window": 200000,
+      "max_output_tokens": 32000,
+      "supports_extended_thinking": false,
+      "supports_json_mode": false,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 5.0,
+      "description": "Claude Opus 4.1 via Requesty - Anthropic's flagship model for complex coding and reasoning",
+      "intelligence_score": 16
+    },
+    {
+      "model_name": "anthropic/claude-sonnet-4-5-20250929",
+      "aliases": [
+        "sonnet",
+        "sonnet4.5"
+      ],
+      "context_window": 200000,
+      "max_output_tokens": 64000,
+      "supports_extended_thinking": false,
+      "supports_json_mode": false,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 5.0,
+      "description": "Claude Sonnet 4.5 via Requesty - High-performance model with exceptional reasoning and efficiency",
+      "intelligence_score": 14
+    },
+    {
+      "model_name": "anthropic/claude-sonnet-4-20250514",
+      "aliases": [
+        "sonnet4"
+      ],
+      "context_window": 200000,
+      "max_output_tokens": 64000,
+      "supports_extended_thinking": false,
+      "supports_json_mode": false,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 5.0,
+      "description": "Claude Sonnet 4 via Requesty - Balanced coding and reasoning model",
+      "intelligence_score": 12
+    },
+    {
+      "model_name": "anthropic/claude-opus-4-20250514",
+      "aliases": [
+        "opus4"
+      ],
+      "context_window": 200000,
+      "max_output_tokens": 32000,
+      "supports_extended_thinking": false,
+      "supports_json_mode": false,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 5.0,
+      "description": "Claude Opus 4 via Requesty - Previous generation flagship model",
+      "intelligence_score": 14
+    },
+    {
+      "model_name": "anthropic/claude-3-5-haiku-20241022",
+      "aliases": [
+        "haiku"
+      ],
+      "context_window": 200000,
+      "max_output_tokens": 8192,
+      "supports_extended_thinking": false,
+      "supports_json_mode": false,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 5.0,
+      "description": "Claude 3.5 Haiku via Requesty - Fast and efficient with vision",
+      "intelligence_score": 8
+    },
+    {
+      "model_name": "google/gemini-2.5-pro",
+      "aliases": [
+        "pro",
+        "gemini-pro",
+        "gemini",
+        "gemini-2.5",
+        "pro-requesty"
+      ],
+      "context_window": 1048576,
+      "max_output_tokens": 65536,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 20.0,
+      "allow_code_generation": true,
+      "description": "Google's Gemini 2.5 Pro via Requesty with vision and thinking",
+      "intelligence_score": 16
+    },
+    {
+      "model_name": "google/gemini-2.5-flash",
+      "aliases": [
+        "flash",
+        "gemini-flash",
+        "flash-requesty"
+      ],
+      "context_window": 1048576,
+      "max_output_tokens": 65536,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 20.0,
+      "description": "Google's Gemini 2.5 Flash via Requesty - Fast model with vision",
+      "intelligence_score": 10
+    },
+    {
+      "model_name": "openai/gpt-5",
+      "aliases": [
+        "gpt5"
+      ],
+      "context_window": 400000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 20.0,
+      "supports_temperature": false,
+      "temperature_constraint": "fixed",
+      "allow_code_generation": true,
+      "description": "GPT-5 via Requesty - Advanced reasoning model with vision",
+      "intelligence_score": 16
+    },
+    {
+      "model_name": "openai/gpt-5-mini",
+      "aliases": [
+        "gpt5mini",
+        "gpt5-mini"
+      ],
+      "context_window": 400000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 20.0,
+      "supports_temperature": false,
+      "temperature_constraint": "fixed",
+      "description": "GPT-5 Mini via Requesty - Efficient reasoning model",
+      "intelligence_score": 10
+    },
+    {
+      "model_name": "openai/gpt-4.1",
+      "aliases": [
+        "gpt4.1",
+        "gpt-4.1"
+      ],
+      "context_window": 1047576,
+      "max_output_tokens": 32768,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 20.0,
+      "description": "GPT-4.1 via Requesty - 1M context general-purpose model",
+      "intelligence_score": 11
+    },
+    {
+      "model_name": "openai/gpt-4.1-mini",
+      "aliases": [
+        "gpt4.1-mini",
+        "gpt-4.1-mini"
+      ],
+      "context_window": 1047576,
+      "max_output_tokens": 32768,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 20.0,
+      "description": "GPT-4.1 Mini via Requesty - Fast 1M context model",
+      "intelligence_score": 9
+    },
+    {
+      "model_name": "openai/gpt-4o",
+      "aliases": [
+        "gpt4o",
+        "gpt-4o"
+      ],
+      "context_window": 128000,
+      "max_output_tokens": 16384,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 20.0,
+      "description": "GPT-4o via Requesty - Multimodal general-purpose model",
+      "intelligence_score": 10
+    },
+    {
+      "model_name": "openai/gpt-4o-mini",
+      "aliases": [
+        "gpt4o-mini",
+        "gpt-4o-mini",
+        "4o-mini"
+      ],
+      "context_window": 128000,
+      "max_output_tokens": 16384,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 20.0,
+      "description": "GPT-4o Mini via Requesty - Fast, low-cost multimodal model",
+      "intelligence_score": 8
+    },
+    {
+      "model_name": "openai/o3",
+      "aliases": [
+        "o3"
+      ],
+      "context_window": 200000,
+      "max_output_tokens": 100000,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 20.0,
+      "supports_temperature": false,
+      "temperature_constraint": "fixed",
+      "description": "OpenAI o3 via Requesty - Strong reasoning model",
+      "intelligence_score": 14
+    },
+    {
+      "model_name": "openai/o4-mini",
+      "aliases": [
+        "o4-mini",
+        "o4mini"
+      ],
+      "context_window": 200000,
+      "max_output_tokens": 100000,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 20.0,
+      "supports_temperature": false,
+      "temperature_constraint": "fixed",
+      "description": "OpenAI o4-mini via Requesty - Fast, cost-efficient reasoning model",
+      "intelligence_score": 11
+    },
+    {
+      "model_name": "deepseek/deepseek-chat",
+      "aliases": [
+        "deepseek",
+        "deepseek-chat",
+        "deepseek-v3"
+      ],
+      "context_window": 131072,
+      "max_output_tokens": 8192,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": false,
+      "description": "DeepSeek V3 (chat) via Requesty - Strong open-weights general model",
+      "intelligence_score": 10
+    },
+    {
+      "model_name": "deepseek/deepseek-reasoner",
+      "aliases": [
+        "deepseek-r1",
+        "r1",
+        "deepseek-thinking"
+      ],
+      "context_window": 131072,
+      "max_output_tokens": 65536,
+      "supports_extended_thinking": true,
+      "supports_json_mode": false,
+      "supports_function_calling": false,
+      "supports_images": false,
+      "supports_temperature": false,
+      "temperature_constraint": "fixed",
+      "description": "DeepSeek R1 (reasoner) via Requesty - Open-weights reasoning model",
+      "intelligence_score": 12
+    },
+    {
+      "model_name": "xai/grok-4",
+      "aliases": [
+        "grok-4",
+        "grok4",
+        "grok"
+      ],
+      "context_window": 256000,
+      "max_output_tokens": 256000,
+      "supports_extended_thinking": true,
+      "supports_json_mode": false,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 20.0,
+      "description": "xAI Grok 4 via Requesty - Frontier reasoning model with vision",
+      "intelligence_score": 14
+    }
+  ]
+}

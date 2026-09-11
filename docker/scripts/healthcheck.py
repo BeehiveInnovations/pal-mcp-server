@@ -70,6 +70,7 @@ def check_environment():
         "XAI_API_KEY",
         "DIAL_API_KEY",
         "OPENROUTER_API_KEY",
+        "REQUESTY_API_KEY",
     ]
 
     has_api_key = any(get_env(key) for key in api_keys)

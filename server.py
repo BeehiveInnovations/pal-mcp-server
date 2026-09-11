@@ -387,7 +387,14 @@ def configure_providers():
     """
     # Log environment variable status for debugging
     logger.debug("Checking environment variables for API keys...")
-    api_keys_to_check = ["OPENAI_API_KEY", "OPENROUTER_API_KEY", "GEMINI_API_KEY", "XAI_API_KEY", "CUSTOM_API_URL"]
+    api_keys_to_check = [
+        "OPENAI_API_KEY",
+        "OPENROUTER_API_KEY",
+        "REQUESTY_API_KEY",
+        "GEMINI_API_KEY",
+        "XAI_API_KEY",
+        "CUSTOM_API_URL",
+    ]
     for key in api_keys_to_check:
         value = get_env(key)
         logger.debug(f"  {key}: {'[PRESENT]' if value else '[MISSING]'}")
@@ -398,6 +405,7 @@ def configure_providers():
     from providers.gemini import GeminiModelProvider
     from providers.openai import OpenAIModelProvider
     from providers.openrouter import OpenRouterProvider
+    from providers.requesty import RequestyProvider
     from providers.shared import ProviderType
     from providers.xai import XAIModelProvider
     from utils.model_restrictions import get_restriction_service
@@ -405,6 +413,7 @@ def configure_providers():
     valid_providers = []
     has_native_apis = False
     has_openrouter = False
+    has_requesty = False
     has_custom = False
 
     # Check for Gemini API key
@@ -475,6 +484,19 @@ def configure_providers():
         else:
             logger.debug("OpenRouter API key is placeholder value")
 
+    # Check for Requesty API key
+    requesty_key = get_env("REQUESTY_API_KEY")
+    logger.debug(f"Requesty key check: key={'[PRESENT]' if requesty_key else '[MISSING]'}")
+    if requesty_key and requesty_key != "your_requesty_api_key_here":
+        valid_providers.append("Requesty")
+        has_requesty = True
+        logger.info("Requesty API key found - Multiple models available via Requesty")
+    else:
+        if not requesty_key:
+            logger.debug("Requesty API key not found in environment")
+        else:
+            logger.debug("Requesty API key is placeholder value")
+
     # Check for custom API endpoint (Ollama, vLLM, etc.)
     custom_url = get_env("CUSTOM_API_URL")
     if custom_url:
@@ -530,11 +552,15 @@ def configure_providers():
         registered_providers.append(ProviderType.CUSTOM.value)
         logger.debug(f"Registered provider: {ProviderType.CUSTOM.value}")
 
-    # 3. OpenRouter last (catch-all for everything else)
+    # 3. OpenRouter / Requesty last (catch-all for everything else)
     if has_openrouter:
         ModelProviderRegistry.register_provider(ProviderType.OPENROUTER, OpenRouterProvider)
         registered_providers.append(ProviderType.OPENROUTER.value)
         logger.debug(f"Registered provider: {ProviderType.OPENROUTER.value}")
+    if has_requesty:
+        ModelProviderRegistry.register_provider(ProviderType.REQUESTY, RequestyProvider)
+        registered_providers.append(ProviderType.REQUESTY.value)
+        logger.debug(f"Registered provider: {ProviderType.REQUESTY.value}")
 
     # Log all registered providers
     if registered_providers:
@@ -549,6 +575,7 @@ def configure_providers():
             "- XAI_API_KEY for X.AI GROK models\n"
             "- DIAL_API_KEY for DIAL models\n"
             "- OPENROUTER_API_KEY for OpenRouter (multiple models)\n"
+            "- REQUESTY_API_KEY for Requesty (multiple models)\n"
             "- CUSTOM_API_URL for local models (Ollama, vLLM, etc.)"
         )
 
@@ -562,6 +589,8 @@ def configure_providers():
         priority_info.append("Custom endpoints")
     if has_openrouter:
         priority_info.append("OpenRouter (catch-all)")
+    if has_requesty:
+        priority_info.append("Requesty (catch-all)")
 
     if len(priority_info) > 1:
         logger.info(f"Provider priority: {' → '.join(priority_info)}")
@@ -684,6 +713,9 @@ async def handle_list_tools() -> list[Tool]:
     openrouter_key_for_cache = get_env("OPENROUTER_API_KEY")
     if openrouter_key_for_cache and openrouter_key_for_cache != "your_openrouter_api_key_here":
         logger.debug("OpenRouter registry cache used efficiently across all tool schemas")
+    requesty_key_for_cache = get_env("REQUESTY_API_KEY")
+    if requesty_key_for_cache and requesty_key_for_cache != "your_requesty_api_key_here":
+        logger.debug("Requesty registry cache used efficiently across all tool schemas")
 
     logger.debug(f"Returning {len(tools)} tools to MCP client")
     return tools

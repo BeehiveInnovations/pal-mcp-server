@@ -11,6 +11,7 @@ Environment Variables:
 - GOOGLE_ALLOWED_MODELS: Comma-separated list of allowed Gemini models
 - XAI_ALLOWED_MODELS: Comma-separated list of allowed X.AI GROK models
 - OPENROUTER_ALLOWED_MODELS: Comma-separated list of allowed OpenRouter models
+- REQUESTY_ALLOWED_MODELS: Comma-separated list of allowed Requesty models
 - DIAL_ALLOWED_MODELS: Comma-separated list of allowed DIAL models
 
 Example:
@@ -18,6 +19,7 @@ Example:
     GOOGLE_ALLOWED_MODELS=flash
     XAI_ALLOWED_MODELS=grok-4,grok-4.1-fast-reasoning
     OPENROUTER_ALLOWED_MODELS=opus,sonnet,mistral
+    REQUESTY_ALLOWED_MODELS=opus,sonnet,gpt4o-mini
 """
 
 import logging
@@ -53,6 +55,7 @@ class ModelRestrictionService:
         ProviderType.GOOGLE: "GOOGLE_ALLOWED_MODELS",
         ProviderType.XAI: "XAI_ALLOWED_MODELS",
         ProviderType.OPENROUTER: "OPENROUTER_ALLOWED_MODELS",
+        ProviderType.REQUESTY: "REQUESTY_ALLOWED_MODELS",
         ProviderType.DIAL: "DIAL_ALLOWED_MODELS",
     }
 

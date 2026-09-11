@@ -20,6 +20,12 @@ You need at least one API key. Choose based on your needs:
 - Control spending limits in your dashboard
 - Access GPT-4, Claude, Gemini, and more through one API
 
+### Option A2: Requesty
+**One API for multiple models**
+- Visit [Requesty](https://app.requesty.ai/router) and sign up
+- Generate an API key and set `REQUESTY_API_KEY`
+- Access GPT, Claude, Gemini, DeepSeek, Grok and more through one API (model ids use the `<vendor>/<model>` format)
+
 ### Option B: Native Provider APIs
 
 **Gemini (Google):**
@@ -290,6 +296,7 @@ GEMINI_API_KEY=your-gemini-api-key-here      # For Gemini models
 OPENAI_API_KEY=your-openai-api-key-here      # For GPT-5.2, GPT-5.1-Codex, O3
 XAI_API_KEY=your-xai-api-key-here            # For Grok models
 OPENROUTER_API_KEY=your-openrouter-key       # For multiple models
+REQUESTY_API_KEY=your-requesty-key           # For multiple models via Requesty
 
 # DIAL Platform (optional)
 DIAL_API_KEY=your-dial-api-key-here

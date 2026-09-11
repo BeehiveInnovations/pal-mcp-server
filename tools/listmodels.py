@@ -2,7 +2,7 @@
 List Models Tool - Display all available models organized by provider
 
 This tool provides a comprehensive view of all AI models available in the system,
-organized by their provider (Gemini, OpenAI, X.AI, OpenRouter, Custom).
+organized by their provider (Gemini, OpenAI, X.AI, OpenRouter, Requesty, Custom).
 It shows which providers are configured and what models can be used.
 """
 
@@ -13,6 +13,7 @@ from mcp.types import TextContent
 
 from providers.registries.custom import CustomEndpointModelRegistry
 from providers.registries.openrouter import OpenRouterModelRegistry
+from providers.registries.requesty import RequestyModelRegistry
 from tools.models import ToolModelCategory, ToolOutput
 from tools.shared.base_models import ToolRequest
 from tools.shared.base_tool import BaseTool
@@ -312,6 +313,114 @@ class ListModelsTool(BaseTool):
 
         output_lines.append("")
 
+        # Check Requesty
+        requesty_key = get_env("REQUESTY_API_KEY")
+        is_requesty_configured = requesty_key and requesty_key != "your_requesty_api_key_here"
+
+        output_lines.append(f"## Requesty {'✅' if is_requesty_configured else '❌'}")
+
+        if is_requesty_configured:
+            output_lines.append("**Status**: Configured and available")
+            output_lines.append("**Description**: Access to multiple cloud AI providers via the Requesty gateway")
+
+            try:
+                provider = ModelProviderRegistry.get_provider(ProviderType.REQUESTY)
+                if provider:
+                    registry = RequestyModelRegistry()
+
+                    def _format_requesty_context(tokens: int) -> str:
+                        if not tokens:
+                            return "?"
+                        if tokens >= 1_000_000:
+                            return f"{tokens // 1_000_000}M"
+                        if tokens >= 1_000:
+                            return f"{tokens // 1_000}K"
+                        return str(tokens)
+
+                    has_restrictions = bool(
+                        restriction_service and restriction_service.has_restrictions(ProviderType.REQUESTY)
+                    )
+
+                    if has_restrictions:
+                        restricted_names = sorted(set(restricted_models_by_provider.get(ProviderType.REQUESTY, [])))
+
+                        output_lines.append("\n**Models (policy restricted)**:")
+                        if restricted_names:
+                            for model_name in restricted_names:
+                                try:
+                                    caps = provider.get_capabilities(model_name)
+                                except ValueError:
+                                    output_lines.append(f"- `{model_name}` *(not recognized by provider)*")
+                                    continue
+
+                                context_value = int(caps.context_window or 0)
+                                context_str = _format_requesty_context(context_value)
+                                suffix_parts = [f"{context_str} context"]
+                                if caps.supports_extended_thinking:
+                                    suffix_parts.append("thinking")
+                                suffix = ", ".join(suffix_parts)
+
+                                arrow = ""
+                                if caps.model_name.lower() != model_name.lower():
+                                    arrow = f" → `{caps.model_name}`"
+
+                                score = caps.get_effective_capability_rank()
+                                output_lines.append(f"- `{model_name}`{arrow} (score {score}, {suffix})")
+
+                            allowed_set = restriction_service.get_allowed_models(ProviderType.REQUESTY) or set()
+                            if allowed_set:
+                                output_lines.append(
+                                    f"\n*Requesty models restricted by REQUESTY_ALLOWED_MODELS: {', '.join(sorted(allowed_set))}*"
+                                )
+                        else:
+                            output_lines.append("- *No models allowed by current restriction policy.*")
+                    else:
+                        available_models = provider.list_models(respect_restrictions=True)
+                        providers_models: dict[str, list[tuple[int, str, Optional[Any]]]] = {}
+
+                        for model_name in available_models:
+                            config = registry.resolve(model_name)
+                            provider_name = "other"
+                            if config and "/" in config.model_name:
+                                provider_name = config.model_name.split("/")[0]
+                            elif "/" in model_name:
+                                provider_name = model_name.split("/")[0]
+
+                            providers_models.setdefault(provider_name, [])
+
+                            rank = config.get_effective_capability_rank() if config else 0
+                            providers_models[provider_name].append((rank, model_name, config))
+
+                        output_lines.append("\n**Available Models**:")
+                        for provider_name, models in sorted(providers_models.items()):
+                            output_lines.append(f"\n*{provider_name.title()}:*")
+                            for rank, alias, config in sorted(models, key=lambda item: (-item[0], item[1])):
+                                if config:
+                                    context_str = _format_requesty_context(getattr(config, "context_window", 0))
+                                    suffix_parts = [f"{context_str} context"]
+                                    if getattr(config, "supports_extended_thinking", False):
+                                        suffix_parts.append("thinking")
+                                    suffix = ", ".join(suffix_parts)
+
+                                    arrow = ""
+                                    if config.model_name.lower() != alias.lower():
+                                        arrow = f" → `{config.model_name}`"
+
+                                    output_lines.append(f"- `{alias}`{arrow} (score {rank}, {suffix})")
+                                else:
+                                    output_lines.append(f"- `{alias}` (score {rank})")
+                else:
+                    output_lines.append("**Error**: Could not load Requesty provider")
+
+            except Exception as e:
+                logger.exception("Error listing Requesty models: %s", e)
+                output_lines.append(f"**Error loading models**: {str(e)}")
+        else:
+            output_lines.append("**Status**: Not configured (set REQUESTY_API_KEY)")
+            output_lines.append("**Note**: Provides access to GPT-5, Claude, Gemini, DeepSeek, and many more")
+
+        output_lines.append("")
+
         # Check Custom API
         custom_url = get_env("CUSTOM_API_URL")
 
@@ -360,6 +469,8 @@ class ListModelsTool(BaseTool):
         )
         if is_openrouter_configured:
             configured_count += 1
+        if is_requesty_configured:
+            configured_count += 1
         if custom_url:
             configured_count += 1
 
@@ -382,6 +493,7 @@ class ListModelsTool(BaseTool):
         output_lines.append("- In auto mode, the CLI Agent will select the best model for each task")
         output_lines.append("- Custom models are only available when CUSTOM_API_URL is set")
         output_lines.append("- OpenRouter provides access to many cloud models with one API key")
+        output_lines.append("- Requesty provides access to many cloud models with one API key")
 
         # Format output
         content = "\n".join(output_lines)

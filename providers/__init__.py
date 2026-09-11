@@ -7,6 +7,7 @@ from .openai import OpenAIModelProvider
 from .openai_compatible import OpenAICompatibleProvider
 from .openrouter import OpenRouterProvider
 from .registry import ModelProviderRegistry
+from .requesty import RequestyProvider
 from .shared import ModelCapabilities, ModelResponse
 
 __all__ = [
@@ -19,4 +20,5 @@ __all__ = [
     "OpenAIModelProvider",
     "OpenAICompatibleProvider",
     "OpenRouterProvider",
+    "RequestyProvider",
 ]
