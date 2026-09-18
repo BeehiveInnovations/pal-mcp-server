@@ -43,6 +43,8 @@ from mcp.types import (  # noqa: E402
     ToolsCapability,
 )
 
+from clink.constants import INTERNAL_DEFAULTS  # noqa: E402
+from clink.registry import available_cli_clients  # noqa: E402
 from config import (  # noqa: E402
     DEFAULT_MODEL,
     __version__,
@@ -69,7 +71,7 @@ from tools import (  # noqa: E402
 )
 from tools.models import ToolOutput  # noqa: E402
 from tools.shared.exceptions import ToolExecutionError  # noqa: E402
-from utils.env import env_override_enabled, get_env  # noqa: E402
+from utils.env import env_override_enabled, get_env, get_env_bool  # noqa: E402
 
 # Configure logging for server operations
 # Can be controlled via LOG_LEVEL environment variable (DEBUG, INFO, WARNING, ERROR)
@@ -540,8 +542,23 @@ def configure_providers():
     if registered_providers:
         logger.info(f"Registered providers: {', '.join(registered_providers)}")
 
-    # Require at least one valid provider
-    if not valid_providers:
+    # Require at least one valid provider, unless a CLI client can serve clink.
+    cli_only_mode = False
+    require_api_provider = get_env_bool("PAL_REQUIRE_API_PROVIDER", False)
+    if not valid_providers and not require_api_provider:
+        # Probed only when CLI-only mode could actually be used, so a fail-fast
+        # deployment reports the missing API key rather than a clink config error.
+        cli_clients = available_cli_clients()
+        if cli_clients:
+            logger.warning(
+                "No API provider is configured; starting in CLI-only mode. The clink tool can "
+                "reach these CLIs: %s. Tools that call a model provider directly will report an "
+                "error until an API key is set. Set PAL_REQUIRE_API_PROVIDER=true to fail fast instead.",
+                ", ".join(cli_clients),
+            )
+            cli_only_mode = True
+
+    if not valid_providers and not cli_only_mode:
         raise ValueError(
             "At least one API configuration is required. Please set either:\n"
             "- GEMINI_API_KEY for Gemini models\n"
@@ -549,10 +566,17 @@ def configure_providers():
             "- XAI_API_KEY for X.AI GROK models\n"
             "- DIAL_API_KEY for DIAL models\n"
             "- OPENROUTER_API_KEY for OpenRouter (multiple models)\n"
-            "- CUSTOM_API_URL for local models (Ollama, vLLM, etc.)"
+            "- CUSTOM_API_URL for local models (Ollama, vLLM, etc.)\n"
+            + (
+                ""
+                if require_api_provider
+                else "Alternatively, install one of the CLIs that clink supports "
+                f"({', '.join(sorted(INTERNAL_DEFAULTS))}) to run in CLI-only mode."
+            )
         )
 
-    logger.info(f"Available providers: {', '.join(valid_providers)}")
+    if valid_providers:
+        logger.info(f"Available providers: {', '.join(valid_providers)}")
 
     # Log provider priority
     priority_info = []
@@ -614,7 +638,7 @@ def configure_providers():
     # Check if auto mode has any models available after restrictions
     from config import IS_AUTO_MODE
 
-    if IS_AUTO_MODE:
+    if IS_AUTO_MODE and not cli_only_mode:
         available_models = ModelProviderRegistry.get_available_models(respect_restrictions=True)
         if not available_models:
             logger.error(
@@ -1185,22 +1209,34 @@ async def reconstruct_thread_context(arguments: dict[str, Any]) -> dict[str, Any
                         f"[CONVERSATION_DEBUG] Unable to resolve fallback model for {context.tool_name}: {fallback_exc}"
                     )
 
+            # get_preferred_fallback_model() always returns a name, even when no
+            # provider can serve it, so presence of a provider is what decides.
+            if fallback_model and ModelProviderRegistry.get_provider_for_model(fallback_model) is None:
+                fallback_model = None
+
             if fallback_model is None:
                 available_models = ModelProviderRegistry.get_available_model_names()
                 if available_models:
                     fallback_model = available_models[0]
 
             if fallback_model is None:
-                raise ValueError(
-                    "Conversation continuation failed: no available models detected for context reconstruction."
+                # No provider is configured, which is normal in CLI-only mode.
+                # This tool does not call one, so reconstruct history against a
+                # synthetic budget rather than failing the continuation.
+                logger.debug(
+                    "[CONVERSATION_DEBUG] No models available; using a provider-free context to "
+                    f"reconstruct history for {context.tool_name}"
                 )
-
-            logger.debug(
-                f"[CONVERSATION_DEBUG] Using fallback model '{fallback_model}' for context reconstruction of tool without model requirement"
-            )
-            model_context = ModelContext(fallback_model)
-            arguments["_model_context"] = model_context
-            arguments["_resolved_model_name"] = fallback_model
+                model_context = ModelContext.for_tool_without_model()
+                arguments["_model_context"] = model_context
+                arguments["_resolved_model_name"] = model_context.model_name
+            else:
+                logger.debug(
+                    f"[CONVERSATION_DEBUG] Using fallback model '{fallback_model}' for context reconstruction of tool without model requirement"
+                )
+                model_context = ModelContext(fallback_model)
+                arguments["_model_context"] = model_context
+                arguments["_resolved_model_name"] = fallback_model
 
     # Build conversation history with model-specific limits
     logger.debug(f"[CONVERSATION_DEBUG] Building conversation history for thread {continuation_id}")

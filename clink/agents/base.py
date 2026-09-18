@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import errno
 import logging
 import os
 import shlex
@@ -13,9 +14,11 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
-from clink.constants import DEFAULT_STREAM_LIMIT
+from clink.constants import DEFAULT_STREAM_LIMIT, TIMEOUT_PLACEHOLDER
 from clink.models import ResolvedCLIClient, ResolvedCLIRole
 from clink.parsers import BaseParser, ParsedCLIResponse, ParserError, get_parser
+
+PROMPT_REDACTION = "<prompt omitted>"
 
 logger = logging.getLogger("clink.agent")
 
@@ -49,7 +52,7 @@ class BaseCLIAgent:
 
     def __init__(self, client: ResolvedCLIClient):
         self.client = client
-        self._parser: BaseParser = get_parser(client.parser)
+        self._parser: BaseParser = get_parser(client.parser, client.parser_options)
         self._logger = logging.getLogger(f"clink.runner.{client.name}")
 
     async def run(
@@ -68,6 +71,11 @@ class BaseCLIAgent:
         command = self._build_command(role=role, system_prompt=system_prompt)
         env = self._build_environment()
 
+        # CLIs that reject a piped prompt take it on the command line instead.
+        prompt_args = self.client.build_prompt_args(prompt)
+        redacted_prompt_args = self.client.build_prompt_args(PROMPT_REDACTION)
+        stdin_prompt = "" if prompt_args else prompt
+
         # Resolve executable path for cross-platform compatibility (especially Windows)
         executable_name = command[0]
         resolved_executable = shutil.which(executable_name)
@@ -77,8 +85,6 @@ class BaseCLIAgent:
                 f"Ensure the command is installed and accessible."
             )
         command[0] = resolved_executable
-
-        sanitized_command = list(command)
 
         cwd = str(self.client.working_dir) if self.client.working_dir else None
         limit = DEFAULT_STREAM_LIMIT
@@ -101,7 +107,14 @@ class BaseCLIAgent:
             except KeyError as exc:  # pragma: no cover - defensive
                 raise CLIAgentError(f"Invalid output flag template '{flag_template}': missing placeholder {exc}")
             command_with_output_flag.extend(shlex.split(rendered_flag))
-            sanitized_command = list(command_with_output_flag)
+
+        # The prompt goes last so it cannot be separated from its flag by any
+        # argument appended above. The sanitized command is built from the same
+        # template with a placeholder substituted for the prompt, so redaction
+        # never depends on argv positions and can never alter an unrelated
+        # argument that happens to contain the prompt text.
+        sanitized_command = list(command_with_output_flag) + redacted_prompt_args
+        command_with_output_flag.extend(prompt_args)
 
         self._logger.debug("Executing CLI command: %s", " ".join(sanitized_command))
         if cwd:
@@ -119,10 +132,19 @@ class BaseCLIAgent:
             )
         except FileNotFoundError as exc:
             raise CLIAgentError(f"Executable not found for CLI '{self.client.name}': {exc}") from exc
+        except OSError as exc:
+            if prompt_args and exc.errno == errno.E2BIG:
+                raise CLIAgentError(
+                    f"Prompt is too large for CLI '{self.client.name}', which receives it on the "
+                    f"command line. The operating system limits argument size. Shorten the prompt, "
+                    f"pass files by path instead of inlining them, or use a CLI that accepts a "
+                    f"piped prompt."
+                ) from exc
+            raise CLIAgentError(f"Failed to launch CLI '{self.client.name}': {exc}") from exc
 
         try:
             stdout_bytes, stderr_bytes = await asyncio.wait_for(
-                process.communicate(prompt.encode("utf-8")),
+                process.communicate(stdin_prompt.encode("utf-8")),
                 timeout=self.client.timeout_seconds,
             )
         except asyncio.TimeoutError as exc:
@@ -196,7 +218,18 @@ class BaseCLIAgent:
         base.extend(self.client.config_args)
         base.extend(role.role_args)
 
-        return base
+        return [self._render_arg(arg) for arg in base]
+
+    def _render_arg(self, arg: str) -> str:
+        """Substitute runtime placeholders into a configured argument.
+
+        ``{timeout_seconds}`` lets a CLI that enforces its own deadline stay in
+        step with the timeout clink applies, instead of the two drifting apart.
+        """
+
+        if TIMEOUT_PLACEHOLDER not in arg:
+            return arg
+        return arg.replace(TIMEOUT_PLACEHOLDER, str(self.client.timeout_seconds))
 
     def _build_environment(self) -> dict[str, str]:
         env = os.environ.copy()

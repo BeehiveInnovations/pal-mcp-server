@@ -78,7 +78,7 @@ You can make your own custom roles in `conf/cli_clients/` or tweak any of the sh
 ## Tool Parameters
 
 - `prompt`: Your question or task for the external CLI (required)
-- `cli_name`: Which CLI to use - `gemini` (default), `claude`, `codex`, or add your own in `conf/cli_clients/`
+- `cli_name`: Which CLI to use - `gemini` (default), `claude`, `codex`, `agy`, or add your own in `conf/cli_clients/`
 - `role`: Preset role - `default`, `planner`, `codereviewer` (default: `default`)
 - `files`: Optional file paths for context (references only, CLI opens files itself)
 - `images`: Optional image paths for visual context
@@ -141,6 +141,7 @@ Clink configurations live in `conf/cli_clients/`. We ship presets for the suppor
 - `gemini.json` – runs `gemini --telemetry false --yolo -o json`
 - `claude.json` – runs `claude --print --output-format json --permission-mode acceptEdits --model sonnet`
 - `codex.json` – runs `codex exec --json --dangerously-bypass-approvals-and-sandbox`
+- `agy.json` – runs `agy --output-format json --dangerously-skip-permissions --print-timeout <timeout>s`
 
 > **CAUTION**: These flags intentionally bypass each CLI's safety prompts so they can edit files or launch tools autonomously via MCP. Only enable them in trusted sandboxes and tailor role prompts or CLI configs if you need more guardrails.
 
@@ -148,7 +149,100 @@ Each preset points to role-specific prompts in `systemprompts/clink/`. Duplicate
 
 > **Why `--yolo` for Gemini?** The Gemini CLI currently requires automatic approvals to execute its own tools (for example `run_shell_command`). Without the flag it errors with `Tool "run_shell_command" not found in registry`. See [issue #5382](https://github.com/google-gemini/gemini-cli/issues/5382) for more details.
 
-**Adding new CLIs**: Drop a JSON config into `conf/cli_clients/`, create role prompts in `systemprompts/clink/`, and register a parser/agent if the CLI outputs a new format.
+### Adding a new CLI
+
+Most CLIs need only a JSON config in `conf/cli_clients/` plus role prompts in
+`systemprompts/clink/`. These fields cover the differences between CLIs without
+writing any Python:
+
+| Field | Purpose |
+|---|---|
+| `parser` | Which parser reads the CLI's output. Use `json`, `jsonl`, or `text` for the generic parsers, or a CLI-specific one. |
+| `parser_options` | Describes the output shape to the generic parsers (see below). |
+| `runner` | Optional agent class providing CLI-specific behaviour. When omitted, a runner matching the client's `name` is used if one exists, otherwise the generic runner. |
+| `prompt_delivery` | `stdin` (default) pipes the prompt. `argv` appends it to the command line, for CLIs that reject a piped prompt. |
+| `prompt_args` | Argument template used with `argv` delivery. Exactly one entry must contain `{prompt}`, e.g. `["-p", "{prompt}"]`. |
+
+`additional_args`, `role_args`, and `prompt_args` may contain
+`{timeout_seconds}`, which is replaced with the client's configured timeout.
+(`output_to_file.flag_template` is excluded: it takes only `{path}`.)
+This keeps a CLI that enforces its own deadline in step with the timeout clink
+applies, instead of the two drifting apart.
+
+> **CAUTION**: `argv` delivery puts the prompt in the process argument vector,
+> where any local process can read it through `ps` or `/proc/<pid>/cmdline`, and
+> where endpoint monitoring or crash reporting may capture it. Prompts routinely
+> carry source code. clink redacts the prompt from the command it records and
+> returns, but it cannot hide it from the operating system. Use `stdin` delivery
+> unless the CLI refuses it, as Antigravity does.
+>
+> Argument size is also capped by the operating system (`ARG_MAX`, which covers
+> the argument vector and the environment together, and varies by platform and
+> configuration). A prompt carrying inlined file contents can exceed it, so
+> clink reports that as a clear error rather than an unhandled `OSError`. Pass
+> files by path where the CLI supports it.
+
+Generic parser options:
+
+| Option | Applies to | Purpose |
+|---|---|---|
+| `content_path` | `json`, `jsonl` | Dotted path to the response text, e.g. `data.message` or `items.0.text`. |
+| `metadata_paths` | `json`, `jsonl` | Map of metadata names to dotted paths. |
+| `status_path` / `success_values` | `json`, `jsonl` | Fail with a clear error when the CLI reports a non-success status. |
+| `error_path` | `json`, `jsonl` | Dotted path to an error message, included in that failure. |
+| `match` | `jsonl` | Map of dotted paths to values selecting which record holds the answer. |
+| `include_events` | `jsonl` | Keep parsed records in metadata, capped at the most recent `MAX_RETAINED_EVENTS` with an `events_truncated` count. |
+
+When a CLI prints progress output before its JSON result, the `json` parser
+takes the last top-level document it can decode, ignoring objects nested inside
+one it has already read. The document must begin at the start of a line. A line opening with `[` that
+does not decode is skipped, since log prefixes (`[INFO] ...`,
+`[2026-09-17 10:00:00] ...`, `[1/3] ...`) share that shape; a line opening with
+`{` that does not decode is an error, since that is the payload shape. An error
+that is never followed by a successful decode is fatal, so a truncated or
+malformed final payload does not silently return an earlier progress record.
+
+A complete config-only client:
+
+```json
+{
+  "name": "mycli",
+  "command": "mycli",
+  "parser": "json",
+  "parser_options": {
+    "content_path": "result.text",
+    "metadata_paths": {"tokens": "usage.total_tokens"}
+  },
+  "prompt_delivery": "argv",
+  "prompt_args": ["--ask", "{prompt}"],
+  "roles": {
+    "default": {"prompt_path": "systemprompts/clink/default.txt"}
+  }
+}
+```
+
+Write a parser or agent class only when the output needs logic the generic
+parsers cannot express, such as recovering a usable answer from an error
+payload.
+
+### Running without an API key
+
+Clink shells out to CLIs that authenticate themselves, so it needs no model
+provider of its own. When no API key is configured but a supported CLI is
+installed, the server starts in CLI-only mode: `clink` works, and tools that
+call a provider directly report an error until a key is set.
+
+This matters for hosts that strip the environment before launching MCP servers.
+Codex does this by default through `shell_environment_policy`, so an API key
+present in your shell does not reach the server. Either pass it explicitly:
+
+```bash
+codex mcp add pal --env GEMINI_API_KEY=... -- /path/to/.pal_venv/bin/python /path/to/server.py
+```
+
+or rely on CLI-only mode and let clink use the installed CLIs. Set
+`PAL_REQUIRE_API_PROVIDER=true` to restore the old behaviour of refusing to
+start without a provider.
 
 ## When to Use Clink vs Other Tools
 
@@ -163,7 +257,8 @@ Ensure the relevant CLI is installed and configured:
 
 - [Claude Code](https://www.anthropic.com/claude-code)
 - [Gemini CLI](https://github.com/google-gemini/gemini-cli)
-- [Codex CLI](https://docs.sourcegraph.com/codex)
+- [Codex CLI](https://github.com/openai/codex)
+- [Antigravity CLI](https://antigravity.google) (`agy`)
 
 ## Related Guides
 

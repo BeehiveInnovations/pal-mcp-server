@@ -1,0 +1,20 @@
+{
+  "name": "agy",
+  "command": "agy",
+  "additional_args": ["--dangerously-skip-permissions", "--print-timeout", "{timeout_seconds}s"],
+  "env": {},
+  "roles": {
+    "default": {
+      "prompt_path": "systemprompts/clink/default.txt",
+      "role_args": []
+    },
+    "planner": {
+      "prompt_path": "systemprompts/clink/default_planner.txt",
+      "role_args": []
+    },
+    "codereviewer": {
+      "prompt_path": "systemprompts/clink/default_codereviewer.txt",
+      "role_args": []
+    }
+  }
+}

@@ -22,6 +22,13 @@ OPENAI_API_KEY=your-openai-key
 
 ### API Keys (At least one required)
 
+**Exception:** the `clink` tool shells out to CLIs that authenticate
+themselves, so no API key is needed to use it. When none is configured but a
+supported CLI (`claude`, `codex`, `gemini`, `agy`) is installed, the server
+starts in CLI-only mode and tools that call a model provider directly report an
+error until a key is set. Set `PAL_REQUIRE_API_PROVIDER=true` to refuse to
+start instead. See [Clink](tools/clink.md).
+
 **Important:** Use EITHER OpenRouter OR native APIs, not both! Having both creates ambiguity about which provider serves each model.
 
 **Option 1: Native APIs (Recommended for direct access)**

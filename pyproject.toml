@@ -4,7 +4,8 @@ version = "9.8.2"
 description = "AI-powered MCP server with multiple model providers"
 requires-python = ">=3.9"
 dependencies = [
-    "mcp>=1.0.0",
+    # Capped below 2.0: the 2.x SDK removed Server.list_tools (see requirements.txt).
+    "mcp>=1.0.0,<2.0.0",
     "google-genai>=1.19.0",
     "openai>=1.55.2",
     "pydantic>=2.0.0",

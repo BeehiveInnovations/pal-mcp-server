@@ -5,7 +5,14 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, Field, PositiveInt, field_validator
+from pydantic import BaseModel, Field, PositiveInt, field_validator, model_validator
+
+from clink.constants import (
+    DEFAULT_PROMPT_DELIVERY,
+    PROMPT_PLACEHOLDER,
+    TIMEOUT_PLACEHOLDER,
+    PromptDelivery,
+)
 
 
 class OutputCaptureConfig(BaseModel):
@@ -51,6 +58,40 @@ class CLIClientConfig(BaseModel):
     timeout_seconds: PositiveInt | None = Field(default=None)
     roles: dict[str, CLIRoleConfig] = Field(default_factory=dict)
     output_to_file: OutputCaptureConfig | None = None
+    parser: str | None = Field(
+        default=None,
+        description="Parser used to interpret CLI output. Overrides the internal default for this CLI.",
+    )
+    runner: str | None = Field(
+        default=None,
+        description="Agent runner providing CLI-specific behaviour. Defaults to the generic runner.",
+    )
+    parser_options: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Parser-specific options, e.g. content_path for the generic json parser.",
+    )
+    prompt_delivery: PromptDelivery | None = Field(
+        default=None,
+        description="How the prompt reaches the CLI: piped to stdin, or appended to the command line.",
+    )
+    prompt_args: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Argument template used when prompt_delivery is 'argv'. Exactly one entry must contain "
+            "the '{prompt}' placeholder, e.g. ['-p', '{prompt}']."
+        ),
+    )
+
+    @field_validator("prompt_args", mode="before")
+    @classmethod
+    def _ensure_prompt_args_list(cls, value: Any) -> list[str]:
+        if value is None:
+            return []
+        if isinstance(value, list):
+            return [str(item) for item in value]
+        if isinstance(value, str):
+            return [value]
+        raise TypeError("prompt_args must be a list of strings or a single string")
 
     @field_validator("additional_args", mode="before")
     @classmethod
@@ -85,8 +126,42 @@ class ResolvedCLIClient(BaseModel):
     timeout_seconds: int
     parser: str
     runner: str | None = None
+    parser_options: dict[str, Any] = Field(default_factory=dict)
+    prompt_delivery: PromptDelivery = DEFAULT_PROMPT_DELIVERY
+    prompt_args: list[str] = Field(default_factory=list)
     roles: dict[str, ResolvedCLIRole]
     output_to_file: OutputCaptureConfig | None = None
+
+    @model_validator(mode="after")
+    def _check_prompt_delivery(self) -> ResolvedCLIClient:
+        """Reject an argv client with no template.
+
+        The registry enforces this when loading configuration, but a client
+        constructed directly would otherwise fall back to stdin silently.
+        """
+
+        if self.prompt_delivery != "argv":
+            return self
+        occurrences = sum(arg.count(PROMPT_PLACEHOLDER) for arg in self.prompt_args)
+        if occurrences != 1:
+            raise ValueError(
+                f"CLI '{self.name}' uses prompt_delivery 'argv' and must contain exactly one "
+                f"'{PROMPT_PLACEHOLDER}' across prompt_args, found {occurrences}"
+            )
+        return self
+
+    def build_prompt_args(self, prompt: str) -> list[str]:
+        """Render the argv prompt template for this client.
+
+        Returns an empty list when the prompt is delivered on stdin.
+        """
+
+        if self.prompt_delivery != "argv":
+            return []
+        return [
+            arg.replace(TIMEOUT_PLACEHOLDER, str(self.timeout_seconds)).replace(PROMPT_PLACEHOLDER, prompt)
+            for arg in self.prompt_args
+        ]
 
     def list_roles(self) -> list[str]:
         return list(self.roles.keys())

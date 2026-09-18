@@ -4,6 +4,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Literal
+
+PromptDelivery = Literal["stdin", "argv"]
+
+DEFAULT_PROMPT_DELIVERY: PromptDelivery = "stdin"
+PROMPT_PLACEHOLDER = "{prompt}"
+TIMEOUT_PLACEHOLDER = "{timeout_seconds}"
 
 DEFAULT_TIMEOUT_SECONDS = 1800
 DEFAULT_STREAM_LIMIT = 10 * 1024 * 1024  # 10MB per stream
@@ -24,6 +31,8 @@ class CLIInternalDefaults:
     default_role_prompt: str | None = None
     timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS
     runner: str | None = None
+    prompt_delivery: PromptDelivery = DEFAULT_PROMPT_DELIVERY
+    prompt_args: list[str] = field(default_factory=list)
 
 
 INTERNAL_DEFAULTS: dict[str, CLIInternalDefaults] = {
@@ -38,6 +47,15 @@ INTERNAL_DEFAULTS: dict[str, CLIInternalDefaults] = {
         additional_args=["exec"],
         default_role_prompt="systemprompts/clink/default.txt",
         runner="codex",
+    ),
+    "agy": CLIInternalDefaults(
+        parser="agy_json",
+        additional_args=["--output-format", "json"],
+        default_role_prompt="systemprompts/clink/default.txt",
+        # agy rejects a piped prompt: `agy -p < file` exits with "flag needs an
+        # argument". The prompt is passed on the command line instead.
+        prompt_delivery="argv",
+        prompt_args=["-p", "{prompt}"],
     ),
     "claude": CLIInternalDefaults(
         parser="claude_json",

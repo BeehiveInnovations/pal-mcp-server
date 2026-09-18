@@ -32,6 +32,7 @@ from typing import Any, Optional
 
 from config import DEFAULT_MODEL
 from providers import ModelCapabilities, ModelProviderRegistry
+from providers.shared import ProviderType
 
 logger = logging.getLogger(__name__)
 
@@ -60,12 +61,40 @@ class ModelContext:
     token calculations, ensuring consistency across the system.
     """
 
+    # Budget used when reconstructing history for a tool that never calls a
+    # provider. Only the context window feeds token allocation; the output cap
+    # is capability metadata. A conservative window keeps history trimming in
+    # effect, since the CLI the prompt is handed to declares no window here.
+    CLI_DELEGATED_CONTEXT_WINDOW = 200_000
+    CLI_DELEGATED_MAX_OUTPUT_TOKENS = 64_000
+
     def __init__(self, model_name: str, model_option: Optional[str] = None):
         self.model_name = model_name
         self.model_option = model_option  # Store optional model option (e.g., "for", "against", etc.)
         self._provider = None
         self._capabilities = None
         self._token_allocation = None
+
+    @classmethod
+    def for_tool_without_model(cls, model_name: str = "cli-delegated") -> "ModelContext":
+        """Build a context for a tool that never calls a model provider.
+
+        Rebuilding conversation history still needs a token budget, but with no
+        API credentials configured there is no provider to supply one. The clink
+        tool is the case that matters: it reaches a CLI that authenticates
+        itself, so a follow-up turn must not fail on a model lookup it never
+        needed.
+        """
+
+        context = cls(model_name)
+        context._capabilities = ModelCapabilities(
+            provider=ProviderType.CUSTOM,
+            model_name=model_name,
+            friendly_name="CLI-delegated",
+            context_window=cls.CLI_DELEGATED_CONTEXT_WINDOW,
+            max_output_tokens=cls.CLI_DELEGATED_MAX_OUTPUT_TOKENS,
+        )
+        return context
 
     @property
     def provider(self):

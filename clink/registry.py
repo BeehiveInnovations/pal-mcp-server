@@ -5,14 +5,18 @@ from __future__ import annotations
 import json
 import logging
 import shlex
+import shutil
 from collections.abc import Iterable
 from pathlib import Path
 
+from clink.agents import available_runners
 from clink.constants import (
     CONFIG_DIR,
+    DEFAULT_PROMPT_DELIVERY,
     DEFAULT_TIMEOUT_SECONDS,
     INTERNAL_DEFAULTS,
     PROJECT_ROOT,
+    PROMPT_PLACEHOLDER,
     USER_CONFIG_DIR,
     CLIInternalDefaults,
 )
@@ -22,6 +26,7 @@ from clink.models import (
     ResolvedCLIClient,
     ResolvedCLIRole,
 )
+from clink.parsers import available_parsers
 from utils.env import get_env
 from utils.file_utils import read_json_file
 
@@ -131,8 +136,6 @@ class ClinkRegistry:
 
         normalized_name = raw.name.strip()
         internal_defaults = INTERNAL_DEFAULTS.get(normalized_name.lower())
-        if internal_defaults is None:
-            raise RegistryLoadError(f"CLI '{raw.name}' is not supported by clink")
 
         executable = self._resolve_executable(raw, internal_defaults, source_path)
 
@@ -143,13 +146,52 @@ class ClinkRegistry:
             internal_defaults.timeout_seconds if internal_defaults else DEFAULT_TIMEOUT_SECONDS
         )
 
-        parser_name = internal_defaults.parser
+        parser_name = raw.parser or (internal_defaults.parser if internal_defaults else None)
         if not parser_name:
             raise RegistryLoadError(
-                f"CLI '{raw.name}' must define a parser either in configuration or internal defaults"
+                f"CLI '{raw.name}' must define a parser either in configuration or internal defaults. "
+                f"Set \"parser\" in {source_path.name} to one of: {', '.join(available_parsers())}"
             )
 
-        runner_name = internal_defaults.runner if internal_defaults else None
+        if parser_name.lower() not in available_parsers():
+            raise RegistryLoadError(
+                f"CLI '{raw.name}' refers to unknown parser '{parser_name}'. "
+                f"Valid parsers: {', '.join(available_parsers())}"
+            )
+
+        runner_name = raw.runner or (internal_defaults.runner if internal_defaults else None)
+        if runner_name and runner_name.lower() not in available_runners():
+            # Without this an unknown runner silently falls back to the generic
+            # agent, dropping CLI-specific error recovery with no diagnostic.
+            raise RegistryLoadError(
+                f"CLI '{raw.name}' refers to unknown runner '{runner_name}'. "
+                f"Valid runners: {', '.join(available_runners())}"
+            )
+
+        prompt_delivery = raw.prompt_delivery or (
+            internal_defaults.prompt_delivery if internal_defaults else DEFAULT_PROMPT_DELIVERY
+        )
+        if raw.prompt_args:
+            prompt_args = list(raw.prompt_args)
+        elif raw.prompt_delivery and internal_defaults and raw.prompt_delivery != internal_defaults.prompt_delivery:
+            # The config deliberately changed delivery, so the bundled template
+            # for the other mode must not be inherited on top of it.
+            prompt_args = []
+        else:
+            prompt_args = list(internal_defaults.prompt_args) if internal_defaults else []
+        if prompt_delivery == "argv":
+            occurrences = sum(arg.count(PROMPT_PLACEHOLDER) for arg in prompt_args)
+            if occurrences != 1:
+                raise RegistryLoadError(
+                    f"CLI '{raw.name}' uses prompt_delivery 'argv' and must contain exactly one "
+                    f'\'{PROMPT_PLACEHOLDER}\' across prompt_args, e.g. ["-p", "{PROMPT_PLACEHOLDER}"]'
+                )
+        elif prompt_args:
+            # Silently discarding these would look like the prompt was delivered.
+            raise RegistryLoadError(
+                f"CLI '{raw.name}' defines prompt_args but uses prompt_delivery '{prompt_delivery}'. "
+                f"Set prompt_delivery to 'argv' or remove prompt_args."
+            )
 
         env = self._merge_env(raw, internal_defaults)
         working_dir = self._resolve_optional_path(raw.working_dir, source_path.parent)
@@ -166,6 +208,9 @@ class ClinkRegistry:
             timeout_seconds=int(timeout_seconds),
             parser=parser_name,
             runner=runner_name,
+            parser_options=dict(raw.parser_options),
+            prompt_delivery=prompt_delivery,
+            prompt_args=prompt_args,
             roles=roles,
             output_to_file=output_to_file,
             working_dir=working_dir,
@@ -253,3 +298,31 @@ def get_registry() -> ClinkRegistry:
     if _REGISTRY is None:
         _REGISTRY = ClinkRegistry()
     return _REGISTRY
+
+
+def available_cli_clients() -> list[str]:
+    """Return the names of configured CLI clients whose executable is on PATH.
+
+    Used to decide whether the server can run without an API provider: clink
+    shells out to CLIs that authenticate themselves, so a machine with one of
+    them installed needs no API key.
+    """
+
+    try:
+        registry = get_registry()
+    except RegistryLoadError:
+        # Report the config problem, but do not let it replace the caller's
+        # own diagnosis: this runs on the no-API-key path, where the missing
+        # key is usually the real blocker.
+        logger.warning("Could not load clink CLI clients while probing for installed CLIs", exc_info=True)
+        return []
+
+    available: list[str] = []
+    for name in registry.list_clients():
+        try:
+            client = registry.get_client(name)
+        except Exception:  # pragma: no cover - defensive
+            continue
+        if client.executable and shutil.which(client.executable[0]):
+            available.append(name)
+    return sorted(available)

@@ -16,6 +16,12 @@ _AGENTS: dict[str, type[BaseCLIAgent]] = {
 }
 
 
+def available_runners() -> list[str]:
+    """Return the sorted names of every registered agent runner."""
+
+    return sorted(_AGENTS)
+
+
 def create_agent(client: ResolvedCLIClient) -> BaseCLIAgent:
     agent_key = (client.runner or client.name).lower()
     agent_cls = _AGENTS.get(agent_key, BaseCLIAgent)
@@ -24,6 +30,7 @@ def create_agent(client: ResolvedCLIClient) -> BaseCLIAgent:
 
 __all__ = [
     "AgentOutput",
+    "available_runners",
     "BaseCLIAgent",
     "CLIAgentError",
     "create_agent",
