@@ -11,6 +11,10 @@ Each provider:
 - Gets wired into `configure_providers()` so environment variables control activation
 - Can leverage helper subclasses (e.g., `AzureOpenAIProvider`) when only client wiring differs
 
+For an SDK-backed provider with a tenant-specific JSON catalog, see
+[`LLMProxyProvider`](../providers/llm_proxy.py) and its
+[configuration guide](llm_proxy.md).
+
 ### Intelligence score cheatsheet
 
 Set `intelligence_score` (1–20) when you want deterministic ordering in auto

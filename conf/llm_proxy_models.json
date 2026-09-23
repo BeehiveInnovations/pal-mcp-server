@@ -1,0 +1,4 @@
+{
+  "_README": "Add models enabled for your LLM Proxy tenant. See docs/llm_proxy.md for the catalog format.",
+  "models": []
+}

@@ -15,3 +15,4 @@ class ProviderType(Enum):
     OPENROUTER = "openrouter"
     CUSTOM = "custom"
     DIAL = "dial"
+    LLM_PROXY = "llm_proxy"

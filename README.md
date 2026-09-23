@@ -202,6 +202,9 @@ cd pal-mcp-server
 
 PAL activates any provider that has credentials in your `.env`. See `.env.example` for deeper customization.
 
+[LLM Proxy](docs/llm_proxy.md) is available through its optional official Python
+client, tenant secret, and a configured model catalog (Python 3.11+).
+
 ## Core Tools
 
 > **Note:** Each tool comes with its own multi-step workflow, parameters, and descriptions that consume valuable context window space even when not in use. To optimize performance, some tools are disabled by default. See [Tool Configuration](#tool-configuration) below to enable them.

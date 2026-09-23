@@ -25,6 +25,14 @@ jobs:
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
 
+      - name: Install optional LLM Proxy client
+        if: matrix.python-version != '3.10'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          proxy_release=$(gh release view --repo tyemirov/llm-proxy --json tagName --jq .tagName)
+          pip install "llm-proxy-client @ git+https://github.com/tyemirov/llm-proxy.git@${proxy_release}#subdirectory=python"
+
       - name: Run unit tests
         run: |
           # Run only unit tests (exclude simulation tests and integration tests)
