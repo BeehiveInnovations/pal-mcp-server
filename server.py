@@ -530,6 +530,20 @@ def configure_providers():
         registered_providers.append(ProviderType.CUSTOM.value)
         logger.debug(f"Registered provider: {ProviderType.CUSTOM.value}")
 
+    # LLM Proxy serves an explicitly configured tenant catalog.
+    proxy_secret = get_env("LLM_PROXY_SECRET")
+    proxy_url = get_env("LLM_PROXY_BASE_URL")
+    if proxy_secret or proxy_url:
+        if not proxy_secret or not proxy_url:
+            raise ValueError("LLM Proxy requires both LLM_PROXY_SECRET and LLM_PROXY_BASE_URL")
+        from providers.llm_proxy import LLMProxyProvider
+
+        # Construct now so invalid configuration fails at startup, not on a tool call.
+        ModelProviderRegistry.register_provider(ProviderType.LLM_PROXY, LLMProxyProvider)
+        ModelProviderRegistry.get_provider(ProviderType.LLM_PROXY)
+        valid_providers.append("LLM Proxy")
+        registered_providers.append(ProviderType.LLM_PROXY.value)
+
     # 3. OpenRouter last (catch-all for everything else)
     if has_openrouter:
         ModelProviderRegistry.register_provider(ProviderType.OPENROUTER, OpenRouterProvider)
@@ -549,6 +563,7 @@ def configure_providers():
             "- XAI_API_KEY for X.AI GROK models\n"
             "- DIAL_API_KEY for DIAL models\n"
             "- OPENROUTER_API_KEY for OpenRouter (multiple models)\n"
+            "- LLM_PROXY_SECRET and LLM_PROXY_BASE_URL for LLM Proxy\n"
             "- CUSTOM_API_URL for local models (Ollama, vLLM, etc.)"
         )
 
