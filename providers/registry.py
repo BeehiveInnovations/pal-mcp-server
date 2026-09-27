@@ -398,39 +398,99 @@ class ModelProviderRegistry:
         from tools.models import ToolModelCategory
 
         effective_category = tool_category or ToolModelCategory.BALANCED
-        first_available_model = None
 
-        # Ask each provider for their preference in priority order
+        # Providers whose models are effectively free / lowest-cost. BALANCED is
+        # biased toward the strongest model from these before spending on a paid API.
+        # NOTE: only CUSTOM (the flat-rate groq endpoint) qualifies. OpenRouter is a
+        # catch-all that also proxies expensive models (gpt-5, opus, gemini-pro), so it
+        # is NOT free-tier — including it would let BALANCED silently pick a paid model.
+        free_tier = (ProviderType.CUSTOM,)
+
+        def rank_of(provider, model_name):
+            """Effective capability rank for a model (alias-aware), or 0 if unknown."""
+            try:
+                # get_capabilities resolves aliases -> canonical caps; the plain dict
+                # lookup does not, so aliases would otherwise rank 0 and skew min/max.
+                caps = provider.get_capabilities(model_name)
+                rank = caps.get_effective_capability_rank() if caps else 0
+                # Guard against providers/mocks returning a non-numeric rank, which
+                # would break the max()/min() comparisons below. Accept int/float but
+                # reject bool (a subclass of int) so True/False can't pose as a rank.
+                return rank if isinstance(rank, (int, float)) and not isinstance(rank, bool) else 0
+            except Exception:  # pragma: no cover - defensive
+                return 0
+
+        # Collect one best candidate per provider (cross-provider), with its rank:
+        # (model_name, rank, provider_type)
+        candidates: list[tuple[str, int, ProviderType]] = []
+        first_available_model = None
+        # First provider (in priority order) that expresses an explicit preference.
+        # Used as the BALANCED fallback so behaviour stays upstream-compatible when
+        # no free tier is configured.
+        priority_preferred = None
+
         for provider_type in cls.PROVIDER_PRIORITY_ORDER:
             provider = cls.get_provider(provider_type)
-            if provider:
-                # 1. Registry filters the models first
-                allowed_models = cls._get_allowed_models_for_provider(provider, provider_type)
+            if not provider:
+                continue
+            allowed_models = cls._get_allowed_models_for_provider(provider, provider_type)
+            if not allowed_models:
+                continue
+            if not first_available_model:
+                first_available_model = sorted(allowed_models)[0]
 
-                if not allowed_models:
-                    continue
+            # Prefer the provider's own category pick; if it declines (e.g. the
+            # custom/groq provider has no override), synthesize one by rank so the
+            # provider still competes cross-provider instead of being skipped.
+            candidate = provider.get_preferred_model(effective_category, allowed_models)
+            if candidate and priority_preferred is None:
+                priority_preferred = candidate
+            if not candidate:
+                # Sort first so ties break deterministically by model name, matching
+                # the sorted() first-available fallback above (min/max are stable and
+                # would otherwise depend on allowed_models iteration order).
+                ordered = sorted(allowed_models)
+                if effective_category == ToolModelCategory.FAST_RESPONSE:
+                    candidate = min(ordered, key=lambda m: rank_of(provider, m))
+                else:
+                    candidate = max(ordered, key=lambda m: rank_of(provider, m))
 
-                # 2. Keep track of the first available model as fallback
-                if not first_available_model:
-                    first_available_model = sorted(allowed_models)[0]
+            candidates.append((candidate, rank_of(provider, candidate), provider_type))
 
-                # 3. Ask provider to pick from allowed list
-                preferred_model = provider.get_preferred_model(effective_category, allowed_models)
+        if candidates:
+            free = [c for c in candidates if c[2] in free_tier]
+            if effective_category == ToolModelCategory.EXTENDED_REASONING:
+                # Deep thinking: strongest model wins regardless of cost.
+                chosen = max(candidates, key=lambda c: c[1])[0]
+            elif effective_category == ToolModelCategory.FAST_RESPONSE:
+                # Speed/cost: cheapest & fastest capable model (lowest rank),
+                # preferring the flat-rate free tier so FAST never picks a paid model.
+                pool = free or candidates
+                chosen = min(pool, key=lambda c: c[1])[0]
+            else:
+                # BALANCED: strongest free-tier model if one exists; otherwise fall
+                # back to the priority-order provider preference (never the global
+                # max, which would silently select the most expensive paid model).
+                if free:
+                    chosen = max(free, key=lambda c: c[1])[0]
+                elif priority_preferred:
+                    chosen = priority_preferred
+                else:
+                    chosen = max(candidates, key=lambda c: c[1])[0]
+            logging.debug(
+                f"Auto-routing category '{effective_category.value}' -> '{chosen}' "
+                f"from candidates {[(c[0], c[1], c[2].value) for c in candidates]}"
+            )
+            return chosen
 
-                if preferred_model:
-                    logging.debug(
-                        f"Provider {provider_type.value} selected '{preferred_model}' for category '{effective_category.value}'"
-                    )
-                    return preferred_model
-
-        # If no provider returned a preference, use first available model
+        # If no provider produced a candidate, use first available model
         if first_available_model:
             logging.debug(f"No provider preference, using first available: {first_available_model}")
             return first_available_model
 
         # Ultimate fallback if no providers have models
         logging.warning("No models available from any provider, using default fallback")
-        return "gemini-2.5-flash"
+        return "gemini-3.6-flash"
 
     @classmethod
     def get_available_providers_with_keys(cls) -> list[ProviderType]:

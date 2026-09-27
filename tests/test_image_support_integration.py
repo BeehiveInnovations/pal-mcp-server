@@ -216,8 +216,8 @@ class TestImageSupportIntegration:
                 temp_file.write(b"\x00" * (15 * 1024 * 1024))  # 15MB
                 small_image_path = temp_file.name
 
-            # Test with the default model from test environment (gemini-2.5-flash)
-            result = tool._validate_image_limits([small_image_path], ModelContext("gemini-2.5-flash"))
+            # Test with the default model from test environment (gemini-3.6-flash)
+            result = tool._validate_image_limits([small_image_path], ModelContext("gemini-3.6-flash"))
             assert result is None  # Should pass for Gemini models
 
             # Create 150MB image (over typical limits)
@@ -225,7 +225,7 @@ class TestImageSupportIntegration:
                 temp_file.write(b"\x00" * (150 * 1024 * 1024))  # 150MB
                 large_image_path = temp_file.name
 
-            result = tool._validate_image_limits([large_image_path], ModelContext("gemini-2.5-flash"))
+            result = tool._validate_image_limits([large_image_path], ModelContext("gemini-3.6-flash"))
             # Large images should fail validation
             assert result is not None
             assert result["status"] == "error"

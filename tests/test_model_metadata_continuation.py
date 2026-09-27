@@ -92,7 +92,7 @@ class TestModelMetadataContinuation:
         thread_id = create_thread("chat", {"prompt": "analyze this"})
 
         # Add multiple turns with different models
-        add_turn(thread_id, "assistant", "First response", model_name="gemini-2.5-flash", model_provider="google")
+        add_turn(thread_id, "assistant", "First response", model_name="gemini-3.6-flash", model_provider="google")
         add_turn(thread_id, "user", "Another question")
         add_turn(thread_id, "assistant", "Second response", model_name="o3", model_provider="openai")
         add_turn(thread_id, "user", "Final question")
@@ -179,7 +179,7 @@ class TestModelMetadataContinuation:
     async def test_explicit_model_overrides_previous_turn(self):
         """Test that explicitly specifying a model overrides the previous turn's model."""
         thread_id = create_thread("chat", {"prompt": "test"})
-        add_turn(thread_id, "assistant", "Response", model_name="gemini-2.5-flash", model_provider="google")
+        add_turn(thread_id, "assistant", "Response", model_name="gemini-3.6-flash", model_provider="google")
 
         arguments = {"continuation_id": thread_id, "model": "o3"}  # Explicitly specified
 

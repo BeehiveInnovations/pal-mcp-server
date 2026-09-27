@@ -32,7 +32,7 @@ def _install_dummy_provider(monkeypatch):
     monkeypatch.setattr(
         ModelProviderRegistry,
         "get_available_models",
-        classmethod(lambda cls, respect_restrictions=False: {"gemini-2.5-flash": None}),
+        classmethod(lambda cls, respect_restrictions=False: {"gemini-3.6-flash": None}),
     )
 
 
@@ -48,7 +48,7 @@ async def test_tool_execution_error_sets_is_error_flag_for_mcp_response(monkeypa
         "prompt": "Trigger working_directory_absolute_path validation failure",
         "working_directory_absolute_path": "relative/path",  # Not absolute -> ToolExecutionError from ChatTool
         "absolute_file_paths": [],
-        "model": "gemini-2.5-flash",
+        "model": "gemini-3.6-flash",
     }
 
     request = CallToolRequest(params=CallToolRequestParams(name="chat", arguments=arguments))

@@ -37,8 +37,7 @@ class TestDirectoryExpansionTracking:
         files = []
         for i in range(5):
             swift_file = temp_path / f"File{i}.swift"
-            swift_file.write_text(
-                f"""
+            swift_file.write_text(f"""
 import Foundation
 
 class TestClass{i} {{
@@ -46,18 +45,15 @@ class TestClass{i} {{
         return "test{i}"
     }}
 }}
-"""
-            )
+""")
             files.append(str(swift_file))
 
         # Create a Python file as well
         python_file = temp_path / "helper.py"
-        python_file.write_text(
-            """
+        python_file.write_text("""
 def helper_function():
     return "helper"
-"""
-        )
+""")
         files.append(str(python_file))
 
         try:

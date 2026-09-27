@@ -532,7 +532,7 @@ class TestConversationFlow:
             "I've analyzed your codebase structure.",
             files=["/project/src/main.py", "/project/src/utils.py"],
             tool_name="analyze",
-            model_name="gemini-2.5-flash",
+            model_name="gemini-3.6-flash",
             model_provider="google",
         )
         assert success is True
@@ -550,7 +550,7 @@ class TestConversationFlow:
                     timestamp="2023-01-01T00:00:30Z",
                     files=["/project/src/main.py", "/project/src/utils.py"],
                     tool_name="analyze",
-                    model_name="gemini-2.5-flash",
+                    model_name="gemini-3.6-flash",
                     model_provider="google",
                 )
             ],
@@ -595,7 +595,7 @@ class TestConversationFlow:
             "Test coverage analysis complete. Coverage is 85%.",
             files=["/project/tests/test_utils.py", "/project/coverage.html"],
             tool_name="analyze",
-            model_name="gemini-2.5-flash",
+            model_name="gemini-3.6-flash",
             model_provider="google",
         )
         assert success is True
@@ -613,7 +613,7 @@ class TestConversationFlow:
                     timestamp="2023-01-01T00:00:30Z",
                     files=["/project/src/main.py", "/project/src/utils.py"],
                     tool_name="analyze",
-                    model_name="gemini-2.5-flash",
+                    model_name="gemini-3.6-flash",
                     model_provider="google",
                 ),
                 ConversationTurn(
@@ -628,7 +628,7 @@ class TestConversationFlow:
                     timestamp="2023-01-01T00:02:30Z",
                     files=["/project/tests/test_utils.py", "/project/coverage.html"],
                     tool_name="analyze",
-                    model_name="gemini-2.5-flash",
+                    model_name="gemini-3.6-flash",
                     model_provider="google",
                 ),
             ],
@@ -638,9 +638,9 @@ class TestConversationFlow:
         history, tokens = build_conversation_history(final_context)
 
         # Verify chronological order and speaker identification
-        assert "--- Turn 1 (gemini-2.5-flash using analyze via google) ---" in history
+        assert "--- Turn 1 (gemini-3.6-flash using analyze via google) ---" in history
         assert "--- Turn 2 (Agent) ---" in history
-        assert "--- Turn 3 (gemini-2.5-flash using analyze via google) ---" in history
+        assert "--- Turn 3 (gemini-3.6-flash using analyze via google) ---" in history
 
         # Verify all files are preserved in chronological order
         turn_1_files = "Files used in this turn: /project/src/main.py, /project/src/utils.py"
@@ -657,9 +657,9 @@ class TestConversationFlow:
         assert "Test coverage analysis complete. Coverage is 85%." in history
 
         # Verify chronological ordering (turn 1 appears before turn 2, etc.)
-        turn_1_pos = history.find("--- Turn 1 (gemini-2.5-flash using analyze via google) ---")
+        turn_1_pos = history.find("--- Turn 1 (gemini-3.6-flash using analyze via google) ---")
         turn_2_pos = history.find("--- Turn 2 (Agent) ---")
-        turn_3_pos = history.find("--- Turn 3 (gemini-2.5-flash using analyze via google) ---")
+        turn_3_pos = history.find("--- Turn 3 (gemini-3.6-flash using analyze via google) ---")
 
         assert turn_1_pos < turn_2_pos < turn_3_pos
 

@@ -4,7 +4,7 @@
     {
       "request": {
         "method": "post",
-        "url": "{MLDEV_URL_PREFIX}/models/gemini-2.5-flash:generateContent",
+        "url": "{MLDEV_URL_PREFIX}/models/gemini-3.6-flash:generateContent",
         "headers": {
           "Content-Type": "application/json",
           "x-goog-api-key": "{REDACTED}",
@@ -75,7 +75,7 @@
               ],
               "thoughtsTokenCount": 63
             },
-            "modelVersion": "gemini-2.5-flash",
+            "modelVersion": "gemini-3.6-flash",
             "responseId": "g_PgaIL5LL6VkdUPgr3q2A8"
           }
         ],
@@ -111,7 +111,7 @@
                 "index": 0
               }
             ],
-            "model_version": "gemini-2.5-flash",
+            "model_version": "gemini-3.6-flash",
             "response_id": "g_PgaIL5LL6VkdUPgr3q2A8",
             "usage_metadata": {
               "candidates_token_count": 1,

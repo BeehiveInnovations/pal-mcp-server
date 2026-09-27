@@ -83,7 +83,7 @@ class TestLargePromptHandling:
         try:
             try:
                 result = await tool.execute(
-                    {"prompt": normal_prompt, "model": "gemini-2.5-flash", "working_directory_absolute_path": temp_dir}
+                    {"prompt": normal_prompt, "model": "gemini-3.6-flash", "working_directory_absolute_path": temp_dir}
                 )
             except ToolExecutionError as exc:
                 output = json.loads(exc.payload if hasattr(exc, "payload") else str(exc))
@@ -115,7 +115,7 @@ class TestLargePromptHandling:
                     {
                         "prompt": "",
                         "absolute_file_paths": [temp_prompt_file],
-                        "model": "gemini-2.5-flash",
+                        "model": "gemini-3.6-flash",
                         "working_directory_absolute_path": temp_dir,
                     }
                 )
@@ -268,14 +268,14 @@ class TestLargePromptHandling:
             mock_provider.generate_content.return_value = MagicMock(
                 content="Success",
                 usage={"input_tokens": 10, "output_tokens": 20, "total_tokens": 30},
-                model_name="gemini-2.5-flash",
+                model_name="gemini-3.6-flash",
                 metadata={"finish_reason": "STOP"},
             )
 
             from utils.model_context import TokenAllocation
 
             mock_model_context = MagicMock()
-            mock_model_context.model_name = "gemini-2.5-flash"
+            mock_model_context.model_name = "gemini-3.6-flash"
             mock_model_context.provider = mock_provider
             mock_model_context.capabilities = MagicMock(supports_extended_thinking=False)
             mock_model_context.calculate_token_allocation.return_value = TokenAllocation(
@@ -328,7 +328,7 @@ class TestLargePromptHandling:
             mock_provider.generate_content.return_value = MagicMock(
                 content="Response to the large prompt",
                 usage={"input_tokens": 12000, "output_tokens": 10, "total_tokens": 12010},
-                model_name="gemini-2.5-flash",
+                model_name="gemini-3.6-flash",
                 metadata={"finish_reason": "STOP"},
             )
             mock_get_provider.return_value = mock_provider
@@ -376,7 +376,7 @@ class TestLargePromptHandling:
             mock_provider.generate_content.return_value = MagicMock(
                 content="Success",
                 usage={"input_tokens": 10, "output_tokens": 20, "total_tokens": 30},
-                model_name="gemini-2.5-flash",
+                model_name="gemini-3.6-flash",
                 metadata={"finish_reason": "STOP"},
             )
             mock_get_provider.return_value = mock_provider
@@ -406,7 +406,7 @@ class TestLargePromptHandling:
             patch("utils.model_context.ModelContext") as mock_model_context_class,
         ):
 
-            mock_provider = create_mock_provider(model_name="gemini-2.5-flash", context_window=1_048_576)
+            mock_provider = create_mock_provider(model_name="gemini-3.6-flash", context_window=1_048_576)
             mock_provider.generate_content.return_value.content = "Success"
             mock_get_provider.return_value = mock_provider
 
@@ -414,7 +414,7 @@ class TestLargePromptHandling:
             from utils.model_context import TokenAllocation
 
             mock_model_context = MagicMock()
-            mock_model_context.model_name = "gemini-2.5-flash"
+            mock_model_context.model_name = "gemini-3.6-flash"
             mock_model_context.calculate_token_allocation.return_value = TokenAllocation(
                 total_tokens=1_048_576,
                 content_tokens=838_861,
@@ -591,7 +591,7 @@ class TestLargePromptHandling:
                 result = await tool.execute(
                     {
                         "prompt": small_user_input,
-                        "model": "gemini-2.5-flash",
+                        "model": "gemini-3.6-flash",
                         "working_directory_absolute_path": temp_dir,
                     }
                 )
