@@ -40,7 +40,7 @@ class TestCustomProvider:
         provider = CustomProvider(api_key="test-key", base_url="http://localhost:11434/v1")
 
         # Known model should validate
-        assert provider.validate_model_name("llama3.2")
+        assert provider.validate_model_name("gpt-oss-120b")
 
         # For custom provider, unknown models return False when not in registry
         # This is expected behavior - custom models need to be declared in custom_models.json
@@ -63,7 +63,7 @@ class TestCustomProvider:
                 provider.get_capabilities("o3")
 
             # Test with a custom model from the local registry
-            capabilities = provider.get_capabilities("local-llama")
+            capabilities = provider.get_capabilities("groq")
             assert capabilities.provider == ProviderType.CUSTOM
             assert capabilities.context_window > 0
 
@@ -86,21 +86,20 @@ class TestCustomProvider:
         """Test model alias resolution works correctly."""
         provider = CustomProvider(api_key="test-key", base_url="http://localhost:11434/v1")
 
-        # Test that aliases resolve properly
-        # "llama" now resolves to "meta-llama/llama-3-70b" (the OpenRouter model)
-        resolved = provider._resolve_model_name("llama")
-        assert resolved == "meta-llama/llama-3-70b"
+        # Test that aliases resolve to their canonical custom model_name
+        resolved = provider._resolve_model_name("groq")
+        assert resolved == "openai/gpt-oss-120b"
 
-        # Test local model alias
-        resolved_local = provider._resolve_model_name("local-llama")
-        assert resolved_local == "llama3.2"
+        # Test another local model alias
+        resolved_qwen = provider._resolve_model_name("qwen")
+        assert resolved_qwen == "qwen/qwen3.8-27b"
 
     def test_no_thinking_mode_support(self):
         """Custom provider generic capabilities default to no thinking mode."""
         provider = CustomProvider(api_key="test-key", base_url="http://localhost:11434/v1")
 
-        # llama3.2 is a known model that should work
-        assert not provider.get_capabilities("llama3.2").supports_extended_thinking
+        # qwen is a known custom model without extended-thinking support
+        assert not provider.get_capabilities("qwen").supports_extended_thinking
 
         # Unknown models should raise error
         with pytest.raises(ValueError, match="Unsupported model 'any-model' for provider custom"):

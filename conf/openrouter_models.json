@@ -103,12 +103,13 @@
       "intelligence_score": 8
     },
     {
-      "model_name": "google/gemini-3-pro-preview",
+      "model_name": "google/gemini-3.1-pro-preview",
       "aliases": [
         "pro",
         "gemini-pro",
         "gemini",
         "gemini3",
+        "google/gemini-3-pro-preview",
         "pro-openrouter"
       ],
       "context_window": 1048576,
@@ -506,6 +507,43 @@
       "supports_temperature": true,
       "temperature_constraint": "range",
       "description": "xAI's Grok 4.1 Fast Reasoning via OpenRouter (2M context) with vision and advanced reasoning",
+      "intelligence_score": 15
+    },
+    {
+      "model_name": "openrouter/free",
+      "aliases": [
+        "or-free",
+        "orf",
+        "router-free"
+      ],
+      "context_window": 200000,
+      "max_output_tokens": 16000,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": false,
+      "supports_images": false,
+      "max_image_size_mb": 0.0,
+      "supports_temperature": true,
+      "description": "OpenRouter meta-model that auto-routes to whichever free-tier model has capacity - reliable generalist for delegation tasks (200K ctx)",
+      "intelligence_score": 13
+    },
+    {
+      "model_name": "nvidia/nemotron-3.5-lightning:free",
+      "aliases": [
+        "nemotron",
+        "lightning",
+        "nemo",
+        "nemotron-lightning"
+      ],
+      "context_window": 1000000,
+      "max_output_tokens": 32000,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": false,
+      "supports_images": false,
+      "max_image_size_mb": 0.0,
+      "supports_temperature": true,
+      "description": "NVIDIA Nemotron 3.5 Lightning (1M ctx, free tier via OpenRouter) - reasoning-capable, best for heavy bulk work / long-context extraction / delegation",
       "intelligence_score": 15
     }
   ]

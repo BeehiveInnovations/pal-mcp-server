@@ -86,7 +86,7 @@ async def test_chat_cross_model_continuation(monkeypatch, tmp_path):
     # Step 1 – Gemini picks a number
     with monkeypatch.context() as m:
         m.setenv("DEFAULT_MODEL", env_updates["DEFAULT_MODEL"])
-        m.setenv("GOOGLE_ALLOWED_MODELS", "gemini-2.5-flash")
+        m.setenv("GOOGLE_ALLOWED_MODELS", "gemini-3.6-flash")
         m.setenv("OPENAI_ALLOWED_MODELS", "gpt-5")
         if recording_mode:
             m.setenv("OPENAI_API_KEY", env_updates["OPENAI_API_KEY"])
@@ -119,7 +119,7 @@ async def test_chat_cross_model_continuation(monkeypatch, tmp_path):
 
         step1_args = {
             "prompt": "Pick a number between 1 and 10 and respond with JUST that number.",
-            "model": "gemini-2.5-flash",
+            "model": "gemini-3.6-flash",
             "temperature": 0.2,
             "working_directory_absolute_path": working_directory,
         }
@@ -140,7 +140,7 @@ async def test_chat_cross_model_continuation(monkeypatch, tmp_path):
         assert 1 <= int(chosen_number) <= 10
 
         # Ensure replay is flushed for Gemini recordings
-        gemini_provider = ModelProviderRegistry.get_provider_for_model("gemini-2.5-flash")
+        gemini_provider = ModelProviderRegistry.get_provider_for_model("gemini-3.6-flash")
         if gemini_provider is not None:
             try:
                 client = gemini_provider.client
@@ -164,7 +164,7 @@ async def test_chat_cross_model_continuation(monkeypatch, tmp_path):
             m.setenv("GOOGLE_GENAI_CLIENT_MODE", "replay")
 
         m.setenv("DEFAULT_MODEL", env_updates["DEFAULT_MODEL"])
-        m.setenv("GOOGLE_ALLOWED_MODELS", "gemini-2.5-flash")
+        m.setenv("GOOGLE_ALLOWED_MODELS", "gemini-3.6-flash")
         m.setenv("OPENAI_ALLOWED_MODELS", "gpt-5")
         m.setenv("GOOGLE_GENAI_REPLAYS_DIRECTORY", str(GEMINI_CASSETTE_DIR))
         m.setenv("GOOGLE_GENAI_REPLAY_ID", GEMINI_REPLAY_ID)

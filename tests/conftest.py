@@ -30,7 +30,7 @@ env_config.reload_env({"PAL_MCP_FORCE_ENV_OVERRIDE": "false"})
 
 # Set default model to a specific value for tests to avoid auto mode
 # This prevents all tests from failing due to missing model parameter
-os.environ["DEFAULT_MODEL"] = "gemini-2.5-flash"
+os.environ["DEFAULT_MODEL"] = "gemini-3.6-flash"
 
 # Force reload of config module to pick up the env var
 import config  # noqa: E402
@@ -197,7 +197,7 @@ def disable_force_env_override(monkeypatch):
 
     monkeypatch.setenv("PAL_MCP_FORCE_ENV_OVERRIDE", "false")
     env_config.reload_env({"PAL_MCP_FORCE_ENV_OVERRIDE": "false"})
-    monkeypatch.setenv("DEFAULT_MODEL", "gemini-2.5-flash")
+    monkeypatch.setenv("DEFAULT_MODEL", "gemini-3.6-flash")
     monkeypatch.setenv("MAX_CONVERSATION_TURNS", "50")
 
     import importlib

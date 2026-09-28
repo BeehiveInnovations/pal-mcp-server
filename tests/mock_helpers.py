@@ -5,7 +5,7 @@ from unittest.mock import Mock
 from providers.shared import ModelCapabilities, ProviderType, RangeTemperatureConstraint
 
 
-def create_mock_provider(model_name="gemini-2.5-flash", context_window=1_048_576):
+def create_mock_provider(model_name="gemini-3.6-flash", context_window=1_048_576):
     """Create a properly configured mock provider."""
     mock_provider = Mock()
 

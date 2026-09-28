@@ -1,0 +1,13 @@
+{
+  "_comment": "Copy to ~/.pal/toolbelt.json. Determines which local tools the delegate model may see. Everything defaults OFF.",
+  "tools": [
+    {"name": "bash",       "enabled": true,  "sandbox": "readonly",
+     "provider_blocklist": []},
+    {"name": "read_file",  "enabled": true,  "sandbox": "readonly",
+     "provider_blocklist": []},
+    {"name": "gh",         "enabled": true,  "sandbox": "readonly",
+     "provider_blocklist": []},
+    {"name": "web_fetch",  "enabled": true,  "sandbox": "readonly",
+     "provider_blocklist": []}
+  ]
+}
