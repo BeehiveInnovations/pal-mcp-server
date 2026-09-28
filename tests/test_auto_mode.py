@@ -112,7 +112,7 @@ class TestAutoMode:
 
         try:
             # Set to a specific model (not auto mode)
-            os.environ["DEFAULT_MODEL"] = "gemini-2.5-flash"
+            os.environ["DEFAULT_MODEL"] = "gemini-3.6-flash"
             import config
 
             importlib.reload(config)

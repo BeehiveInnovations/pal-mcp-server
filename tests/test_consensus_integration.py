@@ -34,7 +34,7 @@ GEMINI_REPLAY_PATH = GEMINI_REPLAY_DIR / "consensus" / "step2_gemini25_flash_aga
 @pytest.mark.no_mock_provider
 @pytest.mark.parametrize("openai_model", ["gpt-5", "gpt-5.2"])
 async def test_consensus_multi_model_consultations(monkeypatch, openai_model):
-    """Exercise ConsensusTool against OpenAI model (supporting) and gemini-2.5-flash (critical).
+    """Exercise ConsensusTool against OpenAI model (supporting) and gemini-3.6-flash (critical).
 
     Tests both gpt-5 and gpt-5.2 to ensure regression coverage for both model families.
     """
@@ -117,7 +117,7 @@ async def test_consensus_multi_model_consultations(monkeypatch, openai_model):
 
         models_to_consult = [
             {"model": openai_model, "stance": "for"},
-            {"model": "gemini-2.5-flash", "stance": "against"},
+            {"model": "gemini-3.6-flash", "stance": "against"},
         ]
 
         # Step 1: CLI agent analysis followed by first model consultation
@@ -164,12 +164,12 @@ async def test_consensus_multi_model_consultations(monkeypatch, openai_model):
     step2_data = json.loads(step2_response[0].text)
 
     assert step2_data["status"] == "consensus_workflow_complete"
-    assert step2_data["model_consulted"] == "gemini-2.5-flash"
+    assert step2_data["model_consulted"] == "gemini-3.6-flash"
     assert step2_data["model_response"]["metadata"]["provider"] == "google"
     assert step2_data["model_response"]["verdict"]
     assert step2_data["complete_consensus"]["models_consulted"] == [
         f"{openai_model}:for",
-        "gemini-2.5-flash:against",
+        "gemini-3.6-flash:against",
     ]
     assert step2_data["consensus_complete"] is True
 
@@ -178,7 +178,7 @@ async def test_consensus_multi_model_consultations(monkeypatch, openai_model):
     assert continuation_offer_final["continuation_id"] == continuation_id
 
     # Ensure Gemini replay session is flushed to disk before verification
-    gemini_provider = ModelProviderRegistry.get_provider_for_model("gemini-2.5-flash")
+    gemini_provider = ModelProviderRegistry.get_provider_for_model("gemini-3.6-flash")
     if gemini_provider is not None:
         try:
             client = gemini_provider.client

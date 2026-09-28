@@ -2,9 +2,13 @@
   "name": "gemini",
   "command": "gemini",
   "additional_args": [
-    "--yolo"
+    "--yolo",
+    "-m",
+    "gemini-2.5-flash"
   ],
-  "env": {},
+  "env": {
+    "GEMINI_API_KEY": "__REDACTED_SET_ENV_VAR__"
+  },
   "roles": {
     "default": {
       "prompt_path": "systemprompts/clink/default.txt",

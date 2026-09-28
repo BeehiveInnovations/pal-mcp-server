@@ -189,3 +189,6 @@ logs/
 /worktrees/
 test_simulation_files/
 .mcp.json
+
+# Nested upstream clone — never track
+zen-mcp-server/

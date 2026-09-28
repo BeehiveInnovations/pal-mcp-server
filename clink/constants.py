@@ -45,4 +45,24 @@ INTERNAL_DEFAULTS: dict[str, CLIInternalDefaults] = {
         default_role_prompt="systemprompts/clink/default.txt",
         runner="claude",
     ),
+    # P4a: generic passthrough clients — no bundled parser, so we route through
+    # the generic text parser (falls back on stdout). Prompt is piped over stdin.
+    "aider": CLIInternalDefaults(
+        parser="generic_text",
+        additional_args=[],
+        default_role_prompt="systemprompts/clink/default.txt",
+        runner=None,
+    ),
+    "cline": CLIInternalDefaults(
+        parser="generic_text",
+        additional_args=[],
+        default_role_prompt="systemprompts/clink/default.txt",
+        runner=None,
+    ),
+    "cursor-agent": CLIInternalDefaults(
+        parser="generic_text",
+        additional_args=[],
+        default_role_prompt="systemprompts/clink/default.txt",
+        runner=None,
+    ),
 }

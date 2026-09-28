@@ -440,14 +440,23 @@ class SimpleTool(BaseTool):
             # Resolve model capabilities for feature gating
             supports_thinking = capabilities.supports_extended_thinking
 
-            # Generate content with provider abstraction
-            model_response = provider.generate_content(
+            # Generate content with provider abstraction.
+            # When the toolbelt is enabled (env PAL_TOOLBELT), run_agentic wraps the
+            # call in a ReAct tool-loop so the auto-routed model can invoke local
+            # tools (gh/bash/webfetch/filesystem/clink); otherwise it is a
+            # zero-overhead passthrough to generate_content.
+            from providers.tooling.agent_loop import run_agentic
+
+            model_response = run_agentic(
+                provider,
                 prompt=prompt,
                 model_name=self._current_model_name,
                 system_prompt=system_prompt,
                 temperature=temperature,
-                thinking_mode=thinking_mode if supports_thinking else None,
-                images=images if images else None,
+                gen_kwargs={
+                    "thinking_mode": thinking_mode if supports_thinking else None,
+                    "images": images if images else None,
+                },
             )
 
             logger.info(f"Received response from {provider.get_provider_type().value} API for {self.get_name()}")

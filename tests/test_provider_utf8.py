@@ -63,7 +63,7 @@ class TestProviderUTF8Encoding(unittest.TestCase):
         # Request with UTF-8 characters
         response = provider.generate_content(
             prompt="Can you explain software development?",
-            model_name="gemini-2.5-flash",
+            model_name="gemini-3.6-flash",
             system_prompt="Reply in French with emojis.",
         )
 
@@ -292,7 +292,7 @@ class TestProviderUTF8Encoding(unittest.TestCase):
         with self.assertRaises(Exception) as context:
             provider.generate_content(
                 prompt="Explain something",
-                model_name="gemini-2.5-flash",
+                model_name="gemini-3.6-flash",
                 system_prompt="Reply in French.",
             )
         # Accept any error message containing UnicodeDecodeError
@@ -351,7 +351,7 @@ class TestLocaleModelIntegration(unittest.TestCase):
     def test_model_name_resolution_utf8(self):
         """Test model name resolution with UTF-8."""
         provider = OpenAIModelProvider(api_key="test")
-        model_names = ["gpt-4", "gemini-2.5-flash", "anthropic/claude-opus-4.1", "o3-pro"]
+        model_names = ["gpt-4", "gemini-3.6-flash", "anthropic/claude-opus-4.1", "o3-pro"]
         for model_name in model_names:
             resolved_model_name = provider._resolve_model_name(model_name)
             self.assertIsInstance(resolved_model_name, str)

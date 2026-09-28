@@ -811,13 +811,41 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[TextCon
 
         # Handle auto mode at MCP boundary - resolve to specific model
         if model_name.lower() == "auto":
-            # Get tool category to determine appropriate model
-            tool_category = tool.get_model_category()
-            resolved_model = ModelProviderRegistry.get_preferred_fallback_model(tool_category)
-            logger.info(f"Auto mode resolved to {resolved_model} for {name} (category: {tool_category.value})")
-            model_name = resolved_model
-            # Update arguments with resolved model
-            arguments["model"] = model_name
+            # P2: prompt-content classifier (falls through to tool category on no match)
+            try:
+                from providers.router import classifier, refusal_memory
+                _prompt_for_cls = arguments.get("prompt") or arguments.get("step") or ""
+                _files_for_cls = arguments.get("absolute_file_paths") or None
+                tool_category = tool.get_model_category()
+                pal_cat = classifier.classify(
+                    _prompt_for_cls, _files_for_cls, tool_default=""
+                )
+                candidates: list[str] = []
+                if pal_cat and pal_cat in classifier.CATEGORY_PREFERENCES:
+                    logger.info(f"PAL classifier picked category '{pal_cat}' for {name}")
+                    candidates = list(classifier.CATEGORY_PREFERENCES[pal_cat])
+                # Filter out session-blacklisted (model, category) pairs.
+                cat_tag = pal_cat or tool_category.value
+                candidates = [c for c in candidates
+                              if not refusal_memory.is_blacklisted(c, cat_tag)]
+                resolved_model = None
+                for cand in candidates:
+                    if ModelProviderRegistry.get_provider_for_model(cand):
+                        resolved_model = cand
+                        break
+                if resolved_model is None:
+                    resolved_model = ModelProviderRegistry.get_preferred_fallback_model(tool_category)
+                logger.info(f"Auto mode resolved to {resolved_model} for {name} (category: {tool_category.value})")
+                model_name = resolved_model
+                arguments["model"] = model_name
+                arguments["_pal_category"] = cat_tag
+            except Exception as _exc:
+                logger.debug(f"PAL smart-router degraded to legacy auto: {_exc}")
+                tool_category = tool.get_model_category()
+                resolved_model = ModelProviderRegistry.get_preferred_fallback_model(tool_category)
+                logger.info(f"Auto mode resolved to {resolved_model} for {name} (category: {tool_category.value})")
+                model_name = resolved_model
+                arguments["model"] = model_name
 
         # Validate model availability at MCP boundary
         provider = ModelProviderRegistry.get_provider_for_model(model_name)
@@ -862,7 +890,31 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[TextCon
                 raise ToolExecutionError(ToolOutput(**file_size_check).model_dump_json())
 
         # Execute tool with pre-resolved model context
-        result = await tool.execute(arguments)
+        try:
+            result = await tool.execute(arguments)
+        except Exception as _exc:
+            # P2: record refusal on error so the router skips this pair next time
+            try:
+                from providers.router import refusal_memory
+                tag = refusal_memory.classify(str(_exc))
+                if tag:
+                    refusal_memory.record(
+                        model_name, arguments.get("_pal_category", ""), tag
+                    )
+            except Exception:
+                pass
+            raise
+        # P2: sniff result payload for silent refusals (200-with-refusal-body)
+        try:
+            from providers.router import refusal_memory
+            _txt = "".join(getattr(x, "text", "") or "" for x in (result or []))
+            tag = refusal_memory.classify(_txt)
+            if tag and tag.startswith("refusal:"):
+                refusal_memory.record(
+                    model_name, arguments.get("_pal_category", ""), tag
+                )
+        except Exception:
+            pass
         logger.info(f"Tool '{name}' execution completed")
 
         # Log completion to activity file

@@ -1,0 +1,16 @@
+{
+  "_comment": "Copy to ~/.pal/toolbelt.json. Determines which local tools the delegate model may see. Everything defaults OFF.",
+  "tools": [
+    {"name": "bash",       "enabled": true,  "sandbox": "readonly",
+     "provider_blocklist": []},
+    {"name": "read_file",  "enabled": true,  "sandbox": "readonly",
+     "provider_blocklist": []},
+    {"name": "gh",         "enabled": true,  "sandbox": "readonly",
+     "provider_blocklist": []},
+    {"name": "web_fetch",  "enabled": true,  "sandbox": "readonly",
+     "provider_blocklist": []},
+    {"name": "nuclei",     "enabled": false, "sandbox": "write",
+     "provider_blocklist": [],
+     "_note": "Active scanner. Enable + set PAL_TOOL_SANDBOX=write or PAL_ALLOW_ACTIVE_SCAN=1"}
+  ]
+}

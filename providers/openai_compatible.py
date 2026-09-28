@@ -673,6 +673,67 @@ class OpenAICompatibleProvider(ModelProvider):
             logging.error(error_msg)
             raise RuntimeError(error_msg) from exc
 
+    def chat_with_tools(
+        self,
+        *,
+        messages: list,
+        tools: list,
+        model_name: str,
+        temperature: float = 0.3,
+        tool_choice: str = "auto",
+        max_output_tokens: Optional[int] = None,
+    ) -> dict:
+        """Single native function-calling turn.
+
+        Sends an OpenAI-style messages array plus a tools schema and returns a dict:
+        {content, tool_calls: [{id, name, arguments(str)}], finish_reason, usage}.
+        Used by the toolbelt agent loop; providers that support native FC expose this.
+        """
+        if not self.validate_model_name(model_name):
+            raise ValueError(f"Model '{model_name}' not in allowed models list. Allowed: {self.allowed_models}")
+        resolved_model = self._resolve_model_name(model_name)
+
+        try:
+            capabilities = self.get_capabilities(model_name)
+            effective_temperature = capabilities.get_effective_temperature(temperature)
+        except Exception:
+            effective_temperature = temperature
+
+        params = {
+            "model": resolved_model,
+            "messages": messages,
+            "tools": tools,
+            "tool_choice": tool_choice,
+            "stream": False,
+        }
+        if effective_temperature is not None:
+            params["temperature"] = effective_temperature
+            if max_output_tokens:
+                params["max_tokens"] = max_output_tokens
+
+        def _attempt() -> dict:
+            response = self.client.chat.completions.create(**params)
+            msg = response.choices[0].message
+            tool_calls = []
+            for tc in (getattr(msg, "tool_calls", None) or []):
+                fn = getattr(tc, "function", None)
+                if fn is None:
+                    continue
+                tool_calls.append({"id": tc.id, "name": fn.name, "arguments": fn.arguments})
+            return {
+                "content": msg.content,
+                "tool_calls": tool_calls,
+                "finish_reason": response.choices[0].finish_reason,
+                "usage": self._extract_usage(response),
+            }
+
+        return self._run_with_retries(
+            operation=_attempt,
+            max_attempts=4,
+            delays=[1, 3, 5, 8],
+            log_prefix=f"{self.FRIENDLY_NAME} tools ({resolved_model})",
+        )
+
     def validate_parameters(self, model_name: str, temperature: float, **kwargs) -> None:
         """Validate model parameters.
 
