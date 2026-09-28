@@ -175,7 +175,7 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
 
         # Gemini 3 Pro Preview currently rejects medium thinking budgets; bump to high.
         effective_thinking_mode = thinking_mode
-        if resolved_model_name == "gemini-3-pro-preview" and thinking_mode == "medium":
+        if resolved_model_name in ("gemini-3.1-pro-preview", "gemini-3-pro-preview") and thinking_mode == "medium":
             logger.debug(
                 "Overriding thinking mode 'medium' with 'high' for %s due to launch limitation",
                 resolved_model_name,
@@ -295,20 +295,64 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
                 },
             )
 
-        try:
+        # P1: smart-router hooks (cache lookup, rate-limit, self-heal on 404)
+        from providers.router import rate_limit, response_cache, self_heal
+
+        _cache_files = kwargs.get("_cache_files") or None
+        cache_key = response_cache.make_key(
+            model=resolved_model_name,
+            tool=kwargs.get("_tool_name", ""),
+            prompt=full_prompt,
+            files=_cache_files,
+            extra={"temperature": temperature, "thinking": effective_thinking_mode},
+        )
+        _cached = response_cache.get(cache_key)
+        if _cached is not None:
+            return _cached
+
+        _est = max(len(full_prompt) // 4, 1)
+        _ds, _reason = rate_limit.should_downshift("google", resolved_model_name, _est)
+        if _ds:
+            raise RuntimeError(f"rate_limit: google/{resolved_model_name} exceed cap ({_reason})")
+
+        resolved_model_name = self_heal.resolve(resolved_model_name)
+
+        def _run_once() -> ModelResponse:
             return self._run_with_retries(
                 operation=_attempt,
                 max_attempts=max_retries,
                 delays=retry_delays,
                 log_prefix=f"Gemini API ({resolved_model_name})",
             )
+
+        try:
+            resp = _run_once()
         except Exception as exc:
-            attempts = max(attempt_counter["value"], 1)
-            error_msg = (
-                f"Gemini API error for model {resolved_model_name} after {attempts} attempt"
-                f"{'s' if attempts > 1 else ''}: {exc}"
-            )
-            raise RuntimeError(error_msg) from exc
+            mig = self_heal.parse_migration(str(exc))
+            if mig and self_heal.is_enabled():
+                dead, new = mig
+                self_heal.record_migration(dead, new, provider="google")
+                logger.warning("self-heal: %s dead → retrying with %s", dead, new)
+                resolved_model_name = new  # rebind for closure
+                try:
+                    resp = _run_once()
+                except Exception as exc2:
+                    attempts = max(attempt_counter["value"], 1)
+                    raise RuntimeError(
+                        f"Gemini API error for model {resolved_model_name} after {attempts} attempt"
+                        f"{'s' if attempts > 1 else ''}: {exc2}"
+                    ) from exc2
+            else:
+                attempts = max(attempt_counter["value"], 1)
+                raise RuntimeError(
+                    f"Gemini API error for model {resolved_model_name} after {attempts} attempt"
+                    f"{'s' if attempts > 1 else ''}: {exc}"
+                ) from exc
+
+        usage = getattr(resp, "usage", {}) or {}
+        rate_limit.record("google", resolved_model_name, usage.get("total_tokens", _est))
+        response_cache.put(cache_key, resp)
+        return resp
 
     def get_provider_type(self) -> ProviderType:
         """Get the provider type."""

@@ -69,7 +69,7 @@ class TestBuggyBehaviorPrevention:
 
         # Verify both aliases and targets are included
         assert "flash" in all_known  # alias
-        assert "gemini-2.5-flash" in all_known  # target
+        assert "gemini-3.6-flash" in all_known  # target
         assert "pro" in all_known  # alias
         assert "gemini-2.5-pro" in all_known  # target
 
@@ -77,7 +77,7 @@ class TestBuggyBehaviorPrevention:
         service = ModelRestrictionService()
         service.restrictions = {
             ProviderType.GOOGLE: {
-                "gemini-2.5-flash",  # Target name restriction
+                "gemini-3.6-flash",  # Target name restriction
                 "gemini-2.5-pro",  # Target name restriction
             }
         }
@@ -89,7 +89,7 @@ class TestBuggyBehaviorPrevention:
             # Should NOT warn about these valid target models
             all_warnings = [str(call) for call in mock_logger.warning.call_args_list]
             for warning in all_warnings:
-                assert "gemini-2.5-flash" not in warning or "not a recognized" not in warning
+                assert "gemini-3.6-flash" not in warning or "not a recognized" not in warning
                 assert "gemini-2.5-pro" not in warning or "not a recognized" not in warning
 
     def test_policy_enforcement_remains_comprehensive(self):
@@ -209,7 +209,7 @@ class TestBuggyBehaviorPrevention:
         """Alias-aware listings should expose targets across providers."""
         providers_to_test = [
             (OpenAIModelProvider(api_key="test-key"), "mini", "o4-mini"),
-            (GeminiModelProvider(api_key="test-key"), "flash", "gemini-2.5-flash"),
+            (GeminiModelProvider(api_key="test-key"), "flash", "gemini-3.6-flash"),
         ]
 
         for provider, alias, target in providers_to_test:

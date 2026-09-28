@@ -1,0 +1,17 @@
+{
+  "name": "aider",
+  "command": "aider",
+  "additional_args": ["--no-auto-commits", "--yes", "--no-analytics",
+                      "--message-file", "/dev/stdin"],
+  "env": {},
+  "roles": {
+    "default": {
+      "prompt_path": "systemprompts/clink/default.txt",
+      "role_args": []
+    },
+    "codereviewer": {
+      "prompt_path": "systemprompts/clink/default_codereviewer.txt",
+      "role_args": []
+    }
+  }
+}

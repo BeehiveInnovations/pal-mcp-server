@@ -64,7 +64,7 @@ class TestModelProviderRegistry:
         """Test getting provider for a specific model"""
         ModelProviderRegistry.register_provider(ProviderType.GOOGLE, GeminiModelProvider)
 
-        provider = ModelProviderRegistry.get_provider_for_model("gemini-2.5-flash")
+        provider = ModelProviderRegistry.get_provider_for_model("gemini-3.6-flash")
 
         assert provider is not None
         assert isinstance(provider, GeminiModelProvider)
@@ -95,10 +95,10 @@ class TestGeminiProvider:
         """Test getting model capabilities"""
         provider = GeminiModelProvider(api_key="test-key")
 
-        capabilities = provider.get_capabilities("gemini-2.5-flash")
+        capabilities = provider.get_capabilities("gemini-3.6-flash")
 
         assert capabilities.provider == ProviderType.GOOGLE
-        assert capabilities.model_name == "gemini-2.5-flash"
+        assert capabilities.model_name == "gemini-3.6-flash"
         assert capabilities.context_window == 1_048_576
         assert capabilities.supports_extended_thinking
 
@@ -118,7 +118,7 @@ class TestGeminiProvider:
         assert provider.validate_model_name("pro")
 
         capabilities = provider.get_capabilities("flash")
-        assert capabilities.model_name == "gemini-2.5-flash"
+        assert capabilities.model_name == "gemini-3.6-flash"
 
     @patch("google.genai.Client")
     def test_generate_content(self, mock_client_class):
@@ -141,11 +141,11 @@ class TestGeminiProvider:
 
         provider = GeminiModelProvider(api_key="test-key")
 
-        response = provider.generate_content(prompt="Test prompt", model_name="gemini-2.5-flash", temperature=0.7)
+        response = provider.generate_content(prompt="Test prompt", model_name="gemini-3.6-flash", temperature=0.7)
 
         assert isinstance(response, ModelResponse)
         assert response.content == "Generated content"
-        assert response.model_name == "gemini-2.5-flash"
+        assert response.model_name == "gemini-3.6-flash"
         assert response.provider == ProviderType.GOOGLE
         assert response.usage["input_tokens"] == 10
         assert response.usage["output_tokens"] == 20

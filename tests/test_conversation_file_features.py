@@ -300,7 +300,7 @@ class TestCrossToolFileContext:
                 timestamp="2023-01-01T00:00:00Z",  # First turn
                 files=[src_file],
                 tool_name="analyze",
-                model_name="gemini-2.5-flash",
+                model_name="gemini-3.6-flash",
                 model_provider="google",
             ),
             ConversationTurn(
@@ -332,7 +332,7 @@ class TestCrossToolFileContext:
         history, tokens = build_conversation_history(context)
 
         # Verify cross-tool context
-        assert "--- Turn 1 (gemini-2.5-flash using analyze via google) ---" in history
+        assert "--- Turn 1 (gemini-3.6-flash using analyze via google) ---" in history
         assert "--- Turn 2 (Agent) ---" in history
         assert "--- Turn 3 (gpt-5 using testgen via openai) ---" in history
 

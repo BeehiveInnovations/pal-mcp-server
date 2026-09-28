@@ -1,0 +1,16 @@
+{
+  "name": "cline",
+  "command": "cline",
+  "additional_args": [],
+  "env": {},
+  "roles": {
+    "default": {
+      "prompt_path": "systemprompts/clink/default.txt",
+      "role_args": []
+    },
+    "planner": {
+      "prompt_path": "systemprompts/clink/default_planner.txt",
+      "role_args": []
+    }
+  }
+}
