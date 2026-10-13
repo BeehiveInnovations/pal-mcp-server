@@ -33,6 +33,7 @@ py-modules = ["server", "config"]
     "conf/gemini_models.json",
     "conf/xai_models.json",
     "conf/dial_models.json",
+    "conf/cheaperinference_models.json",
 ]
 
 [project.scripts]

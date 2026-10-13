@@ -103,6 +103,7 @@ class ListModelsTool(BaseTool):
             ProviderType.AZURE: {"name": "Azure OpenAI", "env_key": "AZURE_OPENAI_API_KEY"},
             ProviderType.XAI: {"name": "X.AI (Grok)", "env_key": "XAI_API_KEY"},
             ProviderType.DIAL: {"name": "AI DIAL", "env_key": "DIAL_API_KEY"},
+            ProviderType.CHEAPERINFERENCE: {"name": "Cheaper Inference", "env_key": "CHEAPER_INFERENCE_API_KEY"},
         }
 
         def format_model_entry(provider, display_name: str) -> list[str]:

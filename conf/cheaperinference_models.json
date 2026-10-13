@@ -1,0 +1,140 @@
+{
+  "_README": {
+    "description": "Model metadata for Cheaper Inference API access.",
+    "documentation": "https://github.com/BeehiveInnovations/pal-mcp-server/blob/main/docs/custom_models.md",
+    "usage": "Models listed here are exposed directly through the Cheaper Inference provider. Aliases are case-insensitive.",
+    "field_notes": "Matches providers/shared/model_capabilities.py.",
+    "field_descriptions": {
+      "model_name": "The model identifier (e.g., 'gpt-5.4-mini', 'claude-sonnet-5')",
+      "aliases": "Array of short names users can type instead of the full model name",
+      "context_window": "Total number of tokens the model can process (input + output combined)",
+      "max_output_tokens": "Maximum number of tokens the model can generate in a single response",
+      "max_thinking_tokens": "Maximum reasoning/thinking tokens the model will allocate when extended thinking is requested",
+      "supports_extended_thinking": "Whether the model supports extended reasoning tokens (currently none do via OpenRouter or custom APIs)",
+      "supports_json_mode": "Whether the model can guarantee valid JSON output",
+      "supports_function_calling": "Whether the model supports function/tool calling",
+      "supports_images": "Whether the model can process images/visual input",
+      "max_image_size_mb": "Maximum total size in MB for all images combined (capped at 40MB max for custom models)",
+      "supports_temperature": "Whether the model accepts temperature parameter in API calls (set to false for O3/O4 reasoning models)",
+      "temperature_constraint": "Type of temperature constraint: 'fixed' (fixed value), 'range' (continuous range), 'discrete' (specific values), or omit for default range",
+      "use_openai_response_api": "Set to true when the model must use the /responses endpoint (reasoning models like GPT-5.2 Pro). Leave false/omit for standard chat completions.",
+      "default_reasoning_effort": "Default reasoning effort level for models that support it (e.g., 'low', 'medium', 'high'). Omit if not applicable.",
+      "description": "Human-readable description of the model",
+      "intelligence_score": "1-20 human rating used as the primary signal for auto-mode model ordering"
+    }
+  },
+  "models": [
+    {
+      "model_name": "gpt-5.4-mini",
+      "friendly_name": "Cheaper Inference (GPT-5.4 Mini)",
+      "aliases": [
+        "ci-mini"
+      ],
+      "intelligence_score": 12,
+      "description": "GPT-5.4 Mini via Cheaper Inference - Fast general-purpose model",
+      "context_window": 400000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0
+    },
+    {
+      "model_name": "gpt-5.4",
+      "friendly_name": "Cheaper Inference (GPT-5.4)",
+      "aliases": [
+        "ci-gpt"
+      ],
+      "intelligence_score": 16,
+      "description": "GPT-5.4 via Cheaper Inference - Strong reasoning model",
+      "context_window": 1000000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0
+    },
+    {
+      "model_name": "claude-sonnet-5",
+      "friendly_name": "Cheaper Inference (Claude Sonnet 5)",
+      "aliases": [
+        "ci-sonnet"
+      ],
+      "intelligence_score": 16,
+      "description": "Claude Sonnet 5 via Cheaper Inference - Strong coding and analysis model",
+      "context_window": 1000000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0
+    },
+    {
+      "model_name": "gemini-3.1-pro",
+      "friendly_name": "Cheaper Inference (Gemini 3.1 Pro)",
+      "aliases": [
+        "ci-gemini"
+      ],
+      "intelligence_score": 16,
+      "description": "Gemini 3.1 Pro via Cheaper Inference - Long-context reasoning model",
+      "context_window": 1048576,
+      "max_output_tokens": 65536,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0
+    },
+    {
+      "model_name": "deepseek-v4-flash",
+      "friendly_name": "Cheaper Inference (DeepSeek V4 Flash)",
+      "aliases": [
+        "ci-deepseek"
+      ],
+      "intelligence_score": 13,
+      "description": "DeepSeek V4 Flash via Cheaper Inference - Fast long-context model",
+      "context_window": 1000000,
+      "max_output_tokens": 384000,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true
+    },
+    {
+      "model_name": "glm-5.3",
+      "friendly_name": "Cheaper Inference (GLM-5.3)",
+      "aliases": [
+        "ci-glm"
+      ],
+      "intelligence_score": 14,
+      "description": "GLM-5.3 via Cheaper Inference - Long-context reasoning model",
+      "context_window": 1000000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true
+    }
+  ]
+}

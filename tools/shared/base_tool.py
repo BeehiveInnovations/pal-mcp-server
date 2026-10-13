@@ -476,6 +476,7 @@ class BaseTool(ABC):
             "XAI_ALLOWED_MODELS": "X.AI",
             "OPENROUTER_ALLOWED_MODELS": "OpenRouter",
             "DIAL_ALLOWED_MODELS": "DIAL",
+            "CHEAPER_INFERENCE_ALLOWED_MODELS": "Cheaper Inference",
         }
 
         notes: list[str] = []

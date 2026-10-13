@@ -151,6 +151,7 @@ For best results when using [Codex CLI](https://developers.openai.com/codex/cli)
 - **[Azure OpenAI](https://learn.microsoft.com/azure/ai-services/openai/)** - Enterprise deployments of GPT-4o, GPT-4.1, GPT-5 family
 - **[X.AI](https://console.x.ai/)** - Grok models
 - **[DIAL](https://dialx.ai/)** - Vendor-agnostic model access
+- **[Cheaper Inference](https://cheaperinference.com/)** - OpenAI-compatible gateway to models from several labs
 - **[Ollama](https://ollama.ai/)** - Local models (free)
 
 **2. Install** (choose one):

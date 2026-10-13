@@ -73,6 +73,7 @@ DEFAULT_MODEL=auto  # Claude picks best model for each task (recommended)
   - `conf/xai_models.json` – X.AI / GROK catalogue (`XAI_MODELS_CONFIG_PATH`)
   - `conf/openrouter_models.json` – OpenRouter catalogue (`OPENROUTER_MODELS_CONFIG_PATH`)
   - `conf/dial_models.json` – DIAL aggregation catalogue (`DIAL_MODELS_CONFIG_PATH`)
+  - `conf/cheaperinference_models.json` – Cheaper Inference catalogue (`CHEAPER_INFERENCE_MODELS_CONFIG_PATH`)
   - `conf/custom_models.json` – Custom/OpenAI-compatible endpoints (`CUSTOM_MODELS_CONFIG_PATH`)
 
   Each JSON file documents the allowed fields via its `_README` block and controls model aliases, capability limits, and feature flags (including `allow_code_generation`). Edit these files (or point the matching `*_MODELS_CONFIG_PATH` variable to your own copy) when you want to adjust context windows, enable JSON mode, enable structured code generation, or expose additional aliases without touching Python code.
@@ -221,6 +222,7 @@ GEMINI_MODELS_CONFIG_PATH=/path/to/gemini_models.json
 XAI_MODELS_CONFIG_PATH=/path/to/xai_models.json
 OPENROUTER_MODELS_CONFIG_PATH=/path/to/openrouter_models.json
 DIAL_MODELS_CONFIG_PATH=/path/to/dial_models.json
+CHEAPER_INFERENCE_MODELS_CONFIG_PATH=/path/to/cheaperinference_models.json
 CUSTOM_MODELS_CONFIG_PATH=/path/to/custom_models.json
 ```
 
