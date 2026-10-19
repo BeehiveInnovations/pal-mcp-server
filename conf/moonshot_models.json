@@ -1,0 +1,27 @@
+{
+  "_README": {
+    "description": "Moonshot Kimi via its OpenAI-compatible API (native provider, MOONSHOT_API_KEY).",
+    "usage": "Base URL https://api.moonshot.ai/v1. Kimi K3 weights are open but 2.8T, so the API is the practical route. Scores pinned to the moonshotai/* OpenRouter mirrors. Verify model IDs against /models if a call 404s."
+  },
+  "models": [
+    {
+      "model_name": "kimi-k3",
+      "friendly_name": "Kimi K3",
+      "aliases": ["kimi", "kimi-k3"],
+      "intelligence_score": 14,
+      "aa_index": 37,
+      "aa_index_by_effort": {"low": 30, "max": 44},
+      "description": "Moonshot Kimi K3 - flagship agentic MoE (2.8T, 1M context). Direct Moonshot API. Score at the high-effort anchor is interpolated: AA has no high row (low 30, max 44), so high is taken as about 37.",
+      "context_window": 1048576,
+      "max_output_tokens": 131072,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0
+    }
+  ]
+}

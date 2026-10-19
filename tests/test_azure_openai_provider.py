@@ -143,3 +143,111 @@ def test_registry_configuration_merges_capabilities(dummy_azure_client, monkeypa
     # API call should use deployment defined in registry
     provider.generate_content("hello", "gpt-4o")
     assert dummy_azure_client["request_kwargs"]["model"] == "registry-deployment"
+
+
+# ---------------------------------------------------------------------------
+# Entra ID (AZURE_OPENAI_USE_ENTRA) auth
+# ---------------------------------------------------------------------------
+
+
+def _fake_token_provider():
+    return "fake-entra-token"
+
+
+def test_entra_mode_uses_token_provider_without_api_key(dummy_azure_client, monkeypatch):
+    built = {}
+
+    def fake_build(**kwargs):
+        built.update(kwargs)
+        return _fake_token_provider
+
+    monkeypatch.setattr("providers.azure_openai.build_entra_token_provider", fake_build)
+    provider = AzureOpenAIProvider(
+        api_key="",
+        azure_endpoint="https://example.openai.azure.com/",
+        deployments={"gpt-4o": "prod"},
+        use_entra=True,
+    )
+
+    _ = provider.client
+
+    client_kwargs = dummy_azure_client["client_kwargs"]
+    assert client_kwargs["azure_ad_token_provider"] is _fake_token_provider
+    assert "api_key" not in client_kwargs
+    assert client_kwargs["azure_endpoint"] == "https://example.openai.azure.com"
+    assert built == {"label": "Azure OpenAI", "endpoint": "https://example.openai.azure.com"}
+
+
+def test_entra_flag_read_from_env(dummy_azure_client, monkeypatch):
+    monkeypatch.setenv("AZURE_OPENAI_USE_ENTRA", "true")
+    monkeypatch.setattr("providers.azure_openai.build_entra_token_provider", lambda **_: _fake_token_provider)
+    provider = AzureOpenAIProvider(
+        api_key="", azure_endpoint="https://example.openai.azure.com/", deployments={"gpt-4o": "prod"}
+    )
+
+    _ = provider.client
+
+    assert dummy_azure_client["client_kwargs"]["azure_ad_token_provider"] is _fake_token_provider
+
+
+def test_entra_mode_does_not_warn_about_missing_key(dummy_azure_client, monkeypatch, caplog):
+    monkeypatch.setattr("providers.azure_openai.build_entra_token_provider", lambda **_: _fake_token_provider)
+    with caplog.at_level("WARNING"):
+        AzureOpenAIProvider(
+            api_key="", azure_endpoint="https://example.openai.azure.com/", deployments={"gpt-4o": "p"}, use_entra=True
+        )
+    assert "without API key" not in caplog.text
+
+
+def test_key_mode_is_unchanged_when_flag_off(dummy_azure_client, monkeypatch):
+    def fail_build(**_):
+        raise AssertionError("Entra token provider must not be built in key mode")
+
+    monkeypatch.setattr("providers.azure_openai.build_entra_token_provider", fail_build)
+    provider = AzureOpenAIProvider(
+        api_key="key", azure_endpoint="https://example.openai.azure.com/", deployments={"gpt-4o": "prod"}
+    )
+
+    _ = provider.client
+
+    client_kwargs = dummy_azure_client["client_kwargs"]
+    assert client_kwargs["api_key"] == "key"
+    assert "azure_ad_token_provider" not in client_kwargs
+
+
+def test_entra_mode_without_azure_identity_raises_clear_error(dummy_azure_client, monkeypatch):
+    # A None entry in sys.modules makes `from azure.identity import ...` raise ImportError.
+    monkeypatch.setitem(sys.modules, "azure.identity", None)
+    provider = AzureOpenAIProvider(
+        api_key="", azure_endpoint="https://example.openai.azure.com/", deployments={"gpt-4o": "p"}, use_entra=True
+    )
+
+    with pytest.raises(ImportError, match="azure-identity"):
+        _ = provider.client
+
+
+def test_reasoning_deployment_sends_max_completion_tokens(dummy_azure_client):
+    # GPT-5.x deployments reject max_tokens with HTTP 400 ("Use 'max_completion_tokens' instead").
+    provider = AzureOpenAIProvider(
+        api_key="key",
+        azure_endpoint="https://example.openai.azure.com/",
+        deployments={"gpt-5.4": {"deployment": "gpt54", "supports_extended_thinking": True}},
+    )
+
+    provider.generate_content("hi", "gpt-5.4", max_output_tokens=20)
+
+    request = dummy_azure_client["request_kwargs"]
+    assert request["max_completion_tokens"] == 20
+    assert "max_tokens" not in request
+
+
+def test_non_reasoning_deployment_keeps_max_tokens(dummy_azure_client):
+    provider = AzureOpenAIProvider(
+        api_key="key", azure_endpoint="https://example.openai.azure.com/", deployments={"gpt-4o": "prod"}
+    )
+
+    provider.generate_content("hi", "gpt-4o", max_output_tokens=20)
+
+    request = dummy_azure_client["request_kwargs"]
+    assert request["max_tokens"] == 20
+    assert "max_completion_tokens" not in request

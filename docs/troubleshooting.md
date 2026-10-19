@@ -72,6 +72,16 @@ See [Logging Documentation](logging.md) for more details on accessing logs.
 **"API key environment variable is required"**
 - Add your API key to the `.env` file
 - Restart Claude Desktop after updating `.env`
+- Or use a provider that signs in instead: `CHATGPT_ENABLED=true` ([ChatGPT Models via Codex CLI](chatgpt_provider.md)) or the Entra ID flags ([Entra ID Authentication](entra_auth.md))
+
+**ChatGPT (`chatgpt/...`) models missing or failing**
+- `grep -i chatgpt logs/mcp_server.log` shows why: Codex not on PATH, not signed in, or signed in with an API key
+- Claude Desktop starts servers with a minimal PATH; set `CHATGPT_CODEX_COMMAND` to the full path from `which codex`
+- See [ChatGPT Models via Codex CLI › Troubleshooting](chatgpt_provider.md#troubleshooting)
+
+**Azure or Foundry calls fail with 401/403 in Entra mode**
+- Run `az login` (and `az account set --subscription <id>`) in the account PAL runs as
+- Your identity needs a data-plane role on the resource, not only Owner or Contributor. See [Entra ID Authentication](entra_auth.md)
 
 **File path errors**
 - Always use absolute paths: `/Users/you/project/file.py`

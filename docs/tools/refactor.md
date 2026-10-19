@@ -105,7 +105,7 @@ This results in Claude first performing its own expert analysis, encouraging it 
 - `model`: auto|pro|flash|flash-2.0|flashlite|o3|o3-mini|o4-mini|gpt4.1|gpt5.2|gpt5.1-codex|gpt5.1-codex-mini|gpt5|gpt5-mini|gpt5-nano (default: server default)
 - `focus_areas`: Specific areas to focus on (e.g., 'performance', 'readability', 'maintainability', 'security')
 - `style_guide_examples`: Optional existing code files to use as style/pattern reference (absolute paths)
-- `thinking_mode`: minimal|low|medium|high|max (default: medium, Gemini only)
+- `thinking_mode`: minimal|low|medium|high|max (default: medium; Gemini budgets, or an explicit effort for models with effort_levels)
 - `use_assistant_model`: Whether to use expert analysis phase (default: true, set to false to use Claude only)
 - `continuation_id`: Thread continuation ID for multi-turn conversations
 

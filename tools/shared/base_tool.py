@@ -427,6 +427,11 @@ class BaseTool(ABC):
         seen_normalized: set[str] = set()
 
         for rank, model_name, capabilities in ranked:
+            # Meta-routers and other opt-out models stay callable by name but never appear as auto-mode
+            # candidates (e.g. the OpenRouter Fusion Router, which fans out to a panel and costs ~4-5x).
+            if not getattr(capabilities, "auto_selectable", True):
+                continue
+
             canonical_name = getattr(capabilities, "model_name", model_name)
             canonical_lower = canonical_name.lower()
             alias_lower = model_name.lower()

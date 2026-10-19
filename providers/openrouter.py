@@ -113,6 +113,44 @@ class OpenRouterProvider(OpenAICompatibleProvider):
         return ProviderType.OPENROUTER
 
     # ------------------------------------------------------------------
+    # Fusion meta-router injection (cost + injection seals)
+    # ------------------------------------------------------------------
+
+    def _augment_completion_params(self, completion_params: dict, resolved_model: str) -> None:
+        """Inject the sealed Fusion panel for the ``fusion-*`` preset SKUs.
+
+        Injection seal: the panel comes ONLY from this model's trusted registry entry — never from the
+        prompt, tool output, or caller kwargs. Cost seal: the fan-out is bounded by the conf-defined panel
+        (hard ceiling of 8), and the exact panel is logged as a receipt before dispatch so spend is
+        auditable. A model without a ``fusion`` block (including the bare ``openrouter/fusion`` default and
+        every normal model) is left untouched.
+        """
+
+        entry = self._registry.get_entry(resolved_model) if self._registry else None
+        fusion = (entry or {}).get("fusion")
+        if not isinstance(fusion, dict):
+            return
+
+        plugin: dict = {"id": "fusion"}
+        analysis_models = fusion.get("analysis_models")
+        if analysis_models:
+            plugin["analysis_models"] = list(analysis_models)[:8]  # hard fan-out ceiling (cost seal)
+        preset = fusion.get("preset")
+        if preset:
+            plugin["preset"] = preset
+
+        # The preset SKUs (openrouter/fusion-quality, -fast) are PAL-side aliases; the panel rides in the
+        # plugin, so the wire `model` must be the real Fusion slug, not our internal SKU name.
+        completion_params["model"] = fusion.get("base_model", "openrouter/fusion")
+        completion_params["extra_body"] = {"plugins": [plugin]}
+        logging.info(
+            "Fusion dispatch (billed ~4-5x a single completion): model=%s panel=%s preset=%s",
+            resolved_model,
+            plugin.get("analysis_models", "vendor-default"),
+            plugin.get("preset", "default(quality)"),
+        )
+
+    # ------------------------------------------------------------------
     # Registry helpers
     # ------------------------------------------------------------------
 

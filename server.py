@@ -69,7 +69,7 @@ from tools import (  # noqa: E402
 )
 from tools.models import ToolOutput  # noqa: E402
 from tools.shared.exceptions import ToolExecutionError  # noqa: E402
-from utils.env import env_override_enabled, get_env  # noqa: E402
+from utils.env import env_override_enabled, get_env, get_env_bool  # noqa: E402
 
 # Configure logging for server operations
 # Can be controlled via LOG_LEVEL environment variable (DEBUG, INFO, WARNING, ERROR)
@@ -375,6 +375,22 @@ PROMPT_TEMPLATES = {
 }
 
 
+def _warn_if_azure_identity_missing(flag: str) -> None:
+    """Log a clear error at startup when an Entra mode is on but azure-identity is not installed."""
+    import importlib.util
+
+    try:
+        installed = importlib.util.find_spec("azure.identity") is not None
+    except ModuleNotFoundError:  # the parent "azure" namespace package is absent
+        installed = False
+    if not installed:
+        logger.error(
+            "%s=true but the 'azure-identity' package is not installed; requests will fail until you run "
+            "`pip install azure-identity`",
+            flag,
+        )
+
+
 def configure_providers():
     """
     Configure and validate AI providers based on available API keys.
@@ -387,11 +403,19 @@ def configure_providers():
     """
     # Log environment variable status for debugging
     logger.debug("Checking environment variables for API keys...")
-    api_keys_to_check = ["OPENAI_API_KEY", "OPENROUTER_API_KEY", "GEMINI_API_KEY", "XAI_API_KEY", "CUSTOM_API_URL"]
+    api_keys_to_check = [
+        "OPENAI_API_KEY",
+        "ANTHROPIC_API_KEY",
+        "OPENROUTER_API_KEY",
+        "GEMINI_API_KEY",
+        "XAI_API_KEY",
+        "CUSTOM_API_URL",
+    ]
     for key in api_keys_to_check:
         value = get_env(key)
         logger.debug(f"  {key}: {'[PRESENT]' if value else '[MISSING]'}")
     from providers import ModelProviderRegistry
+    from providers.anthropic import AnthropicModelProvider
     from providers.azure_openai import AzureOpenAIProvider
     from providers.custom import CustomProvider
     from providers.dial import DIALModelProvider
@@ -427,11 +451,28 @@ def configure_providers():
         else:
             logger.debug("OpenAI API key is placeholder value")
 
-    # Check for Azure OpenAI configuration
+    # Check for Anthropic API key, or Claude on Azure AI Foundry with Entra ID auth (no key needed)
+    anthropic_key = get_env("ANTHROPIC_API_KEY")
+    anthropic_use_entra = get_env_bool("ANTHROPIC_USE_ENTRA")
+    anthropic_entra_ready = anthropic_use_entra and bool(get_env("ANTHROPIC_FOUNDRY_BASE_URL"))
+    anthropic_enabled = bool(anthropic_key and anthropic_key != "your_anthropic_api_key_here") or anthropic_entra_ready
+    if anthropic_use_entra and not anthropic_entra_ready:
+        logger.warning("ANTHROPIC_USE_ENTRA=true but ANTHROPIC_FOUNDRY_BASE_URL is not set - Foundry Claude disabled")
+    if anthropic_enabled:
+        valid_providers.append("Anthropic")
+        has_native_apis = True
+        if anthropic_entra_ready:
+            _warn_if_azure_identity_missing("ANTHROPIC_USE_ENTRA")
+            logger.info("Anthropic on Azure AI Foundry with Entra ID auth - Claude models available")
+        else:
+            logger.info("Anthropic API key found - Claude models available")
+
+    # Check for Azure OpenAI configuration (API key, or Entra ID auth with AZURE_OPENAI_USE_ENTRA)
     azure_key = get_env("AZURE_OPENAI_API_KEY")
     azure_endpoint = get_env("AZURE_OPENAI_ENDPOINT")
+    azure_use_entra = get_env_bool("AZURE_OPENAI_USE_ENTRA")
     azure_models_available = False
-    if azure_key and azure_key != "your_azure_openai_key_here" and azure_endpoint:
+    if ((azure_key and azure_key != "your_azure_openai_key_here") or azure_use_entra) and azure_endpoint:
         try:
             from providers.registries.azure import AzureModelRegistry
 
@@ -440,7 +481,11 @@ def configure_providers():
                 valid_providers.append("Azure OpenAI")
                 has_native_apis = True
                 azure_models_available = True
-                logger.info("Azure OpenAI configuration detected")
+                if azure_use_entra:
+                    _warn_if_azure_identity_missing("AZURE_OPENAI_USE_ENTRA")
+                    logger.info("Azure OpenAI configuration detected (Entra ID auth)")
+                else:
+                    logger.info("Azure OpenAI configuration detected")
             else:
                 logger.warning(
                     "Azure OpenAI models configuration is empty. Populate conf/azure_models.json or set AZURE_MODELS_CONFIG_PATH."
@@ -455,12 +500,66 @@ def configure_providers():
         has_native_apis = True
         logger.info("X.AI API key found - GROK models available")
 
+    # Native OpenAI-compatible open-model providers (direct APIs). Each stays dormant unless its key
+    # is set, so this is zero behavior change for anyone who doesn't configure one.
+    from providers.deepseek import DeepSeekModelProvider
+    from providers.minimax import MiniMaxModelProvider
+    from providers.mistral import MistralModelProvider
+    from providers.moonshot import MoonshotModelProvider
+    from providers.nvidia import NvidiaModelProvider
+    from providers.perplexity import PerplexityModelProvider
+    from providers.qwen import QwenModelProvider
+    from providers.zai import ZaiModelProvider
+
+    native_oai_vendors = [
+        ("DEEPSEEK_API_KEY", "DeepSeek", ProviderType.DEEPSEEK, DeepSeekModelProvider),
+        ("DASHSCOPE_API_KEY", "Qwen (DashScope)", ProviderType.QWEN, QwenModelProvider),
+        ("ZAI_API_KEY", "Z.ai (GLM)", ProviderType.ZAI, ZaiModelProvider),
+        ("MOONSHOT_API_KEY", "Moonshot (Kimi)", ProviderType.MOONSHOT, MoonshotModelProvider),
+        ("MINIMAX_API_KEY", "MiniMax", ProviderType.MINIMAX, MiniMaxModelProvider),
+        ("MISTRAL_API_KEY", "Mistral", ProviderType.MISTRAL, MistralModelProvider),
+        ("NVIDIA_API_KEY", "NVIDIA (Nemotron)", ProviderType.NVIDIA, NvidiaModelProvider),
+        ("PERPLEXITY_API_KEY", "Perplexity", ProviderType.PERPLEXITY, PerplexityModelProvider),
+    ]
+    present_native_vendors = []
+    for env_var, label, ptype, provider_cls in native_oai_vendors:
+        vendor_key = get_env(env_var)
+        if vendor_key and vendor_key != f"your_{env_var.lower()}_here":
+            valid_providers.append(label)
+            has_native_apis = True
+            present_native_vendors.append((ptype, provider_cls))
+            logger.info("%s found - %s models available", env_var, label)
+
     # Check for DIAL API key
     dial_key = get_env("DIAL_API_KEY")
     if dial_key and dial_key != "your_dial_api_key_here":
         valid_providers.append("DIAL")
         has_native_apis = True
         logger.info("DIAL API key found - DIAL models available")
+
+    # ChatGPT-plan models through the Codex CLI's own login (no API key). Opt-in with CHATGPT_ENABLED=true.
+    chatgpt_enabled = False
+    if get_env_bool("CHATGPT_ENABLED"):
+        import shutil
+
+        from providers.chatgpt import codex_command, codex_login_problem
+
+        codex_executable = shutil.which(codex_command())
+        if codex_executable is None:
+            logger.error(
+                "CHATGPT_ENABLED=true but the Codex CLI ('%s') is not on PATH - ChatGPT models disabled. "
+                "Install it or set CHATGPT_CODEX_COMMAND.",
+                codex_command(),
+            )
+        else:
+            login_problem = codex_login_problem(codex_executable)
+            if login_problem:
+                # Still register: the login can be fixed without restarting PAL.
+                logger.warning("CHATGPT_ENABLED=true but %s - ChatGPT model calls fail until fixed", login_problem)
+            chatgpt_enabled = True
+            valid_providers.append("ChatGPT (Codex CLI)")
+            has_native_apis = True
+            logger.info("CHATGPT_ENABLED=true - ChatGPT-plan models available through the Codex CLI")
 
     # Check for OpenRouter API key
     openrouter_key = get_env("OPENROUTER_API_KEY")
@@ -505,6 +604,10 @@ def configure_providers():
             ModelProviderRegistry.register_provider(ProviderType.OPENAI, OpenAIModelProvider)
             registered_providers.append(ProviderType.OPENAI.value)
             logger.debug(f"Registered provider: {ProviderType.OPENAI.value}")
+        if anthropic_enabled:
+            ModelProviderRegistry.register_provider(ProviderType.ANTHROPIC, AnthropicModelProvider)
+            registered_providers.append(ProviderType.ANTHROPIC.value)
+            logger.debug(f"Registered provider: {ProviderType.ANTHROPIC.value}")
         if azure_models_available:
             ModelProviderRegistry.register_provider(ProviderType.AZURE, AzureOpenAIProvider)
             registered_providers.append(ProviderType.AZURE.value)
@@ -513,10 +616,20 @@ def configure_providers():
             ModelProviderRegistry.register_provider(ProviderType.XAI, XAIModelProvider)
             registered_providers.append(ProviderType.XAI.value)
             logger.debug(f"Registered provider: {ProviderType.XAI.value}")
+        for ptype, provider_cls in present_native_vendors:
+            ModelProviderRegistry.register_provider(ptype, provider_cls)
+            registered_providers.append(ptype.value)
+            logger.debug(f"Registered provider: {ptype.value}")
         if dial_key and dial_key != "your_dial_api_key_here":
             ModelProviderRegistry.register_provider(ProviderType.DIAL, DIALModelProvider)
             registered_providers.append(ProviderType.DIAL.value)
             logger.debug(f"Registered provider: {ProviderType.DIAL.value}")
+        if chatgpt_enabled:
+            from providers.chatgpt import ChatGPTModelProvider
+
+            ModelProviderRegistry.register_provider(ProviderType.CHATGPT, ChatGPTModelProvider)
+            registered_providers.append(ProviderType.CHATGPT.value)
+            logger.debug(f"Registered provider: {ProviderType.CHATGPT.value}")
 
     # 2. Custom provider second (for local/private models)
     if has_custom:
@@ -546,8 +659,12 @@ def configure_providers():
             "At least one API configuration is required. Please set either:\n"
             "- GEMINI_API_KEY for Gemini models\n"
             "- OPENAI_API_KEY for OpenAI models\n"
+            "- ANTHROPIC_API_KEY for Anthropic Claude models\n"
+            "- ANTHROPIC_USE_ENTRA=true + ANTHROPIC_FOUNDRY_BASE_URL for Claude on Azure AI Foundry\n"
+            "- AZURE_OPENAI_API_KEY or AZURE_OPENAI_USE_ENTRA=true, plus AZURE_OPENAI_ENDPOINT, for Azure OpenAI\n"
             "- XAI_API_KEY for X.AI GROK models\n"
             "- DIAL_API_KEY for DIAL models\n"
+            "- CHATGPT_ENABLED=true for ChatGPT-plan models through the Codex CLI (`codex login`)\n"
             "- OPENROUTER_API_KEY for OpenRouter (multiple models)\n"
             "- CUSTOM_API_URL for local models (Ollama, vLLM, etc.)"
         )

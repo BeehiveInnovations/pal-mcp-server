@@ -100,9 +100,13 @@ class ListModelsTool(BaseTool):
         provider_info = {
             ProviderType.GOOGLE: {"name": "Google Gemini", "env_key": "GEMINI_API_KEY"},
             ProviderType.OPENAI: {"name": "OpenAI", "env_key": "OPENAI_API_KEY"},
-            ProviderType.AZURE: {"name": "Azure OpenAI", "env_key": "AZURE_OPENAI_API_KEY"},
+            ProviderType.AZURE: {
+                "name": "Azure OpenAI",
+                "env_key": "AZURE_OPENAI_API_KEY or AZURE_OPENAI_USE_ENTRA=true",
+            },
             ProviderType.XAI: {"name": "X.AI (Grok)", "env_key": "XAI_API_KEY"},
             ProviderType.DIAL: {"name": "AI DIAL", "env_key": "DIAL_API_KEY"},
+            ProviderType.CHATGPT: {"name": "ChatGPT (via Codex CLI)", "env_key": "CHATGPT_ENABLED=true"},
         }
 
         def format_model_entry(provider, display_name: str) -> list[str]:

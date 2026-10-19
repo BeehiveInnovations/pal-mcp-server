@@ -1,0 +1,40 @@
+{
+  "_README": {
+    "description": "Mistral via la Plateforme OpenAI-compatible API (native provider, MISTRAL_API_KEY).",
+    "usage": "Base URL https://api.mistral.ai/v1. Mixed open/closed lineup. Scores pinned to the mistralai/* OpenRouter mirrors. `*-latest` aliases track the current dated snapshot. Verify model IDs against /models if a call 404s."
+  },
+  "models": [
+    {
+      "model_name": "mistral-large-latest",
+      "friendly_name": "Mistral Large",
+      "aliases": ["mistral", "mistral-large"],
+      "intelligence_score": 10,
+      "description": "Mistral Large - flagship general model. Direct la Plateforme API.",
+      "context_window": 131072,
+      "max_output_tokens": 65536,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true
+    },
+    {
+      "model_name": "mistral-small-latest",
+      "friendly_name": "Mistral Small",
+      "aliases": ["mistral-small"],
+      "intelligence_score": 9,
+      "description": "Mistral Small - cost-efficient Apache-2.0 model. Direct la Plateforme API.",
+      "context_window": 131072,
+      "max_output_tokens": 65536,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true
+    }
+  ]
+}

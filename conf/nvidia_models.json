@@ -1,0 +1,44 @@
+{
+  "_README": {
+    "description": "NVIDIA Nemotron via NIM OpenAI-compatible API (native provider, NVIDIA_API_KEY).",
+    "usage": "Base URL https://integrate.api.nvidia.com/v1. NIM model IDs use an org/model form. Scores pinned to the nvidia/* OpenRouter mirrors. NOTE: the exact NIM slugs below are PENDING live /models validation (verify on build.nvidia.com before relying on the direct route)."
+  },
+  "models": [
+    {
+      "model_name": "nvidia/nemotron-3-super-120b-a12b",
+      "friendly_name": "Nemotron 3 Super",
+      "aliases": ["nemotron", "nemotron-super"],
+      "intelligence_score": 6,
+      "aa_index": 13,
+      "aa_index_by_effort": {"default": 13},
+      "description": "NVIDIA Nemotron 3 Super (120B-A12B) open model. Direct NIM API. Slug pending live validation.",
+      "context_window": 262144,
+      "max_output_tokens": 65536,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true
+    },
+    {
+      "model_name": "nvidia/nemotron-3-nano-30b-a3b",
+      "friendly_name": "Nemotron 3 Nano",
+      "aliases": ["nemotron-nano"],
+      "intelligence_score": 5,
+      "aa_index": 9,
+      "aa_index_by_effort": {"default": 9},
+      "description": "NVIDIA Nemotron 3 Nano (30B-A3B) open model. Direct NIM API. Slug pending live validation.",
+      "context_window": 262144,
+      "max_output_tokens": 65536,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true
+    }
+  ]
+}

@@ -68,7 +68,7 @@ This workflow ensures methodical analysis before expert insights, resulting in d
 - `analysis_type`: architecture|performance|security|quality|general (default: general)
 - `output_format`: summary|detailed|actionable (default: detailed)
 - `temperature`: Temperature for analysis (0-1, default 0.2)
-- `thinking_mode`: minimal|low|medium|high|max (default: medium, Gemini only)
+- `thinking_mode`: minimal|low|medium|high|max (default: medium; Gemini budgets, or an explicit effort for models with effort_levels)
 - `use_assistant_model`: Whether to use expert analysis phase (default: true, set to false to use Claude only)
 - `continuation_id`: Continue previous analysis sessions
 

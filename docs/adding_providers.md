@@ -39,6 +39,14 @@ features ([details here](model_ranking.md)).
 - Entries follow the [`ModelCapabilities`](../providers/shared/model_capabilities.py) schema and must include a `deployment` identifier.
   See [Azure OpenAI Configuration](azure_openai.md) for a step-by-step walkthrough.
 
+**Option D: CLI-backed provider (`ChatGPTModelProvider`)**
+- For models reachable only through a local CLI's own login rather than an HTTP API with a key
+- `providers/chatgpt.py` runs `codex exec` once per request and parses its JSON event stream; it is a full
+  `ModelProvider` with a JSON catalogue (`conf/chatgpt_models.json`)
+- The registry builds it without an API key, and it ranks before OpenRouter so OpenRouter's
+  `vendor/model` catch-all cannot claim its `chatgpt/<model>` names.
+  See [ChatGPT Models via Codex CLI](chatgpt_provider.md).
+
 ## Step-by-Step Guide
 
 ### 1. Add Provider Type
@@ -310,4 +318,6 @@ needs additional alias handling beyond the shared behaviour.
 See existing implementations:
 - **Full provider**: `providers/gemini.py`
 - **OpenAI-compatible**: `providers/custom.py`
+- **Keyless, token-based auth**: `providers/azure_entra.py` (Entra ID tokens for Azure OpenAI and Claude on Foundry)
+- **CLI-backed**: `providers/chatgpt.py` (ChatGPT-plan models through the Codex CLI)
 - **Base classes**: `providers/base.py`

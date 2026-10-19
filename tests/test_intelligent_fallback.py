@@ -37,14 +37,14 @@ class TestIntelligentFallback:
 
     @patch.dict(os.environ, {"OPENAI_API_KEY": "sk-test-key", "GEMINI_API_KEY": ""}, clear=False)
     def test_prefers_openai_o3_mini_when_available(self):
-        """Test that gpt-5.2 is preferred when OpenAI API key is available (based on new preference order)"""
+        """Test that gpt-5.2 is preferred when OpenAI API key is available (upstream default preference)"""
         # Register only OpenAI provider for this test
         from providers.openai import OpenAIModelProvider
 
         ModelProviderRegistry.register_provider(ProviderType.OPENAI, OpenAIModelProvider)
 
         fallback_model = ModelProviderRegistry.get_preferred_fallback_model()
-        assert fallback_model == "gpt-5.2"  # Based on new preference order: gpt-5.2 before o4-mini
+        assert fallback_model == "gpt-5.2"  # Upstream default: gpt-5.2 is the top BALANCED preference
 
     @patch.dict(os.environ, {"OPENAI_API_KEY": "", "GEMINI_API_KEY": "test-gemini-key"}, clear=False)
     def test_prefers_gemini_flash_when_openai_unavailable(self):
@@ -55,7 +55,7 @@ class TestIntelligentFallback:
         ModelProviderRegistry.register_provider(ProviderType.GOOGLE, GeminiModelProvider)
 
         fallback_model = ModelProviderRegistry.get_preferred_fallback_model()
-        assert fallback_model == "gemini-2.5-flash"
+        assert fallback_model == "gemini-3.8-flash"
 
     @patch.dict(os.environ, {"OPENAI_API_KEY": "sk-test-key", "GEMINI_API_KEY": "test-gemini-key"}, clear=False)
     def test_prefers_openai_when_both_available(self):
@@ -68,7 +68,7 @@ class TestIntelligentFallback:
         ModelProviderRegistry.register_provider(ProviderType.GOOGLE, GeminiModelProvider)
 
         fallback_model = ModelProviderRegistry.get_preferred_fallback_model()
-        assert fallback_model == "gemini-2.5-flash"  # Gemini has priority now (based on new PROVIDER_PRIORITY_ORDER)
+        assert fallback_model == "gemini-3.8-flash"  # Gemini has priority now (based on new PROVIDER_PRIORITY_ORDER)
 
     @patch.dict(os.environ, {"OPENAI_API_KEY": "", "GEMINI_API_KEY": ""}, clear=False)
     def test_fallback_when_no_keys_available(self):
@@ -147,7 +147,7 @@ class TestIntelligentFallback:
 
                 history, tokens = build_conversation_history(context, model_context=None)
 
-                # Verify that ModelContext was called with gpt-5.2 (the intelligent fallback based on new preference order)
+                # Verify that ModelContext was called with gpt-5.2 (the upstream default fallback)
                 mock_context_class.assert_called_once_with("gpt-5.2")
 
     def test_auto_mode_with_gemini_only(self):
@@ -186,8 +186,8 @@ class TestIntelligentFallback:
 
                 history, tokens = build_conversation_history(context, model_context=None)
 
-                # Should use gemini-2.5-flash when only Gemini is available
-                mock_context_class.assert_called_once_with("gemini-2.5-flash")
+                # Should use gemini-3.8-flash when only Gemini is available
+                mock_context_class.assert_called_once_with("gemini-3.8-flash")
 
     def test_non_auto_mode_unchanged(self):
         """Test that non-auto mode behavior is unchanged"""

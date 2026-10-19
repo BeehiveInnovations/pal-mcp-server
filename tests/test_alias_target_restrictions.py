@@ -97,7 +97,7 @@ class TestAliasTargetRestrictions:
 
         provider = GeminiModelProvider(api_key="test-key")
 
-        # Both target and alias should be allowed
+        # Both target and alias should be allowed; by default "flash" -> gemini-2.5-flash
         assert provider.validate_model_name("gemini-2.5-flash")
         assert provider.validate_model_name("flash")
 
@@ -110,6 +110,7 @@ class TestAliasTargetRestrictions:
 
         provider = GeminiModelProvider(api_key="test-key")
 
+        # By default "flash" resolves to gemini-2.5-flash
         assert provider.validate_model_name("flash")
         assert provider.validate_model_name("gemini-2.5-flash")
 
@@ -174,6 +175,7 @@ class TestAliasTargetRestrictions:
         provider = GeminiModelProvider(api_key="test-key")
         service = ModelRestrictionService()
 
+        # By default "flash" resolves to gemini-2.5-flash
         assert service.is_allowed(ProviderType.GOOGLE, "gemini-2.5-flash")
         assert provider.validate_model_name("gemini-2.5-flash")
 

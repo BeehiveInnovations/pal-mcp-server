@@ -1,0 +1,27 @@
+{
+  "_README": {
+    "description": "MiniMax via its OpenAI-compatible API (native provider, MINIMAX_API_KEY).",
+    "usage": "Base URL https://api.minimax.io/v1. M3 weights are open but 428B, so the API is the practical route. Scores pinned to the minimax/* OpenRouter mirrors. Verify model IDs against /models if a call 404s."
+  },
+  "models": [
+    {
+      "model_name": "MiniMax-M3",
+      "friendly_name": "MiniMax M3",
+      "aliases": ["minimax", "minimax-m3"],
+      "intelligence_score": 11,
+      "aa_index": 29,
+      "aa_index_by_effort": {"default": 29},
+      "description": "MiniMax M3 - multimodal MoE (428B, 1M context) for coding and long-running agents. Direct MiniMax API.",
+      "context_window": 1000000,
+      "max_output_tokens": 65536,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0
+    }
+  ]
+}

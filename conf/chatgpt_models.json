@@ -1,0 +1,204 @@
+{
+  "_README": {
+    "description": "Models reachable with a ChatGPT plan login through the Codex CLI (`codex login`), used as plain single-turn models.",
+    "documentation": "docs/chatgpt_provider.md",
+    "usage": "Enable with CHATGPT_ENABLED=true. Model names are namespaced `chatgpt/<codex model slug>`; the slug after the prefix is passed to `codex exec -m`. Aliases are case-insensitive. Override this file with CHATGPT_MODELS_CONFIG_PATH.",
+    "field_notes": "Matches providers/shared/model_capabilities.py. context_window and effort_levels follow `codex debug models`; intelligence_score/aa_index mirror conf/openai_models.json. Temperature and max output tokens cannot be set through the Codex CLI, so supports_temperature is false."
+  },
+  "models": [
+    {
+      "model_name": "chatgpt/gpt-6.1-sol",
+      "friendly_name": "ChatGPT (GPT-6.1 Sol)",
+      "aliases": [
+        "chatgpt/sol"
+      ],
+      "intelligence_score": 19,
+      "aa_index": 50,
+      "description": "gpt-6.1-sol through a ChatGPT plan via the Codex CLI (500K context) - upgrade to GPT-6 Sol, below the GPT-6 Astra flagship.",
+      "context_window": 500000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "effort_levels": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "supports_system_prompts": true,
+      "supports_streaming": false,
+      "supports_function_calling": false,
+      "supports_json_mode": false,
+      "supports_images": true,
+      "supports_temperature": false,
+      "max_image_size_mb": 20.0,
+      "allow_code_generation": true,
+      "temperature_constraint": "fixed"
+    },
+    {
+      "model_name": "chatgpt/gpt-6-astra",
+      "friendly_name": "ChatGPT (GPT-6 Astra)",
+      "aliases": [
+        "chatgpt/astra"
+      ],
+      "intelligence_score": 19,
+      "aa_index": 51,
+      "description": "gpt-6-astra through a ChatGPT plan via the Codex CLI (272K context) - OpenAI flagship.",
+      "context_window": 272000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "effort_levels": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "supports_system_prompts": true,
+      "supports_streaming": false,
+      "supports_function_calling": false,
+      "supports_json_mode": false,
+      "supports_images": true,
+      "supports_temperature": false,
+      "max_image_size_mb": 20.0,
+      "allow_code_generation": true,
+      "temperature_constraint": "fixed"
+    },
+    {
+      "model_name": "chatgpt/gpt-6-sol",
+      "friendly_name": "ChatGPT (GPT-6 Sol)",
+      "aliases": [],
+      "intelligence_score": 18,
+      "description": "gpt-6-sol through a ChatGPT plan via the Codex CLI (272K context) - GPT-6 Sol, the predecessor of GPT-6.1 Sol.",
+      "context_window": 272000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "effort_levels": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "supports_system_prompts": true,
+      "supports_streaming": false,
+      "supports_function_calling": false,
+      "supports_json_mode": false,
+      "supports_images": true,
+      "supports_temperature": false,
+      "max_image_size_mb": 20.0,
+      "allow_code_generation": true,
+      "temperature_constraint": "fixed"
+    },
+    {
+      "model_name": "chatgpt/gpt-6-luna",
+      "friendly_name": "ChatGPT (GPT-6 Luna)",
+      "aliases": [
+        "chatgpt/luna"
+      ],
+      "intelligence_score": 13,
+      "aa_index": 33,
+      "description": "gpt-6-luna through a ChatGPT plan via the Codex CLI (272K context) - fast, low-cost tier of the GPT-6 series.",
+      "context_window": 272000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "effort_levels": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "supports_system_prompts": true,
+      "supports_streaming": false,
+      "supports_function_calling": false,
+      "supports_json_mode": false,
+      "supports_images": true,
+      "supports_temperature": false,
+      "max_image_size_mb": 20.0,
+      "allow_code_generation": true,
+      "temperature_constraint": "fixed"
+    },
+    {
+      "model_name": "chatgpt/gpt-5.6-sol",
+      "friendly_name": "ChatGPT (GPT-5.6 Sol)",
+      "aliases": [],
+      "intelligence_score": 17,
+      "description": "gpt-5.6-sol through a ChatGPT plan via the Codex CLI (272K context) - flagship tier of the GPT-5.6 family.",
+      "context_window": 272000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "effort_levels": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "supports_system_prompts": true,
+      "supports_streaming": false,
+      "supports_function_calling": false,
+      "supports_json_mode": false,
+      "supports_images": true,
+      "supports_temperature": false,
+      "max_image_size_mb": 20.0,
+      "allow_code_generation": true,
+      "temperature_constraint": "fixed"
+    },
+    {
+      "model_name": "chatgpt/gpt-5.6-terra",
+      "friendly_name": "ChatGPT (GPT-5.6 Terra)",
+      "aliases": [
+        "chatgpt/terra"
+      ],
+      "intelligence_score": 13,
+      "aa_index": 34,
+      "description": "gpt-5.6-terra through a ChatGPT plan via the Codex CLI (272K context) - balanced intelligence/cost tier of the GPT-5.6 family.",
+      "context_window": 272000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "effort_levels": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "supports_system_prompts": true,
+      "supports_streaming": false,
+      "supports_function_calling": false,
+      "supports_json_mode": false,
+      "supports_images": true,
+      "supports_temperature": false,
+      "max_image_size_mb": 20.0,
+      "allow_code_generation": true,
+      "temperature_constraint": "fixed"
+    },
+    {
+      "model_name": "chatgpt/gpt-5.6-luna",
+      "friendly_name": "ChatGPT (GPT-5.6 Luna)",
+      "aliases": [],
+      "intelligence_score": 14,
+      "description": "gpt-5.6-luna through a ChatGPT plan via the Codex CLI (272K context) - fast, low-cost tier of the GPT-5.6 family.",
+      "context_window": 272000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "effort_levels": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "supports_system_prompts": true,
+      "supports_streaming": false,
+      "supports_function_calling": false,
+      "supports_json_mode": false,
+      "supports_images": true,
+      "supports_temperature": false,
+      "max_image_size_mb": 20.0,
+      "allow_code_generation": true,
+      "temperature_constraint": "fixed"
+    }
+  ]
+}

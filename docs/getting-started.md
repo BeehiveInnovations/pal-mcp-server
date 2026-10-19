@@ -11,7 +11,7 @@ This guide walks you through setting up the PAL MCP Server from scratch, includi
 
 ## Step 1: Get API Keys
 
-You need at least one API key. Choose based on your needs:
+You need at least one API key, or one of the sign-in options in Option D. Choose based on your needs:
 
 ### Option A: OpenRouter (Recommended for beginners)
 **One API for multiple models**
@@ -59,6 +59,17 @@ ollama pull llama3.2
 - **Text Generation WebUI**: Popular local interface
 
 👉 **[Complete custom model setup guide](custom_models.md)**
+
+### Option D: Sign In Instead of an API Key
+
+**ChatGPT plan (via the Codex CLI):**
+- Install the [Codex CLI](https://github.com/openai/codex) and run `codex login`, choosing **Sign in with ChatGPT**
+- Set `CHATGPT_ENABLED=true`; models appear as `chatgpt/<model>` (for example `chatgpt/gpt-6.1-sol`)
+- Single-turn model calls that count against your ChatGPT plan. See [ChatGPT Models via Codex CLI](chatgpt_provider.md)
+
+**Azure OpenAI or Claude on Azure AI Foundry (Entra ID):**
+- Run `az login`; your identity needs a data-plane role on the resource
+- Set `AZURE_OPENAI_USE_ENTRA=true` or `ANTHROPIC_USE_ENTRA=true` with the endpoint. See [Entra ID Authentication](entra_auth.md)
 
 ## Step 2: Installation
 
@@ -297,6 +308,11 @@ DIAL_API_HOST=https://core.dialx.ai          # Default host (optional)
 DIAL_API_VERSION=2024-12-01-preview          # API version (optional) 
 DIAL_ALLOWED_MODELS=o3,gemini-2.5-pro       # Restrict models (optional)
 
+# Sign in instead of a key (see Option D above)
+# CHATGPT_ENABLED=true                       # ChatGPT-plan models via `codex login`
+# AZURE_OPENAI_USE_ENTRA=true                # Azure OpenAI via `az login` (+ AZURE_OPENAI_ENDPOINT)
+# ANTHROPIC_USE_ENTRA=true                   # Claude on Foundry via `az login` (+ ANTHROPIC_FOUNDRY_BASE_URL)
+
 # Custom/Local models (Ollama, vLLM, etc.)
 CUSTOM_API_URL=http://localhost:11434/v1     # Ollama example
 CUSTOM_API_KEY=                              # Empty for Ollama
@@ -452,6 +468,10 @@ Versions 0.2.1 and newer currently ignore values above ~60 seconds for some tran
 - Verify API keys in `.env` file or MCP configuration
 - Test API keys directly with provider's API
 - Check for extra spaces or quotes around keys
+
+**Signed-in providers (no API key):**
+- ChatGPT models: `codex login status` must print `Logged in using ChatGPT`. See [ChatGPT Models via Codex CLI](chatgpt_provider.md#troubleshooting)
+- Entra ID: `az account show` must succeed and your identity needs a data-plane role. See [Entra ID Authentication](entra_auth.md)
 
 **"Model not available":**
 - Run `"Use pal to list available models"` to see what's configured

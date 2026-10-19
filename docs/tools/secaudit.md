@@ -92,7 +92,7 @@ security remediation plan using planner
 - `audit_focus`: comprehensive|authentication|data_protection|infrastructure|api_security (default: comprehensive)
 - `severity_filter`: critical|high|medium|low|all (default: all)
 - `temperature`: Temperature for analytical consistency (0-1, default 0.2)
-- `thinking_mode`: minimal|low|medium|high|max (default: medium, Gemini only)
+- `thinking_mode`: minimal|low|medium|high|max (default: medium; Gemini budgets, or an explicit effort for models with effort_levels)
 - `use_assistant_model`: Whether to use expert security analysis phase (default: true)
 - `continuation_id`: Continue previous security audit discussions
 

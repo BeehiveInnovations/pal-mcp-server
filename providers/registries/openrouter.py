@@ -18,6 +18,11 @@ class OpenRouterModelRegistry(CapabilityModelRegistry):
             config_path=config_path,
         )
 
+    def _extra_keys(self) -> set[str]:
+        # `fusion` carries the sealed Fusion-meta-router panel config (analysis_models / preset). It is
+        # not a ModelCapabilities field, so it is whitelisted here and captured into `_extras` below.
+        return {"fusion"}
+
     def _finalise_entry(self, entry: dict) -> tuple[ModelCapabilities, dict]:
         provider_override = entry.get("provider")
         if isinstance(provider_override, str):
@@ -35,4 +40,8 @@ class OpenRouterModelRegistry(CapabilityModelRegistry):
         filtered = {k: v for k, v in entry.items() if k in CAPABILITY_FIELD_NAMES}
         filtered.setdefault("provider", entry_provider)
         capability = ModelCapabilities(**filtered)
-        return capability, {}
+
+        extras: dict = {}
+        if isinstance(entry.get("fusion"), dict):
+            extras["fusion"] = entry["fusion"]
+        return capability, extras

@@ -85,7 +85,7 @@ The above prompt will simultaneously run two separate `codereview` tools with tw
 - `standards`: Coding standards to enforce (e.g., "PEP8", "ESLint", "Google Style Guide")
 - `severity_filter`: critical|high|medium|low|all (default: all)
 - `temperature`: Temperature for consistency (0-1, default 0.2)
-- `thinking_mode`: minimal|low|medium|high|max (default: medium, Gemini only)
+- `thinking_mode`: minimal|low|medium|high|max (default: medium; Gemini budgets, or an explicit effort for models with effort_levels)
 - `use_assistant_model`: Whether to use expert analysis phase (default: true, set to false to use Claude only)
 - `continuation_id`: Continue previous review discussions
 

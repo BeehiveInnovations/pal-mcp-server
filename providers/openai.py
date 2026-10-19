@@ -25,6 +25,15 @@ class OpenAIModelProvider(RegistryBackedProviderMixin, OpenAICompatibleProvider)
     REGISTRY_CLASS = OpenAIModelRegistry
     MODEL_CAPABILITIES: ClassVar[dict[str, ModelCapabilities]] = {}
 
+    def _max_output_tokens_param(self, capabilities: Optional[ModelCapabilities]) -> str:
+        """OpenAI's reasoning models (GPT-5.x, GPT-6) reject max_tokens and require max_completion_tokens.
+
+        Other models, including custom gateway models served through this provider, keep max_tokens.
+        """
+        if capabilities is not None and capabilities.supports_extended_thinking:
+            return "max_completion_tokens"
+        return "max_tokens"
+
     def __init__(self, api_key: str, **kwargs):
         """Initialize OpenAI provider with API key."""
         self._ensure_registry()
@@ -100,6 +109,7 @@ class OpenAIModelProvider(RegistryBackedProviderMixin, OpenAICompatibleProvider)
         Returns:
             Preferred model name or None
         """
+        from config import dynamic_model_selection_enabled
         from tools.models import ToolModelCategory
 
         if not allowed_models:
@@ -113,54 +123,85 @@ class OpenAIModelProvider(RegistryBackedProviderMixin, OpenAICompatibleProvider)
                     return model
             return None
 
+        # Each category has a (default, dynamic) preference list. The default lists preserve
+        # upstream behaviour. The dynamic lists lead with the newest flagships and include the full
+        # current catalogue (codex + pro variants as lower-priority fallbacks so they are still
+        # auto-selectable when a restriction policy allows only them). The dynamic lists apply only
+        # when DYNAMIC_MODEL_SELECTION is enabled, leaving default selection unchanged.
         if category == ToolModelCategory.EXTENDED_REASONING:
-            # Prefer models with extended thinking support
-            # GPT-5.1 Codex first for coding tasks
-            preferred = find_first(
-                [
-                    "gpt-5.1-codex",
-                    "gpt-5.2",
-                    "gpt-5-codex",
-                    "gpt-5.2-pro",
-                    "o3-pro",
-                    "gpt-5",
-                    "o3",
-                ]
-            )
-            return preferred if preferred else allowed_models[0]
-
+            default = ["gpt-5.1-codex", "gpt-5.2", "gpt-5-codex", "gpt-5.2-pro", "o3-pro", "gpt-5", "o3"]
+            dynamic = [
+                "gpt-6.1-sol",
+                "gpt-5.6-sol",
+                "gpt-5.6-terra",
+                "gpt-5.5",
+                "gpt-5.4",
+                "gpt-5.3-codex",
+                "gpt-5.2-codex",
+                "gpt-5.1-codex-max",
+                "gpt-5.1-codex",
+                "gpt-5.2",
+                "gpt-5-codex",
+                "gpt-6-luna",
+                "gpt-5.6-luna",
+                "gpt-5.5-pro",
+                "gpt-5.4-pro",
+                "gpt-5.2-pro",
+                "o3-pro",
+                "gpt-5",
+                "o3",
+            ]
         elif category == ToolModelCategory.FAST_RESPONSE:
-            # Prefer fast, cost-efficient models
-            # GPT-5.2 models for speed, GPT-5.1-Codex after (premium pricing but cached)
-            preferred = find_first(
-                [
-                    "gpt-5.2",
-                    "gpt-5.1-codex-mini",
-                    "gpt-5",
-                    "gpt-5-mini",
-                    "gpt-5-codex",
-                    "o4-mini",
-                    "o3-mini",
-                ]
-            )
-            return preferred if preferred else allowed_models[0]
-
+            default = ["gpt-5.2", "gpt-5.1-codex-mini", "gpt-5", "gpt-5-mini", "gpt-5-codex", "o4-mini", "o3-mini"]
+            dynamic = [
+                "gpt-6-luna",
+                "gpt-5.4-mini",
+                "gpt-5.4-nano",
+                "gpt-5-mini",
+                "gpt-5-nano",
+                "gpt-5.1-codex-mini",
+                "gpt-4.1-mini",
+                "gpt-4.1-nano",
+                "gpt-4o-mini",
+                "o4-mini",
+                "o3-mini",
+            ]
         else:  # BALANCED or default
-            # Prefer balanced performance/cost models
-            # Include GPT-5.2 family for latest capabilities
-            preferred = find_first(
-                [
-                    "gpt-5.2",
-                    "gpt-5.1-codex",
-                    "gpt-5",
-                    "gpt-5-codex",
-                    "gpt-5.2-pro",
-                    "gpt-5-mini",
-                    "o4-mini",
-                    "o3-mini",
-                ]
-            )
-            return preferred if preferred else allowed_models[0]
+            default = [
+                "gpt-5.2",
+                "gpt-5.1-codex",
+                "gpt-5",
+                "gpt-5-codex",
+                "gpt-5.2-pro",
+                "gpt-5-mini",
+                "o4-mini",
+                "o3-mini",
+            ]
+            dynamic = [
+                "gpt-6.1-sol",
+                "gpt-5.6-sol",
+                "gpt-5.6-terra",
+                "gpt-5.5",
+                "gpt-5.4",
+                "gpt-5.3-codex",
+                "gpt-5.2-codex",
+                "gpt-5.1-codex-max",
+                "gpt-5.2",
+                "gpt-5.1-codex",
+                "gpt-5-codex",
+                "gpt-6-luna",
+                "gpt-5.6-luna",
+                "gpt-5.5-pro",
+                "gpt-5.4-pro",
+                "gpt-5.2-pro",
+                "gpt-5",
+                "gpt-5-mini",
+                "o4-mini",
+                "o3-mini",
+            ]
+
+        preferred = find_first(dynamic if dynamic_model_selection_enabled() else default)
+        return preferred if preferred else allowed_models[0]
 
 
 # Load registry data at import time so dependent providers (Azure) can reuse it

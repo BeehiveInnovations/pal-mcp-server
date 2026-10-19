@@ -1,0 +1,339 @@
+{
+  "_README": {
+    "description": "Model metadata for Anthropic's Claude API (direct Messages API access).",
+    "documentation": "https://github.com/BeehiveInnovations/pal-mcp-server/blob/main/docs/custom_models.md",
+    "usage": "Models listed here are exposed directly through the native Anthropic provider (ANTHROPIC_API_KEY). Aliases are case-insensitive. Claude models are also reachable via OpenRouter (anthropic/... IDs); when both an Anthropic key and OpenRouter are configured, the native Anthropic provider wins by priority so bare aliases like 'opus'/'fable' route direct.",
+    "field_notes": "Matches providers/shared/model_capabilities.py.",
+    "field_descriptions": {
+      "model_name": "The Anthropic Messages API model identifier (e.g., 'claude-opus-5')",
+      "aliases": "Array of short names users can type instead of the full model name",
+      "context_window": "Total number of tokens the model can process (input + output combined)",
+      "max_output_tokens": "Maximum number of tokens the model can generate in a single response",
+      "max_thinking_tokens": "Maximum reasoning/thinking tokens when extended thinking is requested (Anthropic budget_tokens; clamped to >=1024 and < max_output_tokens at call time)",
+      "supports_extended_thinking": "Whether the model supports Anthropic extended thinking (reasoning) budgets",
+      "supports_json_mode": "Whether the model can guarantee valid JSON output",
+      "supports_function_calling": "Whether the model supports tool use",
+      "supports_images": "Whether the model can process image input",
+      "max_image_size_mb": "Maximum total size in MB for all images combined",
+      "supports_temperature": "Whether the model accepts a temperature parameter (forced to 1.0 by the API when extended thinking is enabled)",
+      "temperature_constraint": "Type of temperature constraint: 'fixed', 'range', 'discrete', or omit for default range",
+      "default_reasoning_effort": "Default reasoning effort level for models that support it",
+      "description": "Human-readable description of the model",
+      "intelligence_score": "1-20 human rating used as the primary signal for auto-mode model ordering. Since 2026-10-13 it is anchored to the Artificial Analysis Intelligence Index v4.3 at HIGH reasoning effort (aa_index_by_effort['high'], leaderboard read 2026-10-12/13) through the ladder in docs/model_ranking.md. Entries without aa_index_by_effort carry estimated scores. PAL tools default to thinking_mode medium, so a typical call can score a few Index points below the anchor.",
+      "aa_index": "Optional AA Index value behind intelligence_score at the high-effort anchor (interpolated or estimated where AA has no high row; the description says which). Used to order models that share the same intelligence_score.",
+      "aa_index_by_effort": "Optional per-effort Artificial Analysis Intelligence Index values (v4.3 leaderboard, read 2026-10-12), keyed by effort (non-reasoning, low, medium, high, xhigh, max; 'default' for a model with a single row). Values AA marks as incomplete (*) are left out.",
+      "effort_levels": "Optional list of reasoning-effort levels this route accepts. When set, PAL sends the tool's thinking_mode as an explicit effort, clamped to these levels; when absent, no effort is sent.",
+      "allow_code_generation": "Whether this model can generate fully working code for your AI tool to use right away. Only true for a model more capable than the AI model / CLI you're currently using."
+    }
+  },
+  "models": [
+    {
+      "model_name": "claude-opus-5-5",
+      "friendly_name": "Claude Opus 5.5",
+      "aliases": [
+        "opus",
+        "opus-5.5",
+        "claude-opus"
+      ],
+      "intelligence_score": 20,
+      "aa_index": 54,
+      "aa_index_by_effort": {
+        "low": 42,
+        "medium": 51,
+        "high": 54,
+        "xhigh": 56,
+        "max": 58
+      },
+      "description": "Anthropic flagship (1M context, released 2026-09-22) - Artificial Analysis Intelligence Index 58 at max effort, above Fable 5.1 (53); at or above Fable 5.1 on most work for $4/$20, a fifth below Opus 5. The API default effort is Medium, which scores 51.",
+      "context_window": 1000000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "effort_levels": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0,
+      "max_thinking_tokens": 32768,
+      "allow_code_generation": true
+    },
+    {
+      "model_name": "claude-opus-5",
+      "friendly_name": "Claude Opus 5",
+      "aliases": [
+        "opus-5"
+      ],
+      "intelligence_score": 18,
+      "description": "Anthropic flagship (1M context) - Artificial Analysis Intelligence Index 51, superseded by Opus 5.5; deep reasoning, architecture, agentic coding.",
+      "context_window": 1000000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "effort_levels": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0,
+      "max_thinking_tokens": 32768,
+      "allow_code_generation": true
+    },
+    {
+      "model_name": "claude-opus-4-8",
+      "friendly_name": "Claude Opus 4.8",
+      "aliases": [
+        "opus-4.8",
+        "claude-opus-4.8"
+      ],
+      "intelligence_score": 17,
+      "description": "Previous-generation Opus (1M context, 128K output) - adaptive thinking with effort levels; estimated score, superseded by Opus 5.",
+      "context_window": 1000000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "effort_levels": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0,
+      "max_thinking_tokens": 32768,
+      "allow_code_generation": true
+    },
+    {
+      "model_name": "claude-fable-5-1",
+      "friendly_name": "Claude Fable 5.1",
+      "aliases": [
+        "fable",
+        "fable-5.1"
+      ],
+      "intelligence_score": 19,
+      "aa_index": 51,
+      "aa_index_by_effort": {
+        "low": 47,
+        "medium": 49,
+        "high": 51,
+        "xhigh": 53,
+        "max": 53
+      },
+      "description": "Anthropic Mythos-class model (1M context) - tops the Artificial Analysis Intelligence Index at 53 (max effort), ahead of Opus 5 (51) and Fable 5 (50); autonomous long-horizon coding and knowledge work. Premium pricing ($10/$50).",
+      "context_window": 1000000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "effort_levels": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0,
+      "max_thinking_tokens": 32768,
+      "allow_code_generation": true
+    },
+    {
+      "model_name": "claude-fable-5",
+      "friendly_name": "Claude Fable 5",
+      "aliases": [
+        "fable-5"
+      ],
+      "intelligence_score": 18,
+      "description": "Anthropic Mythos-class model (1M context) - AA Intelligence Index 50, superseded by Fable 5.1; autonomous long-horizon knowledge work and coding. Premium pricing ($10/$50).",
+      "context_window": 1000000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "effort_levels": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0,
+      "max_thinking_tokens": 32768,
+      "allow_code_generation": true
+    },
+    {
+      "model_name": "claude-sonnet-5-5",
+      "friendly_name": "Claude Sonnet 5.5",
+      "aliases": [
+        "sonnet",
+        "sonnet-5.5",
+        "claude-sonnet"
+      ],
+      "intelligence_score": 18,
+      "aa_index": 47,
+      "aa_index_by_effort": {
+        "low": 36,
+        "medium": 41,
+        "high": 47,
+        "xhigh": 52,
+        "max": 56
+      },
+      "description": "Claude Sonnet 5.5 (released 2026-09-28, 1M context, 128K output) - AA Intelligence Index 56 at max effort, above Fable 5.1 (53) and below Opus 5.5 (58). $2/$10 per M. Adaptive thinking, default effort high.",
+      "context_window": 1000000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "effort_levels": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0,
+      "max_thinking_tokens": 32768,
+      "allow_code_generation": true
+    },
+    {
+      "model_name": "claude-sonnet-5",
+      "friendly_name": "Claude Sonnet 5",
+      "aliases": [
+        "sonnet-5"
+      ],
+      "intelligence_score": 14,
+      "description": "Most capable Sonnet tier (1M context) - near-Opus intelligence for coding and agentic work at Sonnet cost; adaptive thinking. Superseded by Sonnet 5.5.",
+      "context_window": 1000000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "effort_levels": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0,
+      "max_thinking_tokens": 32768,
+      "allow_code_generation": true
+    },
+    {
+      "model_name": "claude-sonnet-4-5",
+      "friendly_name": "Claude Sonnet 4.5",
+      "aliases": [
+        "sonnet-4.5",
+        "claude-sonnet-4.5"
+      ],
+      "intelligence_score": 12,
+      "description": "Legacy Sonnet (200K context, 64K output) - extended thinking with a token budget, no effort parameter; estimated score.",
+      "context_window": 200000,
+      "max_output_tokens": 64000,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0,
+      "max_thinking_tokens": 32768
+    },
+    {
+      "model_name": "claude-haiku-5-5",
+      "friendly_name": "Claude Haiku 5.5",
+      "aliases": [
+        "haiku",
+        "haiku-5.5",
+        "claude-haiku",
+        "claude-haiku-5.5"
+      ],
+      "intelligence_score": 15,
+      "aa_index": 38,
+      "description": "Claude Haiku 5.5 (released 2026-10-07, 1M context, 128K output) - small, fast tier for high-volume work; AA Intelligence Index 43 at max effort (38 at high). From $0.10/$0.50 per M. Adaptive thinking, default effort medium. Succeeds Haiku 4.5.",
+      "context_window": 1000000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0,
+      "max_thinking_tokens": 32768,
+      "allow_code_generation": true,
+      "aa_index_by_effort": {
+        "low": 29,
+        "medium": 34,
+        "high": 38,
+        "xhigh": 41,
+        "max": 43
+      },
+      "effort_levels": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ]
+    },
+    {
+      "model_name": "claude-haiku-4-5-20251001",
+      "friendly_name": "Claude Haiku 4.5",
+      "aliases": [
+        "haiku-4.5",
+        "claude-haiku-4.5",
+        "claude-haiku-4-5"
+      ],
+      "intelligence_score": 10,
+      "description": "Fast, low-cost Claude tier (200K context) - quick analysis and high-volume work; supports thinking.",
+      "context_window": 200000,
+      "max_output_tokens": 64000,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0,
+      "max_thinking_tokens": 8192
+    }
+  ]
+}

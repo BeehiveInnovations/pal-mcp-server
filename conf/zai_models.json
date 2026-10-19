@@ -1,0 +1,61 @@
+{
+  "_README": {
+    "description": "Zhipu GLM via the Z.ai OpenAI-compatible API (native provider, ZAI_API_KEY).",
+    "usage": "Base URL https://api.z.ai/api/paas/v4. GLM-5.3 is API-only (open weights delayed), so this direct route is the way to reach the latest GLM. Scores pinned to the z-ai/* OpenRouter mirrors. Verify model IDs against /models if a call 404s."
+  },
+  "models": [
+    {
+      "model_name": "glm-5.3",
+      "friendly_name": "GLM-5.3",
+      "aliases": ["glm", "glm5"],
+      "intelligence_score": 15,
+      "aa_index": 40,
+      "aa_index_by_effort": {"low": 34, "max": 45},
+      "description": "Zhipu GLM-5.3 - flagship reasoning/coding MoE (API-only; open weights staged). Direct Z.ai API. Score at the high-effort anchor is interpolated: AA has no high row (low 34, max 45), so high is taken as about 40.",
+      "context_window": 204800,
+      "max_output_tokens": 131072,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true
+    },
+    {
+      "model_name": "glm-5.3-flash",
+      "friendly_name": "GLM-5.3 Flash",
+      "aliases": ["glm-flash", "glm-5.3-flash"],
+      "intelligence_score": 16,
+      "aa_index": 42,
+      "aa_index_by_effort": {"default": 42},
+      "description": "Zhipu GLM-5.3 Flash - native multimodal MoE (320B/18B, 1M context, AA Intelligence Index 42). Flash sibling of GLM-5.3, direct Z.ai API.",
+      "context_window": 1048576,
+      "max_output_tokens": 131072,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0
+    },
+    {
+      "model_name": "glm-4.6",
+      "friendly_name": "GLM-4.6",
+      "aliases": ["glm-4.6"],
+      "intelligence_score": 12,
+      "description": "Zhipu GLM-4.6 - prior flagship. Direct Z.ai API.",
+      "context_window": 204800,
+      "max_output_tokens": 131072,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true
+    }
+  ]
+}

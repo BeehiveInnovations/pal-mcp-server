@@ -14,6 +14,8 @@ AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
 
 Without the key and endpoint the provider is skipped entirely. Leave the key blank only if the endpoint truly allows anonymous access (rare for Azure).
 
+To authenticate with your Entra ID login (`az login`) instead of a key, set `AZURE_OPENAI_USE_ENTRA=true` and leave `AZURE_OPENAI_API_KEY` unset. See [Entra ID Authentication](entra_auth.md).
+
 ## 2. Define Deployments in `conf/azure_models.json`
 
 Azure models live in `conf/azure_models.json` (or the file pointed to by `AZURE_MODELS_CONFIG_PATH`). Each entry follows the same schema as [`ModelCapabilities`](../providers/shared/model_capabilities.py) with one additional required key: `deployment`. This field must exactly match the deployment name shown in the Azure Portal (for example `prod-gpt4o`). The provider routes requests by that value, so omitting it or using the wrong name will cause the server to skip the model. You can also opt into extra behaviour per model—for example set `use_openai_response_api` to `true` when an Azure deployment requires the `/responses` endpoint (O-series reasoning models), or leave it unset for standard chat completions.

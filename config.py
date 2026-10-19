@@ -30,6 +30,18 @@ DEFAULT_MODEL = get_env("DEFAULT_MODEL", "auto") or "auto"
 # Auto mode detection - when DEFAULT_MODEL is "auto", Claude picks the model
 IS_AUTO_MODE = DEFAULT_MODEL.lower() == "auto"
 
+
+def dynamic_model_selection_enabled() -> bool:
+    """Whether DYNAMIC_MODEL_SELECTION opts into newest-flagship auto-selection and alias remaps.
+
+    Default (unset/false) preserves the upstream per-category preference lists, the upstream Gemini
+    ordering, and the upstream bare-alias targets. Truthy values ("1", "true", "yes", "on") opt in to
+    preferring the newest flagships and remapping bare aliases (e.g. "flash"/"pro") to the newest
+    models. Read at call time so it is overridable at runtime and in tests.
+    """
+    return (get_env("DYNAMIC_MODEL_SELECTION", "") or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
 # Each provider (gemini.py, openai.py, xai.py, dial.py, openrouter.py, custom.py, azure_openai.py)
 # defines its own MODEL_CAPABILITIES
 # with detailed descriptions. Tools use ModelProviderRegistry.get_available_model_names()

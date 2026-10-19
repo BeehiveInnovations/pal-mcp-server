@@ -85,7 +85,7 @@ class TestOpenAIProvider:
         assert provider._resolve_model_name("gpt5-mini") == "gpt-5-mini"
         assert provider._resolve_model_name("gpt5mini") == "gpt-5-mini"
         assert provider._resolve_model_name("gpt5.2") == "gpt-5.2"
-        assert provider._resolve_model_name("gpt5.1") == "gpt-5.2"
+        assert provider._resolve_model_name("gpt5.1") == "gpt-5.1"  # gpt-5.1 is now its own model
         assert provider._resolve_model_name("gpt5.1-codex") == "gpt-5.1-codex"
         assert provider._resolve_model_name("codex-mini") == "gpt-5.1-codex-mini"
 
@@ -98,9 +98,15 @@ class TestOpenAIProvider:
         assert provider._resolve_model_name("gpt-5") == "gpt-5"
         assert provider._resolve_model_name("gpt-5-mini") == "gpt-5-mini"
         assert provider._resolve_model_name("gpt-5.2") == "gpt-5.2"
-        assert provider._resolve_model_name("gpt-5.1") == "gpt-5.2"
+        assert provider._resolve_model_name("gpt-5.1") == "gpt-5.1"  # gpt-5.1 is now its own model
         assert provider._resolve_model_name("gpt-5.1-codex") == "gpt-5.1-codex"
         assert provider._resolve_model_name("gpt-5.1-codex-mini") == "gpt-5.1-codex-mini"
+        # Bare "sol"/"luna" point at the newest GPT-6 tiers; GPT-5.6 Terra has no GPT-6 successor yet.
+        assert provider._resolve_model_name("sol") == "gpt-6.1-sol"
+        assert provider._resolve_model_name("terra") == "gpt-5.6-terra"
+        assert provider._resolve_model_name("luna") == "gpt-6-luna"
+        assert provider._resolve_model_name("gpt5.6-sol") == "gpt-5.6-sol"
+        assert provider._resolve_model_name("gpt5.6luna") == "gpt-5.6-luna"
 
     def test_get_capabilities_o3(self):
         """Test getting model capabilities for O3."""

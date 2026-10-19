@@ -470,12 +470,46 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
 
         capability_map = self.get_all_model_capabilities()
 
-        # Helper to find best model from candidates
+        # Restrict candidates to canonical model names. allowed_models may include aliases
+        # (list_models defaults to include_aliases=True); aliases must not be returned as picks nor
+        # skew the lexical ordering used by the default selector.
+        canonical_allowed = [m for m in allowed_models if m in capability_map]
+        if canonical_allowed:
+            allowed_models = canonical_allowed
+
+        # Helper to find best model from candidates.
+        # With DYNAMIC_MODEL_SELECTION enabled, pick the highest-capability candidate by effective
+        # capability rank (driven by intelligence_score), ties broken reverse-alphabetically. The
+        # default (upstream) behaviour is plain reverse-alphabetical ordering.
         def find_best(candidates: list[str]) -> Optional[str]:
-            """Return best model from candidates (sorted for consistency)."""
-            return sorted(candidates, reverse=True)[0] if candidates else None
+            """Return best model from candidates."""
+            if not candidates:
+                return None
+
+            from config import dynamic_model_selection_enabled
+
+            if dynamic_model_selection_enabled():
+
+                def rank(model_name: str) -> int:
+                    caps = capability_map.get(model_name)
+                    return caps.get_effective_capability_rank() if caps else 0
+
+                return max(candidates, key=lambda m: (rank(m), m))
+
+            return sorted(candidates, reverse=True)[0]
 
         if category == ToolModelCategory.EXTENDED_REASONING:
+            from config import dynamic_model_selection_enabled
+
+            if dynamic_model_selection_enabled():
+                # Under the flag, rank decides among all thinking models, so a flagship whose name
+                # does not contain "pro" (for example gemini-4-argon) can still win.
+                ranked_thinking = [
+                    m for m in allowed_models if m in capability_map and capability_map[m].supports_extended_thinking
+                ]
+                if ranked_thinking:
+                    return find_best(ranked_thinking)
+
             # For extended reasoning, prefer models with thinking support
             # First try Pro models that support thinking
             pro_thinking = [

@@ -36,8 +36,18 @@ class ModelCapabilities:
     model_name: str
     friendly_name: str
     intelligence_score: int = 10  # Human-curated 1–20 score reflecting general capability
+    # Raw Artificial Analysis Intelligence Index value behind intelligence_score, when measured. The 1-20
+    # scale tops out at 20, so several frontier models share it; providers use this only to order a tie.
+    aa_index: Optional[float] = None
+    # Raw AA Index value per effort level (low, medium, high, xhigh, max, non-reasoning; "default" for a
+    # model with a single row). Stored data for scoring at a chosen effort; not read by selection yet.
+    aa_index_by_effort: dict[str, int] = field(default_factory=dict)
     description: str = ""
     aliases: list[str] = field(default_factory=list)
+    # Aliases that only take effect when DYNAMIC_MODEL_SELECTION is enabled. They override the
+    # default owner of the same alias so a bare alias (e.g. "flash"/"pro") can be remapped to the
+    # newest model without changing default resolution.
+    dynamic_aliases: list[str] = field(default_factory=list)
 
     # Capacity limits / resource budgets
     context_window: int = 0
@@ -54,8 +64,15 @@ class ModelCapabilities:
     supports_temperature: bool = True
     use_openai_response_api: bool = False
     default_reasoning_effort: Optional[str] = None
+    # Reasoning-effort levels the model accepts on this route (for example low..xhigh). When set, the
+    # provider sends the tool's thinking_mode as an explicit effort, clamped to these levels (see
+    # providers/shared/effort.py). When empty, no effort parameter is sent.
+    effort_levels: list[str] = field(default_factory=list)
     allow_code_generation: bool = (
         False  # Enables structured code generation in chat tool for substantial implementations
+    )
+    auto_selectable: bool = (
+        True  # When False, the model is callable by explicit name but excluded from auto-mode candidates
     )
 
     # Additional attributes

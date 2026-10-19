@@ -10,8 +10,9 @@ try:  # pragma: no cover - optional dependency
 except ImportError:  # pragma: no cover
     AzureOpenAI = None  # type: ignore[assignment]
 
-from utils.env import get_env, suppress_env_vars
+from utils.env import get_env, get_env_bool, suppress_env_vars
 
+from .azure_entra import build_entra_token_provider
 from .openai import OpenAIModelProvider
 from .openai_compatible import OpenAICompatibleProvider
 from .registries.azure import AzureModelRegistry
@@ -39,8 +40,14 @@ class AzureOpenAIProvider(OpenAICompatibleProvider):
         azure_endpoint: str | None = None,
         api_version: str | None = None,
         deployments: dict[str, object] | None = None,
+        use_entra: bool | None = None,
         **kwargs,
     ) -> None:
+        # Entra mode (AZURE_OPENAI_USE_ENTRA=true) authenticates with the caller's Entra identity
+        # instead of ``api_key``. Set before the base initialiser, which checks for credentials.
+        self._use_entra = get_env_bool("AZURE_OPENAI_USE_ENTRA") if use_entra is None else use_entra
+        self._entra_token_provider = None
+
         # Let the OpenAI-compatible base handle shared configuration such as
         # timeouts, restriction-aware allowlists, and logging. ``base_url`` maps
         # directly onto Azure's endpoint URL.
@@ -249,12 +256,20 @@ class AzureOpenAIProvider(OpenAICompatibleProvider):
 
                     http_client = httpx.Client(timeout=timeout_config, follow_redirects=True)
 
-                    client_kwargs = {
-                        "api_key": self.api_key,
-                        "azure_endpoint": self.azure_endpoint,
-                        "api_version": self.api_version,
-                        "http_client": http_client,
-                    }
+                    if self._use_entra:
+                        client_kwargs = {
+                            "azure_ad_token_provider": self._get_entra_token_provider(),
+                            "azure_endpoint": self.azure_endpoint,
+                            "api_version": self.api_version,
+                            "http_client": http_client,
+                        }
+                    else:
+                        client_kwargs = {
+                            "api_key": self.api_key,
+                            "azure_endpoint": self.azure_endpoint,
+                            "api_version": self.api_version,
+                            "http_client": http_client,
+                        }
 
                     if self.DEFAULT_HEADERS:
                         client_kwargs["default_headers"] = self.DEFAULT_HEADERS.copy()
@@ -265,6 +280,8 @@ class AzureOpenAIProvider(OpenAICompatibleProvider):
                         self.api_version,
                         timeout_config,
                     )
+                    if self._use_entra:
+                        logger.info("Azure OpenAI authenticating with Entra ID (DefaultAzureCredential)")
 
                     self._client = AzureOpenAI(**client_kwargs)
 
@@ -273,6 +290,24 @@ class AzureOpenAIProvider(OpenAICompatibleProvider):
                     raise
 
         return self._client
+
+    def _max_output_tokens_param(self, capabilities: ModelCapabilities | None) -> str:
+        """Azure's reasoning deployments (GPT-5.x, o-series) reject max_tokens, as on OpenAI."""
+        if capabilities is not None and capabilities.supports_extended_thinking:
+            return "max_completion_tokens"
+        return super()._max_output_tokens_param(capabilities)
+
+    def _authenticates_without_api_key(self) -> bool:
+        return self._use_entra
+
+    def _get_entra_token_provider(self):
+        """Build the Entra bearer-token provider on first use (imports azure-identity lazily)."""
+
+        if self._entra_token_provider is None:
+            self._entra_token_provider = build_entra_token_provider(
+                label=self.FRIENDLY_NAME, endpoint=self.azure_endpoint
+            )
+        return self._entra_token_provider
 
     # ------------------------------------------------------------------
     # Request delegation

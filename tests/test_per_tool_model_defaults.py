@@ -98,7 +98,7 @@ class TestModelSelection:
             ModelProviderRegistry.register_provider(ProviderType.OPENAI, OpenAIModelProvider)
 
             model = ModelProviderRegistry.get_preferred_fallback_model(ToolModelCategory.EXTENDED_REASONING)
-            # OpenAI prefers GPT-5.1-Codex for extended reasoning (coding tasks)
+            # Upstream default: OpenAI prefers gpt-5.1-codex for extended reasoning
             assert model == "gpt-5.1-codex"
 
     def test_extended_reasoning_with_gemini_only(self):
@@ -117,7 +117,7 @@ class TestModelSelection:
             model = ModelProviderRegistry.get_preferred_fallback_model(ToolModelCategory.EXTENDED_REASONING)
             # Gemini should return one of its models for extended reasoning
             # The default behavior may return flash when pro is not explicitly preferred
-            assert model in ["gemini-3-pro-preview", "gemini-2.5-flash", "gemini-2.0-flash"]
+            assert model in ["gemini-3.1-pro-preview", "gemini-3-pro-preview", "gemini-2.5-flash", "gemini-2.0-flash"]
 
     def test_fast_response_with_openai(self):
         """Test FAST_RESPONSE with OpenAI provider."""
@@ -133,7 +133,7 @@ class TestModelSelection:
             ModelProviderRegistry.register_provider(ProviderType.OPENAI, OpenAIModelProvider)
 
             model = ModelProviderRegistry.get_preferred_fallback_model(ToolModelCategory.FAST_RESPONSE)
-            # OpenAI now prefers gpt-5.2 for fast response (based on our new preference order)
+            # Upstream default: OpenAI prefers gpt-5.2 for fast response
             assert model == "gpt-5.2"
 
     def test_fast_response_with_gemini_only(self):
@@ -151,7 +151,7 @@ class TestModelSelection:
 
             model = ModelProviderRegistry.get_preferred_fallback_model(ToolModelCategory.FAST_RESPONSE)
             # Gemini should return one of its models for fast response
-            assert model in ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.5-pro"]
+            assert model in ["gemini-3.8-flash", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.5-pro"]
 
     def test_balanced_category_fallback(self):
         """Test BALANCED category uses existing logic."""
@@ -167,7 +167,7 @@ class TestModelSelection:
             ModelProviderRegistry.register_provider(ProviderType.OPENAI, OpenAIModelProvider)
 
             model = ModelProviderRegistry.get_preferred_fallback_model(ToolModelCategory.BALANCED)
-            # OpenAI prefers gpt-5.2 for balanced (based on our new preference order)
+            # Upstream default: OpenAI prefers gpt-5.2 for balanced
             assert model == "gpt-5.2"
 
     def test_no_category_uses_balanced_logic(self):
@@ -180,7 +180,7 @@ class TestModelSelection:
 
             model = ModelProviderRegistry.get_preferred_fallback_model()
             # Should pick flash for balanced use
-            assert model == "gemini-2.5-flash"
+            assert model == "gemini-3.8-flash"
 
 
 class TestFlexibleModelSelection:
@@ -195,21 +195,21 @@ class TestFlexibleModelSelection:
                 "env": {"OPENAI_API_KEY": "test-key"},
                 "provider_type": ProviderType.OPENAI,
                 "category": ToolModelCategory.EXTENDED_REASONING,
-                "expected": "gpt-5.1-codex",  # GPT-5.1-Codex prioritized for coding tasks
+                "expected": "gpt-5.1-codex",  # Upstream default reasoning preference
             },
             # Case 2: Gemini provider for fast response
             {
                 "env": {"GEMINI_API_KEY": "test-key"},
                 "provider_type": ProviderType.GOOGLE,
                 "category": ToolModelCategory.FAST_RESPONSE,
-                "expected": "gemini-2.5-flash",
+                "expected": "gemini-3.8-flash",
             },
             # Case 3: OpenAI provider for fast response
             {
                 "env": {"OPENAI_API_KEY": "test-key"},
                 "provider_type": ProviderType.OPENAI,
                 "category": ToolModelCategory.FAST_RESPONSE,
-                "expected": "gpt-5.2",  # Based on new preference order
+                "expected": "gpt-5.2",  # Upstream default fast response preference
             },
         ]
 
@@ -233,6 +233,56 @@ class TestFlexibleModelSelection:
 
                 model = ModelProviderRegistry.get_preferred_fallback_model(case["category"])
                 assert model == case["expected"], f"Failed for case: {case}, got {model}"
+
+
+class TestDynamicModelSelectionFlagOn:
+    """Flag-on coverage: DYNAMIC_MODEL_SELECTION opts into newest-flagship selection.
+
+    Selection reads the flag at call time, so it is enough to set the env var before
+    invoking get_preferred_fallback_model on a freshly registered OpenAI provider.
+    """
+
+    def teardown_method(self):
+        ModelProviderRegistry.clear_cache()
+        for provider_type in list(ProviderType):
+            ModelProviderRegistry.unregister_provider(provider_type)
+
+    def test_openai_selection_prefers_newest_flagships_under_flag(self):
+        """With the flag on, OpenAI prefers gpt-6.1-sol (reasoning/balanced) and gpt-6-luna (fast)."""
+        ModelProviderRegistry.clear_cache()
+        for provider_type in list(ProviderType):
+            ModelProviderRegistry.unregister_provider(provider_type)
+
+        with patch.dict(
+            os.environ,
+            {"OPENAI_API_KEY": "test-key", "DYNAMIC_MODEL_SELECTION": "1"},
+            clear=False,
+        ):
+            from providers.openai import OpenAIModelProvider
+
+            ModelProviderRegistry.register_provider(ProviderType.OPENAI, OpenAIModelProvider)
+
+            extended = ModelProviderRegistry.get_preferred_fallback_model(ToolModelCategory.EXTENDED_REASONING)
+            fast = ModelProviderRegistry.get_preferred_fallback_model(ToolModelCategory.FAST_RESPONSE)
+            balanced = ModelProviderRegistry.get_preferred_fallback_model(ToolModelCategory.BALANCED)
+
+            assert extended == "gpt-6.1-sol"
+            assert fast == "gpt-6-luna"
+            assert balanced == "gpt-6.1-sol"
+
+    def test_gemini_extended_reasoning_ranks_all_thinking_models_under_flag(self):
+        """With the flag on, Gemini's extended-reasoning pick is ranked, so gemini-4-argon wins
+        even though its name does not contain "pro". The default path keeps upstream's pro-first rule."""
+        from providers.gemini import GeminiModelProvider
+
+        provider = GeminiModelProvider("test-key")
+        allowed = list(provider.get_all_model_capabilities())
+        with patch.dict(os.environ, {"DYNAMIC_MODEL_SELECTION": "1"}, clear=False):
+            assert provider.get_preferred_model(ToolModelCategory.EXTENDED_REASONING, allowed) == "gemini-4-argon"
+        with patch.dict(os.environ, {"DYNAMIC_MODEL_SELECTION": ""}, clear=False):
+            assert (
+                provider.get_preferred_model(ToolModelCategory.EXTENDED_REASONING, allowed) == "gemini-3.1-pro-preview"
+            )
 
 
 class TestCustomProviderFallback:

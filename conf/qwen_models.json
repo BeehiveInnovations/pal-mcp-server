@@ -1,0 +1,62 @@
+{
+  "_README": {
+    "description": "Alibaba Qwen via DashScope OpenAI-compatible API (native provider, DASHSCOPE_API_KEY).",
+    "usage": "Base URL https://dashscope-intl.aliyuncs.com/compatible-mode/v1. Qwen-Max is closed/API-first, so this direct route reaches models not practically self-hostable. Scores pinned to the qwen/* OpenRouter mirrors. Model IDs verified against DashScope docs 2026-08; re-check /models if a call 404s."
+  },
+  "models": [
+    {
+      "model_name": "qwen3.8-max-0902",
+      "friendly_name": "Qwen3.8 Max 0902",
+      "aliases": ["qwen-max", "qwen3-max", "qwen3.8-max-2026-09-02"],
+      "intelligence_score": 17,
+      "aa_index": 45,
+      "aa_index_by_effort": {"default": 45},
+      "description": "Alibaba Qwen3.8 Max 0902 (2026-09-01 snapshot) - post-trained for coding and agent work; #1 on Code Arena WebDev (1691), narrowly over Claude Opus 5 Max. Artificial Analysis Index v4.3 lists this snapshot at 45 (checked 2026-09-24), which maps to 17, above base Max (40). Native multimodal, 1M context. Direct DashScope API.",
+      "context_window": 1000000,
+      "max_output_tokens": 65536,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "max_image_size_mb": 20.0,
+      "supports_temperature": true
+    },
+    {
+      "model_name": "qwen3.8-max",
+      "friendly_name": "Qwen3.8 Max",
+      "aliases": ["qwen"],
+      "intelligence_score": 14,
+      "description": "Alibaba Qwen3.8 Max - flagship (1T+ params, closed/API-first). Superseded by the qwen3.8-max-0902 snapshot. Direct DashScope API.",
+      "context_window": 262144,
+      "max_output_tokens": 65536,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true
+    },
+    {
+      "model_name": "qwen3.8-flash",
+      "friendly_name": "Qwen3.8 Flash",
+      "aliases": ["qwen-flash", "qwen3-flash"],
+      "intelligence_score": 15,
+      "aa_index": 40,
+      "aa_index_by_effort": {"default": 40},
+      "description": "Alibaba Qwen3.8 Flash - production serving of the Flash-Next architecture (hosted SKU 'qwen3.8-flash'; 1M context, text+image+video). Score pinned to the family's Artificial Analysis Intelligence Index 40; note AA scored the open-weight Flash-Next checkpoint, and the hosted checkpoint differs slightly. Direct DashScope API.",
+      "context_window": 1000000,
+      "max_output_tokens": 131072,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "max_image_size_mb": 20.0,
+      "supports_temperature": true
+    }
+  ]
+}

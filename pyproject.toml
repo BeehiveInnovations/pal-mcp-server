@@ -7,6 +7,8 @@ dependencies = [
     "mcp>=1.0.0",
     "google-genai>=1.19.0",
     "openai>=1.55.2",
+    "anthropic>=0.74.0",
+    "azure-identity>=1.15.0",
     "pydantic>=2.0.0",
     "python-dotenv>=1.0.0",
 ]

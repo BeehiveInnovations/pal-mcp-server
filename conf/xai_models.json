@@ -10,7 +10,7 @@
       "context_window": "Total number of tokens the model can process (input + output combined)",
       "max_output_tokens": "Maximum number of tokens the model can generate in a single response",
       "max_thinking_tokens": "Maximum reasoning/thinking tokens the model will allocate when extended thinking is requested",
-      "supports_extended_thinking": "Whether the model supports extended reasoning tokens (currently none do via OpenRouter or custom APIs)",
+      "supports_extended_thinking": "Whether the model supports extended reasoning tokens (set from the provider's advertised reasoning support)",
       "supports_json_mode": "Whether the model can guarantee valid JSON output",
       "supports_function_calling": "Whether the model supports function/tool calling",
       "supports_images": "Whether the model can process images/visual input",
@@ -20,10 +20,40 @@
       "use_openai_response_api": "Set to true when the model must use the /responses endpoint (reasoning models like GPT-5.2 Pro). Leave false/omit for standard chat completions.",
       "default_reasoning_effort": "Default reasoning effort level for models that support it (e.g., 'low', 'medium', 'high'). Omit if not applicable.",
       "description": "Human-readable description of the model",
-      "intelligence_score": "1-20 human rating used as the primary signal for auto-mode model ordering"
+      "intelligence_score": "1-20 human rating used as the primary signal for auto-mode model ordering. Since 2026-10-13 it is anchored to the Artificial Analysis Intelligence Index v4.3 at HIGH reasoning effort (aa_index_by_effort['high'], leaderboard read 2026-10-12/13) through the ladder in docs/model_ranking.md. Entries without aa_index_by_effort carry estimated scores. PAL tools default to thinking_mode medium, so a typical call can score a few Index points below the anchor.",
+      "aa_index_by_effort": "Optional per-effort Artificial Analysis Intelligence Index values (v4.3 leaderboard, read 2026-10-12), keyed by effort (non-reasoning, low, medium, high, xhigh, max; 'default' for a model with a single row). Values AA marks as incomplete (*) are left out."
     }
   },
   "models": [
+    {
+      "model_name": "grok-4.7",
+      "friendly_name": "X.AI (Grok 4.7)",
+      "aliases": [
+        "grok-4.7",
+        "grok4.7"
+      ],
+      "intelligence_score": 18,
+      "aa_index": 46,
+      "aa_index_by_effort": {
+        "low": 42,
+        "high": 46,
+        "xhigh": 46
+      },
+      "description": "Grok 4.7 (released 2026-09-21, 500K context) - xAI flagship for coding, agentic tasks and knowledge work, succeeding Grok 4.6; AA Intelligence Index 46 (xhigh). $2/$6 per M.",
+      "context_window": 500000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0,
+      "dynamic_aliases": [
+        "grok"
+      ]
+    },
     {
       "model_name": "grok-4",
       "friendly_name": "X.AI (Grok 4)",
@@ -32,7 +62,7 @@
         "grok4",
         "grok-4"
       ],
-      "intelligence_score": 16,
+      "intelligence_score": 12,
       "description": "GROK-4 (256K context) - Frontier multimodal reasoning model with advanced capabilities",
       "context_window": 256000,
       "max_output_tokens": 256000,
@@ -55,7 +85,7 @@
         "grok-4.1-fast-reasoning-latest",
         "grok-4.1-fast"
       ],
-      "intelligence_score": 15,
+      "intelligence_score": 11,
       "description": "GROK-4.1 Fast Reasoning (2M context) - High-performance multimodal reasoning model with function calling",
       "context_window": 2000000,
       "max_output_tokens": 2000000,

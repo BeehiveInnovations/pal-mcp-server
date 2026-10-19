@@ -71,7 +71,7 @@ class TestModelRestrictionService:
                 assert service.is_allowed(ProviderType.OPENAI, "o4-mini")
                 assert not service.is_allowed(ProviderType.OPENAI, "o3")
 
-                # Check Google models
+                # Check Google models (default: "pro" -> gemini-3-pro-preview, "flash" -> gemini-2.5-flash)
                 assert service.is_allowed(ProviderType.GOOGLE, "flash")
                 assert service.is_allowed(ProviderType.GOOGLE, "pro")
                 assert service.is_allowed(ProviderType.GOOGLE, "gemini-3-pro-preview")
@@ -309,7 +309,7 @@ class TestProviderIntegration:
             # Should allow "flash" alias
             assert provider.validate_model_name("flash")
 
-            # Should allow getting capabilities for "flash"
+            # Should allow getting capabilities for "flash" (default: "flash" -> gemini-2.5-flash)
             capabilities = provider.get_capabilities("flash")
             assert capabilities.model_name == "gemini-2.5-flash"
 
@@ -337,7 +337,7 @@ class TestProviderIntegration:
         # Should allow full name
         assert provider.validate_model_name("gemini-2.5-flash")
 
-        # Should also allow alias that resolves to allowed full name
+        # Should also allow alias that resolves to allowed full name (default: "flash" -> gemini-2.5-flash)
         # This works because is_allowed checks both resolved_name and original_name
         assert provider.validate_model_name("flash")
 
@@ -612,7 +612,7 @@ class TestShorthandRestrictions:
             assert not openai_provider.validate_model_name("o4-mini")  # Unrelated model still blocked
             assert not openai_provider.validate_model_name("o3-mini")
 
-            # Test Gemini provider
+            # Test Gemini provider (default: "flash" -> gemini-2.5-flash)
             assert gemini_provider.validate_model_name("flash")  # Should work with shorthand
             assert gemini_provider.validate_model_name("gemini-2.5-flash")  # Canonical allowed
             assert not gemini_provider.validate_model_name("pro")  # Not allowed

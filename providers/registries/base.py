@@ -188,12 +188,11 @@ class CustomModelRegistryBase:
         return ModelCapabilities(**{k: v for k, v in entry.items() if k in CAPABILITY_FIELD_NAMES}), {}
 
     def _build_maps(self, configs: Iterable[ModelCapabilities]) -> None:
+        configs = [config for config in configs if config]
         alias_map: dict[str, str] = {}
         model_map: dict[str, ModelCapabilities] = {}
 
         for config in configs:
-            if not config:
-                continue
             model_map[config.model_name] = config
 
             model_name_lower = config.model_name.lower()
@@ -207,6 +206,16 @@ class CustomModelRegistryBase:
                         f"Duplicate alias '{alias}' found for models '{alias_map[alias_lower]}' and '{config.model_name}'"
                     )
                 alias_map[alias_lower] = config.model_name
+
+        # Opt-in dynamic alias remaps: when DYNAMIC_MODEL_SELECTION is enabled, dynamic_aliases
+        # override the default owner so a bare alias resolves to the newest model. Default off
+        # leaves the upstream alias targets untouched.
+        from config import dynamic_model_selection_enabled
+
+        if dynamic_model_selection_enabled():
+            for config in configs:
+                for alias in config.dynamic_aliases:
+                    alias_map[alias.lower()] = config.model_name
 
         self.alias_map = alias_map
         self.model_map = model_map

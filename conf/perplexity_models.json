@@ -1,0 +1,40 @@
+{
+  "_README": {
+    "description": "Perplexity Sonar via its OpenAI-compatible API (native provider, PERPLEXITY_API_KEY).",
+    "usage": "Base URL https://api.perplexity.ai. NOTE: Sonar models are search/answer models, NOT open-weights; scores are modest and reflect general capability, not the open-model calibration used elsewhere. Verify model IDs against Perplexity docs if a call 404s."
+  },
+  "models": [
+    {
+      "model_name": "sonar-pro",
+      "friendly_name": "Perplexity Sonar Pro",
+      "aliases": ["sonar", "perplexity"],
+      "intelligence_score": 11,
+      "description": "Perplexity Sonar Pro - search-grounded answer model. Direct Perplexity API (search model, not open-weights).",
+      "context_window": 200000,
+      "max_output_tokens": 8192,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": false,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true
+    },
+    {
+      "model_name": "sonar",
+      "friendly_name": "Perplexity Sonar",
+      "aliases": ["sonar-base"],
+      "intelligence_score": 8,
+      "description": "Perplexity Sonar - lightweight search-grounded model. Direct Perplexity API (search model).",
+      "context_window": 128000,
+      "max_output_tokens": 8192,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": false,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true
+    }
+  ]
+}

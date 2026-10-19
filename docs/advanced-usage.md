@@ -115,6 +115,31 @@ These only apply to models that support customizing token usage for extended thi
 | `high` | 16,384 tokens | Complex problems requiring thorough analysis (default for `thinkdeep`) | 128x more than minimal |
 | `max` | 32,768 tokens | Exhaustive reasoning | 256x more than minimal |
 
+### Thinking Modes as Reasoning Effort
+
+Newer models take a reasoning **effort** level instead of a token budget. For a model whose conf entry
+lists `effort_levels`, PAL sends the thinking mode as an explicit effort:
+
+| Thinking mode | Effort sent |
+|------|-------------|
+| `minimal` | The lowest level the model accepts (usually `low`) |
+| `low`, `medium`, `high`, `max` | The same level |
+| none given | `medium` |
+
+If the model does not accept the requested level, PAL sends the highest accepted level below it. For
+example, OpenAI's Chat Completions API accepts `low` to `xhigh` for the GPT-6 models, so `max` becomes
+`xhigh` on the native route; OpenRouter accepts `max`.
+
+| Route | How the effort is sent |
+|------|-------------|
+| OpenAI (native) | `reasoning_effort` on Chat Completions; `reasoning.effort` on the Responses API |
+| OpenRouter | `reasoning_effort` |
+| Anthropic (native) | adaptive thinking with `output_config.effort`; no `temperature` (current Claude models reject sampling parameters and fixed thinking budgets) |
+| Gemini | the token budgets in the table above |
+
+A model without `effort_levels` gets no effort parameter, so its request does not change. The effort
+that PAL sent is recorded as `reasoning_effort` in the response metadata.
+
 ### How to Use Thinking Modes
 
 **Claude automatically selects appropriate thinking modes**, but you can override this by explicitly requesting a specific mode in your prompts. Remember: higher thinking modes = more tokens = higher cost but better quality:
@@ -169,7 +194,7 @@ All tools that work with files support **both individual files and entire direct
 - `model`: auto|pro|flash|flash-2.0|flashlite|o3|o3-mini|o4-mini|gpt4.1|gpt5.2|gpt5.1-codex|gpt5.1-codex-mini|gpt5|gpt5-mini|gpt5-nano (default: server default)
 - `analysis_type`: architecture|performance|security|quality|general
 - `output_format`: summary|detailed|actionable
-- `thinking_mode`: minimal|low|medium|high|max (default: medium, Gemini only)
+- `thinking_mode`: minimal|low|medium|high|max (default: medium; Gemini budgets, or an explicit effort for models with effort_levels)
 - **Web search capability**: The assistant now automatically requests web searches when it needs current documentation or best practices—no parameter required
 
 ```
@@ -186,7 +211,7 @@ All tools that work with files support **both individual files and entire direct
 - `focus_on`: Specific aspects to focus on
 - `standards`: Coding standards to enforce
 - `severity_filter`: critical|high|medium|all
-- `thinking_mode`: minimal|low|medium|high|max (default: medium, Gemini only)
+- `thinking_mode`: minimal|low|medium|high|max (default: medium; Gemini budgets, or an explicit effort for models with effort_levels)
 
 ```
 "Review the entire api/ directory for security issues" (auto mode picks best model)
@@ -202,7 +227,7 @@ All tools that work with files support **both individual files and entire direct
 - `files`: Files or directories related to the issue
 - `runtime_info`: Environment details
 - `previous_attempts`: What you've tried
-- `thinking_mode`: minimal|low|medium|high|max (default: medium, Gemini only)
+- `thinking_mode`: minimal|low|medium|high|max (default: medium; Gemini budgets, or an explicit effort for models with effort_levels)
 - **Web search capability**: Automatically initiates searches for relevant error messages or recent fixes when needed
 
 ```
@@ -217,7 +242,7 @@ All tools that work with files support **both individual files and entire direct
 - `problem_context`: Additional context
 - `focus_areas`: Specific aspects to focus on
 - `files`: Files or directories for context
-- `thinking_mode`: minimal|low|medium|high|max (default: max, Gemini only)
+- `thinking_mode`: minimal|low|medium|high|max (default: max; Gemini budgets, or an explicit effort for models with effort_levels)
 - **Web search capability**: Automatically calls for research when architecture references or external insights are required
 
 ```
@@ -231,7 +256,7 @@ All tools that work with files support **both individual files and entire direct
 - `prompt`: Description of what to test, testing objectives, and scope (required)
 - `model`: auto|pro|flash|flash-2.0|flashlite|o3|o3-mini|o4-mini|gpt4.1|gpt5.2|gpt5.1-codex|gpt5.1-codex-mini|gpt5|gpt5-mini|gpt5-nano (default: server default)
 - `test_examples`: Optional existing test files as style/pattern reference
-- `thinking_mode`: minimal|low|medium|high|max (default: medium, Gemini only)
+- `thinking_mode`: minimal|low|medium|high|max (default: medium; Gemini budgets, or an explicit effort for models with effort_levels)
 
 ```
 "Generate tests for User.login() method with edge cases" (auto mode picks best model)
@@ -247,7 +272,7 @@ All tools that work with files support **both individual files and entire direct
 - `model`: auto|pro|flash|flash-2.0|flashlite|o3|o3-mini|o4-mini|gpt4.1|gpt5.2|gpt5.1-codex|gpt5.1-codex-mini|gpt5|gpt5-mini|gpt5-nano (default: server default)
 - `focus_areas`: Specific areas to focus on (e.g., 'performance', 'readability', 'maintainability', 'security')
 - `style_guide_examples`: Optional existing code files to use as style/pattern reference
-- `thinking_mode`: minimal|low|medium|high|max (default: medium, Gemini only)
+- `thinking_mode`: minimal|low|medium|high|max (default: medium; Gemini budgets, or an explicit effort for models with effort_levels)
 - `continuation_id`: Thread continuation ID for multi-turn conversations
 
 ```

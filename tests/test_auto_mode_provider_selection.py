@@ -58,10 +58,13 @@ class TestAutoModeProviderSelection:
             fast_response = ModelProviderRegistry.get_preferred_fallback_model(ToolModelCategory.FAST_RESPONSE)
             balanced = ModelProviderRegistry.get_preferred_fallback_model(ToolModelCategory.BALANCED)
 
-            # Should select appropriate Gemini models
-            assert extended_reasoning in ["gemini-3-pro-preview", "gemini-2.5-pro", "pro"]
-            assert fast_response in ["gemini-2.5-flash", "flash"]
-            assert balanced in ["gemini-2.5-flash", "flash"]
+            # Should select appropriate Gemini models. NOTE: with DYNAMIC_MODEL_SELECTION unset, Gemini
+            # selection still uses upstream's reverse-alphabetical algorithm; it is pool-driven, so the
+            # newest-numbered model in the catalogue wins by default (gemini-3.8-flash, gemini-3.1-pro-preview)
+            # the same way upstream's algorithm advances whenever newer models are added.
+            assert extended_reasoning in ["gemini-3.1-pro-preview", "gemini-3-pro-preview", "gemini-2.5-pro", "pro"]
+            assert fast_response in ["gemini-3.8-flash", "flash"]
+            assert balanced in ["gemini-3.8-flash", "flash"]
 
         finally:
             # Restore original environment
@@ -97,10 +100,10 @@ class TestAutoModeProviderSelection:
             fast_response = ModelProviderRegistry.get_preferred_fallback_model(ToolModelCategory.FAST_RESPONSE)
             balanced = ModelProviderRegistry.get_preferred_fallback_model(ToolModelCategory.BALANCED)
 
-            # Should select appropriate OpenAI models based on new preference order
-            assert extended_reasoning == "gpt-5.1-codex"  # GPT-5.1 Codex prioritized for extended reasoning
-            assert fast_response == "gpt-5.2"  # gpt-5.2 comes first in fast response preference
-            assert balanced == "gpt-5.2"  # gpt-5.2 for balanced
+            # Should select appropriate OpenAI models based on the upstream (default) preference order
+            assert extended_reasoning == "gpt-5.1-codex"  # Upstream default reasoning preference
+            assert fast_response == "gpt-5.2"  # Upstream default fast response preference
+            assert balanced == "gpt-5.2"  # Upstream default balanced preference
 
         finally:
             # Restore original environment
@@ -139,10 +142,10 @@ class TestAutoModeProviderSelection:
             fast_response = ModelProviderRegistry.get_preferred_fallback_model(ToolModelCategory.FAST_RESPONSE)
 
             # Should prefer Gemini now (based on new provider priority: Gemini before OpenAI)
-            assert extended_reasoning == "gemini-3-pro-preview"  # Gemini 3 Pro Preview has higher priority now
+            assert extended_reasoning == "gemini-3.1-pro-preview"  # Highest-score Gemini Pro thinking model
 
             # Should prefer Gemini for fast response
-            assert fast_response == "gemini-2.5-flash"  # Gemini has higher priority now
+            assert fast_response == "gemini-3.8-flash"  # Gemini has higher priority now
 
         finally:
             # Restore original environment
@@ -316,9 +319,13 @@ class TestAutoModeProviderSelection:
 
             # Test that providers resolve aliases correctly
             test_cases = [
-                ("flash", ProviderType.GOOGLE, "gemini-2.5-flash"),
-                ("pro", ProviderType.GOOGLE, "gemini-3-pro-preview"),  # "pro" now resolves to gemini-3-pro-preview
-                ("mini", ProviderType.OPENAI, "gpt-5-mini"),  # "mini" now resolves to gpt-5-mini
+                ("flash", ProviderType.GOOGLE, "gemini-2.5-flash"),  # "flash" resolves to gemini-2.5-flash by default
+                (
+                    "pro",
+                    ProviderType.GOOGLE,
+                    "gemini-3-pro-preview",
+                ),  # "pro" resolves to gemini-3-pro-preview by default
+                ("mini", ProviderType.OPENAI, "gpt-5-mini"),  # "mini" resolves to gpt-5-mini
                 ("o3mini", ProviderType.OPENAI, "o3-mini"),
                 ("grok", ProviderType.XAI, "grok-4"),
                 ("grok-4.1-fast-reasoning", ProviderType.XAI, "grok-4-1-fast-reasoning"),

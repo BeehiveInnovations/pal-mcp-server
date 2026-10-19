@@ -17,6 +17,7 @@ from .shared import (
     ModelResponse,
     ProviderType,
 )
+from .shared.effort import resolve_reasoning_effort
 
 
 class OpenAICompatibleProvider(ModelProvider):
@@ -54,11 +55,15 @@ class OpenAICompatibleProvider(ModelProvider):
             self._validate_base_url()
 
         # Warn if using external URL without authentication
-        if self.base_url and not self._is_localhost_url() and not api_key:
+        if self.base_url and not self._is_localhost_url() and not api_key and not self._authenticates_without_api_key():
             logging.warning(
                 f"Using external URL '{self.base_url}' without API key. "
                 "This may be insecure. Consider setting an API key for authentication."
             )
+
+    def _authenticates_without_api_key(self) -> bool:
+        """Return True when the provider authenticates some other way (e.g. Entra ID tokens)."""
+        return False
 
     def _ensure_model_allowed(
         self,
@@ -413,9 +418,11 @@ class OpenAICompatibleProvider(ModelProvider):
 
         # Prepare completion parameters for responses endpoint
         # Based on OpenAI documentation, use nested reasoning object for responses endpoint
-        effort = "medium"
-        if capabilities and capabilities.default_reasoning_effort:
-            effort = capabilities.default_reasoning_effort
+        effort = resolve_reasoning_effort(kwargs.get("thinking_mode"), capabilities)
+        if effort is None:
+            effort = "medium"
+            if capabilities and capabilities.default_reasoning_effort:
+                effort = capabilities.default_reasoning_effort
 
         completion_params = {
             "model": model_name,
@@ -480,6 +487,7 @@ class OpenAICompatibleProvider(ModelProvider):
                     "id": getattr(response, "id", ""),
                     "created": getattr(response, "created_at", 0),
                     "endpoint": "responses",
+                    "reasoning_effort": effort,
                 },
             )
 
@@ -598,7 +606,7 @@ class OpenAICompatibleProvider(ModelProvider):
         # Add max tokens if specified and model supports it
         # O3/O4 models that don't support temperature also don't support max_tokens
         if max_output_tokens and supports_sampling:
-            completion_params["max_tokens"] = max_output_tokens
+            completion_params[self._max_output_tokens_param(capabilities)] = max_output_tokens
 
         # Add any additional OpenAI-specific parameters
         # Use capabilities to filter parameters for reasoning models
@@ -608,6 +616,17 @@ class OpenAICompatibleProvider(ModelProvider):
                 if not supports_sampling and key in ["top_p", "frequency_penalty", "presence_penalty", "stream"]:
                     continue  # Skip unsupported parameters for reasoning models
                 completion_params[key] = value
+
+        # Send the tool's thinking_mode as an explicit reasoning effort for models that declare
+        # effort_levels. OpenAI and OpenRouter both accept the top-level reasoning_effort field.
+        reasoning_effort = resolve_reasoning_effort(kwargs.get("thinking_mode"), capabilities)
+        if reasoning_effort is not None:
+            completion_params["reasoning_effort"] = reasoning_effort
+
+        # Provider hook: inject sealed, provider-specific request-body params (e.g. the OpenRouter Fusion
+        # panel). This runs AFTER the caller-kwargs whitelist above, so only trusted, provider-derived
+        # config can reach the body — a caller-supplied ``plugins``/``extra_body`` is already dropped.
+        self._augment_completion_params(completion_params, resolved_model)
 
         # Check if this model needs the Responses API endpoint
         # Prefer capability metadata; fall back to static map when capabilities unavailable
@@ -654,6 +673,7 @@ class OpenAICompatibleProvider(ModelProvider):
                     "model": response.model,
                     "id": response.id,
                     "created": response.created,
+                    "reasoning_effort": reasoning_effort,
                 },
             )
 
@@ -700,6 +720,19 @@ class OpenAICompatibleProvider(ModelProvider):
             # Log warning but don't fail
             logging.warning(f"Parameter validation limited for {model_name}: {e}")
 
+    def _max_output_tokens_param(self, capabilities: Optional[ModelCapabilities]) -> str:
+        """Return the Chat Completions field for the output-token cap. Most OpenAI-compatible APIs use max_tokens."""
+        return "max_tokens"
+
+    def _augment_completion_params(self, completion_params: dict, resolved_model: str) -> None:
+        """Hook for subclasses to inject sealed, provider-specific request-body params.
+
+        Default is a no-op. Subclasses (e.g. OpenRouter, for the Fusion meta-router) override this to add
+        body params such as ``extra_body`` from trusted provider config only.
+        """
+
+        return None
+
     def _extract_usage(self, response) -> dict[str, int]:
         """Extract token usage from OpenAI response.
 
@@ -716,6 +749,10 @@ class OpenAICompatibleProvider(ModelProvider):
             usage["input_tokens"] = getattr(response.usage, "prompt_tokens", 0) or 0
             usage["output_tokens"] = getattr(response.usage, "completion_tokens", 0) or 0
             usage["total_tokens"] = getattr(response.usage, "total_tokens", 0) or 0
+            # OpenRouter reports a per-call dollar cost; surface it so spend is auditable (cost seal).
+            cost = getattr(response.usage, "cost", None)
+            if cost is not None:
+                usage["cost"] = cost
 
         return usage
 

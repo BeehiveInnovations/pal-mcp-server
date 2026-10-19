@@ -57,7 +57,7 @@ word verdict in the end.
 - `images`: Optional images for visual context (absolute paths)
 - `working_directory_absolute_path`: **Required** - Absolute path to an existing directory where generated code artifacts will be saved
 - `temperature`: Response creativity (0-1, default 0.5)
-- `thinking_mode`: minimal|low|medium|high|max (default: medium, Gemini only)
+- `thinking_mode`: minimal|low|medium|high|max (default: medium; Gemini budgets, or an explicit effort for models with effort_levels)
 - `continuation_id`: Continue previous conversations
 
 ## Structured Code Generation

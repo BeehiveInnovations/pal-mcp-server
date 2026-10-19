@@ -36,7 +36,7 @@ with the best architecture for my project
 - `files`: Optional file paths or directories for additional context (absolute paths)
 - `images`: Optional images for visual analysis (absolute paths)
 - `temperature`: Temperature for creative thinking (0-1, default 0.7)
-- `thinking_mode`: minimal|low|medium|high|max (default: high, Gemini only)
+- `thinking_mode`: minimal|low|medium|high|max (default: high; Gemini budgets, or an explicit effort for models with effort_levels)
 - `continuation_id`: Continue previous conversations
 
 ## Usage Examples

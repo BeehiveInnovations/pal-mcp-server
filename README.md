@@ -15,7 +15,7 @@
 [Claude Code](https://www.anthropic.com/claude-code) · [Gemini CLI](https://github.com/google-gemini/gemini-cli) · [Codex CLI](https://github.com/openai/codex) · [Qwen Code CLI](https://qwenlm.github.io/qwen-code-docs/) · [Cursor](https://cursor.com) · _and more_
 
 **With multiple models within a single prompt:**  
-Gemini · OpenAI · Anthropic · Grok · Azure · Ollama · OpenRouter · DIAL · On-Device Model
+Gemini · OpenAI · Anthropic · Grok · Azure · ChatGPT plan (via Codex CLI) · Ollama · OpenRouter · DIAL · On-Device Model
 
 </div>
 
@@ -153,6 +153,10 @@ For best results when using [Codex CLI](https://developers.openai.com/codex/cli)
 - **[DIAL](https://dialx.ai/)** - Vendor-agnostic model access
 - **[Ollama](https://ollama.ai/)** - Local models (free)
 
+No API key? Two providers sign in with an account you already have:
+- **ChatGPT plan** - GPT models through the [Codex CLI](https://github.com/openai/codex) login (`codex login`). See [ChatGPT Models via Codex CLI](docs/chatgpt_provider.md).
+- **Azure (Entra ID)** - Azure OpenAI and Claude on Azure AI Foundry with your `az login`. See [Entra ID Authentication](docs/entra_auth.md).
+
 **2. Install** (choose one):
 
 **Option A: Clone and Automatic Setup** (recommended)
@@ -201,6 +205,23 @@ cd pal-mcp-server
 ## Provider Configuration
 
 PAL activates any provider that has credentials in your `.env`. See `.env.example` for deeper customization.
+
+### Sign in instead of an API key
+
+| Provider | Turn on with | Details |
+|----------|--------------|---------|
+| ChatGPT-plan models (`chatgpt/<model>`) through the Codex CLI | `codex login`, then `CHATGPT_ENABLED=true` | [ChatGPT Models via Codex CLI](docs/chatgpt_provider.md) |
+| Azure OpenAI with your Entra ID login | `az login`, then `AZURE_OPENAI_USE_ENTRA=true` + `AZURE_OPENAI_ENDPOINT` | [Entra ID Authentication](docs/entra_auth.md) |
+| Claude on Azure AI Foundry with your Entra ID login | `az login`, then `ANTHROPIC_USE_ENTRA=true` + `ANTHROPIC_FOUNDRY_BASE_URL` | [Entra ID Authentication](docs/entra_auth.md) |
+
+Each is opt-in. With its flag unset, the provider behaves as before.
+
+### Model selection & restrictions
+
+- **`*_ALLOWED_MODELS`** (allow-list) and **`*_DISALLOWED_MODELS`** (block-list) constrain which models each provider may use. A block-list match always wins: a model is usable iff it is **not** blocked **and** (no allow-list is set **or** it is on the allow-list). Block-lists let you exclude a few models (e.g. costly `*-pro` tiers) without enumerating everything you want to keep, e.g. `OPENROUTER_DISALLOWED_MODELS=openai/gpt-5.5-pro`.
+- **`DYNAMIC_MODEL_SELECTION=1`** opts auto-mode into preferring the newest OpenAI flagships and remapping bare aliases (`flash`/`pro`/`flash-lite`) to the newest models. Unset (the default), OpenAI auto-selection and all bare-alias targets follow upstream behavior; Gemini auto-selection keeps upstream's reverse-alphabetical algorithm, which naturally favors the newest-numbered model available (so adding newer Gemini models advances the default Gemini pick).
+
+See [docs/configuration.md](docs/configuration.md) for the full reference.
 
 ## Core Tools
 
@@ -381,7 +402,7 @@ DISABLED_TOOLS=
 - **[Context revival](docs/context-revival.md)** - Continue conversations even after context resets
 
 **Model Support**
-- **Multiple providers** - Gemini, OpenAI, Azure, X.AI, OpenRouter, DIAL, Ollama
+- **Multiple providers** - Gemini, OpenAI, Anthropic, Azure, X.AI, OpenRouter, DIAL, Ollama, plus ChatGPT-plan models through the Codex CLI
 - **Latest models** - GPT-5, Gemini 3.0 Pro, O3, Grok-4, local Llama
 - **[Thinking modes](docs/advanced-usage.md#thinking-modes)** - Control reasoning depth vs cost
 - **Vision support** - Analyze images, diagrams, screenshots
@@ -423,7 +444,10 @@ DISABLED_TOOLS=
 - [Advanced Usage](docs/advanced-usage.md) - Power user features
 - [Configuration](docs/configuration.md) - Environment variables, restrictions
 - [Adding Providers](docs/adding_providers.md) - Provider-specific setup (OpenAI, Azure, custom gateways)
+- [Entra ID Authentication](docs/entra_auth.md) - Azure OpenAI and Claude on Azure AI Foundry with your `az login`, no API keys
+- [ChatGPT Models via Codex CLI](docs/chatgpt_provider.md) - ChatGPT-plan models in every PAL tool, through `codex login`
 - [Model Ranking Guide](docs/model_ranking.md) - How intelligence scores drive auto-mode suggestions
+- [Model Catalog](docs/model_catalog.md) - Every measured model with its score, AA Index values, routes, and aliases
 
 **🔧 Setup & Support**
 - [WSL Setup](docs/wsl-setup.md) - Windows users

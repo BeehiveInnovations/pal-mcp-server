@@ -147,7 +147,7 @@ Use pal and perform a thorough precommit ensuring there aren't any new regressio
 - `include_unstaged`: Include uncommitted changes in the review (default: true)
 - `focus_on`: Specific aspects to focus on
 - `temperature`: Temperature for response (default: 0.2)
-- `thinking_mode`: minimal|low|medium|high|max (default: medium, Gemini only)
+- `thinking_mode`: minimal|low|medium|high|max (default: medium; Gemini budgets, or an explicit effort for models with effort_levels)
 - `use_assistant_model`: Whether to use expert validation phase (default: true, set to false to use Claude only)
 - `continuation_id`: Continue previous validation discussions
 
