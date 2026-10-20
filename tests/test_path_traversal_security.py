@@ -99,6 +99,15 @@ class TestRegressionPrevention:
         """Test /etc/shadow is blocked (password hashes)."""
         assert is_dangerous_path(Path("/etc/shadow")) is True
 
+    def test_proc_environ_blocked(self):
+        """/proc/self/environ exposes the server's API keys."""
+        assert is_dangerous_path(Path("/proc/self/environ")) is True
+        assert is_dangerous_path(Path("/proc/1/environ")) is True
+
+    def test_sys_blocked(self):
+        """Kernel pseudo-filesystem should not be readable."""
+        assert is_dangerous_path(Path("/sys/class/net")) is True
+
 
 class TestWindowsPathHandling:
     """Test Windows path handling with trailing backslash.

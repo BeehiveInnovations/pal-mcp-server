@@ -16,6 +16,8 @@ DANGEROUS_SYSTEM_PATHS = {
     "/bin",
     "/var",
     "/root",
+    "/proc",
+    "/sys",
     "C:\\Windows",
     "C:\\Program Files",
 }
