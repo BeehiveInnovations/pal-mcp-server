@@ -13,5 +13,8 @@ class ProviderType(Enum):
     AZURE = "azure"
     XAI = "xai"
     OPENROUTER = "openrouter"
+    HUGGINGFACE = "huggingface"
+    COHERE = "cohere"
+    ANTHROPIC_COMPAT = "anthropic_compat"
     CUSTOM = "custom"
     DIAL = "dial"

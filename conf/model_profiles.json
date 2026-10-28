@@ -1,0 +1,31 @@
+{
+  "_README": {
+    "description": "Operator-curated cost/latency overlay for the capability catalog (providers/router/catalog.py). Static manifests carry no pricing, so this fills cost_profile for models we know about. Keys are '<service>/<model_name>'. Live pricing from /models discovery (OpenRouter) overrides this; models absent from both get an 'estimated' cost derived from intelligence_score.",
+    "cost_tier": "free | low | mid | high",
+    "env": "PAL_MODEL_PROFILES_PATH overrides this file"
+  },
+  "profiles": {
+    "groq/openai/gpt-oss-120b": {"cost_tier": "low"},
+    "groq/openai/gpt-oss-20b": {"cost_tier": "low"},
+    "groq/qwen/qwen3.8-27b": {"cost_tier": "low"},
+    "gemini/gemini-3.5-flash-lite": {"cost_tier": "low"},
+    "gemini/gemini-3.6-flash": {"cost_tier": "low"},
+    "gemini/gemini-3.1-pro-preview": {"cost_tier": "mid"},
+    "openai/gpt-5-nano": {"cost_tier": "low"},
+    "openai/gpt-5-mini": {"cost_tier": "low"},
+    "openai/o4-mini": {"cost_tier": "low"},
+    "openai/o3-mini": {"cost_tier": "low"},
+    "openai/gpt-5.1-codex-mini": {"cost_tier": "low"},
+    "openai/gpt-4.1": {"cost_tier": "mid"},
+    "openai/gpt-5": {"cost_tier": "mid"},
+    "openai/gpt-5.2": {"cost_tier": "mid"},
+    "openai/gpt-5-codex": {"cost_tier": "mid"},
+    "openai/gpt-5.1-codex": {"cost_tier": "mid"},
+    "openai/o3": {"cost_tier": "mid"},
+    "openai/gpt-5.2-pro": {"cost_tier": "high"},
+    "openai/o3-pro": {"cost_tier": "high"},
+    "xai/grok-4": {"cost_tier": "mid"},
+    "xai/grok-4-1-fast-reasoning": {"cost_tier": "low"},
+    "openrouter/openrouter/free": {"cost_tier": "free"}
+  }
+}

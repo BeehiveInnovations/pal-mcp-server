@@ -1,0 +1,9 @@
+{
+  "_comment": "HuggingFace router models (OpenAI-compatible). org/model ids.",
+  "models": [
+    {"model_name": "meta-llama/Llama-3.1-8B-Instruct", "aliases": ["hf-llama"]},
+    {"model_name": "Qwen/Qwen3.8-27B", "aliases": ["hf-qwen"]},
+    {"model_name": "deepseek-ai/DeepSeek-V4.1-Flash", "aliases": ["hf-deepseek"]},
+    {"model_name": "zai-org/GLM-5.3-Flash", "aliases": ["hf-glm"]}
+  ]
+}

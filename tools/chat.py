@@ -282,16 +282,23 @@ class ChatTool(SimpleTool):
                     instruction = self._build_agent_instruction(artifact_path)
                     body = self._join_sections(sanitized_text, instruction)
 
-        final_output = (
-            f"{body}\n\n---\n\nAGENT'S TURN: Evaluate this perspective alongside your analysis to "
-            "form a comprehensive solution and continue with the user's request and task at hand."
-        )
-
-        if recordable_override is not None:
-            self._last_recordable_response = (
-                f"{recordable_override}\n\n---\n\nAGENT'S TURN: Evaluate this perspective alongside your analysis to "
+        # The `AGENT'S TURN: Evaluate this perspective...` suffix adds ~40
+        # tokens to every reply and is redundant for orchestrators that already
+        # know they own the next turn. Opt-out with PAL_CHAT_SUPPRESS_SUFFIX=1
+        # (default OFF preserves backwards compatibility).
+        suppress_suffix = os.getenv("PAL_CHAT_SUPPRESS_SUFFIX", "0") in ("1", "true", "yes")
+        suffix = (
+            ""
+            if suppress_suffix
+            else (
+                "\n\n---\n\nAGENT'S TURN: Evaluate this perspective alongside your analysis to "
                 "form a comprehensive solution and continue with the user's request and task at hand."
             )
+        )
+        final_output = f"{body}{suffix}"
+
+        if recordable_override is not None:
+            self._last_recordable_response = f"{recordable_override}{suffix}"
         else:
             self._last_recordable_response = final_output
 

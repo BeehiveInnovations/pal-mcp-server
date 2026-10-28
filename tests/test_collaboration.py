@@ -42,7 +42,7 @@ class TestDynamicContextRequests:
         mock_provider = create_mock_provider()
         mock_provider.get_provider_type.return_value = Mock(value="google")
         mock_provider.generate_content.return_value = Mock(
-            content=clarification_json, usage={}, model_name="gemini-2.5-flash", metadata={}
+            content=clarification_json, usage={}, model_name="gemini-3.6-flash", metadata={}
         )
         mock_get_provider.return_value = mock_provider
 
@@ -123,7 +123,7 @@ class TestDynamicContextRequests:
         mock_provider = create_mock_provider()
         mock_provider.get_provider_type.return_value = Mock(value="google")
         mock_provider.generate_content.return_value = Mock(
-            content=malformed_json, usage={}, model_name="gemini-2.5-flash", metadata={}
+            content=malformed_json, usage={}, model_name="gemini-3.6-flash", metadata={}
         )
         mock_get_provider.return_value = mock_provider
 
@@ -168,7 +168,7 @@ class TestDynamicContextRequests:
         original_default = os.environ.get("DEFAULT_MODEL")
 
         try:
-            os.environ["DEFAULT_MODEL"] = "gemini-2.5-flash"
+            os.environ["DEFAULT_MODEL"] = "gemini-3.6-flash"
             import config
 
             importlib.reload(config)
@@ -196,7 +196,7 @@ class TestDynamicContextRequests:
             mock_provider = create_mock_provider()
             mock_provider.get_provider_type.return_value = Mock(value="google")
             mock_provider.generate_content.return_value = Mock(
-                content=clarification_json, usage={}, model_name="gemini-2.5-flash", metadata={}
+                content=clarification_json, usage={}, model_name="gemini-3.6-flash", metadata={}
             )
             mock_get_provider.return_value = mock_provider
 
@@ -371,7 +371,7 @@ class TestCollaborationWorkflow:
         mock_provider = create_mock_provider()
         mock_provider.get_provider_type.return_value = Mock(value="google")
         mock_provider.generate_content.return_value = Mock(
-            content=clarification_json, usage={}, model_name="gemini-2.5-flash", metadata={}
+            content=clarification_json, usage={}, model_name="gemini-3.6-flash", metadata={}
         )
         mock_get_provider.return_value = mock_provider
 
@@ -437,7 +437,7 @@ class TestCollaborationWorkflow:
         mock_provider = create_mock_provider()
         mock_provider.get_provider_type.return_value = Mock(value="google")
         mock_provider.generate_content.return_value = Mock(
-            content=clarification_json, usage={}, model_name="gemini-2.5-flash", metadata={}
+            content=clarification_json, usage={}, model_name="gemini-3.6-flash", metadata={}
         )
         mock_get_provider.return_value = mock_provider
 
@@ -492,7 +492,7 @@ class TestCollaborationWorkflow:
         """
 
         mock_provider.generate_content.return_value = Mock(
-            content=final_response, usage={}, model_name="gemini-2.5-flash", metadata={}
+            content=final_response, usage={}, model_name="gemini-3.6-flash", metadata={}
         )
 
         # Update expert analysis mock for second call

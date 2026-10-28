@@ -52,6 +52,10 @@ class ModelProvider(ABC):
     def get_provider_type(self) -> ProviderType:
         """Return the concrete provider identity."""
 
+    def set_api_key(self, api_key: str) -> None:
+        """Rotate this provider's API key (subclasses clear any cached client)."""
+        self.api_key = api_key
+
     def get_capabilities(self, model_name: str) -> ModelCapabilities:
         """Resolve capability metadata for a model name.
 

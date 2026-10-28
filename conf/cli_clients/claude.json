@@ -2,8 +2,6 @@
   "name": "claude",
   "command": "claude",
   "additional_args": [
-    "--permission-mode",
-    "acceptEdits",
     "--model",
     "sonnet"
   ],
@@ -11,15 +9,23 @@
   "roles": {
     "default": {
       "prompt_path": "systemprompts/clink/default.txt",
-      "role_args": []
+      "role_args": ["--permission-mode", "default"]
+    },
+    "edit": {
+      "prompt_path": "systemprompts/clink/default.txt",
+      "role_args": ["--permission-mode", "acceptEdits"]
+    },
+    "autonomous": {
+      "prompt_path": "systemprompts/clink/default.txt",
+      "role_args": ["--permission-mode", "bypassPermissions"]
     },
     "planner": {
       "prompt_path": "systemprompts/clink/default_planner.txt",
-      "role_args": []
+      "role_args": ["--permission-mode", "plan"]
     },
     "codereviewer": {
       "prompt_path": "systemprompts/clink/default_codereviewer.txt",
-      "role_args": []
+      "role_args": ["--permission-mode", "default"]
     }
   }
 }

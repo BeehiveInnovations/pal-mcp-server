@@ -16,6 +16,7 @@ from .planner import PlannerTool
 from .precommit import PrecommitTool
 from .refactor import RefactorTool
 from .secaudit import SecauditTool
+from .secsuite import SecSuiteTool
 from .testgen import TestGenTool
 from .thinkdeep import ThinkDeepTool
 from .tracer import TracerTool
@@ -37,6 +38,7 @@ __all__ = [
     "ChallengeTool",
     "RefactorTool",
     "SecauditTool",
+    "SecSuiteTool",
     "TestGenTool",
     "TracerTool",
     "VersionTool",

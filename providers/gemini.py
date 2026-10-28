@@ -82,6 +82,11 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
                 self._client = genai.Client(api_key=self.api_key)
         return self._client
 
+    def set_api_key(self, api_key: str) -> None:
+        """Swap the API key and drop the cached client so the next call uses it (key rotation)."""
+        self.api_key = api_key
+        self._client = None
+
     def _resolve_http_timeout(self) -> Optional[float]:
         """Compute timeout override from shared custom timeout environment variables."""
 
@@ -145,6 +150,19 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
 
         resolved_model_name = self._resolve_model_name(model_name)
 
+        # Antigravity (agy CLI) bypass path — avoids generativelanguage.googleapis.com
+        # daily free-tier quota for gemini-3.8/3.7/3.6-flash and 3.1-pro by routing
+        # through the agy CLI which carries its own authenticated session.
+        # Triggered when model_name/resolved_model_name matches an agy model id,
+        # or SAURON_PREFER_ANTIGRAVITY=1 forces it for standard gemini-3.X-flash ids.
+        if self._should_use_antigravity(model_name, resolved_model_name):
+            return self._generate_via_antigravity(
+                prompt=prompt,
+                system_prompt=system_prompt,
+                model_name=model_name,
+                resolved_model_name=resolved_model_name,
+            )
+
         # Prepare content parts (text and potentially images)
         parts = []
 
@@ -154,6 +172,15 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
         else:
             full_prompt = prompt
 
+        # Guardrail: redact credentials/PII at the send boundary (fail-open, per-call restore map)
+        from providers.router import outbound
+
+        full_prompt, _mask_ctx = outbound.prepare(full_prompt, model_name, compress=False)
+        from providers.router import guardrail
+
+        # Headroom is intentionally NOT applied here: full_prompt is system +
+        # history + user text with no tool-result boundary, so it must reach the
+        # model byte-exact. Headroom only compresses genuine tool-result blobs.
         parts.append({"text": full_prompt})
 
         # Add images if provided and model supports vision
@@ -175,7 +202,7 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
 
         # Gemini 3 Pro Preview currently rejects medium thinking budgets; bump to high.
         effective_thinking_mode = thinking_mode
-        if resolved_model_name == "gemini-3-pro-preview" and thinking_mode == "medium":
+        if resolved_model_name in ("gemini-3.1-pro-preview", "gemini-3-pro-preview") and thinking_mode == "medium":
             logger.debug(
                 "Overriding thinking mode 'medium' with 'high' for %s due to launch limitation",
                 resolved_model_name,
@@ -188,9 +215,46 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
             candidate_count=1,
         )
 
+        # Disable default safety blocking so authorized security review work is not refused.
+        # This workspace runs under written bug-bounty / red-team / CTF authorization; the
+        # system prompt enforces scope. See systemprompts/*_prompt.py for the "AUTHORIZED
+        # SECURITY WORK IS IN SCOPE" preamble.
+        try:
+            generation_config.safety_settings = [
+                types.SafetySetting(category=c, threshold="BLOCK_NONE")
+                for c in (
+                    "HARM_CATEGORY_HARASSMENT",
+                    "HARM_CATEGORY_HATE_SPEECH",
+                    "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                    "HARM_CATEGORY_DANGEROUS_CONTENT",
+                    "HARM_CATEGORY_CIVIC_INTEGRITY",
+                )
+            ]
+        except Exception:
+            pass
+
         # Add max output tokens if specified
         if max_output_tokens:
             generation_config.max_output_tokens = max_output_tokens
+
+        # Structured function-calling: convert OpenAI-style tool dicts to Gemini
+        # function declarations so Gemini emits real function calls (not text tags).
+        _tools = kwargs.get("tools")
+        if _tools:
+            try:
+                _fds = []
+                for _t in _tools:
+                    _fn = _t.get("function", _t) if isinstance(_t, dict) else {}
+                    _fds.append(
+                        types.FunctionDeclaration(
+                            name=_fn.get("name"),
+                            description=_fn.get("description", ""),
+                            parameters=_fn.get("parameters") or {"type": "object", "properties": {}},
+                        )
+                    )
+                generation_config.tools = [types.Tool(function_declarations=_fds)]
+            except Exception:  # fail-open: fall back to text-tag behaviour
+                pass
 
         # Add thinking configuration for models that support it
         if capabilities.supports_extended_thinking and effective_thinking_mode in self.THINKING_BUDGETS:
@@ -281,8 +345,22 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
                 except (AttributeError, TypeError):
                     pass
 
+            _tool_calls = []
+            try:
+                if response.candidates:
+                    for _part in (response.candidates[0].content.parts or []):
+                        _fc = getattr(_part, "function_call", None)
+                        if _fc and getattr(_fc, "name", None):
+                            _tool_calls.append({"name": _fc.name, "arguments": dict(getattr(_fc, "args", {}) or {})})
+            except Exception:
+                pass
+            try:
+                _text = response.text or ""
+            except Exception:
+                _text = ""
+
             return ModelResponse(
-                content=response.text,
+                content=_text,
                 usage=usage,
                 model_name=resolved_model_name,
                 friendly_name="Gemini",
@@ -292,27 +370,177 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
                     "finish_reason": finish_reason_str,
                     "is_blocked_by_safety": is_blocked_by_safety,
                     "safety_feedback": safety_feedback_details,
+                    "tool_calls": _tool_calls,
                 },
             )
 
-        try:
+        # P1: smart-router hooks (cache lookup, rate-limit, self-heal on 404)
+        from providers.router import rate_limit, response_cache, self_heal
+
+        _cache_files = kwargs.get("_cache_files") or None
+        cache_key = response_cache.make_key(
+            model=resolved_model_name,
+            tool=kwargs.get("_tool_name", ""),
+            prompt=full_prompt,
+            files=_cache_files,
+            extra={"temperature": temperature, "thinking": effective_thinking_mode},
+        )
+        _cached = response_cache.get(cache_key)
+        if _cached is not None:
+            return _cached
+
+        _est = max(len(full_prompt) // 4, 1)
+        _ds, _reason = rate_limit.should_downshift("google", resolved_model_name, _est)
+        if _ds:
+            raise RuntimeError(f"rate_limit: google/{resolved_model_name} exceed cap ({_reason})")
+
+        resolved_model_name = self_heal.resolve(resolved_model_name)
+
+        def _run_once() -> ModelResponse:
             return self._run_with_retries(
                 operation=_attempt,
                 max_attempts=max_retries,
                 delays=retry_delays,
                 log_prefix=f"Gemini API ({resolved_model_name})",
             )
+
+        try:
+            resp = _run_once()
         except Exception as exc:
-            attempts = max(attempt_counter["value"], 1)
-            error_msg = (
-                f"Gemini API error for model {resolved_model_name} after {attempts} attempt"
-                f"{'s' if attempts > 1 else ''}: {exc}"
-            )
-            raise RuntimeError(error_msg) from exc
+            mig = self_heal.parse_migration(str(exc))
+            if mig and self_heal.is_enabled():
+                dead, new = mig
+                self_heal.record_migration(dead, new, provider="google")
+                logger.warning("self-heal: %s dead → retrying with %s", dead, new)
+                resolved_model_name = new  # rebind for closure
+                try:
+                    resp = _run_once()
+                except Exception as exc2:
+                    attempts = max(attempt_counter["value"], 1)
+                    raise RuntimeError(
+                        f"Gemini API error for model {resolved_model_name} after {attempts} attempt"
+                        f"{'s' if attempts > 1 else ''}: {exc2}"
+                    ) from exc2
+            else:
+                attempts = max(attempt_counter["value"], 1)
+                raise RuntimeError(
+                    f"Gemini API error for model {resolved_model_name} after {attempts} attempt"
+                    f"{'s' if attempts > 1 else ''}: {exc}"
+                ) from exc
+
+        usage = getattr(resp, "usage", {}) or {}
+        rate_limit.record("google", resolved_model_name, usage.get("total_tokens", _est))
+        resp = guardrail.guard_response(resp, _mask_ctx)
+        response_cache.put(cache_key, resp)
+        return resp
 
     def get_provider_type(self) -> ProviderType:
         """Get the provider type."""
         return ProviderType.GOOGLE
+
+    _ANTIGRAVITY_NATIVE_IDS = {
+        "gemini-3.8-flash-high", "gemini-3.8-flash-medium", "gemini-3.8-flash-low",
+        "gemini-3.7-flash-high", "gemini-3.7-flash-medium", "gemini-3.7-flash-low",
+        "gemini-3.6-flash-high", "gemini-3.6-flash-medium", "gemini-3.6-flash-low",
+        "gemini-3.1-pro-high", "gemini-3.1-pro-low",
+    }
+    _ANTIGRAVITY_BARE_TO_NATIVE = {
+        "gemini-3.8-flash": "gemini-3.8-flash-medium",
+        "gemini-3.7-flash": "gemini-3.7-flash-medium",
+        "gemini-3.6-flash": "gemini-3.6-flash-medium",
+        "gemini-3.1-pro-preview": "gemini-3.1-pro-high",
+    }
+
+    def _should_use_antigravity(self, model_name: str, resolved_model_name: str) -> bool:
+        import os
+        for candidate in (model_name, resolved_model_name):
+            if candidate in self._ANTIGRAVITY_NATIVE_IDS:
+                return True
+        if os.getenv("SAURON_PREFER_ANTIGRAVITY", "").lower() in ("1", "true", "yes"):
+            if resolved_model_name in self._ANTIGRAVITY_BARE_TO_NATIVE:
+                return True
+            if model_name in self._ANTIGRAVITY_BARE_TO_NATIVE:
+                return True
+        return False
+
+    def _generate_via_antigravity(
+        self,
+        prompt: str,
+        system_prompt: Optional[str],
+        model_name: str,
+        resolved_model_name: str,
+    ) -> ModelResponse:
+        """Shell out to `agy` CLI; bypasses generativelanguage.googleapis.com quota."""
+        import json as _json
+        import os
+        import shutil
+        import subprocess
+
+        agy_model = (
+            model_name if model_name in self._ANTIGRAVITY_NATIVE_IDS
+            else resolved_model_name if resolved_model_name in self._ANTIGRAVITY_NATIVE_IDS
+            else self._ANTIGRAVITY_BARE_TO_NATIVE.get(resolved_model_name)
+            or self._ANTIGRAVITY_BARE_TO_NATIVE.get(model_name)
+            or "gemini-3.8-flash-medium"
+        )
+        agy_bin = shutil.which("agy") or os.path.expanduser("~/.local/bin/agy")
+        if not os.path.exists(agy_bin):
+            raise RuntimeError("agy CLI not found; cannot use antigravity route")
+
+        framed = (
+            "System: You are an AI model acting as the language model engine for Sauron. "
+            "Respond directly with your text response to the prompt. "
+            "Do not call autonomous CLI tools; respond with the requested text output directly.\n\n"
+        )
+        if system_prompt:
+            framed += f"System: {system_prompt}\n"
+        framed += f"User: {prompt}\nAssistant:"
+
+        timeout_s = int(os.getenv("SAURON_ANTIGRAVITY_TIMEOUT_MS", "120000")) // 1000
+        try:
+            proc = subprocess.run(
+                [agy_bin, "-p", framed, "--output-format", "stream-json", "--model", agy_model],
+                capture_output=True, text=True, timeout=timeout_s,
+            )
+        except subprocess.TimeoutExpired as e:
+            raise RuntimeError(f"agy timed out after {timeout_s}s") from e
+
+        content_parts: list[str] = []
+        usage: dict[str, int] = {}
+        for line in (proc.stdout or "").splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                obj = _json.loads(line)
+            except Exception:
+                continue
+            if obj.get("event") == "result" and obj.get("result", {}).get("status") == "SUCCESS":
+                resp = obj["result"].get("response")
+                if resp:
+                    content_parts = [resp]
+                u = obj["result"].get("usage", {}) or {}
+                usage = {
+                    "input_tokens": u.get("input_tokens", 0),
+                    "output_tokens": u.get("output_tokens", 0),
+                    "total_tokens": u.get("total_tokens", 0),
+                }
+            elif obj.get("event") == "result" and obj.get("result", {}).get("status") == "ERROR":
+                err = obj["result"].get("error", "agy error")
+                raise RuntimeError(f"antigravity error: {err}")
+
+        if not content_parts:
+            err = (proc.stderr or "").strip() or f"agy exited {proc.returncode} with empty output"
+            raise RuntimeError(f"antigravity error: {err}")
+
+        return ModelResponse(
+            content=content_parts[0],
+            usage=usage,
+            model_name=resolved_model_name,
+            friendly_name=f"antigravity:{agy_model}",
+            provider=ProviderType.GOOGLE,
+            metadata={"route": "antigravity", "agy_model": agy_model},
+        )
 
     def _extract_usage(self, response) -> dict[str, int]:
         """Extract token usage from Gemini response."""

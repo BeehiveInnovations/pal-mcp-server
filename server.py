@@ -62,6 +62,7 @@ from tools import (  # noqa: E402
     PrecommitTool,
     RefactorTool,
     SecauditTool,
+    SecSuiteTool,
     TestGenTool,
     ThinkDeepTool,
     TracerTool,
@@ -268,6 +269,7 @@ TOOLS = {
     "precommit": PrecommitTool(),  # Step-by-step pre-commit validation workflow
     "debug": DebugIssueTool(),  # Root cause analysis and debugging assistance
     "secaudit": SecauditTool(),  # Comprehensive security audit with OWASP Top 10 and compliance coverage
+    "secsuite": SecSuiteTool(),  # Burp-alternative security testing, HTTP repeater, JWT & traffic search
     "docgen": DocgenTool(),  # Step-by-step documentation generation with complexity analysis
     "analyze": AnalyzeTool(),  # General-purpose file and code analysis
     "refactor": RefactorTool(),  # Step-by-step refactoring analysis workflow with expert validation
@@ -535,6 +537,30 @@ def configure_providers():
         ModelProviderRegistry.register_provider(ProviderType.OPENROUTER, OpenRouterProvider)
         registered_providers.append(ProviderType.OPENROUTER.value)
         logger.debug(f"Registered provider: {ProviderType.OPENROUTER.value}")
+
+    # HuggingFace router (OpenAI-compatible; org/model ids)
+    hf_key = get_env("HUGGINGFACE_API_KEY")
+    if hf_key and hf_key != "your_huggingface_api_key_here":
+        from providers.huggingface import HuggingFaceProvider
+
+        ModelProviderRegistry.register_provider(ProviderType.HUGGINGFACE, HuggingFaceProvider)
+        registered_providers.append(ProviderType.HUGGINGFACE.value)
+        logger.debug(f"Registered provider: {ProviderType.HUGGINGFACE.value}")
+
+    try:
+        from providers.extra_providers import register_extras
+
+        register_extras(ModelProviderRegistry)
+    except Exception as _e:
+        logger.debug(f"extra_providers skipped: {_e}")
+
+    cohere_key = get_env("COHERE_API_KEY")
+    if cohere_key and cohere_key != "your_cohere_api_key_here":
+        from providers.cohere import CohereProvider
+
+        ModelProviderRegistry.register_provider(ProviderType.COHERE, CohereProvider)
+        registered_providers.append(ProviderType.COHERE.value)
+        logger.debug(f"Registered provider: {ProviderType.COHERE.value}")
 
     # Log all registered providers
     if registered_providers:
@@ -811,13 +837,50 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[TextCon
 
         # Handle auto mode at MCP boundary - resolve to specific model
         if model_name.lower() == "auto":
-            # Get tool category to determine appropriate model
-            tool_category = tool.get_model_category()
-            resolved_model = ModelProviderRegistry.get_preferred_fallback_model(tool_category)
-            logger.info(f"Auto mode resolved to {resolved_model} for {name} (category: {tool_category.value})")
-            model_name = resolved_model
-            # Update arguments with resolved model
-            arguments["model"] = model_name
+            # P2: prompt-content classifier (falls through to tool category on no match)
+            try:
+                from providers.router import bandit, classifier, refusal_memory
+
+                _prompt_for_cls = arguments.get("prompt") or arguments.get("step") or ""
+                _files_for_cls = arguments.get("absolute_file_paths") or None
+                tool_category = tool.get_model_category()
+                pal_cat = classifier.classify(_prompt_for_cls, _files_for_cls, tool_default="")
+                candidates: list[str] = []
+                if pal_cat and pal_cat in classifier.CATEGORY_PREFERENCES:
+                    logger.info(f"PAL classifier picked category '{pal_cat}' for {name}")
+                    candidates = list(classifier.CATEGORY_PREFERENCES[pal_cat])
+                    # Phase-5: capability filter over the catalog; the name list
+                    # above is only the tie-break prior. [] -> keep legacy list.
+                    try:
+                        from providers.router import catalog
+
+                        candidates = catalog.order_for_category(pal_cat, candidates) or candidates
+                    except Exception as _cexc:
+                        logger.debug(f"catalog routing degraded to name list: {_cexc}")
+                cat_tag = pal_cat or tool_category.value
+                # Phase-1 bandit: reorder by observed success (reversible, in-session;
+                # never drops a candidate -> exploration floor preserved).
+                candidates = bandit.reorder(cat_tag, candidates)
+                # Filter out session-blacklisted (model, category) pairs.
+                candidates = [c for c in candidates if not refusal_memory.is_blacklisted(c, cat_tag)]
+                resolved_model = None
+                for cand in candidates:
+                    if ModelProviderRegistry.get_provider_for_model(cand):
+                        resolved_model = cand
+                        break
+                if resolved_model is None:
+                    resolved_model = ModelProviderRegistry.get_preferred_fallback_model(tool_category)
+                logger.info(f"Auto mode resolved to {resolved_model} for {name} (category: {tool_category.value})")
+                model_name = resolved_model
+                arguments["model"] = model_name
+                arguments["_pal_category"] = cat_tag
+            except Exception as _exc:
+                logger.debug(f"PAL smart-router degraded to legacy auto: {_exc}")
+                tool_category = tool.get_model_category()
+                resolved_model = ModelProviderRegistry.get_preferred_fallback_model(tool_category)
+                logger.info(f"Auto mode resolved to {resolved_model} for {name} (category: {tool_category.value})")
+                model_name = resolved_model
+                arguments["model"] = model_name
 
         # Validate model availability at MCP boundary
         provider = ModelProviderRegistry.get_provider_for_model(model_name)
@@ -862,7 +925,60 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[TextCon
                 raise ToolExecutionError(ToolOutput(**file_size_check).model_dump_json())
 
         # Execute tool with pre-resolved model context
-        result = await tool.execute(arguments)
+        _pal_t0 = time.time()
+        try:
+            result = await tool.execute(arguments)
+        except Exception as _exc:
+            # P2: record refusal on error so the router skips this pair next time
+            try:
+                from providers.router import episode_store, refusal_memory
+
+                _pal_cat = arguments.get("_pal_category", "")
+                _lat_ms = int((time.time() - _pal_t0) * 1000)
+                tag = refusal_memory.classify(str(_exc))
+                if tag:
+                    refusal_memory.record(model_name, _pal_cat, tag)
+                # Phase-1 learning substrate: persist the failure episode.
+                _klass = refusal_memory.classify_class(tag or str(_exc))
+                episode_store.record(
+                    model_name,
+                    _pal_cat,
+                    "refusal" if (tag or "").startswith("refusal:") else "error",
+                    latency_ms=_lat_ms,
+                    prompt=arguments.get("prompt") or arguments.get("step"),
+                    err_class=_klass,
+                    tool=name,
+                    reason=tag or str(_exc),
+                )
+            except Exception:
+                pass
+            raise
+        # P2: sniff result payload for silent refusals (200-with-refusal-body)
+        try:
+            from providers.router import episode_store, refusal_memory
+
+            _pal_cat = arguments.get("_pal_category", "")
+            _lat_ms = int((time.time() - _pal_t0) * 1000)
+            _txt = "".join(getattr(x, "text", "") or "" for x in (result or []))
+            tag = refusal_memory.classify(_txt)
+            _is_refusal = bool(tag and tag.startswith("refusal:"))
+            if _is_refusal:
+                refusal_memory.record(model_name, _pal_cat, tag)
+            else:
+                refusal_memory.record_success(model_name, _pal_cat)
+            # Phase-1 learning substrate: persist the outcome episode.
+            episode_store.record(
+                model_name,
+                _pal_cat,
+                "refusal" if _is_refusal else "success",
+                latency_ms=_lat_ms,
+                prompt=arguments.get("prompt") or arguments.get("step"),
+                err_class=refusal_memory.classify_class(tag) if _is_refusal else None,
+                tool=name,
+                reason=tag if _is_refusal else None,
+            )
+        except Exception:
+            pass
         logger.info(f"Tool '{name}' execution completed")
 
         # Log completion to activity file

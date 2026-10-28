@@ -440,15 +440,47 @@ class SimpleTool(BaseTool):
             # Resolve model capabilities for feature gating
             supports_thinking = capabilities.supports_extended_thinking
 
-            # Generate content with provider abstraction
-            model_response = provider.generate_content(
-                prompt=prompt,
-                model_name=self._current_model_name,
-                system_prompt=system_prompt,
-                temperature=temperature,
-                thinking_mode=thinking_mode if supports_thinking else None,
-                images=images if images else None,
-            )
+            # Generate content — wrap in same-category fallback chain so provider
+            # rate-limits / quota exhaustion / silent policy blocks retry against
+            # peer models automatically instead of surfacing to the caller.
+            from providers.registry import ModelProviderRegistry
+            from providers.router.fallback_chain import call_with_fallback
+            from providers.router.size_guard import check_or_reroute
+
+            # Pre-flight size guard: reroute BEFORE the round-trip if the
+            # request obviously exceeds the model's cap. Saves a 413 hop.
+            _dispatch_model = self._current_model_name
+            ok, hint = check_or_reroute(_dispatch_model, prompt)
+            if not ok and hint and hint.startswith("route:") and hint != "route:none":
+                alt = hint.split(":", 1)[1]
+                logger.warning(
+                    "size-guard: %s over cap for %s → pre-routing to %s",
+                    _dispatch_model,
+                    self.get_name(),
+                    alt,
+                )
+                _dispatch_model = alt
+
+            def _invoke_model(_model: str):
+                # Primary model uses the provider already resolved for this call;
+                # only fallback / rerouted models need a registry lookup.
+                if _model == self._current_model_name:
+                    _prov = provider
+                else:
+                    _prov = ModelProviderRegistry.get_provider_for_model(_model) or provider
+                return _prov.generate_content(
+                    prompt=prompt,
+                    model_name=_model,
+                    system_prompt=system_prompt,
+                    temperature=temperature,
+                    thinking_mode=thinking_mode if supports_thinking else None,
+                    images=images if images else None,
+                )
+
+            def _log_switch(prev: str, nxt: str, reason: str) -> None:
+                logger.warning("fallback: %s → %s for %s (%s)", prev, nxt, self.get_name(), reason)
+
+            model_response = call_with_fallback(_invoke_model, _dispatch_model, on_switch=_log_switch)
 
             logger.info(f"Received response from {provider.get_provider_type().value} API for {self.get_name()}")
 

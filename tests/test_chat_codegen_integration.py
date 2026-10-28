@@ -51,7 +51,7 @@ async def test_chat_codegen_saves_file(monkeypatch, tmp_path):
     with monkeypatch.context() as m:
         m.setenv("GEMINI_API_KEY", gemini_key)
         m.setenv("DEFAULT_MODEL", "auto")
-        m.setenv("GOOGLE_ALLOWED_MODELS", "gemini-2.5-pro")
+        m.setenv("GOOGLE_ALLOWED_MODELS", "gemini-3.1-pro-preview")
         m.setenv("GOOGLE_GENAI_CLIENT_MODE", client_mode)
         m.setenv("GOOGLE_GENAI_REPLAYS_DIRECTORY", str(REPLAYS_ROOT))
         m.setenv("GOOGLE_GENAI_REPLAY_ID", CASSETTE_REPLAY_ID)
@@ -78,12 +78,12 @@ async def test_chat_codegen_saves_file(monkeypatch, tmp_path):
         result = await chat_tool.execute(
             {
                 "prompt": prompt,
-                "model": "gemini-2.5-pro",
+                "model": "gemini-3.1-pro-preview",
                 "working_directory_absolute_path": str(working_dir),
             }
         )
 
-        provider = ModelProviderRegistry.get_provider_for_model("gemini-2.5-pro")
+        provider = ModelProviderRegistry.get_provider_for_model("gemini-3.1-pro-preview")
         if provider is not None:
             try:
                 provider.client.close()

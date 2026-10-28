@@ -9,13 +9,15 @@ dependencies = [
     "openai>=1.55.2",
     "pydantic>=2.0.0",
     "python-dotenv>=1.0.0",
+    "rich>=13.0",
+    "prompt_toolkit>=3.0.43",
 ]
 
 [tool.setuptools.packages.find]
 include = ["tools*", "providers*", "systemprompts*", "utils*", "conf*", "clink*"]
 
 [tool.setuptools]
-py-modules = ["server", "config"]
+py-modules = ["server", "config", "cli"]
 
 [tool.setuptools.package-data]
 "*" = [
@@ -37,6 +39,7 @@ py-modules = ["server", "config"]
 
 [project.scripts]
 pal-mcp-server = "server:run"
+pal = "cli:main"
 
 [tool.black]
 line-length = 120

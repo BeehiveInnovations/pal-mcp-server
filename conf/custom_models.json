@@ -22,20 +22,59 @@
   },
   "models": [
     {
-      "model_name": "llama3.2",
+      "model_name": "openai/gpt-oss-120b",
       "aliases": [
-        "local-llama",
-        "ollama-llama"
+        "groq",
+        "gpt-oss",
+        "gpt-oss-120b",
+        "oss120"
       ],
-      "context_window": 128000,
-      "max_output_tokens": 64000,
-      "supports_extended_thinking": false,
-      "supports_json_mode": false,
-      "supports_function_calling": false,
+      "context_window": 131072,
+      "max_output_tokens": 32768,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
       "supports_images": false,
       "max_image_size_mb": 0.0,
-      "description": "Local Llama 3.2 model via custom endpoint (Ollama/vLLM) - 128K context window (text-only)",
-      "intelligence_score": 6
+      "supports_temperature": true,
+      "description": "Groq / OpenAI gpt-oss-120b - 128K context, top-tier open-weight reasoning, ~500 tok/s",
+      "intelligence_score": 15
+    },
+    {
+      "model_name": "openai/gpt-oss-20b",
+      "aliases": [
+        "groq-fast",
+        "gpt-oss-20b",
+        "oss20"
+      ],
+      "context_window": 131072,
+      "max_output_tokens": 16384,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": false,
+      "max_image_size_mb": 0.0,
+      "supports_temperature": true,
+      "description": "Groq / OpenAI gpt-oss-20b - 128K context, ~1000 tok/s, best for bulk/quick tasks",
+      "intelligence_score": 11
+    },
+    {
+      "model_name": "qwen/qwen3.8-27b",
+      "aliases": [
+        "qwen",
+        "qwen3",
+        "qwen-27b"
+      ],
+      "context_window": 131072,
+      "max_output_tokens": 16384,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": false,
+      "max_image_size_mb": 0.0,
+      "supports_temperature": true,
+      "description": "Groq / Qwen 3.8 27B - 128K context, strong for code",
+      "intelligence_score": 12
     }
   ]
 }
