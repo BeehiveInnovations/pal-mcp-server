@@ -1,0 +1,52 @@
+{
+  "_README": {
+    "description": "Model metadata for llm.buzz multi-provider gateway.",
+    "documentation": "https://llm.buzz",
+    "usage": "Models listed here are available through llm.buzz's OpenAI-compatible API.",
+    "field_notes": "Matches providers/shared/model_capabilities.py."
+  },
+  "models": [
+    {
+      "model_name": "claude-opus-4.1",
+      "friendly_name": "llm.buzz (Claude Opus 4.1)",
+      "aliases": [
+        "opus",
+        "opus-4",
+        "opus-4.1"
+      ],
+      "intelligence_score": 19,
+      "description": "Claude Opus 4.1 via llm.buzz - Anthropic's most capable model for complex reasoning",
+      "context_window": 200000,
+      "max_output_tokens": 16000,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 10.0
+    },
+    {
+      "model_name": "claude-sonnet-4",
+      "friendly_name": "llm.buzz (Claude Sonnet 4)",
+      "aliases": [
+        "sonnet",
+        "sonnet-4",
+        "claude-4"
+      ],
+      "intelligence_score": 18,
+      "description": "Claude Sonnet 4 via llm.buzz - Balanced performance and capability",
+      "context_window": 200000,
+      "max_output_tokens": 16000,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 10.0
+    }
+  ]
+}
