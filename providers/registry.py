@@ -41,6 +41,7 @@ class ModelProviderRegistry:
         ProviderType.AZURE,  # Azure-hosted OpenAI deployments
         ProviderType.XAI,  # Direct X.AI GROK access
         ProviderType.DIAL,  # DIAL unified API access
+        ProviderType.LLMBUZZ,  # llm.buzz multi-provider gateway
         ProviderType.CUSTOM,  # Local/self-hosted models
         ProviderType.OPENROUTER,  # Catch-all for cloud models
     ]
@@ -181,96 +182,75 @@ class ModelProviderRegistry:
                     logging.debug(f"{provider_type} validates model {model_name}")
                     return provider
                 else:
-                    logging.debug(f"{provider_type} does not validate model {model_name}")
+                    if provider:
+                        logging.debug(f"{provider_type} does not validate {model_name}")
+                    else:
+                        logging.debug(f"No provider instance for {provider_type}")
             else:
-                logging.debug(f"{provider_type} not found in registry")
+                logging.debug(f"{provider_type} not in registry")
 
-        logging.debug(f"No provider found for model {model_name}")
+        logging.warning(f"No provider found for model: {model_name}")
         return None
 
     @classmethod
-    def get_available_providers(cls) -> list[ProviderType]:
-        """Get list of registered provider types."""
-        instance = cls()
-        return list(instance._providers.keys())
-
-    @classmethod
     def get_available_models(cls, respect_restrictions: bool = True) -> dict[str, ProviderType]:
-        """Get mapping of all available models to their providers.
+        """Get all available models from all registered providers.
+
+        This combines models from all providers into a single namespace, resolving
+        collisions using the provider priority order.
 
         Args:
-            respect_restrictions: If True, filter out models not allowed by restrictions
+            respect_restrictions: Whether to filter out restricted models
 
         Returns:
-            Dict mapping model names to provider types
+            Dict mapping model name to provider type
         """
-        # Import here to avoid circular imports
         from utils.model_restrictions import get_restriction_service
 
         restriction_service = get_restriction_service() if respect_restrictions else None
-        models: dict[str, ProviderType] = {}
+        available_models = {}
         instance = cls()
 
-        for provider_type in instance._providers:
+        for provider_type in cls.PROVIDER_PRIORITY_ORDER:
+            if provider_type not in instance._providers:
+                continue
+
             provider = cls.get_provider(provider_type)
             if not provider:
                 continue
 
             try:
-                available = provider.list_models(respect_restrictions=respect_restrictions)
-            except NotImplementedError:
-                logging.warning("Provider %s does not implement list_models", provider_type)
-                continue
+                # Use list_models if available
+                models = provider.list_models(respect_restrictions=respect_restrictions)
+            except (NotImplementedError, AttributeError, TypeError):
+                # Fallback to MODEL_CAPABILITIES
+                model_map = getattr(provider, "MODEL_CAPABILITIES", {})
+                models = list(model_map.keys()) if isinstance(model_map, dict) else []
 
-            if restriction_service and restriction_service.has_restrictions(provider_type):
-                restricted_display = cls._collect_restricted_display_names(
-                    provider,
-                    provider_type,
-                    available,
-                    restriction_service,
-                )
-                if restricted_display:
-                    for model_name in restricted_display:
-                        models[model_name] = provider_type
-                    continue
+            # Filter by restrictions if needed
+            if restriction_service:
+                models = [m for m in models if restriction_service.is_allowed(provider_type, m)]
 
-            for model_name in available:
-                # =====================================================================================
-                # CRITICAL: Prevent double restriction filtering (Fixed Issue #98)
-                # =====================================================================================
-                # Previously, both the provider AND registry applied restrictions, causing
-                # double-filtering that resulted in "no models available" errors.
-                #
-                # Logic: If respect_restrictions=True, provider already filtered models,
-                # so registry should NOT filter them again.
-                # TEST COVERAGE: tests/test_provider_routing_bugs.py::TestOpenRouterAliasRestrictions
-                # =====================================================================================
-                if (
-                    restriction_service
-                    and not respect_restrictions  # Only filter if provider didn't already filter
-                    and not restriction_service.is_allowed(provider_type, model_name)
-                ):
-                    logging.debug("Model %s filtered by restrictions", model_name)
-                    continue
-                models[model_name] = provider_type
+            # Add to available models (priority order means earlier entries win)
+            for model in models:
+                if model not in available_models:
+                    available_models[model] = provider_type
 
-        return models
+        return available_models
 
     @classmethod
-    def _collect_restricted_display_names(
-        cls,
-        provider: ModelProvider,
-        provider_type: ProviderType,
-        available: list[str],
-        restriction_service,
-    ) -> list[str] | None:
-        """Derive the human-facing model list when restrictions are active."""
+    def sort_models_by_capability(cls, allowed_models: list[str], provider: ModelProvider) -> list[str]:
+        """Sort a list of model names by their capability rank.
 
-        allowed_models = restriction_service.get_allowed_models(provider_type)
-        if not allowed_models:
-            return None
+        Args:
+            allowed_models: The list of model names to sort
+            provider: The provider that these models belong to
 
-        allowed_details: list[tuple[str, int]] = []
+        Returns:
+            A sorted list of model names, from highest to lowest rank.
+            Within tied ranks, names are sorted alphabetically.
+        """
+        allowed_details: list[tuple[str, float | int]] = []
 
         for model_name in sorted(allowed_models):
             try:
@@ -337,6 +317,7 @@ class ModelProviderRegistry:
             ProviderType.AZURE: "AZURE_OPENAI_API_KEY",
             ProviderType.XAI: "XAI_API_KEY",
             ProviderType.OPENROUTER: "OPENROUTER_API_KEY",
+            ProviderType.LLMBUZZ: "LLMBUZZ_API_KEY",
             ProviderType.CUSTOM: "CUSTOM_API_KEY",  # Can be empty for providers that don't need auth
             ProviderType.DIAL: "DIAL_API_KEY",
         }
