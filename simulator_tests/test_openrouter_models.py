@@ -99,13 +99,13 @@ class OpenRouterModelsTest(BaseSimulatorTest):
             self.logger.info("  ✅ O3 alias call completed")
 
             # Test 4: Direct OpenRouter model name
-            self.logger.info("  4: Testing direct OpenRouter model name (anthropic/claude-3-haiku)")
+            self.logger.info("  4: Testing direct OpenRouter model name (anthropic/claude-haiku-5.5)")
 
             response4, _ = self.call_mcp_tool(
                 "chat",
                 {
                     "prompt": "Say 'Hello from Claude Haiku!' and nothing else.",
-                    "model": "anthropic/claude-3-haiku",
+                    "model": "anthropic/claude-haiku-5.5",
                     "temperature": 0.1,
                 },
             )
@@ -117,7 +117,7 @@ class OpenRouterModelsTest(BaseSimulatorTest):
             self.logger.info("  ✅ Direct OpenRouter model call completed")
 
             # Test 5: OpenRouter alias from config
-            self.logger.info("  5: Testing OpenRouter alias from config ('opus' -> anthropic/claude-opus-4)")
+            self.logger.info("  5: Testing OpenRouter alias from config ('opus' -> anthropic/claude-opus-5.5)")
 
             response5, _ = self.call_mcp_tool(
                 "chat",

@@ -52,16 +52,20 @@ The curated defaults in `conf/openrouter_models.json` include popular entries su
 
 | Alias | Canonical Model | Highlights |
 |-------|-----------------|------------|
-| `opus`, `claude-opus` | `anthropic/claude-opus-4.1` | Flagship Claude reasoning model with vision |
-| `sonnet`, `sonnet4.5` | `anthropic/claude-sonnet-4.5` | Balanced Claude with high context window |
-| `haiku` | `anthropic/claude-3.5-haiku` | Fast Claude option with vision |
-| `pro`, `gemini` | `google/gemini-2.5-pro` | Frontier Gemini with extended thinking |
-| `flash` | `google/gemini-2.5-flash` | Ultra-fast Gemini with vision |
-| `mistral` | `mistralai/mistral-large-2411` | Frontier Mistral (text only) |
-| `llama3` | `meta-llama/llama-3-70b` | Large open-weight text model |
-| `deepseek-r1` | `deepseek/deepseek-r1-0528` | DeepSeek reasoning model |
-| `perplexity` | `perplexity/llama-3-sonar-large-32k-online` | Search-augmented model |
-| `gpt5.2`, `gpt-5.2`, `5.2` | `openai/gpt-5.2` | Flagship GPT-5.2 with reasoning and vision |
+| `opus`, `claude-opus` | `anthropic/claude-opus-5.5` | Flagship Claude reasoning model with vision (1M context) |
+| `sonnet`, `sonnet5.5` | `anthropic/claude-sonnet-5.5` | Balanced Claude for everyday engineering work |
+| `haiku` | `anthropic/claude-haiku-5.5` | Fast, low-cost Claude option with vision |
+| `pro`, `gemini` | `google/gemini-3.1-pro-preview` | Frontier Gemini with extended thinking |
+| `flash` | `google/gemini-3.8-flash` | Fast Gemini with thinking and vision |
+| `gpt6.1-sol`, `gpt6.1-terra`, `gpt6-luna` | `openai/gpt-6.1-sol`, `openai/gpt-6.1-terra`, `openai/gpt-6-luna` | GPT-6 family (upper, mid and fast tiers) |
+| `codex` | `openai/gpt-5.3-codex` | Agentic coding model |
+| `grok` | `x-ai/grok-4.7` | Flagship Grok for coding and agentic work |
+| `deepseek` | `deepseek/deepseek-v4-pro` | Large MoE reasoning model (1M context) |
+| `deepseek-r1`, `r1` | `deepseek/deepseek-r1-0528` | DeepSeek reasoning model |
+| `mistral` | `mistralai/mistral-large-4-0` | Multimodal Mistral (1M context) |
+| `llama` | `meta-llama/llama-4-maverick` | Open-weight multimodal MoE model |
+| `perplexity`, `sonar` | `perplexity/sonar-pro` | Search-augmented model |
+| `gpt5.2`, `gpt-5.2`, `5.2` | `openai/gpt-5.2` | GPT-5.2 with reasoning and vision |
 | `gpt5.1-codex`, `codex-5.1` | `openai/gpt-5.1-codex` | Agentic coding specialization (Responses API) |
 | `codex-mini`, `gpt5.1-codex-mini` | `openai/gpt-5.1-codex-mini` | Cost-efficient Codex variant with streaming |
 
