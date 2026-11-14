@@ -151,6 +151,26 @@ class TestGeminiProvider:
         assert response.usage["output_tokens"] == 20
         assert response.usage["total_tokens"] == 30
 
+    @patch.dict(os.environ, {}, clear=False)
+    @patch("google.genai.Client")
+    def test_client_pins_v1beta_api_version(self, mock_client_class):
+        """google-genai 3.x defaults to v1; the provider must request v1beta explicitly."""
+        os.environ.pop("GOOGLE_GENAI_API_VERSION", None)
+
+        _ = GeminiModelProvider(api_key="test-key").client
+
+        http_options = mock_client_class.call_args.kwargs["http_options"]
+        assert http_options.api_version == "v1beta"
+
+    @patch.dict(os.environ, {"GOOGLE_GENAI_API_VERSION": "v1"})
+    @patch("google.genai.Client")
+    def test_client_respects_api_version_env_override(self, mock_client_class):
+        """GOOGLE_GENAI_API_VERSION lets the SDK choose the version instead of the pinned default."""
+        _ = GeminiModelProvider(api_key="test-key").client
+
+        http_options = mock_client_class.call_args.kwargs.get("http_options")
+        assert http_options is None or http_options.api_version is None
+
 
 class TestOpenAIProvider:
     """Test OpenAI model provider"""
