@@ -118,7 +118,7 @@ class TestGeminiProvider:
         assert provider.validate_model_name("pro")
 
         capabilities = provider.get_capabilities("flash")
-        assert capabilities.model_name == "gemini-2.5-flash"
+        assert capabilities.model_name == "gemini-3.8-flash"
 
     @patch("google.genai.Client")
     def test_generate_content(self, mock_client_class):
