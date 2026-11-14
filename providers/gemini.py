@@ -20,6 +20,9 @@ from .shared import ModelCapabilities, ModelResponse, ProviderType
 
 logger = logging.getLogger(__name__)
 
+# Gemini Developer API version used when GOOGLE_GENAI_API_VERSION is not set.
+GEMINI_API_VERSION = "v1beta"
+
 
 class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
     """First-party Gemini integration built on the official Google SDK.
@@ -65,6 +68,11 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
         """Lazy initialization of Gemini client."""
         if self._client is None:
             http_options_kwargs: dict[str, object] = {}
+            # google-genai 3.x changed the Gemini API default from v1beta to v1, and newer
+            # models (e.g. gemini-3.x previews) are only served on v1beta. Pin it explicitly
+            # unless the user opts into another version via the SDK's own env var.
+            if not get_env("GOOGLE_GENAI_API_VERSION"):
+                http_options_kwargs["api_version"] = GEMINI_API_VERSION
             if self._base_url:
                 http_options_kwargs["base_url"] = self._base_url
             if self._timeout_override is not None:
@@ -73,7 +81,8 @@ class GeminiModelProvider(RegistryBackedProviderMixin, ModelProvider):
             if http_options_kwargs:
                 http_options = types.HttpOptions(**http_options_kwargs)
                 logger.debug(
-                    "Initializing Gemini client with options: base_url=%s timeout=%s",
+                    "Initializing Gemini client with options: api_version=%s base_url=%s timeout=%s",
+                    http_options_kwargs.get("api_version"),
                     http_options_kwargs.get("base_url"),
                     http_options_kwargs.get("timeout"),
                 )
