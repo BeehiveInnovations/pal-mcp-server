@@ -226,7 +226,7 @@ if __name__ == '__main__':
                     "next_step_required": True,
                     "findings": "Starting security assessment",
                     "relevant_files": [self.auth_file],
-                    "model": "gemini-2.0-flash-lite",
+                    "model": "flashlite",
                 },
             )
 
@@ -272,7 +272,7 @@ if __name__ == '__main__':
                     ],
                     "confidence": "medium",
                     "continuation_id": continuation_id,
-                    "model": "gemini-2.0-flash-lite",
+                    "model": "flashlite",
                 },
             )
 
@@ -305,7 +305,7 @@ if __name__ == '__main__':
                     "security_scope": "Web API endpoints",
                     "threat_level": "high",
                     "audit_focus": "owasp",
-                    "model": "gemini-2.0-flash-lite",
+                    "model": "flashlite",
                 },
             )
 
@@ -346,7 +346,7 @@ if __name__ == '__main__':
                     "findings": "Starting OWASP Top 10 security assessment of authentication and API modules",
                     "relevant_files": [self.auth_file, self.api_file],
                     "security_scope": "Web application with authentication and API endpoints",
-                    "model": "gemini-2.0-flash-lite",
+                    "model": "flashlite",
                 },
             )
 
@@ -392,7 +392,7 @@ if __name__ == '__main__':
                     ],
                     "confidence": "high",
                     "continuation_id": continuation_id,
-                    "model": "gemini-2.0-flash-lite",
+                    "model": "flashlite",
                 },
             )
 
@@ -409,7 +409,7 @@ if __name__ == '__main__':
                     "relevant_files": [self.auth_file, self.api_file],
                     "confidence": "high",  # High confidence to trigger expert analysis
                     "continuation_id": continuation_id,
-                    "model": "gemini-2.0-flash-lite",
+                    "model": "flashlite",
                 },
             )
 
@@ -455,7 +455,7 @@ if __name__ == '__main__':
                         {"severity": "critical", "description": "SQL injection vulnerability in login method"}
                     ],
                     "confidence": "certain",
-                    "model": "gemini-2.0-flash-lite",
+                    "model": "flashlite",
                 },
             )
 
@@ -500,7 +500,7 @@ if __name__ == '__main__':
                     "next_step_required": True,
                     "findings": "Beginning authentication security analysis",
                     "relevant_files": [self.auth_file],
-                    "model": "gemini-2.0-flash-lite",
+                    "model": "flashlite",
                 },
             )
 
@@ -526,7 +526,7 @@ if __name__ == '__main__':
                     {
                         "prompt": "Can you tell me more about the SQL injection vulnerability details found in the security audit?",
                         "continuation_id": continuation_id,
-                        "model": "gemini-2.0-flash-lite",
+                        "model": "flashlite",
                     },
                 )
 
@@ -562,7 +562,7 @@ if __name__ == '__main__':
                     "findings": "Starting SSRF vulnerability analysis",
                     "relevant_files": [self.api_file],
                     "audit_focus": "owasp",
-                    "model": "gemini-2.0-flash-lite",
+                    "model": "flashlite",
                 },
             )
 
@@ -582,7 +582,7 @@ if __name__ == '__main__':
                     "relevant_files": [self.auth_file],
                     "confidence": "high",
                     "use_assistant_model": False,  # Skip expert analysis
-                    "model": "gemini-2.0-flash-lite",
+                    "model": "flashlite",
                 },
             )
 

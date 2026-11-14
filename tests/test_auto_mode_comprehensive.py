@@ -80,9 +80,9 @@ class TestAutoModeComprehensive:
                     "OPENROUTER_API_KEY": None,
                 },
                 {
-                    "EXTENDED_REASONING": "gemini-3-pro-preview",  # Gemini 3 Pro Preview for deep thinking
-                    "FAST_RESPONSE": "gemini-2.5-flash",  # Flash for speed
-                    "BALANCED": "gemini-2.5-flash",  # Flash as balanced
+                    "EXTENDED_REASONING": "gemini-3.1-pro-preview",  # Gemini 3.1 Pro Preview for deep thinking
+                    "FAST_RESPONSE": "gemini-3.8-flash",  # Flash for speed
+                    "BALANCED": "gemini-3.8-flash",  # Flash as balanced
                 },
             ),
             # Only OpenAI API available
@@ -122,9 +122,9 @@ class TestAutoModeComprehensive:
                     "OPENROUTER_API_KEY": None,
                 },
                 {
-                    "EXTENDED_REASONING": "gemini-3-pro-preview",  # Gemini 3 Pro Preview comes first in priority
-                    "FAST_RESPONSE": "gemini-2.5-flash",  # Prefer flash for speed
-                    "BALANCED": "gemini-2.5-flash",  # Prefer flash for balanced
+                    "EXTENDED_REASONING": "gemini-3.1-pro-preview",  # Gemini 3.1 Pro Preview comes first in priority
+                    "FAST_RESPONSE": "gemini-3.8-flash",  # Prefer flash for speed
+                    "BALANCED": "gemini-3.8-flash",  # Prefer flash for balanced
                 },
             ),
             # All native APIs available - Google still comes first
@@ -136,9 +136,9 @@ class TestAutoModeComprehensive:
                     "OPENROUTER_API_KEY": None,
                 },
                 {
-                    "EXTENDED_REASONING": "gemini-3-pro-preview",  # Gemini 3 Pro Preview comes first in priority
-                    "FAST_RESPONSE": "gemini-2.5-flash",  # Prefer flash for speed
-                    "BALANCED": "gemini-2.5-flash",  # Prefer flash for balanced
+                    "EXTENDED_REASONING": "gemini-3.1-pro-preview",  # Gemini 3.1 Pro Preview comes first in priority
+                    "FAST_RESPONSE": "gemini-3.8-flash",  # Prefer flash for speed
+                    "BALANCED": "gemini-3.8-flash",  # Prefer flash for balanced
                 },
             ),
         ],
