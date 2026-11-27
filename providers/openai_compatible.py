@@ -631,6 +631,31 @@ class OpenAICompatibleProvider(ModelProvider):
                 **kwargs,
             )
 
+        # For OpenRouter reasoning models on the chat-completions path, forward the
+        # nested `reasoning` payload via `extra_body` so reasoning effort can be
+        # controlled and `reasoning_details` returned.
+        if (
+            self.get_provider_type() == ProviderType.OPENROUTER
+            and capabilities is not None
+            and getattr(capabilities, "supports_extended_thinking", False)
+        ):
+            thinking_mode = kwargs.get("thinking_mode")
+            effort = getattr(capabilities, "default_reasoning_effort", None)
+            if isinstance(thinking_mode, str) and thinking_mode:
+                effort_map = {
+                    "minimal": "minimal",
+                    "low": "low",
+                    "medium": "medium",
+                    "high": "high",
+                    "max": "high",
+                    "xhigh": "xhigh",
+                }
+                effort = effort_map.get(thinking_mode.lower(), effort)
+            reasoning_param = {"effort": effort} if effort else {"enabled": True}
+            extra_body = dict(completion_params.get("extra_body") or {})
+            extra_body["reasoning"] = reasoning_param
+            completion_params["extra_body"] = extra_body
+
         # Retry logic with progressive delays
         max_retries = 4  # Total of 4 attempts
         retry_delays = [1, 3, 5, 8]  # Progressive delays: 1s, 3s, 5s, 8s
@@ -640,8 +665,20 @@ class OpenAICompatibleProvider(ModelProvider):
             attempt_counter["value"] += 1
             response = self.client.chat.completions.create(**completion_params)
 
-            content = response.choices[0].message.content
+            message = response.choices[0].message
+            content = message.content
             usage = self._extract_usage(response)
+            metadata = {
+                "finish_reason": response.choices[0].finish_reason,
+                "model": response.model,
+                "id": response.id,
+                "created": response.created,
+            }
+            reasoning_details = getattr(message, "reasoning_details", None)
+            if reasoning_details is None:
+                reasoning_details = getattr(message, "reasoning", None)
+            if reasoning_details is not None:
+                metadata["reasoning_details"] = reasoning_details
 
             return ModelResponse(
                 content=content,
@@ -649,12 +686,7 @@ class OpenAICompatibleProvider(ModelProvider):
                 model_name=resolved_model,
                 friendly_name=self.FRIENDLY_NAME,
                 provider=self.get_provider_type(),
-                metadata={
-                    "finish_reason": response.choices[0].finish_reason,
-                    "model": response.model,
-                    "id": response.id,
-                    "created": response.created,
-                },
+                metadata=metadata,
             )
 
         try:
