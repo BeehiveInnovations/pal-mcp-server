@@ -647,7 +647,7 @@ class OpenAICompatibleProvider(ModelProvider):
                     "low": "low",
                     "medium": "medium",
                     "high": "high",
-                    "max": "high",
+                    "max": "xhigh",
                     "xhigh": "xhigh",
                 }
                 effort = effort_map.get(thinking_mode.lower(), effort)

@@ -4,6 +4,7 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 from providers.openai_compatible import OpenAICompatibleProvider
+from providers.registries.openrouter import OpenRouterModelRegistry
 from providers.shared import ModelCapabilities, ProviderType
 
 
@@ -29,61 +30,59 @@ class _DummyOpenRouterProvider(OpenAICompatibleProvider):
         return {self._caps.model_name: self._caps}
 
 
-def _make_completion_response(content="answer", reasoning_details=None):
+def _make_completion_response(model="openai/gpt-5.2", content="answer", reasoning_details=None):
     msg = SimpleNamespace(content=content, reasoning_details=reasoning_details)
     choice = SimpleNamespace(message=msg, finish_reason="stop")
     usage = SimpleNamespace(prompt_tokens=10, completion_tokens=5, total_tokens=15)
     return SimpleNamespace(
         choices=[choice],
         usage=usage,
-        model="z-ai/glm-5.2",
+        model=model,
         id="chatcmpl-123",
         created=1700000000,
     )
 
 
 def test_openrouter_reasoning_model_sends_extra_body_and_surfaces_reasoning_details():
-    caps = ModelCapabilities(
-        provider=ProviderType.OPENROUTER,
-        model_name="z-ai/glm-5.2",
-        friendly_name="GLM 5.2",
-        context_window=128000,
-        max_output_tokens=8192,
-        supports_extended_thinking=True,
-        default_reasoning_effort="medium",
-    )
+    registry = OpenRouterModelRegistry()
+    caps = registry.resolve("openai/gpt-5.2")
+    assert caps is not None
+    assert caps.supports_extended_thinking is True
+
     provider = _DummyOpenRouterProvider(caps)
     trace = [{"type": "reasoning.text", "text": "step by step"}]
     provider._client.chat.completions.create.return_value = _make_completion_response(
-        content="42", reasoning_details=trace
+        model="openai/gpt-5.2", content="42", reasoning_details=trace
     )
 
-    resp = provider.generate_content(prompt="What is 6*7?", model_name="z-ai/glm-5.2")
+    resp = provider.generate_content(prompt="What is 6*7?", model_name="openai/gpt-5.2")
 
     call_kwargs = provider._client.chat.completions.create.call_args.kwargs
     assert call_kwargs["extra_body"] == {"reasoning": {"effort": "medium"}}
     assert resp.metadata["reasoning_details"] == trace
 
 
-def test_openrouter_thinking_mode_overrides_default_effort():
-    caps = ModelCapabilities(
-        provider=ProviderType.OPENROUTER,
-        model_name="z-ai/glm-5.2",
-        friendly_name="GLM 5.2",
-        context_window=128000,
-        max_output_tokens=8192,
-        supports_extended_thinking=True,
-        default_reasoning_effort="medium",
-    )
+def test_openrouter_thinking_mode_overrides_default_effort_including_max():
+    registry = OpenRouterModelRegistry()
+    caps = registry.resolve("openai/gpt-5.2")
+    assert caps is not None
+
     provider = _DummyOpenRouterProvider(caps)
     provider._client.chat.completions.create.return_value = _make_completion_response()
 
     provider.generate_content(
-        prompt="Solve", model_name="z-ai/glm-5.2", thinking_mode="high"
+        prompt="Solve", model_name="openai/gpt-5.2", thinking_mode="high"
     )
+    assert provider._client.chat.completions.create.call_args.kwargs["extra_body"] == {
+        "reasoning": {"effort": "high"}
+    }
 
-    call_kwargs = provider._client.chat.completions.create.call_args.kwargs
-    assert call_kwargs["extra_body"] == {"reasoning": {"effort": "high"}}
+    provider.generate_content(
+        prompt="Solve deeply", model_name="openai/gpt-5.2", thinking_mode="max"
+    )
+    assert provider._client.chat.completions.create.call_args.kwargs["extra_body"] == {
+        "reasoning": {"effort": "xhigh"}
+    }
 
 
 def test_openrouter_non_reasoning_model_omits_reasoning_extra_body():
@@ -96,7 +95,9 @@ def test_openrouter_non_reasoning_model_omits_reasoning_extra_body():
         supports_extended_thinking=False,
     )
     provider = _DummyOpenRouterProvider(caps)
-    provider._client.chat.completions.create.return_value = _make_completion_response()
+    provider._client.chat.completions.create.return_value = _make_completion_response(
+        model="openai/gpt-4o-mini"
+    )
 
     resp = provider.generate_content(prompt="Hi", model_name="openai/gpt-4o-mini")
 
